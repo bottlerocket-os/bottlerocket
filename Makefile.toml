@@ -620,49 +620,6 @@ docker run --rm \
 '''
 ]
 
-# Provide build options for netdog
-[tasks.netdog-tools]
-dependencies = ["setup", "fetch-sources"]
-script = [
-'''
-if [ ! -s "${VARIANT}" ]; then
-  export VARIANT=metal-dev
-fi
-cargo install \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --path sources/api/netdog \
-  --root tools \
-  --force \
-  --quiet
-'''
-]
-
-[tasks.validate-net-config]
-dependencies = ["netdog-tools"]
-script_runner = "bash"
-script = [
-'''
-set -euo pipefail
-
-if [ ! -s "${NET_CONFIG_INPUT}" ]; then
-   echo "No network config file exists, please create one at ${NET_CONFIG_INPUT}"
-   exit 1
-fi
-
-docker run --rm \
-  --network=none \
-  --user "$(id -u):$(id -g)" \
-  --security-opt label:disable \
-  -v "${NET_CONFIG_INPUT}":"${NET_CONFIG_INPUT}" \
-  -v "${PWD}/tools/bin":/tmp/tools/bin \
-  "${BUILDSYS_SDK_IMAGE}" \
-  /tmp/tools/bin/netdog validate-net-config -f "${NET_CONFIG_INPUT}"
-
-echo "Netdog parsed the provided file"
-'''
-]
-
-
 # Builds a package including its build-time and runtime dependency packages.
 [tasks.build-package]
 dependencies = ["check-cargo-version", "fetch-sdk", "build-tools", "publish-setup", "fetch-licenses"]

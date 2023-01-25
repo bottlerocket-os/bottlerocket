@@ -29,7 +29,7 @@ file. This command is intended to be run by a user to test network configuration
 The subcommand `write-resolv-conf` writes the resolv.conf, favoring DNS API settings and
 supplementing any missing settings with DNS settings from the primary interface's DHCP lease.  It
 is meant to be used as a restart command for DNS API settings.
- */
+*/
 
 #![deny(rust_2018_idioms)]
 

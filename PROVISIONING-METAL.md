@@ -265,15 +265,16 @@ Older networking configuration versions (such as `1` or `2`) are supported in ne
 | Version 2                     | [v1.10.0](https://github.com/bottlerocket-os/bottlerocket/releases/tag/v1.10.0) |
 | Version 3                     | [v1.12.0](https://github.com/bottlerocket-os/bottlerocket/releases/tag/v1.12.0) |
 
-#### Validation network configuration
+#### Validate network configuration
 
-There is a `make` target `netdog-parse` to validate that network configuration files parse correctly.
-This target is intended to validate the format and structure of the file, it will not guarantee the generated configuration will work in a particular context.
-The command can be run by passing the absolute path to a `net.toml` file:
+`netdog` has a command `validate-net-config` to validate that network configuration files parse correctly.
+This command is intended to validate the format and structure of the file, it will not guarantee the generated configuration will work in a particular context.
+The command can be run by passing the path to a `net.toml` file:
+
 ```bash
-cargo make -e NET_CONFIG_INPUT=/home/yeazelm/git/bottlerocket/sources/api/netdog/test_data/net_config/net_config.toml validate-net-config
+# from the root of the bottlerocket git repo
+VARIANT=metal-dev cargo run --manifest-path sources/api/netdog/Cargo.toml -- validate-net-config -f sources/api/netdog/test_data/net_config/net_config.toml
 ...
-[cargo-make] INFO - Running Task: netdog-parse
 eno2 found as primary interface
 Found eno1
 Found eno2
@@ -286,14 +287,14 @@ Found eno8
 Found eno9
 Found eno10
 net.toml file provided successfully parsed!
-Netdog parsed the provided file
 ```
+
 Errors will also be detected and printed to standard out.
+
 ```bash
-cargo make -e NET_CONFIG_INPUT=/home/yeazelm/git/bottlerocket/sources/api/netdog/test_data/net_config/basic/bad_version.toml validate-net-config
+VARIANT=metal-dev cargo run --manifest-path sources/api/netdog/Cargo.toml -- validate-net-config -f sources/api/netdog/test_data/net_config/basic/bad_version.toml
 ...
-Unable to read/parse network config from '/var/lib/bottlerocket/net.toml': Invalid network configuration: Unknown network config version: 50
-Netdog parsed the provided file
+Unable to read/parse network config from 'sources/api/netdog/test_data/net_config/basic/bad_version.toml': Invalid network configuration: Unknown network config version: 50
 ```
 
 ### Boot Configuration
