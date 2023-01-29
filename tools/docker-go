@@ -82,7 +82,7 @@ docker run --rm \
   "${go_env[@]}" \
   "${proxy_env[@]}" \
   --user "$(id -u):$(id -g)" \
-  --security-opt label:disable \
+  --security-opt="label=disable" \
   ${DOCKER_RUN_ARGS} \
   -v "${GO_MOD_CACHE}":/tmp/go/pkg/mod \
   -v "${GO_MODULE_PATH}":/usr/src/module \

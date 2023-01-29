@@ -307,7 +307,7 @@ touch $(pwd)/bootconfig.data
 docker run --rm \
    --network=none \
    --user "$(id -u):$(id -g)" \
-   --security-opt label:disable \
+   --security-opt label=disable \
    -v $(pwd)/bootconfig-input:/tmp/bootconfig-input \
    -v $(pwd)/bootconfig.data:/tmp/bootconfig.data \
    "${SDK_IMAGE}" \
@@ -327,7 +327,7 @@ SDK_IMAGE="public.ecr.aws/bottlerocket/bottlerocket-sdk-${ARCH}:${SDK_VERSION}"
 docker run --rm \
    --network=none \
    --user "$(id -u):$(id -g)" \
-   --security-opt label:disable \
+   --security-opt label=disable \
    -v $(pwd)/bootconfig.data:/tmp/bootconfig.data \
    "${SDK_IMAGE}" \
    bootconfig -l /tmp/bootconfig.data
