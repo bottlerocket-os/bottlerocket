@@ -364,7 +364,7 @@ rc=0
 if ! docker run --rm \
   --network=none \
   --user "$(id -u):$(id -g)" \
-  --security-opt label:disable \
+  --security-opt="label:disable" \
   -v "${BUILDSYS_TOOLS_DIR}":/tmp/tools \
   "${BUILDSYS_SDK_IMAGE}" \
   bash -c \
