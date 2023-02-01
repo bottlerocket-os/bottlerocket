@@ -171,6 +171,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-k8s-1_26"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kubernetes-1_26",
+ "release",
+]
+
+[[package]]
+name = "aws-k8s-1_26-nvidia"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kmod-5_15-nvidia",
+ "kubernetes-1_26",
+ "nvidia-container-toolkit",
+ "nvidia-k8s-device-plugin",
+ "release",
+]
+
+[[package]]
 name = "aws-signing-helper"
 version = "0.1.0"
 dependencies = [
@@ -480,6 +507,15 @@ dependencies = [
 
 [[package]]
 name = "kubernetes-1_25"
+version = "0.1.0"
+dependencies = [
+ "aws-signing-helper",
+ "ecr-credential-provider",
+ "glibc",
+]
+
+[[package]]
+name = "kubernetes-1_26"
 version = "0.1.0"
 dependencies = [
  "aws-signing-helper",
@@ -831,6 +867,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "metal-k8s-1_26"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kubernetes-1_26",
+ "release",
+]
+
+[[package]]
 name = "microcode"
 version = "0.1.0"
 
@@ -1053,6 +1100,18 @@ dependencies = [
  "cni-plugins",
  "kernel-5_15",
  "kubernetes-1_25",
+ "open-vm-tools",
+ "release",
+]
+
+[[package]]
+name = "vmware-k8s-1_26"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kubernetes-1_26",
  "open-vm-tools",
  "release",
 ]
