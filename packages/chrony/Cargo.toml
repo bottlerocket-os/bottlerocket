@@ -19,5 +19,5 @@ sha512 = "1394bac3ed684352fe89b7fef7da50e61f9f522abee807627ae1fc4c2dde891017bc8e
 glibc = { path = "../glibc" }
 libcap = { path = "../libcap" }
 libseccomp = { path = "../libseccomp" }
-ncurses = { path = "../ncurses" }
+libncurses = { path = "../libncurses" }
 readline = { path = "../readline" }

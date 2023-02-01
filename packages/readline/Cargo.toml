@@ -17,4 +17,4 @@ sha512 = "b512275c8aa8b3b3178366c6d681f867676fc1c881e375134a88e9c860a448535e04ca
 
 [build-dependencies]
 glibc = { path = "../glibc" }
-ncurses = { path = "../ncurses" }
+libncurses = { path = "../libncurses" }
