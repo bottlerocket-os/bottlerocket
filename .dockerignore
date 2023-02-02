@@ -5,3 +5,4 @@
 /build/rpms/*-debuginfo-*.rpm
 /build/rpms/*-debugsource-*.rpm
 **/target/*
+/tests

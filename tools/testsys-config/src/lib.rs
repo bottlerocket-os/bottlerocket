@@ -1,7 +1,7 @@
 use bottlerocket_variant::Variant;
 pub use error::Error;
 use handlebars::Handlebars;
-use log::warn;
+use log::{debug, trace, warn};
 use maplit::btreemap;
 use model::constants::TESTSYS_VERSION;
 use model::SecretName;
@@ -32,7 +32,16 @@ impl TestConfig {
     {
         let path = path.as_ref();
         let test_config_str = fs::read_to_string(path).context(error::FileSnafu { path })?;
-        toml::from_str(&test_config_str).context(error::InvalidTomlSnafu { path })
+        let mut config: Self =
+            toml::from_str(&test_config_str).context(error::InvalidTomlSnafu { path })?;
+        // Copy the GenericConfig from `test` to `configs`.
+        config.test.as_ref().and_then(|test| {
+            config
+                .configs
+                .insert("test".to_string(), test.config.clone())
+        });
+
+        Ok(config)
     }
 
     /// Deserializes a TestConfig from a given path, if it exists, otherwise builds a default
@@ -63,31 +72,47 @@ impl TestConfig {
         arch: S,
         starting_config: Option<GenericVariantConfig>,
         test_type: &str,
-    ) -> GenericVariantConfig
+    ) -> (GenericVariantConfig, String)
     where
         S: Into<String>,
     {
         let arch = arch.into();
         // Starting with a list of keys ordered by precedence, return a single config with values
         // selected by the order of the list.
-        config_keys(variant)
+        let (test_type, configs) = config_keys(variant)
             // Convert the vec of keys in to an iterator of keys.
             .into_iter()
             // Convert the iterator of keys to and iterator of Configs. If the key does not have a
             // configuration in the config file, remove it from the iterator.
             .filter_map(|key| self.configs.get(&key).cloned())
-            // Expand the `test_type` configuration
-            .flat_map(|config| vec![config.test(test_type), config])
-            // Take the iterator of configurations and extract the arch specific config and the
-            // non-arch specific config for each config. Then, convert them into a single iterator.
-            .flat_map(|config| vec![config.for_arch(&arch), config.config])
-            // Take the iterator of configurations and merge them into a single config by populating
-            // each field with the first value that is not `None` while following the list of
-            // precedence.
+            // Reverse the iterator
+            .rev()
             .fold(
-                starting_config.unwrap_or_default(),
-                GenericVariantConfig::merge,
-            )
+                (test_type.to_string(), Vec::new()),
+                |(test_type, mut configs), config| {
+                    let (ordered_configs, test_type) = config.test_configs(test_type);
+                    configs.push(ordered_configs);
+                    (test_type, configs)
+                },
+            );
+        debug!("Resolved test-type '{}'", test_type);
+        (
+            configs
+                .into_iter()
+                .rev()
+                .flatten()
+                // Take the iterator of configurations and extract the arch specific config and the
+                // non-arch specific config for each config. Then, convert them into a single iterator.
+                .flat_map(|config| vec![config.for_arch(&arch), config.config])
+                // Take the iterator of configurations and merge them into a single config by populating
+                // each field with the first value that is not `None` while following the list of
+                // precedence.
+                .fold(
+                    starting_config.unwrap_or_default(),
+                    GenericVariantConfig::merge,
+                ),
+            test_type,
+        )
     }
 }
 
@@ -111,6 +136,10 @@ pub struct Test {
 
     /// The tag that should be used for TestSys images
     pub testsys_image_tag: Option<String>,
+
+    #[serde(flatten)]
+    /// Configuration values for all Bottlerocket variants
+    pub config: GenericConfig,
 }
 
 /// Create a vec of relevant keys for this variant ordered from most specific to least specific.
@@ -132,6 +161,7 @@ fn config_keys(variant: &Variant) -> Vec<String> {
         variant.family().to_string(),
         platform_flavor,
         variant.platform().to_string(),
+        "test".to_string(),
     ]
 }
 
@@ -147,6 +177,8 @@ pub struct GenericConfig {
     config: GenericVariantConfig,
     #[serde(default)]
     configuration: HashMap<String, GenericConfig>,
+    #[serde(rename = "test-type")]
+    test_type: Option<String>,
 }
 
 impl GenericConfig {
@@ -171,6 +203,36 @@ impl GenericConfig {
             .get(test_type.as_ref())
             .cloned()
             .unwrap_or_default()
+    }
+
+    /// Get a set of `GenericConfig`s following test types (test_type -> generic config).
+    fn test_configs<S>(&self, test_type: S) -> (Vec<GenericConfig>, String)
+    where
+        S: AsRef<str>,
+    {
+        // A vec containing all relevant test configs for this `GenericConfig` starting with
+        // `test_type` and ending with the `GenericConfig` itself.
+        let mut configs = Vec::new();
+        // Track the last test_type that we added to `configs`
+        let mut cur_test_type = test_type.as_ref().to_string();
+        loop {
+            // Add the config for the current test type (if the config doesn't exist, an empty
+            // config is added)
+            let test_config = self.test(&cur_test_type);
+            configs.push(test_config.clone());
+            // If the current test config specifies another test type, that test type needs to be
+            // added to the configurations.
+            if let Some(test_type) = test_config.test_type.to_owned() {
+                trace!("Test-type '{}' resolves to '{}'", cur_test_type, test_type);
+                cur_test_type = test_type;
+            } else {
+                break;
+            }
+        }
+
+        // Add the `self` config
+        configs.push(self.clone());
+        (configs, cur_test_type)
     }
 }
 

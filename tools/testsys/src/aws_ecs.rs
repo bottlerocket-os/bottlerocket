@@ -164,9 +164,11 @@ impl CrdCreator for AwsEcsCreator {
             .set_secrets(Some(test_input.crd_input.config.secrets.to_owned()))
             .set_labels(Some(labels))
             .build(format!(
-                "{}-test{}",
+                "{}-{}",
                 cluster_resource_name,
-                test_input.name_suffix.unwrap_or_default()
+                test_input
+                    .name_suffix
+                    .unwrap_or(test_input.crd_input.test_flavor.as_str())
             ))
             .context(error::BuildSnafu {
                 what: "ECS test CRD",

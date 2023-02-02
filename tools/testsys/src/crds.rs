@@ -3,7 +3,7 @@ use crate::run::{KnownTestType, TestType};
 use bottlerocket_types::agent_config::TufRepoConfig;
 use bottlerocket_variant::Variant;
 use handlebars::Handlebars;
-use log::{debug, warn};
+use log::{debug, info, warn};
 use maplit::btreemap;
 use model::constants::{API_VERSION, NAMESPACE};
 use model::test_manager::{SelectionParams, TestManager};
@@ -12,6 +12,8 @@ use pubsys_config::RepoConfig;
 use serde::Deserialize;
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
+use std::fs;
+use std::path::PathBuf;
 use testsys_config::{rendered_cluster_name, GenericVariantConfig, TestsysImages};
 
 /// A type that is used for the creation of all CRDs.
@@ -21,6 +23,7 @@ pub struct CrdInput<'a> {
     pub variant: Variant,
     pub config: GenericVariantConfig,
     pub repo_config: RepoConfig,
+    pub test_flavor: String,
     pub starting_version: Option<String>,
     pub migrate_to_version: Option<String>,
     pub build_id: Option<String>,
@@ -28,6 +31,7 @@ pub struct CrdInput<'a> {
     /// it is not externally visible.
     pub(crate) starting_image_id: Option<String>,
     pub(crate) test_type: TestType,
+    pub(crate) tests_directory: PathBuf,
     pub images: TestsysImages,
 }
 
@@ -101,15 +105,67 @@ impl<'a> CrdInput<'a> {
     /// Use the provided userdata path to create the encoded userdata.
     pub fn encoded_userdata(&self) -> Result<Option<String>> {
         let userdata_path = match self.config.userdata.as_ref() {
-            Some(path) => path,
+            Some(userdata) => self.custom_userdata_file_path(userdata)?,
             None => return Ok(None),
         };
 
-        let userdata = std::fs::read_to_string(userdata_path).context(error::FileSnafu {
+        info!("Using userdata at '{}'", userdata_path.display());
+
+        let userdata = std::fs::read_to_string(&userdata_path).context(error::FileSnafu {
             path: userdata_path,
         })?;
 
         Ok(Some(base64::encode(userdata)))
+    }
+
+    /// Find the userdata file for the test type
+    fn custom_userdata_file_path(&self, userdata: &str) -> Result<PathBuf> {
+        let test_type = &self.test_type.to_string();
+
+        // List all acceptable paths to the custom crd to allow users some freedom in the way
+        // `tests` is organized.
+        let acceptable_paths = vec![
+            // Check the absolute path
+            userdata.into(),
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/<USERDATA>
+            self.tests_directory.join(test_type).join(userdata),
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/<USERDATA>.toml
+            self.tests_directory
+                .join(test_type)
+                .join(userdata)
+                .with_extension("toml"),
+            // Check for <TESTSYS_FOLDER>/shared/<USERDATA>
+            self.tests_directory.join("shared").join(userdata),
+            // Check for <TESTSYS_FOLDER>/shared/<USERDATA>.toml
+            self.tests_directory
+                .join("shared")
+                .join(userdata)
+                .with_extension("toml"),
+            // Check for <TESTSYS_FOLDER>/shared/userdata/<USERDATA>
+            self.tests_directory
+                .join("shared")
+                .join("userdata")
+                .join(userdata),
+            // Check for <TESTSYS_FOLDER>/shared/userdata/<USERDATA>.toml
+            self.tests_directory
+                .join("shared")
+                .join("userdata")
+                .join(userdata)
+                .with_extension("toml"),
+            // Check for the path in the top level directory
+            PathBuf::new().join(userdata),
+        ];
+
+        // Find the first acceptable path that exists and return that.
+        acceptable_paths
+            .into_iter()
+            .find(|path| path.exists())
+            .context(error::InvalidSnafu {
+                what: format!(
+                    "Could not find userdata '{}' for test type '{}'",
+                    userdata, test_type
+                ),
+            })
     }
 
     /// Fill in the templated cluster name with `arch` and `variant`.
@@ -159,12 +215,105 @@ impl<'a> CrdInput<'a> {
             "variant".to_string() => self.variant.to_string(),
             "kube-arch".to_string() => self.kube_arch(),
             "kube-variant".to_string() => self.kube_variant(),
+            "flavor".to_string() => some_or_null(&self.variant.variant_flavor().map(str::to_string)),
+            "version".to_string() => some_or_null(&self.variant.version().map(str::to_string)),
             "cluster-name".to_string() => cluster_name.to_string(),
             "instance-type".to_string() => some_or_null(&self.config.instance_type),
             "agent-role".to_string() => some_or_null(&self.config.agent_role),
             "conformance-image".to_string() => some_or_null(&self.config.conformance_image),
             "conformance-registry".to_string() => some_or_null(&self.config.conformance_registry),
         }
+    }
+
+    /// Find the crd template file for the given test type
+    fn custom_crd_template_file_path(&self) -> Option<PathBuf> {
+        let test_type = &self.test_type.to_string();
+        // List all acceptable paths to the custom crd to allow users some freedom in the way
+        // `tests` is organized.
+        let acceptable_paths = vec![
+            // Check for <TEST-TYPE>.yaml in the top level directory
+            PathBuf::new().join(test_type).with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/<TEST-TYPE>.yaml
+            self.tests_directory
+                .join(test_type)
+                .join(test_type)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/crd.yaml
+            self.tests_directory.join(test_type).join("crd.yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/<TEST-TYPE>.yaml
+            self.tests_directory
+                .join("shared")
+                .join(test_type)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/tests/<TEST-TYPE>.yaml
+            self.tests_directory
+                .join("shared")
+                .join("tests")
+                .join(test_type)
+                .with_extension("yaml"),
+        ];
+
+        // Find the first acceptable path that exists and return that.
+        acceptable_paths.into_iter().find(|path| path.exists())
+    }
+
+    /// Find the cluster config file for the given cluster name and test type.
+    fn cluster_config_file_path(&self, cluster_name: &str) -> Option<PathBuf> {
+        let test_type = &self.test_type.to_string();
+        // List all acceptable paths to the custom crd to allow users some freedom in the way
+        // `tests` is organized.
+        let acceptable_paths = vec![
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/<CLUSTER-NAME>.yaml
+            self.tests_directory
+                .join(test_type)
+                .join(cluster_name)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/<CLUSTER-NAME>.yaml
+            self.tests_directory
+                .join("shared")
+                .join(cluster_name)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/cluster-config/<CLUSTER-NAME>.yaml
+            self.tests_directory
+                .join("shared")
+                .join("cluster-config")
+                .join(cluster_name)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/clusters/<CLUSTER-NAME>.yaml
+            self.tests_directory
+                .join("shared")
+                .join("cluster-config")
+                .join(cluster_name)
+                .with_extension("yaml"),
+        ];
+
+        // Find the first acceptable path that exists and return that.
+        acceptable_paths.into_iter().find(|path| path.exists())
+    }
+
+    /// Find the resolved cluster config file for the given cluster name and test type if it exists.
+    fn resolved_cluster_config(
+        &self,
+        cluster_name: &str,
+        additional_fields: &mut BTreeMap<String, String>,
+    ) -> Result<Option<String>> {
+        let path = match self.cluster_config_file_path(cluster_name) {
+            None => return Ok(None),
+            Some(path) => path,
+        };
+        info!("Using cluster config at {}", path.display());
+        let config = fs::read_to_string(&path).context(error::FileSnafu { path })?;
+
+        let mut fields = self.config_fields(cluster_name);
+        fields.insert("api-version".to_string(), API_VERSION.to_string());
+        fields.insert("namespace".to_string(), NAMESPACE.to_string());
+        fields.append(additional_fields);
+
+        let mut handlebars = Handlebars::new();
+        handlebars.set_strict_mode(true);
+        let rendered_config = handlebars.render_template(&config, &fields)?;
+
+        Ok(Some(rendered_config))
     }
 }
 
@@ -222,6 +371,10 @@ pub(crate) trait CrdCreator: Sync {
                 .cluster_crd(ClusterInput {
                     cluster_name,
                     crd_input,
+                    cluster_config: &crd_input.resolved_cluster_config(
+                        cluster_name,
+                        &mut self.additional_fields(&test_type.to_string()),
+                    )?,
                 })
                 .await?;
             let cluster_crd_name = cluster_output.crd_name();
@@ -294,7 +447,7 @@ pub(crate) trait CrdCreator: Sync {
                             test_type,
                             crd_input,
                             prev_tests: tests.clone(),
-                            name_suffix: "-1-initial".into(),
+                            name_suffix: "1-initial".into(),
                         })
                         .await?;
                     if let Some(name) = test_output.crd_name() {
@@ -309,7 +462,7 @@ pub(crate) trait CrdCreator: Sync {
                             bottlerocket_crd_name: &bottlerocket_crd_name,
                             crd_input,
                             prev_tests: tests.clone(),
-                            name_suffix: "-2-migrate".into(),
+                            name_suffix: "2-migrate".into(),
                             migration_direction: MigrationDirection::Upgrade,
                         })
                         .await?;
@@ -326,7 +479,7 @@ pub(crate) trait CrdCreator: Sync {
                             test_type,
                             crd_input,
                             prev_tests: tests.clone(),
-                            name_suffix: "-3-migrated".into(),
+                            name_suffix: "3-migrated".into(),
                         })
                         .await?;
                     if let Some(name) = test_output.crd_name() {
@@ -341,7 +494,7 @@ pub(crate) trait CrdCreator: Sync {
                             bottlerocket_crd_name: &bottlerocket_crd_name,
                             crd_input,
                             prev_tests: tests.clone(),
-                            name_suffix: "-4-migrate".into(),
+                            name_suffix: "4-migrate".into(),
                             migration_direction: MigrationDirection::Downgrade,
                         })
                         .await?;
@@ -358,7 +511,7 @@ pub(crate) trait CrdCreator: Sync {
                             test_type,
                             crd_input,
                             prev_tests: tests,
-                            name_suffix: "-5-final".into(),
+                            name_suffix: "5-final".into(),
                         })
                         .await?;
                     if let Some(crd) = test_output.crd() {
@@ -377,8 +530,21 @@ pub(crate) trait CrdCreator: Sync {
         &self,
         test_type: &str,
         crd_input: &CrdInput,
-        crd_template_file_path: &str,
+        override_crd_template: Option<PathBuf>,
     ) -> Result<Vec<Crd>> {
+        debug!("Creating custom CRDs for '{}' test", test_type);
+        let crd_template_file_path = &override_crd_template
+            .or_else(|| crd_input.custom_crd_template_file_path())
+            .context(error::InvalidSnafu {
+                what: format!(
+                    "A custom yaml file could not be found for test type '{}'",
+                    test_type
+                ),
+            })?;
+        info!(
+            "Creating custom crd from '{}'",
+            crd_template_file_path.display()
+        );
         let mut crds = Vec::new();
         for cluster_name in &crd_input.cluster_names()? {
             let mut fields = crd_input.config_fields(cluster_name);
@@ -425,6 +591,7 @@ pub(crate) trait CrdCreator: Sync {
 pub struct ClusterInput<'a> {
     pub cluster_name: &'a String,
     pub crd_input: &'a CrdInput<'a>,
+    pub cluster_config: &'a Option<String>,
 }
 
 /// The input used for bottlerocket crd creation

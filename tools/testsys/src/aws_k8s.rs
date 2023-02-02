@@ -11,6 +11,7 @@ use bottlerocket_types::agent_config::{
 };
 use maplit::btreemap;
 use model::{Crd, DestructionPolicy};
+use serde_yaml::Value;
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::str::FromStr;
@@ -48,10 +49,44 @@ impl CrdCreator for AwsK8sCreator {
 
     /// Create an EKS cluster CRD with the `cluster_name` in `cluster_input`.
     async fn cluster_crd<'a>(&self, cluster_input: ClusterInput<'a>) -> Result<CreateCrdOutput> {
+        let cluster_version =
+            K8sVersion::from_str(cluster_input.crd_input.variant.version().context(
+                error::MissingSnafu {
+                    item: "K8s version".to_string(),
+                    what: "aws-k8s variant".to_string(),
+                },
+            )?)
+            .map_err(|_| error::Error::K8sVersion {
+                version: cluster_input.crd_input.variant.to_string(),
+            })?;
+
+        let (cluster_name, region, config) = match cluster_input.cluster_config {
+            Some(config) => {
+                let (cluster_name, region) = cluster_config_data(config)?;
+                (
+                    cluster_name,
+                    region,
+                    EksctlConfig::File {
+                        encoded_config: base64::encode(config),
+                    },
+                )
+            }
+            None => (
+                cluster_input.cluster_name.to_string(),
+                self.region.clone(),
+                EksctlConfig::Args {
+                    cluster_name: cluster_input.cluster_name.to_string(),
+                    region: Some(self.region.clone()),
+                    zones: None,
+                    version: Some(cluster_version),
+                },
+            ),
+        };
+
         let labels = cluster_input.crd_input.labels(btreemap! {
             "testsys/type".to_string() => "cluster".to_string(),
-            "testsys/cluster".to_string() => cluster_input.cluster_name.to_string(),
-            "testsys/region".to_string() => self.region.clone()
+            "testsys/cluster".to_string() => cluster_name.to_string(),
+            "testsys/region".to_string() => region.clone()
         });
 
         // Check if the cluster already has a crd
@@ -67,26 +102,10 @@ impl CrdCreator for AwsK8sCreator {
             return Ok(CreateCrdOutput::ExistingCrd(cluster_crd));
         }
 
-        let cluster_version =
-            K8sVersion::from_str(cluster_input.crd_input.variant.version().context(
-                error::MissingSnafu {
-                    item: "K8s version".to_string(),
-                    what: "aws-k8s variant".to_string(),
-                },
-            )?)
-            .map_err(|_| error::Error::K8sVersion {
-                version: cluster_input.crd_input.variant.to_string(),
-            })?;
-
         let eks_crd = EksClusterConfig::builder()
             .creation_policy(CreationPolicy::IfNotExists)
             .assume_role(cluster_input.crd_input.config.agent_role.clone())
-            .config(EksctlConfig::Args {
-                cluster_name: cluster_input.cluster_name.to_string(),
-                region: Some(self.region.clone()),
-                zones: None,
-                version: Some(cluster_version),
-            })
+            .config(config)
             .image(
                 cluster_input
                     .crd_input
@@ -105,7 +124,7 @@ impl CrdCreator for AwsK8sCreator {
             .set_labels(Some(labels))
             .set_secrets(Some(cluster_input.crd_input.config.secrets.clone()))
             .destruction_policy(DestructionPolicy::Never)
-            .build(cluster_input.cluster_name.to_string())
+            .build(cluster_name)
             .context(error::BuildSnafu {
                 what: "EKS cluster CRD",
             })?;
@@ -144,4 +163,39 @@ impl CrdCreator for AwsK8sCreator {
     fn additional_fields(&self, _test_type: &str) -> BTreeMap<String, String> {
         btreemap! {"region".to_string() => self.region.clone()}
     }
+}
+
+/// Converts a eksctl cluster config to a `serde_yaml::Value` and extracts the cluster name and
+/// region from it.
+fn cluster_config_data(cluster_config: &str) -> Result<(String, String)> {
+    let config: Value = serde_yaml::from_str(cluster_config).context(error::SerdeYamlSnafu {
+        what: "Unable to deserialize cluster config",
+    })?;
+
+    let (cluster_name, region) = config
+        .get("metadata")
+        .map(|metadata| {
+            (
+                metadata.get("name").and_then(|name| name.as_str()),
+                metadata.get("region").and_then(|region| region.as_str()),
+            )
+        })
+        .context(error::MissingSnafu {
+            item: "metadata",
+            what: "eksctl config",
+        })?;
+    Ok((
+        cluster_name
+            .context(error::MissingSnafu {
+                item: "name",
+                what: "eksctl config metadata",
+            })?
+            .to_string(),
+        region
+            .context(error::MissingSnafu {
+                item: "region",
+                what: "eksctl config metadata",
+            })?
+            .to_string(),
+    ))
 }

@@ -19,6 +19,7 @@ use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize
 use snafu::{OptionExt, ResultExt};
 use std::fs::read_to_string;
 use std::path::PathBuf;
+use std::str::FromStr;
 use testsys_config::{GenericVariantConfig, TestConfig};
 
 /// Run a set of tests for a given arch and variant
@@ -42,6 +43,10 @@ pub(crate) struct Run {
     /// The path to `Test.toml`
     #[clap(long, env = "TESTSYS_TEST_CONFIG_PATH", parse(from_os_str))]
     test_config_path: PathBuf,
+
+    /// The path to the `tests` directory
+    #[clap(long, env = "TESTSYS_FOLDER", parse(from_os_str))]
+    tests_directory: PathBuf,
 
     /// The path to the EKS-A management cluster kubeconfig for vSphere K8s cluster creation
     #[clap(long, env = "TESTSYS_MGMT_CLUSTER_KUBECONFIG", parse(from_os_str))]
@@ -102,8 +107,8 @@ pub(crate) struct Run {
     migration_target_version: Option<String>,
 
     /// The template file that should be used for custom testing.
-    #[clap(long = "template-file", short = 'f')]
-    custom_crd_template: Option<String>,
+    #[clap(long = "template-file", short = 'f', parse(from_os_str))]
+    custom_crd_template: Option<PathBuf>,
 }
 
 /// This is a CLI parsable version of `testsys_config::GenericVariantConfig`.
@@ -176,12 +181,14 @@ impl Run {
 
         let test_opts = test_config.test.to_owned().unwrap_or_default();
 
-        let variant_config = test_config.reduced_config(
+        let (variant_config, test_type) = test_config.reduced_config(
             &variant,
             &self.arch,
             Some(self.config.into()),
             &self.test_flavor.to_string(),
         );
+        let resolved_test_type = TestType::from_str(&test_type)
+            .expect("All unrecognized test type become `TestType::Custom`");
 
         // If a lock file exists, use that, otherwise use Infra.toml or default
         let infra_config = InfraConfig::from_path_or_lock(&self.infra_config_path, true)?;
@@ -345,22 +352,24 @@ impl Run {
             starting_version: self.migration_starting_version,
             migrate_to_version: self.migration_target_version,
             starting_image_id: self.starting_image_id,
-            test_type: self.test_flavor.clone(),
+            test_type: resolved_test_type.clone(),
+            test_flavor: self.test_flavor.to_string(),
             images,
+            tests_directory: self.tests_directory,
         };
 
-        let crds = match &self.test_flavor {
-            TestType::Known(test_type) => crd_creator.create_crds(test_type, &crd_input).await?,
-            TestType::Custom(test_type) => {
+        let crds = match &resolved_test_type {
+            TestType::Known(resolved_test_type) => {
+                crd_creator
+                    .create_crds(resolved_test_type, &crd_input)
+                    .await?
+            }
+            TestType::Custom(resolved_test_type) => {
                 crd_creator
                     .create_custom_crds(
-                        test_type,
+                        resolved_test_type,
                         &crd_input,
-                        self.custom_crd_template
-                            .as_ref()
-                            .context(error::InvalidSnafu {
-                                what: "A crd template file is required for custom test types.",
-                            })?,
+                        self.custom_crd_template.to_owned(),
                     )
                     .await?
             }
