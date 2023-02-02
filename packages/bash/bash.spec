@@ -10,9 +10,9 @@ Source0: https://ftp.gnu.org/gnu/bash/bash-%{version}.tar.gz
 Patch127: bash-4.4-no-loadable-builtins.patch
 
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}ncurses-devel
+BuildRequires: %{_cross_os}libncurses-devel
 BuildRequires: %{_cross_os}readline-devel
-Requires: %{_cross_os}ncurses
+Requires: %{_cross_os}libncurses
 Requires: %{_cross_os}readline
 
 %description

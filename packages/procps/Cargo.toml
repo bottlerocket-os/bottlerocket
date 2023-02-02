@@ -18,4 +18,4 @@ sha512 = "070076cf6bbbd8b6b342af361035f11d9c7381c5d1e2e430a5f2584ff55656254e8f86
 [build-dependencies]
 glibc = { path = "../glibc" }
 libselinux = { path = "../libselinux" }
-ncurses = { path = "../ncurses" }
+libncurses = { path = "../libncurses" }

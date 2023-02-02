@@ -7,8 +7,8 @@ URL: https://tiswww.case.edu/php/chet/readline/rltop.html
 Source0: https://ftp.gnu.org/gnu/readline/readline-%{version}.tar.gz
 Patch1: readline-8.1-shlib.patch
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}ncurses-devel
-Requires: %{_cross_os}ncurses
+BuildRequires: %{_cross_os}libncurses-devel
+Requires: %{_cross_os}libncurses
 
 %description
 %{summary}.

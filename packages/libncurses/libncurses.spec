@@ -1,4 +1,4 @@
-Name: %{_cross_os}ncurses
+Name: %{_cross_os}libncurses
 Version: 6.2
 Release: 1%{?dist}
 Summary: Ncurses libraries

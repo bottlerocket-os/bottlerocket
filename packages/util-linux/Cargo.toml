@@ -20,4 +20,4 @@ glibc = { path = "../glibc" }
 libacl = { path = "../libacl" }
 libselinux = { path = "../libselinux" }
 libxcrypt = { path = "../libxcrypt" }
-ncurses = { path = "../ncurses" }
+libncurses = { path = "../libncurses" }

@@ -12,8 +12,8 @@ Source4: chrony-tmpfiles.conf
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libcap-devel
+BuildRequires: %{_cross_os}libncurses-devel
 BuildRequires: %{_cross_os}libseccomp-devel
-BuildRequires: %{_cross_os}ncurses-devel
 BuildRequires: %{_cross_os}readline-devel
 Requires: %{_cross_os}libcap
 Requires: %{_cross_os}libseccomp
@@ -24,8 +24,8 @@ Requires: %{_cross_os}libseccomp
 %package tools
 Summary: Command-line interface for chrony daemon
 Requires: %{_cross_os}chrony
+Requires: %{_cross_os}libncurses
 Requires: %{_cross_os}readline
-Requires: %{_cross_os}ncurses
 
 %description tools
 %{summary}.

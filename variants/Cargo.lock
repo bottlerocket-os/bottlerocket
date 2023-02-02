@@ -209,7 +209,7 @@ name = "bash"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "ncurses",
+ "libncurses",
  "readline",
 ]
 
@@ -231,8 +231,8 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "libcap",
+ "libncurses",
  "libseccomp",
- "ncurses",
  "readline",
 ]
 
@@ -621,6 +621,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "libncurses"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "libnetfilter_conntrack"
 version = "0.1.0"
 dependencies = [
@@ -867,13 +874,6 @@ name = "microcode"
 version = "0.1.0"
 
 [[package]]
-name = "ncurses"
-version = "0.1.0"
-dependencies = [
- "glibc",
-]
-
-[[package]]
 name = "nvidia-container-toolkit"
 version = "0.1.0"
 dependencies = [
@@ -927,8 +927,8 @@ name = "procps"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "libncurses",
  "libselinux",
- "ncurses",
 ]
 
 [[package]]
@@ -936,7 +936,7 @@ name = "readline"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "ncurses",
+ "libncurses",
 ]
 
 [[package]]
@@ -1024,9 +1024,9 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "libacl",
+ "libncurses",
  "libselinux",
  "libxcrypt",
- "ncurses",
 ]
 
 [[package]]

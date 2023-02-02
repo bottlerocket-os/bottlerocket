@@ -11,17 +11,17 @@ Source0: https://www.kernel.org/pub/linux/utils/util-linux/v%{majorminor}/util-l
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libacl-devel
+BuildRequires: %{_cross_os}libncurses-devel
 BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}libxcrypt-devel
-BuildRequires: %{_cross_os}ncurses-devel
 Requires: %{_cross_os}libacl
-Requires: %{_cross_os}libxcrypt
-Requires: %{_cross_os}ncurses
 Requires: %{_cross_os}libblkid
+Requires: %{_cross_os}libncurses
 Requires: %{_cross_os}libmount
 Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}libsmartcols
 Requires: %{_cross_os}libuuid
+Requires: %{_cross_os}libxcrypt
 
 %description
 %{summary}.
