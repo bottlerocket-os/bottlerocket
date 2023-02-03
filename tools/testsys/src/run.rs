@@ -45,7 +45,7 @@ pub(crate) struct Run {
     test_config_path: PathBuf,
 
     /// The path to the `tests` directory
-    #[clap(long, env = "TESTSYS_FOLDER", parse(from_os_str))]
+    #[clap(long, env = "TESTSYS_TESTS_DIR", parse(from_os_str))]
     tests_directory: PathBuf,
 
     /// The path to the EKS-A management cluster kubeconfig for vSphere K8s cluster creation
