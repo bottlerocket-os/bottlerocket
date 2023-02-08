@@ -2072,6 +2072,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "k8s-registry"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "language-tags"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
