@@ -82,6 +82,9 @@ CONFIG_SECURITY_LOCKDOWN_LSM_EARLY=y
 # disable integrity measurement architecture
 # CONFIG_IMA is not set
 
+# Disable SafeSetID LSM
+# CONFIG_SECURITY_SAFESETID is not set
+
 # enable /proc/config.gz
 CONFIG_IKCONFIG=y
 CONFIG_IKCONFIG_PROC=y
