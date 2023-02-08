@@ -79,6 +79,9 @@ CONFIG_SECURITY_LOCKDOWN_LSM=y
 # kernel command line, it can be enforced.
 CONFIG_SECURITY_LOCKDOWN_LSM_EARLY=y
 
+# disable integrity measurement architecture
+# CONFIG_IMA is not set
+
 # enable /proc/config.gz
 CONFIG_IKCONFIG=y
 CONFIG_IKCONFIG_PROC=y
