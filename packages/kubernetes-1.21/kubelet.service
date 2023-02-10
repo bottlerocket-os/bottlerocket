@@ -14,7 +14,7 @@ ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
 # Must be overridden by a drop-in file or `kubelet` won't start
 ExecStart=/usr/bin/false
 
-Restart=on-failure
+Restart=always
 RestartForceExitStatus=SIGPIPE
 RestartSec=5
 Delegate=yes
