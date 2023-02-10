@@ -39,6 +39,7 @@ impl CrdCreator for AwsEcsCreator {
             })?)
            , &crd_input.arch,
            & self.region,
+           crd_input.config.dev.image_account_id.as_deref(),
         )
         .await
     }
@@ -73,7 +74,15 @@ impl CrdCreator for AwsEcsCreator {
             .cluster_name(cluster_input.cluster_name)
             .region(Some(self.region.to_owned()))
             .assume_role(cluster_input.crd_input.config.agent_role.clone())
-            .destruction_policy(DestructionPolicy::OnTestSuccess)
+            .destruction_policy(
+                cluster_input
+                    .crd_input
+                    .config
+                    .dev
+                    .cluster_destruction_policy
+                    .to_owned()
+                    .unwrap_or(DestructionPolicy::OnTestSuccess),
+            )
             .image(
                 cluster_input
                     .crd_input
@@ -160,7 +169,14 @@ impl CrdCreator for AwsEcsCreator {
                     .testsys_agent_pull_secret
                     .to_owned(),
             )
-            .keep_running(true)
+            .keep_running(
+                test_input
+                    .crd_input
+                    .config
+                    .dev
+                    .keep_tests_running
+                    .unwrap_or(false),
+            )
             .set_secrets(Some(test_input.crd_input.config.secrets.to_owned()))
             .set_labels(Some(labels))
             .build(format!(

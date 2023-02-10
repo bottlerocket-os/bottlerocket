@@ -43,6 +43,7 @@ impl CrdCreator for AwsK8sCreator {
             })?)
            , &crd_input.arch,
            & self.region,
+           crd_input.config.dev.image_account_id.as_deref(),
         )
         .await
     }
@@ -123,7 +124,15 @@ impl CrdCreator for AwsK8sCreator {
             )
             .set_labels(Some(labels))
             .set_secrets(Some(cluster_input.crd_input.config.secrets.clone()))
-            .destruction_policy(DestructionPolicy::Never)
+            .destruction_policy(
+                cluster_input
+                    .crd_input
+                    .config
+                    .dev
+                    .cluster_destruction_policy
+                    .to_owned()
+                    .unwrap_or(DestructionPolicy::Never),
+            )
             .build(cluster_name)
             .context(error::BuildSnafu {
                 what: "EKS cluster CRD",
