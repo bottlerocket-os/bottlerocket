@@ -37,7 +37,7 @@ To install `tuftool` you'll need to install Rust (via [rustup](https://rustup.rs
 
 ```shell
 ARCH="x86_64"
-VERSION="v1.9.0"
+VERSION="v1.12.0"
 VARIANT="metal-k8s-1.23"
 IMAGE="bottlerocket-${VARIANT}-${ARCH}-${VERSION}.img.lz4"
 OUTDIR="${VARIANT}-${VERSION}"
