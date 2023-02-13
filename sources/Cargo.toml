@@ -26,15 +26,6 @@ members = [
 
     # "api/migration/migrations/vX.Y.Z/..."
     # (all previous migrations archived; add new ones after this line)
-    "api/migration/migrations/v1.12.0/k8s-private-pki-path",
-    "api/migration/migrations/v1.12.0/add-k8s-autoscaling-warm-pool-setting",
-    "api/migration/migrations/v1.12.0/add-k8s-autoscaling-warm-pool-setting-metadata",
-    "api/migration/migrations/v1.12.0/oci-defaults-setting",
-    "api/migration/migrations/v1.12.0/oci-defaults-setting-metadata",
-    "api/migration/migrations/v1.12.0/aws-admin-container-v0-9-4",
-    "api/migration/migrations/v1.12.0/public-admin-container-v0-9-4",
-    "api/migration/migrations/v1.12.0/aws-control-container-v0-7-0",
-    "api/migration/migrations/v1.12.0/public-control-container-v0-7-0",
 
     "bottlerocket-release",
 
