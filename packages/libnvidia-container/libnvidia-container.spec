@@ -10,6 +10,7 @@ License: Apache-2.0
 URL: https://github.com/NVIDIA/libnvidia-container
 Source0: https://github.com/NVIDIA/libnvidia-container/archive/v%{version}/libnvidia-container-%{version}.tar.gz
 Source1: https://github.com/NVIDIA/nvidia-modprobe/archive/%{nvidia_modprobe_version}/nvidia-modprobe-%{nvidia_modprobe_version}.tar.gz
+Source2: libnvidia-container-sysctl.conf
 
 # First party patches from 1 to 1000
 Patch0001: 0001-use-shared-libtirpc.patch
@@ -67,6 +68,8 @@ export DESTDIR=%{buildroot} \\\
 %install
 %set_env
 %make_install
+install -d %{buildroot}%{_cross_sysctldir}
+install -p -m 0644 %{S:2} %{buildroot}%{_cross_sysctldir}/90-libnvidia-container.conf
 
 %files
 %license NOTICE LICENSE
@@ -76,6 +79,7 @@ export DESTDIR=%{buildroot} \\\
 %{_cross_libdir}/libnvidia-container-go.so
 %{_cross_libdir}/libnvidia-container-go.so.*
 %{_cross_bindir}/nvidia-container-cli
+%{_cross_sysctldir}/90-libnvidia-container.conf
 %exclude %{_cross_docdir}
 
 %files devel
