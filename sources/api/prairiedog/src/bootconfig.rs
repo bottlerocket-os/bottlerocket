@@ -210,7 +210,7 @@ fn parse_boot_config_to_boot_settings(bootconfig: &str) -> Result<BootSettings> 
     let mut kernel_params: HashMap<BootConfigKey, Vec<BootConfigValue>> = HashMap::new();
     let mut init_params: HashMap<BootConfigKey, Vec<BootConfigValue>> = HashMap::new();
     for line in bootconfig.trim().lines() {
-        let mut kv = line.trim().split('=').map(|kv| kv.trim());
+        let mut kv = line.trim().splitn(2, '=').map(|kv| kv.trim());
         // Ensure the key is a valid boot config key
         let key: BootConfigKey = kv
             .next()
@@ -480,6 +480,23 @@ mod boot_settings_tests {
             json!({"kernel":{"console":["ttyS1,115200n8","tty0"]},"init":{"systemd.log_level":["debug"]}}),
             serde_json::from_str::<Value>(
                 &boot_config_to_boot_settings_json(SPECIAL_BOOTCONFIG).unwrap()
+            )
+            .unwrap()
+        );
+    }
+
+    static EQUALS_BOOTCONFIG: &str = r#"
+        kernel.dm-mod.create = "root,,,ro,0 0 delay PARTUUID=00000000-0000-0000-0000-000000000000/PARTNROFF=1 0 500"
+        "#;
+
+    #[test]
+    fn equals_boot_config_to_boot_settings_json() {
+        assert_eq!(
+            json!({"kernel":{"dm-mod.create":[
+                "root,,,ro,0 0 delay PARTUUID=00000000-0000-0000-0000-000000000000/PARTNROFF=1 0 500"]
+            }}),
+            serde_json::from_str::<Value>(
+                &boot_config_to_boot_settings_json(EQUALS_BOOTCONFIG).unwrap()
             )
             .unwrap()
         );
