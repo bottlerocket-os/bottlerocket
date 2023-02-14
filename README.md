@@ -694,9 +694,10 @@ The following setting is optional and allows you to configure image registry cre
 
 * `settings.container-registry.credentials`: An array of container images registry credential settings. Each element specifies the registry and the credential information for said registry.
 The credential fields map to [containerd's registry credential fields](https://github.com/containerd/containerd/blob/v1.6.0/docs/cri/registry.md#configure-registry-credentials), which in turn map to the fields in `.docker/config.json`.
-It is recommended to programmatically set these settings via `apiclient` through the Bottlerocket control container and/or custom host-containers.
 
-  An example `apiclient` call to set registry credentials for `gcr.io` and `docker.io` looks like this:
+  To avoid storing plaintext credentials in external systems, it is recommended to programmatically apply these settings via `apiclient` using a [bootstrap container](#bootstrap-containers-settings) or [host container](#host-containers-settings).
+
+  Example `apiclient` call to set registry credentials for `gcr.io` and `docker.io`:
 
   ```shell
   apiclient set --json '{
@@ -714,6 +715,18 @@ It is recommended to programmatically set these settings via `apiclient` through
       ]
     }
   }'
+  ```
+
+  Example user data for setting up image registry credentials:
+  ```toml
+  [[settings.container-registry.credentials]]
+  registry = "docker.io"
+  username = "foo"
+  password = "bar"
+
+  [[settings.container-registry.credentials]]
+  registry = "gcr.io"
+  auth = "example_base64_encoded_auth_string"
   ```
 
 In addition to the container runtime daemons, these credential settings will also apply to [host-container](#host-containers-settings) and [bootstrap-container](#bootstrap-containers-settings) image pulls as well.
