@@ -36,7 +36,7 @@ impl CrdCreator for VmwareK8sCreator {
     /// Use standard naming conventions to predict the starting OVA.
     async fn starting_image_id(&self, crd_input: &CrdInput) -> Result<String> {
         Ok(format!(
-            "bottlerocket-{}-{}-{}",
+            "bottlerocket-{}-{}-{}.ova",
             crd_input.variant,
             crd_input.arch,
             crd_input
@@ -190,7 +190,7 @@ impl CrdCreator for VmwareK8sCreator {
 
         let suffix: String = repeat_with(fastrand::lowercase).take(4).collect();
         let vsphere_vm_crd = VSphereVmConfig::builder()
-            .ova_name(self.image_id(bottlerocket_input.crd_input)?)
+            .ova_name(bottlerocket_input.image_id)
             .tuf_repo(bottlerocket_input.crd_input.tuf_repo_config().context(
                 error::InvalidSnafu {
                     what: "TUF repo information is required for Bottlerocket vSphere VM creation.",
