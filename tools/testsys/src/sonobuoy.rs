@@ -48,7 +48,14 @@ pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
                 .testsys_agent_pull_secret
                 .to_owned(),
         )
-        .keep_running(true)
+        .keep_running(
+            test_input
+                .crd_input
+                .config
+                .dev
+                .keep_tests_running
+                .unwrap_or(false),
+        )
         .kubeconfig_base64_template(cluster_resource_name, "encodedKubeconfig")
         .plugin("e2e")
         .mode(sonobuoy_mode)

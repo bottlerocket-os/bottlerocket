@@ -78,6 +78,9 @@ eks-resource-agent-image = "public.ecr.aws/bottlerocket-test-system/eks_resource
 # Note: values passed by command line argument will take precedence over those passed by environment
 # variable, and both take precedence over values set by `Test.toml`.
 
+# Additional fields are configurable with the `dev` table.
+# See `DeveloperConfig` for individual fields.
+
 # Example Configurations
 
 # Configuration for all variants with the `aws` platform.

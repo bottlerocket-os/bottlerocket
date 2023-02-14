@@ -4,7 +4,7 @@ use handlebars::Handlebars;
 use log::{debug, trace, warn};
 use maplit::btreemap;
 use model::constants::TESTSYS_VERSION;
-use model::SecretName;
+use model::{DestructionPolicy, SecretName};
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 use std::collections::{BTreeMap, HashMap};
@@ -261,6 +261,8 @@ pub struct GenericVariantConfig {
     pub control_plane_endpoint: Option<String>,
     /// The path to userdata that should be used for Bottlerocket launch
     pub userdata: Option<String>,
+    #[serde(default)]
+    pub dev: DeveloperConfig,
 }
 
 impl GenericVariantConfig {
@@ -287,6 +289,40 @@ impl GenericVariantConfig {
             conformance_registry: self.conformance_registry.or(other.conformance_registry),
             control_plane_endpoint: self.control_plane_endpoint.or(other.control_plane_endpoint),
             userdata: self.userdata.or(other.userdata),
+            dev: self.dev.merge(other.dev),
+        }
+    }
+}
+
+/// The configuration for a specific config level (<PLATFORM>-<FLAVOR>). This may or may not be arch
+/// specific depending on it's location in `GenericConfig`.
+/// The configurable fields here add refined control to TestSys objects.
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq, Clone)]
+#[serde(deny_unknown_fields)]
+#[serde(rename_all = "kebab-case")]
+pub struct DeveloperConfig {
+    /// Control the destruction behavior of cluster CRDs
+    pub cluster_destruction_policy: Option<DestructionPolicy>,
+    /// Control the destruction behavior of Bottlerocket CRDs
+    pub bottlerocket_destruction_policy: Option<DestructionPolicy>,
+    /// Keep test pods running on completion
+    pub keep_tests_running: Option<bool>,
+    /// Use an alternate account for image lookup
+    pub image_account_id: Option<String>,
+}
+
+impl DeveloperConfig {
+    /// Overwrite the unset values of `self` with the set values of `other`
+    fn merge(self, other: Self) -> Self {
+        Self {
+            cluster_destruction_policy: self
+                .cluster_destruction_policy
+                .or(other.cluster_destruction_policy),
+            bottlerocket_destruction_policy: self
+                .bottlerocket_destruction_policy
+                .or(other.bottlerocket_destruction_policy),
+            keep_tests_running: self.keep_tests_running.or(other.keep_tests_running),
+            image_account_id: self.image_account_id.or(other.image_account_id),
         }
     }
 }

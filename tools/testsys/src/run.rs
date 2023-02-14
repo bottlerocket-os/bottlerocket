@@ -164,6 +164,7 @@ impl From<CliConfig> for GenericVariantConfig {
             conformance_registry: val.conformance_registry,
             control_plane_endpoint: val.control_plane_endpoint,
             userdata: val.userdata,
+            dev: Default::default(),
         }
     }
 }

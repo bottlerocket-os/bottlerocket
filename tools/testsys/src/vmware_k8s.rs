@@ -121,7 +121,15 @@ impl CrdCreator for VmwareK8sCreator {
             .vcenter_workload_folder(&self.datacenter.folder)
             .mgmt_cluster_kubeconfig_base64(&self.encoded_mgmt_cluster_kubeconfig)
             .set_conflicts_with(Some(existing_clusters))
-            .destruction_policy(DestructionPolicy::OnTestSuccess)
+            .destruction_policy(
+                cluster_input
+                    .crd_input
+                    .config
+                    .dev
+                    .cluster_destruction_policy
+                    .to_owned()
+                    .unwrap_or(DestructionPolicy::OnTestSuccess),
+            )
             .image(
                 cluster_input
                     .crd_input
@@ -208,7 +216,15 @@ impl CrdCreator for VmwareK8sCreator {
             .assume_role(bottlerocket_input.crd_input.config.agent_role.clone())
             .set_labels(Some(labels))
             .set_conflicts_with(Some(existing_clusters))
-            .destruction_policy(DestructionPolicy::OnTestSuccess)
+            .destruction_policy(
+                bottlerocket_input
+                    .crd_input
+                    .config
+                    .dev
+                    .bottlerocket_destruction_policy
+                    .to_owned()
+                    .unwrap_or(DestructionPolicy::OnTestSuccess),
+            )
             .image(
                 bottlerocket_input
                     .crd_input

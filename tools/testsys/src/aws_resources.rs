@@ -38,7 +38,12 @@ pub(crate) fn ami(ami_input: &str, region: &str) -> Result<String> {
 }
 
 /// Queries EC2 for the given AMI name. If found, returns Ok(Some(id)), if not returns Ok(None).
-pub(crate) async fn get_ami_id<S1, S2, S3>(name: S1, arch: S2, region: S3) -> Result<String>
+pub(crate) async fn get_ami_id<S1, S2, S3>(
+    name: S1,
+    arch: S2,
+    region: S3,
+    account: Option<&str>,
+) -> Result<String>
 where
     S1: Into<String>,
     S2: Into<String>,
@@ -54,7 +59,7 @@ where
     // Find all images named `name` on `arch` in the `region`.
     let describe_images = ec2_client
         .describe_images()
-        .owners("self")
+        .owners(account.unwrap_or("self"))
         .filters(Filter::builder().name("name").values(name).build())
         .filters(
             Filter::builder()
@@ -176,7 +181,15 @@ pub(crate) async fn ec2_crd<'a>(
         .set_labels(Some(labels))
         .set_conflicts_with(conflicting_resources.into())
         .set_secrets(Some(bottlerocket_input.crd_input.config.secrets.clone()))
-        .destruction_policy(DestructionPolicy::OnTestSuccess);
+        .destruction_policy(
+            bottlerocket_input
+                .crd_input
+                .config
+                .dev
+                .bottlerocket_destruction_policy
+                .to_owned()
+                .unwrap_or(DestructionPolicy::OnTestSuccess),
+        );
 
     // Add in the EKS specific configuration.
     if cluster_type == ClusterType::Eks {

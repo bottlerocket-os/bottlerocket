@@ -80,7 +80,14 @@ pub(crate) fn migration_crd(
                 .testsys_agent_pull_secret
                 .to_owned(),
         )
-        .keep_running(true)
+        .keep_running(
+            migration_input
+                .crd_input
+                .config
+                .dev
+                .keep_tests_running
+                .unwrap_or(false),
+        )
         .set_secrets(Some(migration_input.crd_input.config.secrets.to_owned()))
         .set_labels(Some(labels))
         .build(format!(
