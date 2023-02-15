@@ -13,7 +13,7 @@ RequiresMountsFor=/local
 Type=oneshot
 
 # Resize the partition, whether or not it resides on the same disk as /.
-ExecStart=/usr/bin/systemd-repart --dry-run=no /dev/disk/by-partlabel/BOTTLEROCKET-DATA
+ExecStart=-/usr/bin/systemd-repart --dry-run=no /dev/disk/by-partlabel/BOTTLEROCKET-DATA
 
 # Grow the filesystem to fill the partition. Doing this in another unit could
 # introduce a race if the underlying block device is not ready after resizing.

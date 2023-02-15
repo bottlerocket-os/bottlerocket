@@ -1,0 +1,20 @@
+[Unit]
+Description=Label data partition B
+DefaultDependencies=no
+Conflicts=shutdown.target
+# Only run this if a partition labeled 'BOTTLEROCKET-DATA' does not exist already.
+ConditionPathIsSymbolicLink=!/dev/disk/by-partlabel/BOTTLEROCKET-DATA
+# This is the partition GUID for the fallback data partition.
+Wants=dev-disk-by\x2dpartuuid-69040874\x2d417d\x2d4e26\x2da764\x2d7885f22007ea.device
+After=dev-disk-by\x2dpartuuid-69040874\x2d417d\x2d4e26\x2da764\x2d7885f22007ea.device
+
+[Service]
+Type=oneshot
+
+# Label the partition as 'BOTTLEROCKET-DATA' and resize the partition, whether or not it resides on the same disk as /.
+ExecStart=-/usr/bin/systemd-repart --dry-run=no /dev/disk/by-partuuid/69040874-417d-4e26-a764-7885f22007ea
+
+RemainAfterExit=true
+
+[Install]
+WantedBy=local-fs.target

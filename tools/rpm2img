@@ -109,7 +109,8 @@ ROOT_IMAGE="$(mktemp)"
 DATA_IMAGE="$(mktemp)"
 EFI_IMAGE="$(mktemp)"
 PRIVATE_IMAGE="$(mktemp)"
-BOTTLEROCKET_DATA="$(mktemp)"
+BOTTLEROCKET_DATA_A="$(mktemp)"
+BOTTLEROCKET_DATA_B="$(mktemp)"
 
 ROOT_MOUNT="$(mktemp -d)"
 BOOT_MOUNT="$(mktemp -d)"
@@ -136,22 +137,23 @@ case "${PARTITION_PLAN}" in
     ;;
 esac
 
-declare -A partlabel parttype partsize partoff
+declare -A partlabel parttype partguid partsize partoff
 set_partition_sizes \
   "${OS_IMAGE_SIZE_GIB}" "${DATA_IMAGE_SIZE_GIB}" "${PARTITION_PLAN}" \
   partsize partoff
 set_partition_labels partlabel
 set_partition_types parttype
+set_partition_uuids partguid
 
 declare -a partargs
 for part in \
   BIOS \
   EFI-A BOOT-A ROOT-A HASH-A RESERVED-A \
   EFI-B BOOT-B ROOT-B HASH-B RESERVED-B \
-  PRIVATE DATA ;
+  PRIVATE DATA-A DATA-B ;
 do
-  # We only append the data partition if we're using the unified layout.
-  if [ "${part}" == "DATA" ] && [ "${PARTITION_PLAN}" != "unified" ] ; then
+  # We create the DATA-B partition separately if we're using the split layout
+  if [ "${part}" == "DATA-B" ] ; then
     continue
   fi
 
@@ -166,6 +168,7 @@ do
   partargs+=(-n "0:${part_start}M:${part_end}")
   partargs+=(-c "0:${partlabel[${part}]}")
   partargs+=(-t "0:${parttype[${part}]}")
+  partargs+=(-u "0:${partguid[${part}]:-R}")
 
   # Boot partition attributes:
   #  48 = gptprio priority bit
@@ -180,13 +183,14 @@ sgdisk --clear "${partargs[@]}" --sort --print "${OS_IMAGE}"
 
 # Partition the separate data disk, if we're using the split layout.
 if [ "${PARTITION_PLAN}" == "split" ] ; then
-  data_start="${partoff[DATA]}"
-  data_end=$((data_start + partsize[DATA]))
+  data_start="${partoff[DATA-B]}"
+  data_end=$((data_start + partsize[DATA-B]))
   data_end=$((data_end * 2048 - 1))
   sgdisk --clear \
     -n "0:${data_start}M:${data_end}" \
-    -c "0:${partlabel[DATA]}" \
-    -t "0:${parttype[DATA]}" \
+    -c "0:${partlabel[DATA-B]}" \
+    -t "0:${parttype[DATA-B]}" \
+    -u "0:${partguid[DATA-B]}" \
     --sort --print "${DATA_IMAGE}"
 fi
 
@@ -383,7 +387,7 @@ cp /host/tools/bootconfig/empty-bootconfig.data "${PRIVATE_MOUNT}/bootconfig.dat
 mkfs.ext4 -b 4096 -i 4096 -I 256 -d "${PRIVATE_MOUNT}" "${PRIVATE_IMAGE}" "${partsize[PRIVATE]}M"
 dd if="${PRIVATE_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[PRIVATE]}"
 
-# BOTTLEROCKET-DATA
+# BOTTLEROCKET-DATA-A and BOTTLEROCKET-DATA-B
 
 # If we build on a host with SELinux enabled, we could end up with labels that
 # do not match our policy. Since we allow replacing the data volume at runtime,
@@ -391,14 +395,26 @@ dd if="${PRIVATE_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[PRI
 # remove them all.
 UNLABELED=$(find "${DATA_MOUNT}" \
     | awk -v root="${DATA_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_rm", $1, "security.selinux"}')
-mkfs.ext4 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" "${partsize[DATA]}M"
-echo "${UNLABELED}" | debugfs -w -f - "${BOTTLEROCKET_DATA}"
+
+for side in A B ; do
+  if [ "${side}" == "B" ] && [ "${PARTITION_PLAN}" == "unified" ] ; then
+    continue
+  fi
+  dev="BOTTLEROCKET_DATA_${side}"
+  dev="${!dev}"
+  mkfs.ext4 -d "${DATA_MOUNT}" "${dev}" "${partsize["DATA-${side}"]}M"
+  echo "${UNLABELED}" | debugfs -w -f - "${dev}"
+done
+
 case "${PARTITION_PLAN}" in
   split)
-    dd if="${BOTTLEROCKET_DATA}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA]}"
+    # Only create data partition B on data image in "split" image layout configurations
+    dd if="${BOTTLEROCKET_DATA_B}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA-B]}"
+
+    dd if="${BOTTLEROCKET_DATA_A}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA-A]}"
     ;;
   unified)
-    dd if="${BOTTLEROCKET_DATA}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA]}"
+    dd if="${BOTTLEROCKET_DATA_A}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA-A]}"
     ;;
 esac
 
