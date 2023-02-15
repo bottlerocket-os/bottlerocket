@@ -26,10 +26,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 9 insertions(+)
 
 diff --git a/Makefile b/Makefile
-index 1d4a50ebe3b7..b9347d1e69e2 100644
+index aba2651d0..6f0cb64df 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1719,6 +1719,15 @@ else # KBUILD_EXTMOD
+@@ -1706,6 +1706,15 @@ else # KBUILD_EXTMOD
  KBUILD_BUILTIN :=
  KBUILD_MODULES := 1
  
@@ -43,8 +43,8 @@ index 1d4a50ebe3b7..b9347d1e69e2 100644
 +prepare: modules_prepare
 +
  build-dirs := $(KBUILD_EXTMOD)
- PHONY += modules
- modules: $(MODORDER)
+ $(MODORDER): descend
+ 	@:
 -- 
-2.21.3
+2.39.1
 
