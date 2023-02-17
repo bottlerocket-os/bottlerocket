@@ -1,3 +1,4 @@
+%global debug_package %{nil}
 %global _cross_first_party 1
 
 Name: %{_cross_os}release
@@ -75,7 +76,6 @@ Source1100: systemd-tmpfiles-setup-service-debug.conf
 # systemd-udevd default link
 Source1200: 80-release.link
 
-BuildArch: noarch
 Requires: %{_cross_os}acpid
 Requires: %{_cross_os}audit
 Requires: %{_cross_os}ca-certificates
