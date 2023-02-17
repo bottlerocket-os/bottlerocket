@@ -15,10 +15,22 @@ require (
 	k8s.io/cri-api v0.26.0
 )
 
-// containerd still uses the v1alpha2 APIs in k8s.io/cri-api.
-// These were removed in v0.26 of cri-api resulting in a dependency conflict.
-// TODO: Remove this `replace` when containerd uses v1 of the cri-api
-replace k8s.io/cri-api => k8s.io/cri-api v0.25.5
+replace (
+	// Containerd 1.6.x carries an older version of go-restful that has a CVE.
+	// As documented in containerd here: https://github.com/containerd/containerd/pull/7117
+	// this CVE cannot be executed against containerd.
+	// Regardless, this replace statement upgrades the go-restful dependency
+	// to a version that does not have this CVE
+	// and is still compatible with containerd.
+	// TODO: For containerd 1.7.x, this replace statement can be removed
+	// since containerd moved to go-restful/v3
+	github.com/emicklei/go-restful v2.9.5+incompatible => github.com/emicklei/go-restful v2.16.0+incompatible
+
+	// containerd still uses the v1alpha2 APIs in k8s.io/cri-api.
+	// These were removed in v0.26 of cri-api resulting in a dependency conflict.
+	// TODO: Remove this `replace` when containerd uses v1 of the cri-api
+	k8s.io/cri-api => k8s.io/cri-api v0.25.5
+)
 
 require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
