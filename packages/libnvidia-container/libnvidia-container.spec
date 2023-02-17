@@ -10,6 +10,7 @@ License: Apache-2.0
 URL: https://github.com/NVIDIA/libnvidia-container
 Source0: https://github.com/NVIDIA/libnvidia-container/archive/v%{version}/libnvidia-container-%{version}.tar.gz
 Source1: https://github.com/NVIDIA/nvidia-modprobe/archive/%{nvidia_modprobe_version}/nvidia-modprobe-%{nvidia_modprobe_version}.tar.gz
+Source2: libnvidia-container-sysctl.conf
 
 # First party patches from 1 to 1000
 Patch0001: 0001-use-shared-libtirpc.patch
@@ -48,13 +49,14 @@ touch deps/src/nvidia-modprobe-%{nvidia_modprobe_version}/.download_stamp
 
 %global set_env \
 %set_cross_build_flags \\\
+%set_cross_go_flags \\\
 export CC=%{_cross_target}-gcc \\\
 export LD=%{_cross_target}-ld \\\
 export CFLAGS="${CFLAGS} -I%{_cross_includedir}/tirpc" \\\
 export WITH_LIBELF=yes \\\
 export WITH_SECCOMP=yes \\\
 export WITH_TIRPC=yes \\\
-export WITH_NVCGO=no \\\
+export WITH_NVCGO=yes \\\
 export prefix=%{_cross_prefix} \\\
 export DESTDIR=%{buildroot} \\\
 %{nil}
@@ -66,13 +68,18 @@ export DESTDIR=%{buildroot} \\\
 %install
 %set_env
 %make_install
+install -d %{buildroot}%{_cross_sysctldir}
+install -p -m 0644 %{S:2} %{buildroot}%{_cross_sysctldir}/90-libnvidia-container.conf
 
 %files
 %license NOTICE LICENSE
 %{_cross_attribution_file}
 %{_cross_libdir}/libnvidia-container.so
 %{_cross_libdir}/libnvidia-container.so.*
+%{_cross_libdir}/libnvidia-container-go.so
+%{_cross_libdir}/libnvidia-container-go.so.*
 %{_cross_bindir}/nvidia-container-cli
+%{_cross_sysctldir}/90-libnvidia-container.conf
 %exclude %{_cross_docdir}
 
 %files devel
