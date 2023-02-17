@@ -121,6 +121,7 @@ RUN --mount=target=/host \
         --repofrompath repo,./rpmbuild/RPMS \
         --enablerepo 'repo' \
         --nogpgcheck \
+	--forcearch "${ARCH}" \
         builddep rpmbuild/SPECS/${PACKAGE}.spec
 
 # We use the "nocache" writable space to generate code where necessary, like the variant-
@@ -133,6 +134,7 @@ RUN --mount=source=.cargo,target=/home/builder/.cargo \
     --mount=source=sources,target=/home/builder/rpmbuild/BUILD/sources \
     rpmbuild -ba --clean \
       --undefine _auto_set_build_flags \
+      --define "_target_cpu ${ARCH}" \
       rpmbuild/SPECS/${PACKAGE}.spec
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
@@ -171,7 +173,8 @@ RUN --mount=target=/host \
         --nogpgcheck \
         --downloadonly \
         --downloaddir . \
-        install $(printf "bottlerocket-${ARCH}-%s\n" ${PACKAGES}) \
+	--forcearch "${ARCH}" \
+        install $(printf "bottlerocket-%s\n" ${PACKAGES}) \
     && mv *.rpm /local/rpms \
     && createrepo_c /local/rpms \
     && echo ${NOCACHE}
@@ -229,7 +232,7 @@ USER root
 RUN --mount=target=/host \
     mkdir -p /local/migrations \
     && find /host/build/rpms/ -maxdepth 1 -type f \
-        -name "bottlerocket-${ARCH}-migrations-*.rpm" \
+        -name "bottlerocket-migrations-*.rpm" \
         -not -iname '*debuginfo*' \
         -exec cp '{}' '/local/migrations/' ';' \
     && /host/tools/rpm2migrations \
@@ -256,7 +259,7 @@ RUN --mount=target=/host \
     mkdir -p /local/archives \
     && KERNEL="$(printf "%s\n" ${PACKAGES} | awk '/^kernel-/{print $1}')" \
     && find /host/build/rpms/ -maxdepth 1 -type f \
-        -name "bottlerocket-${ARCH}-${KERNEL}-archive-*.rpm" \
+        -name "bottlerocket-${KERNEL}-archive-*.rpm" \
         -exec cp '{}' '/local/archives/' ';' \
     && /host/tools/rpm2kmodkit \
         --archive-dir=/local/archives \

@@ -24,7 +24,7 @@ SYS_ROOT="${ARCH}-bottlerocket-linux-gnu/sys-root"
 MIGRATIONS_DIR="${ROOT_TEMP}/${SYS_ROOT}/usr/share/migrations"
 
 # "Install" the migrations (just puts them in $MIGRATIONS_DIR)
-rpm -iv --root "${ROOT_TEMP}" "${PACKAGE_DIR}"/*.rpm
+rpm -iv --ignorearch --root "${ROOT_TEMP}" "${PACKAGE_DIR}"/*.rpm
 
 if [ ! -d "${MIGRATIONS_DIR}" ]; then
   echo "Migrations directory does not exist: ${MIGRATIONS_DIR}"
