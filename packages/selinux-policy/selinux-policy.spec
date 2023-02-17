@@ -1,3 +1,5 @@
+%global debug_package %{nil}
+
 %global _cross_first_party 1
 %global policytype fortified
 
@@ -33,7 +35,6 @@ Source101: lxc_contexts
 Source102: selinux-policy-files.service
 Source103: selinux-policy-tmpfiles.conf
 
-BuildArch: noarch
 BuildRequires: secilc
 
 %description

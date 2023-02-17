@@ -69,7 +69,6 @@ BuildRequires: gettext-devel
 
 %package modules
 Summary: Modules for the bootloader with support for Linux and more
-BuildArch: noarch
 
 %description modules
 %{summary}.
