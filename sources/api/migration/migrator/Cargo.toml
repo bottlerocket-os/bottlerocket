@@ -10,27 +10,27 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-bottlerocket-release = { path = "../../../bottlerocket-release", version = "0.1.0" }
+bottlerocket-release = { path = "../../../bottlerocket-release", version = "0.1" }
 log = "0.4"
-lz4 = "1.23.1"
+lz4 = "1"
 nix = "0.24"
-pentacle = "1.0.0"
+pentacle = "1"
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
-regex = "1.1"
-semver = "1.0"
+regex = "1"
+semver = "1"
 simplelog = "0.12"
 snafu = "0.7"
 tough = "0.12"
-update_metadata = { path = "../../../updater/update_metadata", version = "0.1.0" }
-url = "2.1.1"
+update_metadata = { path = "../../../updater/update_metadata", version = "0.1" }
+url = "2"
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../../../generate-readme" }
 
 [dev-dependencies]
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
-storewolf = { path = "../../storewolf", version = "0.1.0" }
-tempfile = "3.1.0"
+storewolf = { path = "../../storewolf", version = "0.1" }
+tempfile = "3"
 
 [[bin]]
 name = "migrator"

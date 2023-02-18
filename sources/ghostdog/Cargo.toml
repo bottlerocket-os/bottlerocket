@@ -9,11 +9,11 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-argh = "0.1.3"
+argh = "0.1"
 gptman = { version = "1", default-features = false }
-hex-literal = "0.3.0"
-lazy_static = "1.2"
-signpost = { path = "../updater/signpost", version = "0.1.0" }
+hex-literal = "0.3"
+lazy_static = "1"
+signpost = { path = "../updater/signpost", version = "0.1" }
 snafu = "0.7"
 
 [build-dependencies]

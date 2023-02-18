@@ -9,19 +9,19 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-bottlerocket-release = { path = "../bottlerocket-release", version = "0.1.0" }
+bottlerocket-release = { path = "../bottlerocket-release", version = "0.1" }
 log = "0.4"
-reqwest = { version = "0.11.1", default-features = false, features = ["blocking", "rustls-tls-native-roots"] }
-serde = { version = "1.0.100", features = ["derive"] }
+reqwest = { version = "0.11", default-features = false, features = ["blocking", "rustls-tls-native-roots"] }
+serde = { version = "1", features = ["derive"] }
 simplelog = "0.12"
 snafu = { version = "0.7" }
-structopt = "0.3.17"
-toml = "0.5.1"
-url = "2.1.1"
+structopt = "0.3"
+toml = "0.5"
+url = "2"
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../generate-readme" }
 
 [dev-dependencies]
 httptest = "0.15"
-tempfile = { version = "3.1.0", default-features = false }
+tempfile = { version = "3", default-features = false }
