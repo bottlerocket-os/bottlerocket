@@ -58,8 +58,6 @@ multiple-versions = "deny"
 wildcards = "deny"
 
 skip = [
-    # older version used by chrono 0.4.22
-    { name = "time", version = "0.1.44" },
 ]
 
 skip-tree = [

@@ -7,25 +7,25 @@ edition = "2018"
 publish = false
 
 [dependencies]
-async-trait = "0.1.53"
-clap = "3.1"
-hex = "0.4.0"
-log = "0.4.14"
-pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
-aws-config = "0.48.0"
-aws-types = "0.48.0"
-aws-sdk-cloudformation = "0.18.0"
-aws-sdk-s3 = "0.18.0"
-serde_json = "1.0.66"
-serde_yaml = "0.8.17"
+async-trait = "0.1"
+clap = "3"
+hex = "0.4"
+log = "0.4"
+pubsys-config = { path = "../pubsys-config/", version = "0.1" }
+aws-config = "0.48"
+aws-types = "0.48"
+aws-sdk-cloudformation = "0.18"
+aws-sdk-s3 = "0.18"
+serde_json = "1"
+serde_yaml = "0.8"
 sha2 = "0.10"
-shell-words = "1.0.0"
+shell-words = "1"
 simplelog = "0.12"
 snafu = "0.7"
 structopt = { version = "0.3", default-features = false }
 tokio = { version = "1", default-features = false, features = ["macros", "rt-multi-thread"] }
 toml = "0.5"
-url = "2.2.2"
+url = "2"
 
 [dev-dependencies]
-assert-json-diff = "2.0.1"
+assert-json-diff = "2"

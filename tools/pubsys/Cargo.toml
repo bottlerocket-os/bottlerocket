@@ -7,46 +7,46 @@ edition = "2018"
 publish = false
 
 [dependencies]
-async-trait = "0.1.53"
-aws-config = "0.48.0"
-aws-sdk-ebs = "0.18.0"
-aws-sdk-ec2 = "0.18.0"
-aws-sdk-kms = "0.18.0"
-aws-sdk-ssm = "0.18.0"
-aws-sdk-sts = "0.18.0"
-aws-smithy-types = "0.48.0"
-aws-types = "0.48.0"
-buildsys = { path = "../buildsys", version = "0.1.0" }
+async-trait = "0.1"
+aws-config = "0.48"
+aws-sdk-ebs = "0.18"
+aws-sdk-ec2 = "0.18"
+aws-sdk-kms = "0.18"
+aws-sdk-ssm = "0.18"
+aws-sdk-sts = "0.18"
+aws-smithy-types = "0.48"
+aws-types = "0.48"
+buildsys = { path = "../buildsys", version = "0.1" }
 chrono = "0.4"
-clap = "3.1"
+clap = "3"
 coldsnap = { version = "0.4", default-features = false, features = ["aws-sdk-rust-rustls"] }
-duct = "0.13.0"
-futures = "0.3.5"
+duct = "0.13"
+futures = "0.3"
 governor = "0.5"
-http = "0.2.8"
-indicatif = "0.17.1"
-lazy_static = "1.4"
+http = "0.2"
+indicatif = "0.17"
+lazy_static = "1"
 log = "0.4"
 nonzero_ext = "0.3"
 num_cpus = "1"
-parse-datetime = { path = "../../sources/parse-datetime", version = "0.1.0" }
-pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
+parse-datetime = { path = "../../sources/parse-datetime", version = "0.1" }
+pubsys-config = { path = "../pubsys-config/", version = "0.1" }
 rayon = "1"
 # Need to bring in reqwest with a TLS feature so tough can support TLS repos.
-reqwest = { version = "0.11.1", default-features = false, features = ["rustls-tls", "blocking"] }
-semver = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "blocking"] }
+semver = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 simplelog = "0.12"
 snafu = "0.7"
 structopt = { version = "0.3", default-features = false }
-tempfile = "3.1"
-tinytemplate = "1.1"
+tempfile = "3"
+tinytemplate = "1"
 tokio = { version = "1", features = ["full"] }  # LTS
 tokio-stream = { version = "0.1", features = ["time"] }
 toml = "0.5"
 tough = { version = "0.12", features = ["http"] }
 tough-kms = "0.4"
 tough-ssm = "0.7"
-update_metadata = { path = "../../sources/updater/update_metadata/", version = "0.1.0" }
-url = { version = "2.1.0", features = ["serde"] }
+update_metadata = { path = "../../sources/updater/update_metadata/", version = "0.1" }
+url = { version = "2", features = ["serde"] }
