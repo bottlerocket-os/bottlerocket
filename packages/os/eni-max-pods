@@ -11,8 +11,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 #
-# This file was generated at 2022-08-15T23:21:13Z
-#
 # The regions queried were:
 # - ap-northeast-1
 # - ap-northeast-2
@@ -158,6 +156,15 @@ c6id.8xlarge 234
 c6id.large 29
 c6id.metal 737
 c6id.xlarge 58
+c6in.12xlarge 234
+c6in.16xlarge 737
+c6in.24xlarge 737
+c6in.2xlarge 58
+c6in.32xlarge 345
+c6in.4xlarge 234
+c6in.8xlarge 234
+c6in.large 29
+c6in.xlarge 58
 c7g.12xlarge 234
 c7g.16xlarge 737
 c7g.2xlarge 58
@@ -209,7 +216,7 @@ g5.12xlarge 737
 g5.16xlarge 234
 g5.24xlarge 737
 g5.2xlarge 58
-g5.48xlarge 737
+g5.48xlarge 345
 g5.4xlarge 234
 g5.8xlarge 234
 g5.xlarge 58
@@ -224,6 +231,7 @@ h1.2xlarge 58
 h1.4xlarge 234
 h1.8xlarge 234
 hpc6a.48xlarge 100
+hpc6id.32xlarge 51
 hs1.8xlarge 234
 i2.2xlarge 58
 i2.4xlarge 234
@@ -393,6 +401,33 @@ m6id.8xlarge 234
 m6id.large 29
 m6id.metal 737
 m6id.xlarge 58
+m6idn.12xlarge 234
+m6idn.16xlarge 737
+m6idn.24xlarge 737
+m6idn.2xlarge 58
+m6idn.32xlarge 345
+m6idn.4xlarge 234
+m6idn.8xlarge 234
+m6idn.large 29
+m6idn.xlarge 58
+m6in.12xlarge 234
+m6in.16xlarge 737
+m6in.24xlarge 737
+m6in.2xlarge 58
+m6in.32xlarge 345
+m6in.4xlarge 234
+m6in.8xlarge 234
+m6in.large 29
+m6in.xlarge 58
+m7g.12xlarge 234
+m7g.16xlarge 737
+m7g.2xlarge 58
+m7g.4xlarge 234
+m7g.8xlarge 234
+m7g.large 29
+m7g.medium 8
+m7g.metal 737
+m7g.xlarge 58
 mac1.metal 234
 mac2.metal 234
 p2.16xlarge 234
@@ -525,6 +560,33 @@ r6id.8xlarge 234
 r6id.large 29
 r6id.metal 737
 r6id.xlarge 58
+r6idn.12xlarge 234
+r6idn.16xlarge 737
+r6idn.24xlarge 737
+r6idn.2xlarge 58
+r6idn.32xlarge 345
+r6idn.4xlarge 234
+r6idn.8xlarge 234
+r6idn.large 29
+r6idn.xlarge 58
+r6in.12xlarge 234
+r6in.16xlarge 737
+r6in.24xlarge 737
+r6in.2xlarge 58
+r6in.32xlarge 345
+r6in.4xlarge 234
+r6in.8xlarge 234
+r6in.large 29
+r6in.xlarge 58
+r7g.12xlarge 234
+r7g.16xlarge 737
+r7g.2xlarge 58
+r7g.4xlarge 234
+r7g.8xlarge 234
+r7g.large 29
+r7g.medium 8
+r7g.metal 737
+r7g.xlarge 58
 t1.micro 4
 t2.2xlarge 44
 t2.large 35
@@ -554,9 +616,13 @@ t4g.micro 4
 t4g.nano 4
 t4g.small 11
 t4g.xlarge 58
+trn1.2xlarge 58
+trn1.32xlarge 247
 u-12tb1.112xlarge 737
 u-12tb1.metal 147
+u-18tb1.112xlarge 737
 u-18tb1.metal 737
+u-24tb1.112xlarge 737
 u-24tb1.metal 737
 u-3tb1.56xlarge 234
 u-6tb1.112xlarge 737
