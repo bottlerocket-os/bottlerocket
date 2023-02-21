@@ -56,6 +56,7 @@ Source204: netdog-tmpfiles.conf
 
 # 3xx sources: udev rules
 Source300: ephemeral-storage.rules
+Source301: ebs-volumes.rules
 
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}apiclient
@@ -439,6 +440,7 @@ install -p -m 0644 %{S:204} %{buildroot}%{_cross_tmpfilesdir}/netdog.conf
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-storage.rules
+install -p -m 0644 %{S:301} %{buildroot}%{_cross_udevrulesdir}/81-ebs-volumes.rules
 
 %cross_scan_attribution --clarify %{_builddir}/sources/clarify.toml \
     cargo --offline --locked %{_builddir}/sources/Cargo.toml
@@ -510,6 +512,7 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-stor
 %files -n %{_cross_os}ghostdog
 %{_cross_bindir}/ghostdog
 %{_cross_udevrulesdir}/80-ephemeral-storage.rules
+%{_cross_udevrulesdir}/81-ebs-volumes.rules
 
 %files -n %{_cross_os}signpost
 %{_cross_bindir}/signpost
