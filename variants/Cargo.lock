@@ -874,6 +874,78 @@ name = "microcode"
 version = "0.1.0"
 
 [[package]]
+name = "nutanix-dev"
+version = "0.1.0"
+dependencies = [
+ "chrony",
+ "docker-cli",
+ "docker-engine",
+ "docker-init",
+ "docker-proxy",
+ "iputils",
+ "kernel-5_15",
+ "login",
+ "release",
+ "strace",
+ "tcpdump",
+]
+
+[[package]]
+name = "nutanix-k8s-1_21"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_10",
+ "kubernetes-1_21",
+ "release",
+]
+
+[[package]]
+name = "nutanix-k8s-1_22"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_10",
+ "kubernetes-1_22",
+ "release",
+]
+
+[[package]]
+name = "nutanix-k8s-1_23"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_10",
+ "kubernetes-1_23",
+ "release",
+]
+
+[[package]]
+name = "nutanix-k8s-1_24"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kubernetes-1_24",
+ "release",
+]
+
+[[package]]
+name = "nutanix-k8s-1_25"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-5_15",
+ "kubernetes-1_25",
+ "release",
+]
+
+[[package]]
 name = "nvidia-container-toolkit"
 version = "0.1.0"
 dependencies = [

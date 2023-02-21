@@ -1,0 +1,4 @@
+# Support boot from SCSI disks
+CONFIG_SCSI=y
+CONFIG_SCSI_VIRTIO=y
+CONFIG_BLK_DEV_SD=y

@@ -20,6 +20,11 @@ mod metal;
 #[cfg(variant_platform = "metal")]
 pub(crate) use metal::MetalDataProvider as Platform;
 
+#[cfg(variant_platform = "nutanix")]
+mod nutanix;
+#[cfg(variant_platform = "nutanix")]
+pub(crate) use nutanix::NutanixDataProvider as Platform;
+
 /// Support for new platforms can be added by implementing this trait.
 #[async_trait]
 pub(crate) trait PlatformDataProvider {

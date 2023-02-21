@@ -84,6 +84,14 @@ We also have variants that are designed to be Kubernetes worker nodes in VMware:
 * `vmware-k8s-1.24`
 * `vmware-k8s-1.25`
 
+The following variants are designed to be Kubernetes worker nodes on Nutanix:
+
+* `nutanix-k8s-1.21`
+* `nutanix-k8s-1.22`
+* `nutanix-k8s-1.23`
+* `nutanix-k8s-1.24`
+* `nutanix-k8s-1.25`
+
 The following variants are designed to be Kubernetes worker nodes on bare metal:
 
 * `metal-k8s-1.21`
@@ -116,6 +124,7 @@ Bottlerocket is best used with a container orchestrator.
 To get started with Kubernetes in Amazon EKS, please see [QUICKSTART-EKS](QUICKSTART-EKS.md).
 To get started with Kubernetes in VMware, please see [QUICKSTART-VMWARE](QUICKSTART-VMWARE.md).
 To get started with Amazon ECS, please see [QUICKSTART-ECS](QUICKSTART-ECS.md).
+To get started with Kubernetes in Nutanix, please see [QUICKSTART-NUTANIX](QUICKSTART-NUTANIX.md).
 These guides describe:
 
 * how to set up a cluster with the orchestrator, so your Bottlerocket instance can run containers

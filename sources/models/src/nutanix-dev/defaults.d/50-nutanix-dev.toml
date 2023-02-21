@@ -1,0 +1,8 @@
+# Metrics
+[settings.metrics]
+send-metrics = false
+service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "docker"]
+
+# Network
+[metadata.settings.network]
+affected-services = ["containerd", "docker", "host-containerd", "host-containers"]

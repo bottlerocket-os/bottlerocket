@@ -25,6 +25,12 @@ members = [
     "vmware-k8s-1.23",
     "vmware-k8s-1.24",
     "vmware-k8s-1.25",
+    "nutanix-dev",
+    "nutanix-k8s-1.21",
+    "nutanix-k8s-1.22",
+    "nutanix-k8s-1.23",
+    "nutanix-k8s-1.24",
+    "nutanix-k8s-1.25",
 ]
 
 [profile.dev]

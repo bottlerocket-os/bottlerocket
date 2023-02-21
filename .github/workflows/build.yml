@@ -135,6 +135,30 @@ jobs:
             arch: aarch64
             supported: true
             fetch-upstream: "true"
+          - variant: nutanix-dev
+            arch: x86_64
+            supported: true
+            fetch-upstream: "false"
+          - variant: nutanix-k8s-1.21
+            arch: x86_64
+            supported: true
+            fetch-upstream: "false"
+          - variant: nutanix-k8s-1.22
+            arch: x86_64
+            supported: true
+            fetch-upstream: "false"
+          - variant: nutanix-k8s-1.23
+            arch: x86_64
+            supported: true
+            fetch-upstream: "false"
+          - variant: nutanix-k8s-1.24
+            arch: x86_64
+            supported: true
+            fetch-upstream: "false"
+          - variant: nutanix-k8s-1.25
+            arch: x86_64
+            supported: true
+            fetch-upstream: "false"
       fail-fast: false
     steps:
       - name: Preflight step to set up the runner
