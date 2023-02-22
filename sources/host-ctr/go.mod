@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.176
 	github.com/awslabs/amazon-ecr-containerd-resolver v0.0.0-20221221205310-1903c4ed45d1
 	github.com/containerd/containerd v1.6.15
+	github.com/gofrs/flock v0.8.1
 	github.com/opencontainers/runtime-spec v1.0.3-0.20220909204839-494a5a6aca78
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pkg/errors v0.9.1

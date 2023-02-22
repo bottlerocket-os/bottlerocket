@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	pidns "host-ctr/pidnamespaces"
 	"io"
 	"math/rand"
 	"os"
@@ -31,6 +32,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
+	"golang.org/x/sys/unix"
 )
 
 // Expecting to match ECR image names of the form:
@@ -432,6 +434,21 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 		log.G(ctx).Info("successfully started container task")
 	}
 
+	// Track the task's PID namespace in a manifest so monitoring agents can access it
+	taskPidNs, pidNsErr := pidns.GetTaskPidNs(task.Pid())
+	if taskPidNs == -1 {
+		if pidNsErr == unix.EPERM {
+			log.G(ctx).Info("container task shares root PID namespace, not tracking in PID NS manifest")
+		} else {
+			log.G(ctx).WithError(pidNsErr).Error("failed to get task process PID NS")
+		}
+	} else {
+		err = pidns.AddPidNsToManifest(taskPidNs)
+		if err != nil {
+			log.G(ctx).WithError(err).Error("failed to add task PID NS to manifest")
+		}
+	}
+
 	// Block until an OS signal (e.g. SIGTERM, SIGINT) is received or the
 	// container task finishes and exits on its own.
 
@@ -488,6 +505,14 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 	// Return error if container exists with non-zero status
 	if code != 0 {
 		return fmt.Errorf("Container %s exited with non-zero status", containerID)
+	}
+
+	// Remove the task's PID NS from the tracking manifest since the task has finished
+	if taskPidNs != -1 {
+		err = pidns.RemovePidNsFromManifest(taskPidNs)
+		if err != nil {
+			log.G(ctx).WithError(err).Error("failed to remove task PID NS from manifest")
+		}
 	}
 
 	return nil
@@ -564,6 +589,17 @@ func cleanUp(containerdSocket string, namespace string, containerID string) erro
 				return err
 			}
 			log.G(ctx).WithField("container-id", containerID).Info("killed existing container task")
+
+			// Remove the task's PID NS from the tracking manifest
+			taskPidNs, err := pidns.GetTaskPidNs(task.Pid())
+			if err != nil {
+				log.G(ctx).WithError(err).Error("failed to get task process PID NS")
+			} else if taskPidNs != -1 {
+				err = pidns.RemovePidNsFromManifest(taskPidNs)
+				if err != nil {
+					log.G(ctx).WithError(err).Error("failed to remove task PID NS from manifest")
+				}
+			}
 		}
 		if err := container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
 			log.G(ctx).WithField("container-id", containerID).WithError(err).Error("failed to delete existing container")
