@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.46.5/e2fsprogs-1.46.5.tar.xz"
-sha512 = "53282e1c524f62a95012b1aceef296d494f5238c82c9b08b29fbe6a803dbf7ccfdcd9124eb2f11fe2ff9de26387c78751a92c3217ca414f6db6242098a72d3fa"
+url = "https://mirrors.edge.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.47.0/e2fsprogs-1.47.0.tar.xz"
+sha512 = "0e6d64c565b455becb84166b6a5c7090724bac5cfe69098657a31bf0481b4e2cace3de1363121b7d84820fbae85b7c83ac5f2a2b02bb36280f0e3ae83a934cec"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
