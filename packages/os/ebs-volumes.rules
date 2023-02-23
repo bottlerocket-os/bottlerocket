@@ -1,0 +1,8 @@
+ACTION=="remove", GOTO="ebs_volumes_end"
+SUBSYSTEM!="block", GOTO="ebs_volumes_end"
+ENV{DEVTYPE}!="disk", GOTO="ebs_volumes_end"
+
+# Follow AWS recommendation of never timing out IO on EBS volumes attached via NVMe
+KERNEL=="nvme*", ATTRS{model}=="Amazon Elastic Block Store", ATTR{queue/io_timeout}="4294967295"
+
+LABEL="ebs_volumes_end"
