@@ -1,10 +1,10 @@
 Name: %{_cross_os}libxcrypt
-Version: 4.4.31
+Version: 4.4.33
 Release: 1%{?dist}
 Summary: Extended crypt library for descrypt, md5crypt, bcrypt, and others
 License: LGPL-2.1-or-later
 URL: https://github.com/besser82/libxcrypt
-Source0: https://github.com/besser82/libxcrypt/archive/v%{version}/libxcrypt-%{version}.tar.gz
+Source0: https://github.com/besser82/libxcrypt/releases/download/v%{version}/libxcrypt-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
 
 %description
@@ -19,7 +19,6 @@ Requires: %{name}
 
 %prep
 %autosetup -n libxcrypt-%{version} -p1
-./autogen.sh
 
 %build
 %cross_configure \
