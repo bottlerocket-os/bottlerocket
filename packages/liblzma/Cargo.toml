@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://tukaani.org/xz"
 
 [[package.metadata.build-package.external-files]]
-url = "https://tukaani.org/xz/xz-5.2.9.tar.xz"
-sha512 = "fa844d63ceedf3b35c38f82532dc3b847543ac37b9e56db774c234af73d1385a300ba1033154689059031f18793d791c8cdb65bbeb031691d837f76e673372a7"
+url = "https://tukaani.org/xz/xz-5.4.1.tar.xz"
+sha512 = "f890ee5207799fbc7bb9ae031f444d39d82275b0e1b8cc7f01fdb9270050e38849bd1269db2a2f12fe87b5e23e03f9e809a5c3456d066c0a56e6f98d728553ea"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
