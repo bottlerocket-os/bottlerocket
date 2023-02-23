@@ -2,7 +2,7 @@
 %global gorepo k8s-device-plugin
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 0.12.3
+%global gover 0.13.0
 %global rpmver %{gover}
 
 Name: %{_cross_os}nvidia-k8s-device-plugin
@@ -11,7 +11,7 @@ Release: 1%{?dist}
 Summary: Kubernetes device plugin for NVIDIA GPUs
 License: Apache-2.0
 URL: https://github.com/NVIDIA/k8s-device-plugin
-Source0: https://%{goimport}/archive/v%{gover}/v%{gover}.tar.gz
+Source0: https://%{goimport}/archive/v%{gover}/v%{gover}.tar.gz#/k8s-device-plugin-%{gover}.tar.gz
 Source1: nvidia-k8s-device-plugin.service
 
 BuildRequires: %{_cross_os}glibc-devel
