@@ -10,12 +10,12 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-constants = { path = "../../constants", version = "0.1.0" }
-serde = {version = "1.0", features = ["derive"]}
+constants = { path = "../../constants", version = "0.1" }
+serde = {version = "1", features = ["derive"]}
 serde_json = "1"
-schnauzer = { path = "../schnauzer", version = "0.1.0" }
+schnauzer = { path = "../schnauzer", version = "0.1" }
 log = "0.4"
-models = { path = "../../models", version = "0.1.0" }
+models = { path = "../../models", version = "0.1" }
 simplelog = "0.12"
 snafu = "0.7"
 tokio = { version = "~1.20", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS

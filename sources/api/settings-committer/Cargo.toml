@@ -10,12 +10,12 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-apiclient = { path = "../apiclient", version = "0.1.0" }
-constants = { path = "../../constants", version = "0.1.0" }
+apiclient = { path = "../apiclient", version = "0.1" }
+constants = { path = "../../constants", version = "0.1" }
 snafu = "0.7"
 http = "0.2"
 log = "0.4"
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 simplelog = "0.12"
 tokio = { version = "~1.20", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS

@@ -9,10 +9,10 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-bit_field = "0.10.0"
-block-party = { path = "../block-party", version = "0.1.0" }
+bit_field = "0.10"
+block-party = { path = "../block-party", version = "0.1" }
 gptman = { version = "1", default-features = false }
-hex-literal = "0.3.0"
-serde = { version = "1.0.91", features = ["derive"] }
-serde_plain = "1.0"
+hex-literal = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_plain = "1"
 snafu = { version = "0.7", default-features = false, features = ["std"] }

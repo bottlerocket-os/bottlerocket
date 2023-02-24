@@ -8,14 +8,14 @@ publish = false
 
 [dependencies]
 bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
-handlebars = "4.3"
+handlebars = "4"
 home = "0.5"
-lazy_static = "1.4"
+lazy_static = "1"
 log = "0.4"
-maplit="1.0"
+maplit="1"
 model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.5", tag = "v0.0.5"}
-serde = { version = "1.0", features = ["derive"]  }
-serde_yaml = "0.8.17"
+serde = { version = "1", features = ["derive"]  }
+serde_yaml = "0.8"
 snafu = "0.7"
 toml = "0.5"
-url = { version = "2.1.0", features = ["serde"] }
+url = { version = "2", features = ["serde"] }

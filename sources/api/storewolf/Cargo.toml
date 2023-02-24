@@ -10,13 +10,13 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-constants = { path = "../../constants", version = "0.1.0" }
-bottlerocket-release = { path = "../../bottlerocket-release", version = "0.1.0" }
-datastore = { path = "../datastore", version = "0.1.0" }
+constants = { path = "../../constants", version = "0.1" }
+bottlerocket-release = { path = "../../bottlerocket-release", version = "0.1" }
+datastore = { path = "../datastore", version = "0.1" }
 log = "0.4"
-models = { path = "../../models", version = "0.1.0" }
+models = { path = "../../models", version = "0.1" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
-semver = "1.0"
+semver = "1"
 simplelog = "0.12"
 snafu = "0.7"
 toml = "0.5"
@@ -24,13 +24,13 @@ toml = "0.5"
 [build-dependencies]
 bottlerocket-variant = { version = "0.1", path = "../../bottlerocket-variant" }
 generate-readme = { version = "0.1", path = "../../generate-readme" }
-merge-toml = { path = "merge-toml", version = "0.1.0" }
+merge-toml = { path = "merge-toml", version = "0.1" }
 # We have a models build-dep because we read default settings from the models
 # directory and need its build.rs to run first; we also reflect the dependency
 # with cargo:rerun-if-changed statements in our build.rs.  The models build.rs
 # runs twice, once for the above dependency and once for this build-dependency,
 # so it's important that it remains reentrant.
-models = { path = "../../models", version = "0.1.0" }
+models = { path = "../../models", version = "0.1" }
 snafu = "0.7"
 toml = "0.5"
 walkdir = "2"

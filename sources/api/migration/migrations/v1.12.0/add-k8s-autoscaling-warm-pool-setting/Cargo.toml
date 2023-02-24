@@ -9,7 +9,7 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}
+migration-helpers = { path = "../../../migration-helpers", version = "0.1"}
 
 [build-dependencies]
 bottlerocket-variant = { version = "0.1", path = "../../../../../bottlerocket-variant" }
