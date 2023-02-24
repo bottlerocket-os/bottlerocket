@@ -52,6 +52,10 @@ Patch9010: 9010-sysusers-set-root-shell-to-sbin-nologin.patch
 # Local patch to keep modprobe units running to avoid repeated log entries.
 Patch9011: 9011-units-keep-modprobe-service-units-running.patch
 
+# Local patch to split the systemd-networkd tmpfiles into a separate file which
+# allows us to exclude them when not using networkd.
+Patch9012: 9012-tmpfiles-Split-networkd-entries-into-a-separate-file.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
@@ -327,6 +331,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_libdir}/sysusers.d/*
 %{_cross_libdir}/systemd/*
 %{_cross_libdir}/udev/*
+%exclude %{_cross_libdir}/tmpfiles.d/systemd-network.conf
 %exclude %{_cross_libdir}/sysusers.d/systemd-network.conf
 %exclude %{_cross_libdir}/systemd/systemd-networkd
 %exclude %{_cross_libdir}/systemd/systemd-networkd-wait-online
@@ -421,5 +426,6 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_libdir}/sysusers.d/systemd-network.conf
 %{_cross_datadir}/dbus-1/system-services/org.freedesktop.network1.service
 %{_cross_datadir}/dbus-1/system.d/org.freedesktop.network1.conf
+%{_cross_libdir}/tmpfiles.d/systemd-network.conf
 
 %changelog
