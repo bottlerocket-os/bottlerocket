@@ -353,6 +353,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethtool"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libmnl",
+]
+
+[[package]]
 name = "filesystem"
 version = "0.1.0"
 
@@ -952,6 +960,7 @@ dependencies = [
  "coreutils",
  "dbus-broker",
  "e2fsprogs",
+ "ethtool",
  "filesystem",
  "findutils",
  "glibc",

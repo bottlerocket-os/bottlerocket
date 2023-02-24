@@ -23,6 +23,7 @@ containerd = { path = "../containerd" }
 coreutils = { path = "../coreutils" }
 dbus-broker = { path = "../dbus-broker" }
 e2fsprogs = { path = "../e2fsprogs" }
+ethtool = { path = "../ethtool" }
 filesystem = { path = "../filesystem" }
 findutils = { path = "../findutils" }
 glibc = { path = "../glibc" }
