@@ -13,8 +13,6 @@ If the returned value is "baz", our generated value will be "foo-baz".
 (The name "schnauzer" comes from the fact that Schnauzers are search and rescue dogs (similar to this search and replace task) and because they have mustaches.)
 */
 
-#![deny(rust_2018_idioms)]
-
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::string::String;

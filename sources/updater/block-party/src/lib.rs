@@ -6,7 +6,7 @@
 //! * Getting a numbered partition on a disk
 //! * Getting the devices that are combined as a block device, e.g. a dm-verity device
 
-#![deny(missing_docs, rust_2018_idioms)]
+#![deny(missing_docs)]
 
 use snafu::{ensure, OptionExt, ResultExt};
 use std::ffi::OsString;

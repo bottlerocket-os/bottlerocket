@@ -1,5 +1,3 @@
-#![deny(rust_2018_idioms)]
-
 //! The apiclient library provides high-level methods to interact with the Bottlerocket API.  See
 //! the documentation for submodules [`apply`], [`exec`], [`get`], [`reboot`], [`set`], and
 //! [`update`] for high-level helpers.

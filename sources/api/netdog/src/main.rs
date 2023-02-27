@@ -26,8 +26,6 @@ supplementing any missing settings with DNS settings from the primary interface'
 is meant to be used as a restart command for DNS API settings.
 */
 
-#![deny(rust_2018_idioms)]
-
 #[macro_use]
 extern crate serde_plain;
 

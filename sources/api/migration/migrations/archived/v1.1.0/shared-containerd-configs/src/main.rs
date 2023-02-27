@@ -1,5 +1,3 @@
-#![deny(rust_2018_idioms)]
-
 use lazy_static::lazy_static;
 use migration_helpers::{migrate, Migration, MigrationData, Result};
 use std::process;

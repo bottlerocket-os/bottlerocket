@@ -69,7 +69,6 @@ You can start the API server from the `apiserver` directory with a command like:
 Then, from another shell, you can query or modify data.
 See `../../apiclient/README.md` for client examples.
 */
-#![deny(rust_2018_idioms)]
 
 #[macro_use]
 extern crate log;

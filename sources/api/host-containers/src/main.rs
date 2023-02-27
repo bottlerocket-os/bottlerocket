@@ -11,8 +11,6 @@ It queries the API for their settings, then configures the system by:
 * ensuring the host container's systemd service is enabled/started or disabled/stopped
 */
 
-#![deny(rust_2018_idioms)]
-
 #[macro_use]
 extern crate log;
 

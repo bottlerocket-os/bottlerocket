@@ -1,5 +1,3 @@
-#![deny(rust_2018_idioms)]
-
 use migration_helpers::{migrate, Migration, MigrationData, Result};
 use std::process;
 

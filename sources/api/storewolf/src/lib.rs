@@ -1,5 +1,3 @@
-#![deny(rust_2018_idioms)]
-
 use bottlerocket_release::BottlerocketRelease;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};

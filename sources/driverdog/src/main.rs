@@ -7,8 +7,6 @@ driverdog is a tool to link kernel modules at runtime. It uses a toml configurat
 `kernel-modules`: hash with the kernel modules to be linked, each kernel module in the map should include the files used to link it
 */
 
-#![deny(rust_2018_idioms)]
-
 #[macro_use]
 extern crate log;
 

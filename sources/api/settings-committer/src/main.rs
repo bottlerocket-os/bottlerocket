@@ -8,8 +8,6 @@ By default, it commits the 'bottlerocket-launch' transaction, which is used to o
 
 The `--transaction` argument can be used to specify another transaction.
 */
-#![deny(rust_2018_idioms)]
-
 #[macro_use]
 extern crate log;
 

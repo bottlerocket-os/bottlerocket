@@ -1,4 +1,4 @@
-#![deny(rust_2018_idioms, unused_imports)]
+#![deny(unused_imports)]
 
 /*!
 # Introduction
@@ -56,8 +56,6 @@ version_lock = "latest"
 ignore_waves = false
 ```
 */
-
-#![deny(rust_2018_idioms)]
 
 mod args;
 mod config;

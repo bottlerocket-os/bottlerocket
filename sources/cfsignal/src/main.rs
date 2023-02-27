@@ -1,4 +1,4 @@
-#![deny(rust_2018_idioms, unused_imports)]
+#![deny(unused_imports)]
 
 /*!
 ## Introduction
@@ -16,8 +16,6 @@ Configuration is read from a TOML file, which is generated from Bottlerocket set
 * `stack_name`: Name of the CFN stack to signal.
 * `logical_resource_id`: The logical ID of the AutoScalingGroup resource that you want to signal.
 */
-
-#![deny(rust_2018_idioms)]
 
 mod cloudformation;
 mod config;

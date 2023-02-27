@@ -17,8 +17,6 @@ will create an IMDSv2 session _(if one does not already exist)_ and send a reque
 The result is returned as a `String` _(ex. m5.large)_.
 */
 
-#![deny(rust_2018_idioms)]
-
 use std::sync::RwLock;
 
 use http::StatusCode;

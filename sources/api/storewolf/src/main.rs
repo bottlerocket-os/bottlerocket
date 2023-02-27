@@ -6,8 +6,6 @@ storewolf creates the filesystem datastore used by the API system.
 It creates the datastore at a provided path and populates any default settings, as given in the
 TOML files of the current variant's `defaults.d` directory, unless the datastore already exists.
 */
-#![deny(rust_2018_idioms)]
-
 #[macro_use]
 extern crate log;
 

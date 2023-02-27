@@ -7,8 +7,6 @@ It requests settings generators from the API and runs them.
 The output is collected and sent to a known Bottlerocket API server endpoint.
 */
 
-#![deny(rust_2018_idioms)]
-
 #[macro_use]
 extern crate log;
 

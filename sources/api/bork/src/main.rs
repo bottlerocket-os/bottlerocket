@@ -1,5 +1,3 @@
-#![deny(rust_2018_idioms)]
-
 use rand::{thread_rng, Rng};
 
 fn main() {
