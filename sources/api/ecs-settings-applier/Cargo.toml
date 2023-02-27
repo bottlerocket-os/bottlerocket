@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Samuel Karp <skarp@amazon.com>"]
 license = "Apache-2.0 OR MIT"
 publish = false
-edition = "2018"
+edition = "2021"
 build = "build.rs"
 # Don't rebuild crate just because of changes to README.
 exclude = ["README.md"]
