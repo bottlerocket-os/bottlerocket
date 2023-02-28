@@ -840,6 +840,12 @@ func withPrivilegedMounts() oci.SpecOpts {
 			Source:      "/mnt",
 			Type:        "bind",
 		},
+		{
+			Options:     []string{"rbind", "ro"},
+			Destination: "/.bottlerocket/host-ctr-namespaces",
+			Source:      "/etc/host-ctr-namespaces",
+			Type:        "bind",
+		},
 	})
 }
 
