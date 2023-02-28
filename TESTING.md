@@ -205,7 +205,7 @@ cargo make \
 cargo make \
   -e BUILDSYS_VARIANT="aws-k8s-1.24" \
   -e BUILDSYS_ARCH="x86_64" \
-  -e PUBLISH_REGIONS="us-west-2"
+  -e PUBLISH_REGIONS="us-west-2" \
   ami
 
 cargo make \
@@ -234,7 +234,7 @@ cargo make \
 cargo make \
   -e BUILDSYS_VARIANT="aws-ecs-1" \
   -e BUILDSYS_ARCH="x86_64" \
-  -e PUBLISH_REGIONS="us-west-2"
+  -e PUBLISH_REGIONS="us-west-2" \
   ami
 
 cargo make \
