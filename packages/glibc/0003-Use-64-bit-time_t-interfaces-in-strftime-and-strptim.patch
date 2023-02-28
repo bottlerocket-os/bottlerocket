@@ -1,0 +1,157 @@
+From fb7b95dc47b0d5ecd48339512d091b6b23e7d900 Mon Sep 17 00:00:00 2001
+From: Andreas Schwab <schwab@suse.de>
+Date: Thu, 26 Jan 2023 14:25:05 +0100
+Subject: [PATCH 3/8] Use 64-bit time_t interfaces in strftime and strptime
+ (bug 30053)
+
+Both functions use time_t only internally, so the ABI is not affected.
+
+(cherry picked from commit 41349f6f67c83e7bafe49f985b56493d2c4c9c77)
+---
+ NEWS                        |  6 +++++
+ time/Makefile               |  3 ++-
+ time/strftime_l.c           |  4 +++
+ time/strptime_l.c           |  4 ++-
+ time/tst-strftime4-time64.c |  1 +
+ time/tst-strftime4.c        | 52 +++++++++++++++++++++++++++++++++++++
+ 6 files changed, 68 insertions(+), 2 deletions(-)
+ create mode 100644 time/tst-strftime4-time64.c
+ create mode 100644 time/tst-strftime4.c
+
+diff --git a/NEWS b/NEWS
+index ad5196a5f1..4da140db31 100644
+--- a/NEWS
++++ b/NEWS
+@@ -5,6 +5,12 @@ See the end for copying conditions.
+ Please send GNU C library bug reports via <https://sourceware.org/bugzilla/>
+ using `glibc' in the "product" field.
+ 
++Version 2.37.1
++
++The following bugs are resolved with this release:
++
++  [30053] time: strftime %s returns -1 after 2038 on 32 bits systems
++
+ Version 2.37
+ 
+ Major new features:
+diff --git a/time/Makefile b/time/Makefile
+index d86f2105c5..92bc3db315 100644
+--- a/time/Makefile
++++ b/time/Makefile
+@@ -50,7 +50,7 @@ tests	:= test_time clocktest tst-posixtz tst-strptime tst_wcsftime \
+ 	   tst-clock tst-clock2 tst-clock_nanosleep tst-cpuclock1 \
+ 	   tst-adjtime tst-ctime tst-difftime tst-mktime4 tst-clock_settime \
+ 	   tst-settimeofday tst-itimer tst-gmtime tst-timegm \
+-	   tst-timespec_get tst-timespec_getres
++	   tst-timespec_get tst-timespec_getres tst-strftime4
+ 
+ tests-time64 := \
+   tst-adjtime-time64 \
+@@ -65,6 +65,7 @@ tests-time64 := \
+   tst-itimer-time64 \
+   tst-mktime4-time64 \
+   tst-settimeofday-time64 \
++  tst-strftime4-time64 \
+   tst-timegm-time64 \
+   tst-timespec_get-time64 \
+   tst-timespec_getres-time64 \
+diff --git a/time/strftime_l.c b/time/strftime_l.c
+index e09561c39c..402c6c4111 100644
+--- a/time/strftime_l.c
++++ b/time/strftime_l.c
+@@ -159,6 +159,10 @@ extern char *tzname[];
+ #ifdef _LIBC
+ # define tzname __tzname
+ # define tzset __tzset
++
++# define time_t __time64_t
++# define __gmtime_r(t, tp) __gmtime64_r (t, tp)
++# define mktime(tp) __mktime64 (tp)
+ #endif
+ 
+ #if !HAVE_TM_GMTOFF
+diff --git a/time/strptime_l.c b/time/strptime_l.c
+index 80fd705b8d..85c3249fcc 100644
+--- a/time/strptime_l.c
++++ b/time/strptime_l.c
+@@ -30,8 +30,10 @@
+ #ifdef _LIBC
+ # define HAVE_LOCALTIME_R 0
+ # include "../locale/localeinfo.h"
+-#endif
+ 
++# define time_t __time64_t
++# define __localtime_r(t, tp) __localtime64_r (t, tp)
++#endif
+ 
+ #if ! HAVE_LOCALTIME_R && ! defined localtime_r
+ # ifdef _LIBC
+diff --git a/time/tst-strftime4-time64.c b/time/tst-strftime4-time64.c
+new file mode 100644
+index 0000000000..4d47ee7d79
+--- /dev/null
++++ b/time/tst-strftime4-time64.c
+@@ -0,0 +1 @@
++#include "tst-strftime4.c"
+diff --git a/time/tst-strftime4.c b/time/tst-strftime4.c
+new file mode 100644
+index 0000000000..659716d0fa
+--- /dev/null
++++ b/time/tst-strftime4.c
+@@ -0,0 +1,52 @@
++/* Test strftime and strptime after 2038-01-19 03:14:07 UTC (bug 30053).
++   Copyright (C) 2023 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++#include <time.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <string.h>
++#include <support/check.h>
++
++static int
++do_test (void)
++{
++  TEST_VERIFY_EXIT (setenv ("TZ", "UTC0", 1) == 0);
++  tzset ();
++  if (sizeof (time_t) > 4)
++    {
++      time_t wrap = (time_t) 2147483648LL;
++      char buf[80];
++      struct tm *tm = gmtime (&wrap);
++      TEST_VERIFY_EXIT (tm != NULL);
++      TEST_VERIFY_EXIT (strftime (buf, sizeof buf, "%s", tm) > 0);
++      puts (buf);
++      TEST_VERIFY (strcmp (buf, "2147483648") == 0);
++
++      struct tm tm2;
++      char *p = strptime (buf, "%s", &tm2);
++      TEST_VERIFY_EXIT (p != NULL && *p == '\0');
++      time_t t = mktime (&tm2);
++      printf ("%lld\n", (long long) t);
++      TEST_VERIFY (t == wrap);
++    }
++  else
++    FAIL_UNSUPPORTED ("32-bit time_t");
++  return 0;
++}
++
++#include <support/test-driver.c>
+-- 
+2.25.1
+

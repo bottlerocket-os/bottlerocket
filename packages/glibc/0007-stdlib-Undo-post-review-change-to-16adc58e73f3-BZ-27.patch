@@ -1,0 +1,142 @@
+From 790e504a172a5ef7399b3e3f481d76394dce0a23 Mon Sep 17 00:00:00 2001
+From: Vitaly Buka <vitalybuka@google.com>
+Date: Sat, 18 Feb 2023 12:53:41 -0800
+Subject: [PATCH 7/8] stdlib: Undo post review change to 16adc58e73f3 [BZ
+ #27749]
+
+Post review removal of "goto restart" from
+https://sourceware.org/pipermail/libc-alpha/2021-April/125470.html
+introduced a bug when some atexit handers skipped.
+
+Signed-off-by: Vitaly Buka <vitalybuka@google.com>
+
+Reviewed-by: Adhemerval Zanella  <adhemerval.zanella@linaro.org>
+(cherry picked from commit fd78cfa72ea2bab30fdb4e1e0672b34471426c05)
+---
+ stdlib/Makefile                |  1 +
+ stdlib/exit.c                  |  7 +++-
+ stdlib/test-atexit-recursive.c | 75 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 81 insertions(+), 2 deletions(-)
+ create mode 100644 stdlib/test-atexit-recursive.c
+
+diff --git a/stdlib/Makefile b/stdlib/Makefile
+index e0fc82fc4d..005eede5d9 100644
+--- a/stdlib/Makefile
++++ b/stdlib/Makefile
+@@ -171,6 +171,7 @@ tests := \
+   test-a64l \
+   test-at_quick_exit-race \
+   test-atexit-race \
++  test-atexit-recursive \
+   test-bz22786 \
+   test-canon \
+   test-canon2 \
+diff --git a/stdlib/exit.c b/stdlib/exit.c
+index 6b1eed6445..1cd0bdfe94 100644
+--- a/stdlib/exit.c
++++ b/stdlib/exit.c
+@@ -51,7 +51,10 @@ __run_exit_handlers (int status, struct exit_function_list **listp,
+      exit (). */
+   while (true)
+     {
+-      struct exit_function_list *cur = *listp;
++      struct exit_function_list *cur;
++
++    restart:
++      cur = *listp;
+ 
+       if (cur == NULL)
+ 	{
+@@ -113,7 +116,7 @@ __run_exit_handlers (int status, struct exit_function_list **listp,
+ 	  if (__glibc_unlikely (new_exitfn_called != __new_exitfn_called))
+ 	    /* The last exit function, or another thread, has registered
+ 	       more exit functions.  Start the loop over.  */
+-            continue;
++	    goto restart;
+ 	}
+ 
+       *listp = cur->next;
+diff --git a/stdlib/test-atexit-recursive.c b/stdlib/test-atexit-recursive.c
+new file mode 100644
+index 0000000000..0596b9763b
+--- /dev/null
++++ b/stdlib/test-atexit-recursive.c
+@@ -0,0 +1,75 @@
++/* Support file for atexit/exit, etc. race tests (BZ #27749).
++   Copyright (C) 2023 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library; if not, see
++   <https://www.gnu.org/licenses/>.  */
++
++/* Check that atexit handler registed from another handler still called. */
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <support/check.h>
++#include <support/xunistd.h>
++#include <sys/wait.h>
++#include <unistd.h>
++
++static void
++atexit_cb (void)
++{
++}
++
++static void
++atexit_last (void)
++{
++  _exit (1);
++}
++
++static void
++atexit_recursive (void)
++{
++  atexit (&atexit_cb);
++  atexit (&atexit_last);
++}
++
++_Noreturn static void
++test_and_exit (int count)
++{
++  for (int i = 0; i < count; ++i)
++    atexit (&atexit_cb);
++  atexit (&atexit_recursive);
++  exit (0);
++}
++
++static int
++do_test (void)
++{
++  for (int i = 0; i < 100; ++i)
++    if (xfork () == 0)
++      test_and_exit (i);
++
++  for (int i = 0; i < 100; ++i)
++    {
++      int status;
++      xwaitpid (0, &status, 0);
++      if (!WIFEXITED (status))
++	FAIL_EXIT1 ("Failed iterations %d", i);
++      TEST_COMPARE (WEXITSTATUS (status), 1);
++    }
++
++  return 0;
++}
++
++#define TEST_FUNCTION do_test
++#include <support/test-driver.c>
+-- 
+2.25.1
+

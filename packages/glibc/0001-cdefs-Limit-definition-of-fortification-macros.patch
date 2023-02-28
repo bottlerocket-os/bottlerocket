@@ -1,0 +1,53 @@
+From 020b43544a26237d752eae4a715c403f29226542 Mon Sep 17 00:00:00 2001
+From: Siddhesh Poyarekar <siddhesh@sourceware.org>
+Date: Thu, 2 Feb 2023 07:49:02 -0500
+Subject: [PATCH 1/8] cdefs: Limit definition of fortification macros
+
+Define the __glibc_fortify and other macros only when __FORTIFY_LEVEL >
+0.  This has the effect of not defining these macros on older C90
+compilers that do not have support for variable length argument lists.
+
+Also trim off the trailing backslashes from the definition of
+__glibc_fortify and __glibc_fortify_n macros.
+
+Signed-off-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+Reviewed-by: Florian Weimer <fweimer@redhat.com>
+(cherry picked from commit 2337e04e21ba6040926ec871e403533f77043c40)
+---
+ misc/sys/cdefs.h | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/misc/sys/cdefs.h b/misc/sys/cdefs.h
+index 66d6702123..c37a3ff637 100644
+--- a/misc/sys/cdefs.h
++++ b/misc/sys/cdefs.h
+@@ -152,6 +152,7 @@
+ # define __glibc_objsize(__o) __bos (__o)
+ #endif
+ 
++#if __USE_FORTIFY_LEVEL > 0
+ /* Compile time conditions to choose between the regular, _chk and _chk_warn
+    variants.  These conditions should get evaluated to constant and optimized
+    away.  */
+@@ -187,7 +188,7 @@
+    ? __ ## f ## _alias (__VA_ARGS__)					      \
+    : (__glibc_unsafe_len (__l, __s, __osz)				      \
+       ? __ ## f ## _chk_warn (__VA_ARGS__, __osz)			      \
+-      : __ ## f ## _chk (__VA_ARGS__, __osz)))			      \
++      : __ ## f ## _chk (__VA_ARGS__, __osz)))
+ 
+ /* Fortify function f, where object size argument passed to f is the number of
+    elements and not total size.  */
+@@ -197,7 +198,8 @@
+    ? __ ## f ## _alias (__VA_ARGS__)					      \
+    : (__glibc_unsafe_len (__l, __s, __osz)				      \
+       ? __ ## f ## _chk_warn (__VA_ARGS__, (__osz) / (__s))		      \
+-      : __ ## f ## _chk (__VA_ARGS__, (__osz) / (__s))))		      \
++      : __ ## f ## _chk (__VA_ARGS__, (__osz) / (__s))))
++#endif
+ 
+ #if __GNUC_PREREQ (4,3)
+ # define __warnattr(msg) __attribute__((__warning__ (msg)))
+-- 
+2.25.1
+

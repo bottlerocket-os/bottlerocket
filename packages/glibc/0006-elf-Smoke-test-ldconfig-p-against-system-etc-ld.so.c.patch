@@ -1,0 +1,128 @@
+From d8e1a7590d375159fb5aac07ad8111ab4699e994 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Wed, 8 Feb 2023 18:11:04 +0100
+Subject: [PATCH 6/8] elf: Smoke-test ldconfig -p against system
+ /etc/ld.so.cache
+
+The test is sufficient to detect the ldconfig bug fixed in
+commit 9fe6f6363886aae6b2b210cae3ed1f5921299083 ("elf: Fix 64 time_t
+support for installed statically binaries").
+
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+(cherry picked from commit 9fd63e35371b9939e9153907c6a753e6960b68ad)
+---
+ elf/Makefile          |  6 ++++
+ elf/tst-ldconfig-p.sh | 77 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 83 insertions(+)
+ create mode 100644 elf/tst-ldconfig-p.sh
+
+diff --git a/elf/Makefile b/elf/Makefile
+index b509b3eada..2fc6391183 100644
+--- a/elf/Makefile
++++ b/elf/Makefile
+@@ -626,6 +626,7 @@ ifeq ($(run-built-tests),yes)
+ tests-special += \
+   $(objpfx)noload-mem.out \
+   $(objpfx)tst-ldconfig-X.out \
++  $(objpfx)tst-ldconfig-p.out \
+   $(objpfx)tst-leaks1-mem.out \
+   $(objpfx)tst-rtld-help.out \
+   # tests-special
+@@ -2396,6 +2397,11 @@ $(objpfx)tst-ldconfig-X.out : tst-ldconfig-X.sh $(objpfx)ldconfig
+ 		 '$(run-program-env)' > $@; \
+ 	$(evaluate-test)
+ 
++$(objpfx)tst-ldconfig-p.out : tst-ldconfig-p.sh $(objpfx)ldconfig
++	$(SHELL) $< '$(common-objpfx)' '$(test-wrapper-env)' \
++		 '$(run-program-env)' > $@; \
++	$(evaluate-test)
++
+ # Test static linking of all the libraries we can possibly link
+ # together.  Note that in some configurations this may be less than the
+ # complete list of libraries we build but we try to maxmimize this list.
+diff --git a/elf/tst-ldconfig-p.sh b/elf/tst-ldconfig-p.sh
+new file mode 100644
+index 0000000000..ec937bf4ec
+--- /dev/null
++++ b/elf/tst-ldconfig-p.sh
+@@ -0,0 +1,77 @@
++#!/bin/sh
++# Test that ldconfig -p prints something useful.
++# Copyright (C) 2023 Free Software Foundation, Inc.
++# This file is part of the GNU C Library.
++
++# The GNU C Library is free software; you can redistribute it and/or
++# modify it under the terms of the GNU Lesser General Public
++# License as published by the Free Software Foundation; either
++# version 2.1 of the License, or (at your option) any later version.
++
++# The GNU C Library is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++# Lesser General Public License for more details.
++
++# You should have received a copy of the GNU Lesser General Public
++# License along with the GNU C Library; if not, see
++# <https://www.gnu.org/licenses/>.
++
++# Check that the newly built ldconfig -p can dump the system
++# /etc/ld.so.cache file.  This should always work even if the ABIs are
++# not compatible, except in a cross-endian build (that presumably
++# involves emulation when running ldconfig).
++
++common_objpfx=$1
++test_wrapper_env=$2
++run_program_env=$3
++
++if ! test -r /etc/ld.so.cache; then
++    echo "warning: /etc/ld.so.cache does not exist, test skipped"
++    exit 77
++fi
++
++testout="${common_objpfx}elf/tst-ldconfig-p.out"
++# Truncate file.
++: > "$testout"
++
++${test_wrapper_env} \
++${run_program_env} \
++${common_objpfx}elf/ldconfig -p \
++  $testroot/lib >>"$testout" 2>>"$testout"
++status=$?
++echo "info: ldconfig exit status: $status" >>"$testout"
++
++errors=0
++case $status in
++    (0)
++	if head -n 1 "$testout" | \
++		grep -q "libs found in cache \`/etc/ld.so.cache'\$" ; then
++	    echo "info: initial string found" >>"$testout"
++	else
++	    echo "error: initial string not found" >>"$testout"
++	    errors=1
++	fi
++	if grep -q "^	libc\.so\..* => " "$testout"; then
++	    echo "info: libc.so.* string found" >>"$testout"
++	else
++	    echo "error: libc.so.* string not found" >>"$testout"
++	    errors=1
++	fi
++	;;
++    (1)
++	if head -n 1 "$testout" | \
++		grep -q ": Cache file has wrong endianness\.$" ; then
++	    echo "info: cache file has wrong endianess" >> "$testout"
++	else
++	    echo "error: unexpected ldconfig error message" >> "$testout"
++	    errors=1
++	fi
++	;;
++    (*)
++	echo "error: unexpected exit status" >> "$testout"
++	errors=1
++	;;
++esac
++
++exit $errors
+-- 
+2.25.1
+
