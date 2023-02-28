@@ -1,5 +1,3 @@
-#![deny(rust_2018_idioms)]
-
 use migration_helpers::common_migrations::AddSettingsMigration;
 use migration_helpers::{migrate, Result};
 use std::process;

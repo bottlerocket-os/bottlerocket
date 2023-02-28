@@ -1,5 +1,3 @@
-#![deny(rust_2018_idioms)]
-
 use migration_helpers::{error, migrate, Migration, MigrationData, Result};
 use serde_json::Value;
 use snafu::OptionExt;

@@ -1,5 +1,3 @@
-#![deny(rust_2018_idioms)]
-
 #[cfg(variant_runtime = "k8s")]
 mod static_pods;
 #[cfg(variant_runtime = "k8s")]

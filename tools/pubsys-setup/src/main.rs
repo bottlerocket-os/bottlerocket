@@ -4,8 +4,6 @@ the repos you use to update them.  Specifically, it can create a new key and rol
 existing role.
 */
 
-#![deny(rust_2018_idioms)]
-
 use log::{debug, info, trace, warn};
 use pubsys_config::InfraConfig;
 use sha2::{Digest, Sha512};

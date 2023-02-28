@@ -21,8 +21,6 @@ Configuration comes from:
 * Policy files for repo metadata expiration and update wave timing
 */
 
-#![deny(rust_2018_idioms)]
-
 mod aws;
 mod repo;
 mod vmware;

@@ -1,5 +1,3 @@
-#![deny(rust_2018_idioms)]
-
 use migration_helpers::{error, migrate, Migration, MigrationData, Result};
 use snafu::ResultExt;
 use std::fs;

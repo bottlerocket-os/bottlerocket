@@ -70,8 +70,6 @@ journalctl -u bootstrap-containers@bear.service
 ```
 */
 
-#![deny(rust_2018_idioms)]
-
 #[macro_use]
 extern crate log;
 

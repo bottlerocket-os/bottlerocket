@@ -5,8 +5,6 @@ It sets kernel-related settings, for example:
 * lockdown mode, based on the value of `settings.kernel.lockdown`
 */
 
-#![deny(rust_2018_idioms)]
-
 use log::{debug, error, info, trace, warn};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;

@@ -22,8 +22,6 @@ based on the value of the `VARIANT` environment variable at build time.
 
 */
 
-#![deny(rust_2018_idioms)]
-
 mod create_tarball;
 mod error;
 mod log_request;

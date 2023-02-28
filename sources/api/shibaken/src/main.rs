@@ -13,8 +13,6 @@ shibaken can:
 (The name "shibaken" comes from the fact that Shiba are small, but agile, hunting dogs.)
 */
 
-#![deny(rust_2018_idioms)]
-
 use argh::FromArgs;
 use simplelog::{ColorChoice, Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::ResultExt;
