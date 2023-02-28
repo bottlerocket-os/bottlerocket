@@ -17,7 +17,7 @@ aws-sdk-sts = "0.18"
 aws-smithy-types = "0.48"
 aws-types = "0.48"
 buildsys = { path = "../buildsys", version = "0.1" }
-chrono = "0.4"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 clap = "3"
 coldsnap = { version = "0.4", default-features = false, features = ["aws-sdk-rust-rustls"] }
 duct = "0.13"

@@ -7,7 +7,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-chrono = "0.4"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 home = "0.5"
 lazy_static = "1"
 log = "0.4"
