@@ -52,13 +52,13 @@ pub mod error {
 /// # Variant
 ///
 /// Represents a Bottlerocket variant string. These are in the form
-/// `platform-runtime-[variant_version]-[variant_flavor]`.
+/// `platform-runtime-[variant_version][-variant_flavor]`.
 ///
 /// For example, here are some valid variant strings:
 /// - aws-ecs-1
-/// - vmware-k8s-1.18
+/// - vmware-k8s-1.23
 /// - metal-dev
-/// - aws-k8s-1.21-nvidia
+/// - aws-k8s-1.24-nvidia
 ///
 /// The `platform` and `runtime` values are required. `variant_version` and `variant_flavor` values
 /// are optional and will default to `"0"` and `"none"` respectively.
@@ -70,10 +70,10 @@ pub mod error {
 ///
 /// ```rust
 /// use bottlerocket_variant::{Variant, VARIANT_ENV};
-/// std::env::set_var(VARIANT_ENV, "metal-k8s-1.21");
+/// std::env::set_var(VARIANT_ENV, "metal-k8s-1.24");
 /// let variant = Variant::from_env().unwrap();
 ///
-/// assert_eq!(variant.version().unwrap(), "1.21");
+/// assert_eq!(variant.version().unwrap(), "1.24");
 ///
 /// // In a `build.rs` file, you may want to emit cfgs that you can use for conditional compilation.
 /// variant.emit_cfgs();
@@ -96,9 +96,9 @@ impl Variant {
     /// # Valid Values
     ///
     /// - `aws-dev`
-    /// - `vmware-k8s-1.21`
-    /// - `aws-k8s-1.21-nvidia`
-    /// - `aws-k8s-1.21-nvidia-some-additional-ignored-tuple-positions`
+    /// - `vmware-k8s-1.24`
+    /// - `aws-k8s-1.24-nvidia`
+    /// - `aws-k8s-1.24-nvidia-some-additional-ignored-tuple-positions`
     ///
     /// # Invalid Values
     ///
@@ -130,13 +130,13 @@ impl Variant {
     }
 
     /// The variant's runtime. This is the second member of the tuple. For example, in
-    /// `metal-k8s-1.21`, `k8s` is the `runtime`.
+    /// `metal-k8s-1.24`, `k8s` is the `runtime`.
     pub fn runtime(&self) -> &str {
         &self.runtime
     }
 
     /// The variant's family. This is the `platform` and `runtime` together. For example, in
-    /// `aws-k8s-1.21`, `aws-k8s` is the `family`.
+    /// `aws-k8s-1.24`, `aws-k8s` is the `family`.
     pub fn family(&self) -> &str {
         &self.family
     }
@@ -149,7 +149,7 @@ impl Variant {
     }
 
     /// The variant's flavor. This is the optional fourth value in the variant string tuple. For
-    /// example for `aws-k8s-1.21-nvidia` the `variant_flavor` is `nvidia`.
+    /// example for `aws-k8s-1.24-nvidia` the `variant_flavor` is `nvidia`.
     pub fn variant_flavor(&self) -> Option<&str> {
         self.variant_flavor.as_deref()
     }
@@ -166,14 +166,14 @@ impl Variant {
     ///
     /// # Example
     ///
-    /// Given a variant `aws-k8s-1.21`, if this function has been called in `build.rs`, then
+    /// Given a variant `aws-k8s-1.24`, if this function has been called in `build.rs`, then
     /// all of the following conditional complition checks would evaluate to `true`.
     ///
-    /// `#[cfg(variant = "aws-k8s-1.21")]`
+    /// `#[cfg(variant = "aws-k8s-1.24")]`
     /// `#[cfg(variant_platform = "aws")]`
     /// `#[cfg(variant_runtime = "k8s")]`
     /// `#[cfg(variant_family = "aws-k8s")]`
-    /// `#[cfg(variant_version = "1.21")]`
+    /// `#[cfg(variant_version = "1.24")]`
     /// `#[cfg(variant_flavor = "none")]`
     pub fn emit_cfgs(&self) {
         Self::rerun_if_changed();
@@ -407,11 +407,11 @@ fn parse_ok() {
             variant_flavor: None,
         },
         Test {
-            input: "aws-k8s-1.21-nvidia-some-additional-ignored-tuple-positions",
+            input: "aws-k8s-1.24-nvidia-some-additional-ignored-tuple-positions",
             platform: "aws",
             runtime: "k8s",
             variant_family: "aws-k8s",
-            variant_version: Some("1.21"),
+            variant_version: Some("1.24"),
             variant_flavor: Some("nvidia"),
         },
     ];
@@ -430,7 +430,7 @@ fn parse_ok() {
 
 #[test]
 fn parse_err() {
-    let tests = vec!["aws", "aws-", "aws-dev-", "aws-k8s-1.21-"];
+    let tests = vec!["aws", "aws-", "aws-dev-", "aws-k8s-1.24-"];
     for test in tests {
         let result = Variant::new(test);
         assert!(

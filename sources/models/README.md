@@ -22,16 +22,6 @@ Entries are sorted by filename, and later entries take precedence.
 
 The `#[model]` attribute on Settings and its sub-structs reduces duplication and adds some required metadata; see [its docs](model-derive/) for details.
 
-### aws-k8s-1.21: Kubernetes 1.21
-
-* [Model](src/aws-k8s-1.22/mod.rs)
-* [Default settings](src/aws-k8s-1.22/defaults.d/)
-
-#### aws-k8s-1.21-nvidia: Kubernetes 1.21 NVIDIA
-
-* [Model](src/aws-k8s-1.22-nvidia/mod.rs)
-* [Default settings](src/aws-k8s-1.22-nvidia/defaults.d/)
-
 ### aws-k8s-1.22: Kubernetes 1.22
 
 * [Model](src/aws-k8s-1.22/mod.rs)
@@ -87,11 +77,6 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/vmware-dev/mod.rs)
 * [Default settings](src/vmware-dev/defaults.d/)
 
-### vmware-k8s-1.21: VMware Kubernetes 1.21
-
-* [Model](src/vmware-k8s-1.22/mod.rs)
-* [Default settings](src/vmware-k8s-1.22/defaults.d/)
-
 ### vmware-k8s-1.22: VMware Kubernetes 1.22
 
 * [Model](src/vmware-k8s-1.22/mod.rs)
@@ -116,11 +101,6 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 * [Model](src/metal-dev/mod.rs)
 * [Default settings](src/metal-dev/defaults.d/)
-
-### metal-k8s-1.21: Metal Kubernetes 1.21
-
-* [Model](src/metal-k8s-1.23/mod.rs)
-* [Default settings](src/metal-k8s-1.22/defaults.d/)
 
 ### metal-k8s-1.22: Metal Kubernetes 1.22
 

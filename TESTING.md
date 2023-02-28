@@ -198,18 +198,18 @@ You will need to delete the EKS cluster manually when you are done using it.
 
 ```shell
 cargo make \
-  -e BUILDSYS_VARIANT="aws-k8s-1.21" \
+  -e BUILDSYS_VARIANT="aws-k8s-1.24" \
   -e BUILDSYS_ARCH="x86_64" \
   build
 
 cargo make \
-  -e BUILDSYS_VARIANT="aws-k8s-1.21" \
+  -e BUILDSYS_VARIANT="aws-k8s-1.24" \
   -e BUILDSYS_ARCH="x86_64" \
   -e PUBLISH_REGIONS="us-west-2"
   ami
 
 cargo make \
-  -e BUILDSYS_VARIANT="aws-k8s-1.21" \
+  -e BUILDSYS_VARIANT="aws-k8s-1.24" \
   -e BUILDSYS_ARCH="x86_64" \
   test
 ```
