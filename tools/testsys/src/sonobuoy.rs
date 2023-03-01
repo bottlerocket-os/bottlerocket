@@ -1,7 +1,9 @@
 use crate::crds::TestInput;
 use crate::error::{self, Result};
 use crate::run::KnownTestType;
-use bottlerocket_types::agent_config::{SonobuoyConfig, SonobuoyMode};
+use bottlerocket_types::agent_config::{
+    SonobuoyConfig, SonobuoyMode, WorkloadConfig, WorkloadTest,
+};
 use maplit::btreemap;
 use model::Test;
 use snafu::ResultExt;
@@ -19,7 +21,9 @@ pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
         .expect("A cluster name is required for migrations");
     let sonobuoy_mode = match test_input.test_type {
         KnownTestType::Conformance => SonobuoyMode::CertifiedConformance,
-        KnownTestType::Quick | KnownTestType::Migration => SonobuoyMode::Quick,
+        KnownTestType::Quick | KnownTestType::Migration | KnownTestType::Workload => {
+            SonobuoyMode::Quick
+        }
     };
 
     let labels = test_input.crd_input.labels(btreemap! {
@@ -80,6 +84,74 @@ pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
         ))
         .context(error::BuildSnafu {
             what: "Sonobuoy CRD",
+        })
+}
+
+/// Create a workload CRD for K8s testing.
+pub(crate) fn workload_crd(test_input: TestInput) -> Result<Test> {
+    let cluster_resource_name = test_input
+        .cluster_crd_name
+        .as_ref()
+        .expect("A cluster name is required for migrations");
+    let bottlerocket_resource_name = test_input
+        .bottlerocket_crd_name
+        .as_ref()
+        .expect("A cluster name is required for migrations");
+
+    let labels = test_input.crd_input.labels(btreemap! {
+        "testsys/type".to_string() => test_input.test_type.to_string(),
+        "testsys/cluster".to_string() => cluster_resource_name.to_string(),
+    });
+    let plugins: Vec<_> = test_input
+        .crd_input
+        .config
+        .workloads
+        .iter()
+        .map(|(name, image)| WorkloadTest {
+            name: name.to_string(),
+            image: image.to_string(),
+        })
+        .collect();
+    if plugins.is_empty() {
+        return Err(error::Error::Invalid {
+            what: "There were no plugins specified in the workload test.
+            Workloads can be specified in `Test.toml` or via the command line."
+                .to_string(),
+        });
+    }
+
+    WorkloadConfig::builder()
+        .resources(bottlerocket_resource_name)
+        .resources(cluster_resource_name)
+        .set_depends_on(Some(test_input.prev_tests))
+        .set_retries(Some(5))
+        .image(
+            test_input
+                .crd_input
+                .images
+                .k8s_workload_agent_image
+                .to_owned()
+                .expect("The default K8s workload testing image is missing"),
+        )
+        .set_image_pull_secret(
+            test_input
+                .crd_input
+                .images
+                .testsys_agent_pull_secret
+                .to_owned(),
+        )
+        .keep_running(true)
+        .kubeconfig_base64_template(cluster_resource_name, "encodedKubeconfig")
+        .plugins(plugins)
+        .set_secrets(Some(test_input.crd_input.config.secrets.to_owned()))
+        .set_labels(Some(labels))
+        .build(format!(
+            "{}{}",
+            cluster_resource_name,
+            test_input.name_suffix.unwrap_or("-test")
+        ))
+        .context(error::BuildSnafu {
+            what: "Workload CRD",
         })
 }
 

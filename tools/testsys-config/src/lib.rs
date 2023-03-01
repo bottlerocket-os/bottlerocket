@@ -261,6 +261,9 @@ pub struct GenericVariantConfig {
     pub control_plane_endpoint: Option<String>,
     /// The path to userdata that should be used for Bottlerocket launch
     pub userdata: Option<String>,
+    /// The workload tests that should be run
+    #[serde(default)]
+    pub workloads: BTreeMap<String, String>,
     #[serde(default)]
     pub dev: DeveloperConfig,
 }
@@ -280,6 +283,12 @@ impl GenericVariantConfig {
             self.secrets
         };
 
+        let workloads = if self.workloads.is_empty() {
+            other.workloads
+        } else {
+            self.workloads
+        };
+
         Self {
             cluster_names,
             instance_type: self.instance_type.or(other.instance_type),
@@ -289,6 +298,7 @@ impl GenericVariantConfig {
             conformance_registry: self.conformance_registry.or(other.conformance_registry),
             control_plane_endpoint: self.control_plane_endpoint.or(other.control_plane_endpoint),
             userdata: self.userdata.or(other.userdata),
+            workloads,
             dev: self.dev.merge(other.dev),
         }
     }
@@ -353,6 +363,7 @@ pub struct TestsysImages {
     pub sonobuoy_test_agent_image: Option<String>,
     pub ecs_test_agent_image: Option<String>,
     pub migration_test_agent_image: Option<String>,
+    pub k8s_workload_agent_image: Option<String>,
     pub controller_image: Option<String>,
     pub testsys_agent_pull_secret: Option<String>,
 }
@@ -380,6 +391,7 @@ impl TestsysImages {
             sonobuoy_test_agent_image: Some(format!("{}/sonobuoy-test-agent:{tag}", registry)),
             ecs_test_agent_image: Some(format!("{}/ecs-test-agent:{tag}", registry)),
             migration_test_agent_image: Some(format!("{}/migration-test-agent:{tag}", registry)),
+            k8s_workload_agent_image: Some(format!("{}/k8s-workload-agent:{tag}", registry)),
             controller_image: Some(format!("{}/controller:{tag}", registry)),
             testsys_agent_pull_secret: None,
         }
@@ -409,6 +421,9 @@ impl TestsysImages {
             migration_test_agent_image: self
                 .migration_test_agent_image
                 .or(other.migration_test_agent_image),
+            k8s_workload_agent_image: self
+                .k8s_workload_agent_image
+                .or(other.k8s_workload_agent_image),
             controller_image: self.controller_image.or(other.controller_image),
             testsys_agent_pull_secret: self
                 .testsys_agent_pull_secret
