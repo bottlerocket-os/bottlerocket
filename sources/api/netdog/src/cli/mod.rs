@@ -1,6 +1,8 @@
 pub(crate) mod generate_hostname;
 pub(crate) mod generate_net_config;
 pub(crate) mod node_ip;
+#[cfg(net_backend = "systemd-networkd")]
+pub(crate) mod primary_interface;
 pub(crate) mod set_hostname;
 pub(crate) mod write_resolv_conf;
 
@@ -19,6 +21,8 @@ use crate::{
 pub(crate) use generate_hostname::GenerateHostnameArgs;
 pub(crate) use generate_net_config::GenerateNetConfigArgs;
 pub(crate) use node_ip::NodeIpArgs;
+#[cfg(net_backend = "systemd-networkd")]
+pub(crate) use primary_interface::PrimaryInterfaceArgs;
 use serde::{Deserialize, Serialize};
 pub(crate) use set_hostname::SetHostnameArgs;
 use snafu::{ensure, OptionExt, ResultExt};
