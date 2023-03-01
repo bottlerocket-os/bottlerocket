@@ -1,5 +1,5 @@
 Name: %{_cross_os}glibc
-Version: 2.36
+Version: 2.37
 Release: 1%{?dist}
 Summary: The GNU libc libraries
 License: LGPL-2.1-or-later AND (LGPL-2.1-or-later WITH GCC-exception-2.0) AND GPL-2.0-or-later AND (GPL-2.0-or-later WITH GCC-exception-2.0) AND BSD-3-Clause AND ISC
@@ -15,48 +15,17 @@ Source99: HACK-only-build-and-install-localedef.patch
 
 # Upstream patches from 2.36 release branch:
 # ```
-# git checkout origin/release/2.36/master
-# git format-patch glibc-2.36..
+# git checkout origin/release/2.37/master
+# git format-patch glibc-2.37..
 # ```
-Patch0001: 0001-stdlib-Suppress-gcc-diagnostic-that-char8_t-is-a-key.patch
-Patch0002: 0002-wcsmbs-Add-missing-test-c8rtomb-test-mbrtoc8-depende.patch
-Patch0003: 0003-dlfcn-Pass-caller-pointer-to-static-dlopen-implement.patch
-Patch0004: 0004-Update-syscall-lists-for-Linux-5.19.patch
-Patch0005: 0005-elf-Replace-strcpy-call-with-memcpy-BZ-29454.patch
-Patch0006: 0006-Linux-Terminate-subprocess-on-late-failure-in-tst-pi.patch
-Patch0007: 0007-alpha-Fix-generic-brk-system-call-emulation-in-__brk.patch
-Patch0008: 0008-socket-Check-lengths-before-advancing-pointer-in-CMS.patch
-Patch0009: 0009-NEWS-Add-entry-for-bug-28846.patch
-Patch0010: 0010-glibcextract.py-Add-compile_c_snippet.patch
-Patch0011: 0011-linux-Use-compile_c_snippet-to-check-linux-pidfd.h-a.patch
-Patch0012: 0012-linux-Mimic-kernel-defition-for-BLOCK_SIZE.patch
-Patch0013: 0013-linux-Use-compile_c_snippet-to-check-linux-mount.h-a.patch
-Patch0014: 0014-linux-Fix-sys-mount.h-usage-with-kernel-headers.patch
-Patch0015: 0015-Linux-Fix-enum-fsconfig_command-detection-in-sys-mou.patch
-Patch0016: 0016-syslog-Fix-large-messages-BZ-29536.patch
-Patch0017: 0017-elf-Call-__libc_early_init-for-reused-namespaces-bug.patch
-Patch0018: 0018-Apply-asm-redirections-in-wchar.h-before-first-use.patch
-Patch0019: 0019-elf-Restore-how-vDSO-dependency-is-printed-with-LD_T.patch
-Patch0020: 0020-syslog-Remove-extra-whitespace-between-timestamp-and.patch
-Patch0021: 0021-Add-NEWS-entry-for-CVE-2022-39046.patch
-Patch0022: 0022-nscd-Fix-netlink-cache-invalidation-if-epoll-is-used.patch
-Patch0023: 0023-resolv-Add-tst-resolv-byaddr-for-testing-reverse-loo.patch
-Patch0024: 0024-resolv-Add-tst-resolv-aliases.patch
-Patch0025: 0025-resolv-Add-internal-__res_binary_hnok-function.patch
-Patch0026: 0026-resolv-Add-the-__ns_samebinaryname-function.patch
-Patch0027: 0027-resolv-Add-internal-__ns_name_length_uncompressed-fu.patch
-Patch0028: 0028-resolv-Add-DNS-packet-parsing-helpers-geared-towards.patch
-Patch0029: 0029-nss_dns-Split-getanswer_ptr-from-getanswer_r.patch
-Patch0030: 0030-nss_dns-Rewrite-_nss_dns_gethostbyaddr2_r-and-getans.patch
-Patch0031: 0031-nss_dns-Remove-remnants-of-IPv6-address-mapping.patch
-Patch0032: 0032-nss_dns-Rewrite-getanswer_r-to-match-getanswer_ptr-b.patch
-Patch0033: 0033-nss_dns-In-gaih_getanswer_slice-skip-strange-aliases.patch
-Patch0034: 0034-resolv-Add-new-tst-resolv-invalid-cname.patch
-Patch0035: 0035-nss_dns-Rewrite-_nss_dns_gethostbyname4_r-using-curr.patch
-Patch0036: 0036-resolv-Fix-building-tst-resolv-invalid-cname-for-ear.patch
-Patch0037: 0037-NEWS-Note-bug-12154-and-bug-29305-as-fixed.patch
-Patch0038: 0038-elf-Run-tst-audit-tlsdesc-tst-audit-tlsdesc-dlopen-e.patch
-Patch0039: 0039-elf-Fix-hwcaps-string-size-overestimation.patch
+Patch0001: 0001-cdefs-Limit-definition-of-fortification-macros.patch
+Patch0002: 0002-LoongArch-Add-new-relocation-types.patch
+Patch0003: 0003-Use-64-bit-time_t-interfaces-in-strftime-and-strptim.patch
+Patch0004: 0004-Account-for-grouping-in-printf-width-bug-30068.patch
+Patch0005: 0005-NEWS-Document-CVE-2023-25139.patch
+Patch0006: 0006-elf-Smoke-test-ldconfig-p-against-system-etc-ld.so.c.patch
+Patch0007: 0007-stdlib-Undo-post-review-change-to-16adc58e73f3-BZ-27.patch
+Patch0008: 0008-elf-Restore-ldconfig-libc6-implicit-soname-logic-BZ-.patch
 
 # Fedora patches
 Patch1001: glibc-cs-path.patch

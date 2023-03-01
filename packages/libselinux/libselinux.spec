@@ -1,5 +1,5 @@
 Name: %{_cross_os}libselinux
-Version: 3.4
+Version: 3.5
 Release: 1%{?dist}
 Summary: Library for SELinux
 License: LicenseRef-SELinux-PD
@@ -65,7 +65,6 @@ export USE_PCRE2='y' \\\
 %exclude %{_cross_sbindir}/compute_create
 %exclude %{_cross_sbindir}/compute_member
 %exclude %{_cross_sbindir}/compute_relabel
-%exclude %{_cross_sbindir}/compute_user
 %exclude %{_cross_sbindir}/getconlist
 %exclude %{_cross_sbindir}/getdefaultcon
 %exclude %{_cross_sbindir}/getenforce
@@ -82,8 +81,7 @@ export USE_PCRE2='y' \\\
 %exclude %{_cross_sbindir}/selabel_partial_match
 %exclude %{_cross_sbindir}/selinux_check_access
 %exclude %{_cross_sbindir}/selinux_check_securetty_context
-%exclude %{_cross_sbindir}/selinuxconlist
-%exclude %{_cross_sbindir}/selinuxdefcon
+%exclude %{_cross_sbindir}/getpidprevcon
 %exclude %{_cross_sbindir}/selinuxenabled
 %exclude %{_cross_sbindir}/selinuxexeccon
 %exclude %{_cross_sbindir}/setenforce

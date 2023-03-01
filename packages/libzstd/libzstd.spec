@@ -1,10 +1,10 @@
 Name: %{_cross_os}libzstd
-Version: 1.5.2
+Version: 1.5.4
 Release: 1%{?dist}
 Summary: Library for Zstandard compression
 License: BSD-3-Clause AND GPL-2.0-only
 URL: https://github.com/facebook/zstd/
-Source0: https://github.com/faceboot/zstd/archive/v%{version}.tar.gz
+Source0: https://github.com/faceboot/zstd/releases/download/v%{version}/zstd-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
 
 %description

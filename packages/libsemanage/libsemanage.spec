@@ -1,5 +1,5 @@
 Name: %{_cross_os}libsemanage
-Version: 3.4
+Version: 3.5
 Release: 1%{?dist}
 Summary: Library for SELinux binary policy manipulation
 License: LGPL-2.1-or-later
@@ -45,7 +45,7 @@ export PREFIX='%{_cross_prefix}' \\\
 %make_install
 
 %files
-%license COPYING
+%license LICENSE
 %{_cross_attribution_file}
 %{_cross_libdir}/*.so.*
 %exclude %{_cross_libexecdir}

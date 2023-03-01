@@ -2,12 +2,12 @@
 %global gorepo cloud-provider-aws
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.25.1
+%global gover 1.25.3
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
 
-%global gitrev 704b05de2c8633e4acaae62bd81c5575e1e5c1d6
+%global gitrev 2ca3fc6e5e74e856411e25ae0f26d4c299e2eb3d
 %global shortrev %(c=%{gitrev}; echo ${c:0:7})
 
 Name: %{_cross_os}ecr-credential-provider

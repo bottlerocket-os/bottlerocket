@@ -2,7 +2,7 @@
 %global gorepo aws-iam-authenticator
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 0.5.9
+%global gover 0.6.2
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -14,6 +14,7 @@ Summary: AWS IAM authenticator
 License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
+Source1: bundled-aws-iam-authenticator-%{gover}.tar.gz
 Source1000: clarify.toml
 
 BuildRequires: git
@@ -23,7 +24,8 @@ BuildRequires: %{_cross_os}glibc-devel
 %{summary}.
 
 %prep
-%autosetup -Sgit -n %{gorepo}-%{gover} -p1
+%setup -n %{gorepo}-%{gover} -q
+%setup -T -D -n %{gorepo}-%{version} -b 1
 
 %build
 %set_cross_go_flags

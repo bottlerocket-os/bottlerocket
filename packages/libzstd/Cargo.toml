@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/facebook/zstd/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/facebook/zstd/archive/v1.5.2.tar.gz"
-sha512 = "e107508a41fca50845cc2494e64adaba93efb95a2fa486fc962510a8ba4b2180d93067cae9870f119e88e5e8b28a046bc2240b0b23cdd8933d1fb1a6a9668c1e"
+url = "https://github.com/facebook/zstd/releases/download/v1.5.4/zstd-1.5.4.tar.gz"
+sha512 = "2896a6dd6b60cc251720356babcbab6018c874eb2149121b26e28041496fc355a9cb5fd1b39c91558fcfbafb789b3d721264a0f9b5734f893d5f3cdf97016394"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

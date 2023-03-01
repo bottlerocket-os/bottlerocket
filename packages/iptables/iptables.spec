@@ -1,10 +1,10 @@
 Name: %{_cross_os}iptables
-Version: 1.8.8
+Version: 1.8.9
 Release: 1%{?dist}
 Summary: Tools for managing Linux kernel packet filtering capabilities
 License: GPL-2.0-or-later AND GPL-2.0-only
 URL: http://www.netfilter.org/
-Source0: http://www.netfilter.org/projects/iptables/files/iptables-%{version}.tar.bz2
+Source0: https://www.netfilter.org/projects/iptables/files/iptables-%{version}.tar.xz
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libmnl-devel
@@ -16,7 +16,7 @@ Requires: %{_cross_os}libnfnetlink
 Requires: %{_cross_os}libnftnl
 Requires: %{_cross_os}libnetfilter_conntrack
 
-Patch1001: 1001-xshared-Fix-build-for-Werror-format-security.patch
+Patch1001: 1001-extensions-NAT-Fix-for-Werror-format-security.patch
 
 %description
 %{summary}.
@@ -73,6 +73,7 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %{_cross_libdir}/xtables/*.so
 %exclude %{_cross_mandir}/*
 %exclude %{_cross_datadir}/xtables/pf.os
+%exclude %{_cross_datadir}/xtables/iptables.xslt
 %exclude %{_cross_sbindir}/iptables-apply
 %exclude %{_cross_sbindir}/ip6tables-apply
 %exclude %{_cross_sbindir}/nfnl_osf
@@ -83,6 +84,5 @@ sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 %dir %{_cross_includedir}/libiptc
 %{_cross_includedir}/libiptc/*.h
 %{_cross_pkgconfigdir}/*.pc
-%exclude %{_cross_libdir}/*.la
 
 %changelog

@@ -1,5 +1,5 @@
 Name: %{_cross_os}policycoreutils
-Version: 3.4
+Version: 3.5
 Release: 1%{?dist}
 Summary: A set of SELinux policy tools
 License: GPL-2.0-only
@@ -44,7 +44,7 @@ done
 rm %{buildroot}%{_cross_sbindir}/sestatus
 
 %files
-%license COPYING
+%license LICENSE
 %{_cross_attribution_file}
 %{_cross_sbindir}/load_policy
 %{_cross_sbindir}/semodule
