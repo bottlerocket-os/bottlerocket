@@ -644,20 +644,23 @@ mod error {
         #[snafu(display("Failed to add new target '{}' to repo: {}", path.display(), source))]
         AddTarget {
             path: PathBuf,
-            source: tough::error::Error,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
         },
 
         #[snafu(display("Failed to build target metadata from path '{}': {}", path.display(), source))]
         BuildTarget {
             path: PathBuf,
-            source: tough::schema::Error,
+            #[snafu(source(from(tough::schema::Error, Box::new)))]
+            source: Box<tough::schema::Error>,
         },
 
         #[snafu(display("Failed to copy target '{}' to '{}': {}", target.display(), path.display(), source))]
         CopyTarget {
             target: PathBuf,
             path: PathBuf,
-            source: tough::error::Error,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
         },
 
         #[snafu(display("Error reading config: {}", source))]
@@ -667,7 +670,10 @@ mod error {
         CreateDir { path: PathBuf, source: io::Error },
 
         #[snafu(display("Failed to create repo editor from given repo: {}", source))]
-        EditorFromRepo { source: tough::error::Error },
+        EditorFromRepo {
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
+        },
 
         #[snafu(display("Failed to read '{}': {}", path.display(), source))]
         File { path: PathBuf, source: io::Error },
@@ -685,7 +691,8 @@ mod error {
         LinkTarget {
             target: PathBuf,
             path: PathBuf,
-            source: tough::error::Error,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
         },
 
         #[snafu(display("Failed to write Manifest to '{}': {}", path.display(), source))]
@@ -701,7 +708,10 @@ mod error {
         MissingRepoUrls { repo: String },
 
         #[snafu(display("Failed to create new repo editor: {}", source))]
-        NewEditor { source: tough::error::Error },
+        NewEditor {
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
+        },
 
         #[snafu(display("Repo does not have a manifest.json: {}", metadata_url))]
         NoManifest { metadata_url: Url },
@@ -718,7 +728,8 @@ mod error {
         #[snafu(display("Failed to read target '{}' from repo: {}", target, source))]
         ReadTarget {
             target: String,
-            source: tough::error::Error,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
         },
 
         #[snafu(display("Failed to create async runtime: {}", source))]
@@ -727,7 +738,8 @@ mod error {
         #[snafu(display("Failed to parse target name from string '{}': {}", target, source))]
         ParseTargetName {
             target: String,
-            source: tough::error::Error,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
         },
 
         #[snafu(display("Repo exists at '{}' - remove it and try again", path.display()))]
@@ -743,31 +755,38 @@ mod error {
         ))]
         RepoLoad {
             metadata_base_url: Url,
-            source: tough::error::Error,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
         },
 
         #[snafu(display("Requested repository does not exist: '{}'", url))]
         RepoNotFound { url: Url },
 
         #[snafu(display("Failed to sign repository: {}", source))]
-        RepoSign { source: tough::error::Error },
+        RepoSign {
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
+        },
 
         #[snafu(display("Failed to write repository to {}: {}", path.display(), source))]
         RepoWrite {
             path: PathBuf,
-            source: tough::error::Error,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
         },
 
         #[snafu(display("Failed to set targets expiration to {}: {}", expiration, source))]
         SetTargetsExpiration {
             expiration: DateTime<Utc>,
-            source: tough::error::Error,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
         },
 
         #[snafu(display("Failed to set targets version to {}: {}", version, source))]
         SetTargetsVersion {
             version: u64,
-            source: tough::error::Error,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
         },
 
         #[snafu(display("Failed to set waves from '{}': {}", wave_policy_path.display(), source))]

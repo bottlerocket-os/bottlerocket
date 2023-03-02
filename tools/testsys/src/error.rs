@@ -44,7 +44,10 @@ pub enum Error {
         context(false),
         display("Unable create template from yaml: {}", source)
     )]
-    HandlebarsTemplate { source: handlebars::TemplateError },
+    HandlebarsTemplate {
+        #[snafu(source(from(handlebars::TemplateError, Box::new)))]
+        source: Box<handlebars::TemplateError>,
+    },
 
     #[snafu(display("Unable to create map from {}: {}", what, source))]
     IntoMap { what: String, source: model::Error },

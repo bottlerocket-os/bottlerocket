@@ -439,14 +439,21 @@ rc=0
 export VARIANT="${BUILDSYS_VARIANT}"
 
 # For rust first-party source code
-if ! cargo clippy \
-  --manifest-path ${BUILDSYS_TOOLS_DIR}/Cargo.toml \
+if ! docker run --rm \
+   -v "$(pwd)":/tmp \
+   "${BUILDSYS_SDK_IMAGE}" \
+   cargo clippy \
+  --manifest-path /tmp/tools/Cargo.toml \
   --locked -- -D warnings --no-deps; then
   rc=1
 fi
 
-if ! cargo clippy \
-  --manifest-path ${BUILDSYS_SOURCES_DIR}/Cargo.toml \
+if ! docker run --rm \
+   -v "$(pwd)":/tmp \
+   -e VARIANT \
+   "${BUILDSYS_SDK_IMAGE}" \
+   cargo clippy \
+  --manifest-path /tmp/sources/Cargo.toml \
   --locked -- -D warnings --no-deps; then
   rc=1
 fi

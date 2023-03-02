@@ -469,7 +469,10 @@ mod error {
             context(false),
             display("Failed to create template for cluster name: {}", source)
         )]
-        TemplateError { source: handlebars::TemplateError },
+        TemplateError {
+            #[snafu(source(from(handlebars::TemplateError, Box::new)))]
+            source: Box<handlebars::TemplateError>,
+        },
 
         #[snafu(
             context(false),
