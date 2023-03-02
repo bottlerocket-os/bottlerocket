@@ -1,0 +1,20 @@
+[package]
+name = "ethtool"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+releases-url = "https://kernel.org/pub/software/network/ethtool/"
+
+[[package.metadata.build-package.external-files]]
+url = "https://mirrors.edge.kernel.org/pub/software/network/ethtool/ethtool-6.2.tar.xz"
+sha512 = "ff1f14c7876163bef93ca48e22a3429f09b4bcb3e1d101ef297d9f226e3fc2d3c3f19faf5b85f54cb558479e4a408ef5356a2d12e7ba132cc4cadaf92effccaf"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libmnl = { path = "../libmnl" }
