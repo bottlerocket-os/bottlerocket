@@ -1,0 +1,16 @@
+[Unit]
+Description=Checks and marks if boot has ever succeeded before
+DefaultDependencies=no
+Before=label-data-alternative.service label-data-preferred.service
+RequiresMountsFor=/etc
+
+[Service]
+Type=oneshot
+# Check if boot has ever succeeded before
+ExecStart=/bin/signpost has-boot-ever-succeeded
+RemainAfterExit=true
+# If boot has succeeded before, the marker file will be non-zero-sized
+StandardOutput=file:/etc/has-boot-ever-succeeded
+
+[Install]
+WantedBy=local-fs.target

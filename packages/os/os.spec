@@ -47,6 +47,7 @@ Source118: generate-network-config.service
 Source119: reboot-if-required.service
 Source120: warm-pool-wait.service
 Source121: disable-udp-offload.service
+Source122: has-boot-ever-succeeded.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -411,7 +412,7 @@ install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
-  %{S:113} %{S:114} %{S:118} %{S:119} \
+  %{S:113} %{S:114} %{S:118} %{S:119} %{S:122} \
   %{buildroot}%{_cross_unitdir}
 
 %if %{with nvidia_flavor}
@@ -526,6 +527,7 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %files -n %{_cross_os}signpost
 %{_cross_bindir}/signpost
 %{_cross_unitdir}/mark-successful-boot.service
+%{_cross_unitdir}/has-boot-ever-succeeded.service
 
 %files -n %{_cross_os}updog
 %{_cross_bindir}/updog

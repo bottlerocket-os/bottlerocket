@@ -4,6 +4,8 @@ DefaultDependencies=no
 Conflicts=shutdown.target
 # Only run this if a partition labeled 'BOTTLEROCKET-DATA' does not exist already.
 ConditionPathIsSymbolicLink=!/dev/disk/by-partlabel/BOTTLEROCKET-DATA
+# Only run if this boot has never succeeded before
+ConditionFileNotEmpty=!/etc/has-boot-ever-succeeded
 # This is the partition GUID for the DATA-A partition.
 Wants=dev-disk-by\x2dpartuuid-5b94e8df\x2d28b8\x2d485c\x2d9d19\x2d362263b5944c.device
 After=dev-disk-by\x2dpartuuid-5b94e8df\x2d28b8\x2d485c\x2d9d19\x2d362263b5944c.device
