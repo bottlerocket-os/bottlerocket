@@ -401,16 +401,29 @@ for m in ${GO_MODULES}; do
 done
 
 # For rust first-party source code
-if ! cargo fmt \
-  --manifest-path ${BUILDSYS_SOURCES_DIR}/Cargo.toml \
+if ! docker run --rm \
+   -u $(id -u):$(id -g) \
+   -e CARGO_HOME="/tmp/.cargo" \
+   -v "${CARGO_HOME}":/tmp/.cargo \
+   -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
+   "${BUILDSYS_SDK_IMAGE}" \
+   cargo fmt \
+  --manifest-path /tmp/sources/Cargo.toml \
   --message-format short \
   --all \
   -- --check; then
   rc=1
 fi
 
-if ! cargo fmt \
-  --manifest-path ${BUILDSYS_TOOLS_DIR}/Cargo.toml \
+if ! docker run --rm \
+   -u $(id -u):$(id -g) \
+   -e CARGO_HOME="/tmp/.cargo" \
+   -v "${CARGO_HOME}":/tmp/.cargo \
+   -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
+   -v "${BUILDSYS_ROOT_DIR}/tools":/tmp/tools \
+   "${BUILDSYS_SDK_IMAGE}" \
+   cargo fmt \
+  --manifest-path /tmp/tools/Cargo.toml \
   --message-format short \
   --all \
   -- --check; then
