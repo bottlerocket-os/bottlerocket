@@ -9,9 +9,12 @@ USAGE:
 SUBCOMMANDS:
     status                  Show partition sets and priority status
     mark-successful-boot    Mark the active partitions as successfully booted
-    clear-inactive          Clears inactive priority information to prepare writing images disk
-    upgrade-to-inactive     Sets the inactive partitions as new upgrade partitions
+    clear-inactive          Clears inactive priority information to prepare writing images to disk
+    mark-inactive-valid     Marks the inactive partition as having a valid image
+    upgrade-to-inactive     Sets the inactive partitions as new upgrade partitions if marked valid
+    cancel-upgrade          Reverse upgrade-to-inactive
     rollback-to-inactive    Deprioritizes the inactive partitions
+    has-boot-ever-succeeded Checks whether boot has ever succeeded
     rewrite-table           Rewrite the partition table with no changes to disk (used for testing this code)
 ```
 
@@ -25,13 +28,14 @@ The Bottlerocket OS disk has two partition sets, each containing three partition
 
 The Bottlerocket boot partition uses the same GPT partition attribute flags as Chrome OS, which are used by GRUB to select the partition from which to read a `grub.cfg`:
 
-| Bits  | Content                       |
-|-------|-------------------------------|
-| 63-57 | Unused                        |
-| 56    | Successful boot flag          |
-| 55-52 | Tries remaining               |
-| 51-48 | Priority                      |
-| 47-0  | Reserved by GPT specification |
+| Bits  | Content                         |
+|-------|---------------------------------|
+| 63-56 | Unused                          |
+| 57    | Have successfully booted before |
+| 56    | Successful boot flag            |
+| 55-52 | Tries remaining                 |
+| 51-48 | Priority                        |
+| 47-0  | Reserved by GPT specification   |
 
 The boot partition GRUB selects contains a grub.cfg which references the root and hash partitions by offset, thus selecting all three partitions of a set.
 

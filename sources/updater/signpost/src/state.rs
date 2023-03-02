@@ -13,10 +13,13 @@ use std::path::{Path, PathBuf};
 const BOTTLEROCKET_BOOT: [u8; 16] = uuid_to_guid(hex!("6b636168 7420 6568 2070 6c616e657421"));
 const BOTTLEROCKET_ROOT: [u8; 16] = uuid_to_guid(hex!("5526016a 1a97 4ea4 b39a b7c8c6ca4502"));
 const BOTTLEROCKET_HASH: [u8; 16] = uuid_to_guid(hex!("598f10af c955 4456 6a99 7720068a6cea"));
+const BOTTLEROCKET_PRIVATE: [u8; 16] = uuid_to_guid(hex!("440408bb eb0b 4328 a6e5 a29038fad706"));
 
 #[derive(Debug, Clone)]
 pub struct State {
     os_disk: PathBuf,
+    // BOTTLEROCKET_PRIVATE partition number
+    private_partition_num: u32,
     sets: [PartitionSet; 2],
     /// The partition numbers that correspond to the boot partitions in each partition set,
     /// respectively.
@@ -133,6 +136,7 @@ impl State {
 
         Ok(Self {
             os_disk: os_disk.path(),
+            private_partition_num: nth_guid(BOTTLEROCKET_PRIVATE, 0)?,
             sets,
             boot_partition_nums,
             table,
@@ -144,12 +148,20 @@ impl State {
         &self.os_disk
     }
 
+    fn gpt_attributes(&self, num_part: u32) -> u64 {
+        self.table[num_part].attribute_bits
+    }
+
     fn gptprio(&self, select: SetSelect) -> GptPrio {
-        GptPrio::from(self.table[self.boot_partition_nums[select.idx()]].attribute_bits)
+        GptPrio::from(self.gpt_attributes(self.boot_partition_nums[select.idx()]))
+    }
+
+    fn set_gpt_attributes(&mut self, num_part: u32, flags: GptPrio) {
+        self.table[num_part].attribute_bits = flags.into();
     }
 
     fn set_gptprio(&mut self, select: SetSelect, flags: GptPrio) {
-        self.table[self.boot_partition_nums[select.idx()]].attribute_bits = flags.into();
+        self.set_gpt_attributes(self.boot_partition_nums[select.idx()], flags);
     }
 
     pub fn active(&self) -> SetSelect {
@@ -187,10 +199,15 @@ impl State {
     }
 
     /// Sets the active partition as successfully booted, but **does not write to the disk**.
+    /// Marks the BOTTLEROCKET_PRIVATE partition table to indicate that boot has succeeded at least once
     pub fn mark_successful_boot(&mut self) {
         let mut flags = self.gptprio(self.active());
         flags.set_successful(true);
         self.set_gptprio(self.active(), flags);
+
+        let mut private_flags = GptPrio::from(self.gpt_attributes(self.private_partition_num));
+        private_flags.boot_has_succeeded();
+        self.set_gpt_attributes(self.private_partition_num, private_flags);
     }
 
     /// Clears priority bits of the inactive partition in preparation to write new images, but
@@ -280,6 +297,12 @@ impl State {
         self.set_gptprio(self.active(), active_flags);
 
         Ok(())
+    }
+
+    /// Returns whether boot has ever succeeded or not
+    pub fn has_boot_succeeded(&mut self) -> bool {
+        let private_flags = GptPrio::from(self.gpt_attributes(self.private_partition_num));
+        private_flags.has_boot_succeeded()
     }
 
     /// Writes the partition table to the OS disk.
