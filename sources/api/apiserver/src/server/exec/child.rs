@@ -142,6 +142,9 @@ impl ChildHandles {
         // process too, or it'd stick around forever.  Perform the rest of initialization in a
         // closure so that we can kill the child easily on any error, returning the original value.
         (move || {
+            // Starting with Rust 2021, need to explicitly capture the while child variable
+            let _ = &child;
+
             // Now that the process is spawned, if we created a PTY, close its slave fd in the
             // parent process, or reads of the master side will block.
             if let Some(close_fd) = child_fds.close_fd {

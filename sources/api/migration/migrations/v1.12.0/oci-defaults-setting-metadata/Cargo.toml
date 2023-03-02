@@ -1,7 +1,7 @@
 [package]
 name = "oci-defaults-setting-metadata"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 authors = ["Mahdi Chaker <mmchaker@amazon.com>"]
 license = "Apache-2.0 OR MIT"
 publish = false
