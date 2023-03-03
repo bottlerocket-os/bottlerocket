@@ -20,7 +20,7 @@ regex = "1"
 semver = "1"
 simplelog = "0.12"
 snafu = "0.7"
-tough = "0.12"
+tough = "0.13"
 update_metadata = { path = "../../../updater/update_metadata", version = "0.1" }
 url = "2"
 
