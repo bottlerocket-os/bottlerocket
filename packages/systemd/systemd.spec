@@ -176,7 +176,11 @@ CONFIGURE_OPTS=(
  -Dpkgconfigdatadir='%{_cross_pkgconfigdir}'
  -Dpkgconfiglibdir='%{_cross_pkgconfigdir}'
 
+ %if %{with unified_cgroup_hierarchy}
+ -Ddefault-hierarchy=unified
+ %else
  -Ddefault-hierarchy=hybrid
+ %endif
 
  -Dadm-group=false
  -Dwheel-group=false

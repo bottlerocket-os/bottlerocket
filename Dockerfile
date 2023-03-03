@@ -68,6 +68,7 @@ ARG VARIANT_FLAVOR
 ARG REPO
 ARG GRUB_SET_PRIVATE_VAR
 ARG SYSTEMD_NETWORKD
+ARG UNIFIED_CGROUP_HIERARCHY
 ENV SYSTEMD_NETWORKD=${SYSTEMD_NETWORKD}
 ENV VARIANT=${VARIANT}
 WORKDIR /home/builder
@@ -102,6 +103,7 @@ RUN rpmdev-setuptree \
    && echo "%bcond_without $(V=${VARIANT_FLAVOR:-no}; V=${V,,}; echo ${V//-/_})_flavor" >> .bconds \
    && echo -e -n "${GRUB_SET_PRIVATE_VAR:+%bcond_without grub_set_private_var\n}" >> .bconds \
    && echo -e -n "${SYSTEMD_NETWORKD:+%bcond_without systemd_networkd\n}" >> .bconds \
+   && echo -e -n "${UNIFIED_CGROUP_HIERARCHY:+%bcond_without unified_cgroup_hierarchy\n}" >> .bconds \
    && cat .bconds ${PACKAGE}.spec >> rpmbuild/SPECS/${PACKAGE}.spec \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \
    && echo ${NOCACHE}
