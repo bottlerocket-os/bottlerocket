@@ -12,7 +12,7 @@ use std::io;
 use std::path::PathBuf;
 use std::sync::mpsc;
 use structopt::{clap, StructOpt};
-use tough::{Repository, RepositoryLoader};
+use tough::{Repository, RepositoryLoader, TargetName};
 use url::Url;
 
 /// Validates a set of TUF repositories
@@ -57,26 +57,14 @@ fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
     let (tx, rx) = mpsc::channel();
 
     for target in targets.keys() {
+        let repo = repo.clone();
         let tx = tx.clone();
-        let mut reader = repo
-            .read_target(target)
-            .with_context(|_| repo_error::ReadTargetSnafu {
-                target: target.raw(),
-            })?
-            .with_context(|| error::TargetMissingSnafu {
-                target: target.raw(),
-            })?;
         info!("Downloading target: {}", target.raw());
         let target = target.clone();
         thread_pool.spawn(move || {
-            tx.send({
-                // tough's `Read` implementation validates the target as it's being downloaded
-                io::copy(&mut reader, &mut io::sink()).context(error::TargetDownloadSnafu {
-                    target: target.raw(),
-                })
-            })
-            // inability to send on this channel is unrecoverable
-            .unwrap();
+            tx.send(download_targets(&repo, target))
+                // inability to send on this channel is unrecoverable
+                .unwrap();
         });
     }
     // close all senders
@@ -92,6 +80,27 @@ fn retrieve_targets(repo: &Repository) -> Result<(), Error> {
 
     // no errors were found, the targets are validated
     Ok(())
+}
+
+fn download_targets(repo: &Repository, target: TargetName) -> Result<u64, Error> {
+    let mut reader = match repo.read_target(&target) {
+        Ok(Some(reader)) => reader,
+        Ok(None) => {
+            return error::TargetMissingSnafu {
+                target: target.raw(),
+            }
+            .fail()
+        }
+        Err(e) => {
+            return Err(e).context(error::TargetReadSnafu {
+                target: target.raw(),
+            })
+        }
+    };
+    // tough's `Read` implementation validates the target as it's being downloaded
+    io::copy(&mut reader, &mut io::sink()).context(error::TargetDownloadSnafu {
+        target: target.raw(),
+    })
 }
 
 fn validate_repo(
@@ -175,6 +184,13 @@ mod error {
 
         #[snafu(display("Missing target: {}", target))]
         TargetMissing { target: String },
+
+        #[snafu(display("Failed to read target '{}' from repo: {}", target, source))]
+        TargetRead {
+            target: String,
+            #[snafu(source(from(tough::error::Error, Box::new)))]
+            source: Box<tough::error::Error>,
+        },
 
         #[snafu(display("Unable to create thread pool: {}", source))]
         ThreadPool { source: rayon::ThreadPoolBuildError },

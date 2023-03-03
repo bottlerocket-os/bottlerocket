@@ -58,14 +58,25 @@ multiple-versions = "deny"
 wildcards = "deny"
 
 skip = [
+    # num_cpus uses an old version of hermit-abi
+    { name = "hermit-abi", version = "=0.2.6" },
+    # tungstenite other crates use an old version of base64
+    { name = "base64", version = "=0.13.1" },
+    # governor uses an old version of wasi
+    { name = "wasi", version = "=0.10.2" },
+    # testsys uses an old version of time
+    { name = "time", version = "=0.1.43" },
 ]
 
 skip-tree = [
     # structopt pulls in an older version of clap
     { name = "structopt", version = "0.3.26" },
 
-    # aws-smithy-client uses an older hyper-rustls
-    { name = "aws-smithy-client", version = "0.48.0" },
+    # windows-sys is not a direct dependency. mio and schannel
+    # are using different versions of windows-sys. we skip the
+    # dependency tree because windows-sys has many sub-crates
+    # that differ in major version.
+    { name = "windows-sys", version = "=0.42.0" },
 ]
 
 [sources]

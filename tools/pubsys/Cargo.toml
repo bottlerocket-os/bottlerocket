@@ -8,14 +8,15 @@ publish = false
 
 [dependencies]
 async-trait = "0.1"
-aws-config = "0.48"
-aws-sdk-ebs = "0.18"
-aws-sdk-ec2 = "0.18"
-aws-sdk-kms = "0.18"
-aws-sdk-ssm = "0.18"
-aws-sdk-sts = "0.18"
-aws-smithy-types = "0.48"
-aws-types = "0.48"
+aws-config = "0.54"
+aws-credential-types = "0.54"
+aws-sdk-ebs = "0.24"
+aws-sdk-ec2 = "0.24"
+aws-sdk-kms = "0.24"
+aws-sdk-ssm = "0.24"
+aws-sdk-sts = "0.24"
+aws-smithy-types = "0.54"
+aws-types = "0.54"
 buildsys = { path = "../buildsys", version = "0.1" }
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 clap = "3"
@@ -45,8 +46,8 @@ tinytemplate = "1"
 tokio = { version = "1", features = ["full"] }  # LTS
 tokio-stream = { version = "0.1", features = ["time"] }
 toml = "0.5"
-tough = { version = "0.12", features = ["http"] }
-tough-kms = "0.4"
-tough-ssm = "0.7"
+tough = { version = "0.13", features = ["http"] }
+tough-kms = "0.5"
+tough-ssm = "0.8"
 update_metadata = { path = "../../sources/updater/update_metadata/", version = "0.1" }
 url = { version = "2", features = ["serde"] }
