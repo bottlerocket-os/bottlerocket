@@ -46,6 +46,7 @@ Source117: cfsignal.service
 Source118: generate-network-config.service
 Source119: reboot-if-required.service
 Source120: warm-pool-wait.service
+Source121: disable-udp-offload.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -442,6 +443,10 @@ install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-storage.rules
 install -p -m 0644 %{S:301} %{buildroot}%{_cross_udevrulesdir}/81-ebs-volumes.rules
 
+%if %{with vmware_platform}
+install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
+%endif
+
 %cross_scan_attribution --clarify %{_builddir}/sources/clarify.toml \
     cargo --offline --locked %{_builddir}/sources/Cargo.toml
 
@@ -465,6 +470,10 @@ install -p -m 0644 %{S:301} %{buildroot}%{_cross_udevrulesdir}/81-ebs-volumes.ru
 %{_cross_bindir}/netdog
 %{_cross_tmpfilesdir}/netdog.conf
 %{_cross_unitdir}/generate-network-config.service
+%if %{with vmware_platform}
+%{_cross_unitdir}/disable-udp-offload.service
+%endif
+
 
 %files -n %{_cross_os}corndog
 %{_cross_bindir}/corndog

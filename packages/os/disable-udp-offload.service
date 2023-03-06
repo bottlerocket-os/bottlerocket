@@ -1,0 +1,20 @@
+[Unit]
+Description=Disables UDP offload
+After=network-online.target
+# Block manual interactions with this service
+RefuseManualStart=true
+RefuseManualStop=true
+# This unit disables UDP offload for the default primary interface (eth0) in
+# VMware.  This avoids an issue with the VXLAN / Geneve tunnels used by Cilium,
+# which affects the vmxnet3 driver in recent kernels.
+ConditionVirtualization=vmware
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/ethtool -K eth0 tx-udp_tnl-segmentation off
+ExecStart=/usr/sbin/ethtool -K eth0 tx-udp_tnl-csum-segmentation off
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+RequiredBy=preconfigured.target
