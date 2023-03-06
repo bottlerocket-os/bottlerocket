@@ -3,14 +3,13 @@ use migration_helpers::{migrate, Result};
 use std::process;
 
 const OLD_K8S_PAUSE_IMAGE: &str = "k8s.gcr.io/pause:3.2";
-const NEW_K8S_PAUSE_IMAGE: &str = "registry.k8s.io/pause:3.2";
+const NEW_K8S_PAUSE_IMAGE: &str = "public.ecr.aws/eks-distro/kubernetes/pause:3.3";
 
-// The `k8s.gcr.io registry`, as of April 2023 will be frozen and
+// The `k8s.gcr.io` registry, as of April 2023 will be frozen and
 // images will no longer be pushed to that registry.
-// Instead, Kubernetes consumers are expected to use `registry.k8s.io`
 // For further details: https://kubernetes.io/blog/2023/02/06/k8s-gcr-io-freeze-announcement/
 //
-// In this migration, we move image references from k8s.gcr.io to registry.k8s.io
+// In this migration, we move pause container image references from `k8s.gcr.io` to `public.ecr.aws/eks-distro/kubernetes/`
 fn run() -> Result<()> {
     migrate(ReplaceStringMigration {
         setting: "settings.kubernetes.pod-infra-container-image",
