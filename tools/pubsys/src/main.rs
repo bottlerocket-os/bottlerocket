@@ -48,6 +48,7 @@ fn run() -> Result<()> {
                     LevelFilter::Info,
                     ConfigBuilder::new()
                         .add_filter_ignore_str("aws_config")
+                        .add_filter_ignore_str("aws_credential_types")
                         .add_filter_ignore_str("aws_smithy")
                         .add_filter_ignore_str("tracing::span")
                         .build(),
@@ -56,6 +57,7 @@ fn run() -> Result<()> {
                     LevelFilter::Warn,
                     ConfigBuilder::new()
                         .add_filter_allow_str("aws_config")
+                        .add_filter_allow_str("aws_credential_types")
                         .add_filter_allow_str("aws_smithy")
                         .add_filter_allow_str("tracing::span")
                         .build(),

@@ -2,7 +2,7 @@ use aws_config::default_provider::credentials::default_provider;
 use aws_config::profile::ProfileFileCredentialsProvider;
 use aws_config::sts::AssumeRoleProvider;
 use aws_config::SdkConfig;
-use aws_types::credentials::SharedCredentialsProvider;
+use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_types::region::Region;
 use pubsys_config::AwsConfig as PubsysAwsConfig;
 

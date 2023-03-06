@@ -71,7 +71,7 @@ impl Transport for HttpQueryTransport {
     fn fetch(
         &self,
         url: Url,
-    ) -> std::result::Result<Box<dyn std::io::Read + Send>, TransportError> {
+    ) -> std::result::Result<Box<dyn std::io::Read + Send + '_>, TransportError> {
         self.inner.fetch(self.parameters.add_params_to_url(url))
     }
 }
