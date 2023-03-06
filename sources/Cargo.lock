@@ -523,6 +523,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-control-container-v0-7-1"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-endpoint"
 version = "0.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2845,6 +2852,13 @@ dependencies = [
 
 [[package]]
 name = "public-control-container-v0-7-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "public-control-container-v0-7-1"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
