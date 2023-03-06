@@ -5,12 +5,12 @@ use error::Result;
 use install::Install;
 use log::{debug, error, LevelFilter};
 use logs::Logs;
-use model::test_manager::TestManager;
 use restart_test::RestartTest;
 use run::Run;
 use secret::Add;
 use status::Status;
 use std::path::PathBuf;
+use testsys_model::test_manager::TestManager;
 use uninstall::Uninstall;
 
 mod aws_ecs;

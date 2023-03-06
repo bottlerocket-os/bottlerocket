@@ -1,6 +1,6 @@
 use crate::error::Result;
 use clap::Parser;
-use model::test_manager::TestManager;
+use testsys_model::test_manager::TestManager;
 
 /// Restart a test. This will delete the test object from the testsys cluster and replace it with
 /// a new, identical test object with a clean state.

@@ -64,8 +64,6 @@ skip = [
     { name = "base64", version = "=0.13.1" },
     # governor uses an old version of wasi
     { name = "wasi", version = "=0.10.2" },
-    # testsys uses an old version of time
-    { name = "time", version = "=0.1.43" },
 ]
 
 skip-tree = [

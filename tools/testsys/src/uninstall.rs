@@ -1,7 +1,7 @@
 use crate::error::Result;
 use clap::Parser;
 use log::{info, trace};
-use model::test_manager::TestManager;
+use testsys_model::test_manager::TestManager;
 
 /// The uninstall subcommand is responsible for removing all of the components for testsys in
 /// a k8s cluster. This is completed by removing the `testsys-bottlerocket-aws` namespace.

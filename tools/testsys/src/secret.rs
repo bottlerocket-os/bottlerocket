@@ -1,8 +1,8 @@
 use crate::error::{self, Result};
 use clap::Parser;
-use model::test_manager::TestManager;
-use model::SecretName;
 use snafu::OptionExt;
+use testsys_model::test_manager::TestManager;
+use testsys_model::SecretName;
 
 /// Add a testsys object to the testsys cluster.
 #[derive(Debug, Parser)]

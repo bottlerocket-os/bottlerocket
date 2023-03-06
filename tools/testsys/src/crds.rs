@@ -5,9 +5,6 @@ use bottlerocket_variant::Variant;
 use handlebars::Handlebars;
 use log::{debug, info, warn};
 use maplit::btreemap;
-use model::constants::{API_VERSION, NAMESPACE};
-use model::test_manager::{SelectionParams, TestManager};
-use model::Crd;
 use pubsys_config::RepoConfig;
 use serde::Deserialize;
 use snafu::{OptionExt, ResultExt};
@@ -15,6 +12,9 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 use testsys_config::{rendered_cluster_name, GenericVariantConfig, TestsysImages};
+use testsys_model::constants::{API_VERSION, NAMESPACE};
+use testsys_model::test_manager::{SelectionParams, TestManager};
+use testsys_model::Crd;
 
 /// A type that is used for the creation of all CRDs.
 pub struct CrdInput<'a> {

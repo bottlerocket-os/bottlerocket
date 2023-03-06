@@ -10,12 +10,12 @@ use bottlerocket_types::agent_config::{
     VSphereVmConfig,
 };
 use maplit::btreemap;
-use model::{Crd, DestructionPolicy, SecretName};
 use pubsys_config::vmware::Datacenter;
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::iter::repeat_with;
 use std::str::FromStr;
+use testsys_model::{Crd, DestructionPolicy, SecretName};
 
 /// A `CrdCreator` responsible for creating crd related to `vmware-k8s` variants.
 pub(crate) struct VmwareK8sCreator {
