@@ -29,7 +29,7 @@ pub(crate) struct VmwareK8sCreator {
 #[async_trait::async_trait]
 impl CrdCreator for VmwareK8sCreator {
     /// Use the provided OVA name for the image id.
-    fn image_id(&self, _: &CrdInput) -> Result<String> {
+    async fn image_id(&self, _: &CrdInput) -> Result<String> {
         Ok(self.ova_name.to_string())
     }
 
@@ -104,7 +104,7 @@ impl CrdCreator for VmwareK8sCreator {
             .control_plane_endpoint_ip(control_plane_endpoint)
             .creation_policy(CreationPolicy::IfNotExists)
             .version(cluster_version)
-            .ova_name(self.image_id(cluster_input.crd_input)?)
+            .ova_name(self.image_id(cluster_input.crd_input).await?)
             .tuf_repo(
                 cluster_input
                     .crd_input

@@ -102,6 +102,12 @@ pub enum Error {
     #[snafu(display("{} is not supported.", what))]
     Unsupported { what: String },
 
+    #[snafu(display("Unable to parse url from '{}': {}", url, source))]
+    UrlParse {
+        url: String,
+        source: url::ParseError,
+    },
+
     #[snafu(display("Unable to create `Variant` from `{}`: {}", variant, source))]
     Variant {
         variant: String,

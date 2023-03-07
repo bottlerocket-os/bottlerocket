@@ -3,6 +3,7 @@ use crate::aws_k8s::AwsK8sCreator;
 use crate::crds::{CrdCreator, CrdInput};
 use crate::error;
 use crate::error::Result;
+use crate::metal_k8s::MetalK8sCreator;
 use crate::vmware_k8s::VmwareK8sCreator;
 use bottlerocket_variant::Variant;
 use clap::Parser;
@@ -48,7 +49,7 @@ pub(crate) struct Run {
     #[clap(long, env = "TESTSYS_TESTS_DIR", parse(from_os_str))]
     tests_directory: PathBuf,
 
-    /// The path to the EKS-A management cluster kubeconfig for vSphere K8s cluster creation
+    /// The path to the EKS-A management cluster kubeconfig for vSphere or metal K8s cluster creation
     #[clap(long, env = "TESTSYS_MGMT_CLUSTER_KUBECONFIG", parse(from_os_str))]
     mgmt_cluster_kubeconfig: Option<PathBuf>,
 
@@ -64,6 +65,10 @@ pub(crate) struct Run {
     /// The name of the VMware OVA that should be used for testing
     #[clap(long, env = "BUILDSYS_OVA")]
     ova_name: Option<String>,
+
+    /// The name of the image that should be used for Bare Metal testing
+    #[clap(long, env = "BUILDSYS_NAME_FULL")]
+    image_name: Option<String>,
 
     /// The path to `amis.json`
     #[clap(long, env = "AMI_INPUT")]
@@ -155,6 +160,16 @@ struct CliConfig {
     /// A set of workloads that should be run for a workload test (--workload my-workload=<WORKLOAD-IMAGE>)
     #[clap(long = "workload", parse(try_from_str = parse_workloads), number_of_values = 1)]
     pub workloads: Vec<(String, String)>,
+
+    /// The directory containing Bottlerocket images. For metal, this is the directory containing
+    /// gzipped images.
+    #[clap(long)]
+    pub os_image_dir: Option<String>,
+
+    /// The hardware that should be used for provisioning Bottlerocket. For metal, this is the
+    /// hardware csv that is passed to EKS Anywhere.
+    #[clap(long)]
+    pub hardware_csv: Option<String>,
 }
 
 impl From<CliConfig> for GenericVariantConfig {
@@ -168,6 +183,8 @@ impl From<CliConfig> for GenericVariantConfig {
             conformance_registry: val.conformance_registry,
             control_plane_endpoint: val.control_plane_endpoint,
             userdata: val.userdata,
+            os_image_dir: val.os_image_dir,
+            hardware_csv: val.hardware_csv,
             dev: Default::default(),
             workloads: val.workloads.into_iter().collect(),
         }
@@ -341,6 +358,30 @@ impl Run {
                     creds: vsphere_secret,
                 })
             }
+            "metal-k8s" => {
+                debug!("Using family 'metal-k8s'");
+                let aws_config = infra_config.aws.unwrap_or_default();
+                let region = aws_config
+                    .regions
+                    .front()
+                    .map(String::to_string)
+                    .unwrap_or_else(|| "us-west-2".to_string());
+
+                let mgmt_cluster_kubeconfig =
+                    self.mgmt_cluster_kubeconfig.context(error::InvalidSnafu {
+                        what: "A management cluster kubeconfig is required for metal testing",
+                    })?;
+                let encoded_kubeconfig = base64::encode(
+                    read_to_string(&mgmt_cluster_kubeconfig).context(error::FileSnafu {
+                        path: mgmt_cluster_kubeconfig,
+                    })?,
+                );
+                Box::new(MetalK8sCreator {
+                    region,
+                    encoded_mgmt_cluster_kubeconfig: encoded_kubeconfig,
+                    image_name: self.image_name.context(error::InvalidSnafu{what: "The image name is required for Bare Metal testing. This can be set with `BUILDSYS_NAME_FULL`."})?
+                })
+            }
             unsupported => {
                 return Err(error::Error::Unsupported {
                     what: unsupported.to_string(),
@@ -472,6 +513,13 @@ pub(crate) struct TestsysImages {
     )]
     pub(crate) vsphere_k8s_cluster_resource: Option<String>,
 
+    /// Bare Metal cluster resource agent URI. If not provided the latest released resource agent will be used.
+    #[clap(
+        long = "metal-k8s-cluster-resource-agent-image",
+        env = "TESTSYS_METAL_K8S_CLUSTER_RESOURCE_AGENT_IMAGE"
+    )]
+    pub(crate) metal_k8s_cluster_resource: Option<String>,
+
     /// EC2 resource agent URI. If not provided the latest released resource agent will be used.
     #[clap(
         long = "ec2-resource-agent-image",
@@ -529,6 +577,7 @@ impl From<TestsysImages> for testsys_config::TestsysImages {
             eks_resource_agent_image: val.eks_resource,
             ecs_resource_agent_image: val.ecs_resource,
             vsphere_k8s_cluster_resource_agent_image: val.vsphere_k8s_cluster_resource,
+            metal_k8s_cluster_resource_agent_image: val.metal_k8s_cluster_resource,
             ec2_resource_agent_image: val.ec2_resource,
             vsphere_vm_resource_agent_image: val.vsphere_vm_resource,
             sonobuoy_test_agent_image: val.sonobuoy_test,

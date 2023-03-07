@@ -26,7 +26,7 @@ pub(crate) struct AwsK8sCreator {
 #[async_trait::async_trait]
 impl CrdCreator for AwsK8sCreator {
     /// Determine the AMI from `amis.json`.
-    fn image_id(&self, _: &CrdInput) -> Result<String> {
+    async fn image_id(&self, _: &CrdInput) -> Result<String> {
         ami(&self.ami_input, &self.region)
     }
 

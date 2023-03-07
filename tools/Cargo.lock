@@ -3244,6 +3244,7 @@ dependencies = [
  "testsys-model",
  "tokio",
  "unescape",
+ "url",
 ]
 
 [[package]]
