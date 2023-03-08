@@ -883,9 +883,9 @@ dependencies = [
 
 [[package]]
 name = "coldsnap"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fe7c5bb30e67fee6c251ce9be3e066a05f60ce572282dd3cb4b9affa6084e11"
+checksum = "7cb5b7cce3f0df950d0ed759a9cd31c5c8c54ec783e501187fa60b7b866ea183"
 dependencies = [
  "argh",
  "async-trait",
