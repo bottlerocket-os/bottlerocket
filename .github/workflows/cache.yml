@@ -45,7 +45,6 @@ jobs:
             tools/.crates2.json
             tools/target
           key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}
-      - run: rustup default 1.66.1
       - run: cargo install --locked --version 0.36.0 cargo-make
       - run: cargo install --locked --version 0.8.3 --no-default-features --features ci-autoclean cargo-cache
       - run: cargo install --locked --version 0.6.2 cargo-sweep
