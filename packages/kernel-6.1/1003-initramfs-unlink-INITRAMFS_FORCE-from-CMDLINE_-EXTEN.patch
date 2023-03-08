@@ -1,0 +1,50 @@
+From 002d1909e18b7ca876edd4680ffcf8b59dea6c1b Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Tue, 18 Oct 2022 22:24:52 +0000
+Subject: [PATCH] initramfs: unlink INITRAMFS_FORCE from CMDLINE_{EXTEND,FORCE}
+
+The motivation given in cff75e0b6fe83 for tying INITRAMFS_FORCE to
+either of CMDLINE_{EXTEND,FORCE} was that these options imply an
+inflexible bootloader, and that overriding the initramfs image would
+also only be necessary for inflexible bootloaders.
+
+However, with the advent of Boot Config support, distributions that do
+not normally use an initramfs may still want to allow an "initrd" to be
+passed by the bootloader in order to accept boot configuration data. In
+such cases, the CMDLINE_{EXTEND,FORCE} options are not desired because
+the bootloader is actually expected to control the kernel command line.
+
+Unlinking the INITRAMFS_FORCE config option allows Boot Config data to
+be passed by the bootloader while still preventing an unexpected
+initramfs from overriding the built-in initramfs (if any).
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ usr/Kconfig | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/usr/Kconfig b/usr/Kconfig
+index 8bbcf699f..06aac1906 100644
+--- a/usr/Kconfig
++++ b/usr/Kconfig
+@@ -24,7 +24,7 @@ config INITRAMFS_SOURCE
+ 
+ config INITRAMFS_FORCE
+ 	bool "Ignore the initramfs passed by the bootloader"
+-	depends on CMDLINE_EXTEND || CMDLINE_FORCE
++	default n
+ 	help
+ 	  This option causes the kernel to ignore the initramfs image
+ 	  (or initrd image) passed to it by the bootloader. This is
+@@ -32,6 +32,8 @@ config INITRAMFS_FORCE
+ 	  and is useful if you cannot or don't want to change the image
+ 	  your bootloader passes to the kernel.
+ 
++	  If unsure, say N.
++
+ config INITRAMFS_ROOT_UID
+ 	int "User ID to map to 0 (user root)"
+ 	depends on INITRAMFS_SOURCE!=""
+-- 
+2.39.1
+

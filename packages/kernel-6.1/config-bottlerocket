@@ -1,0 +1,197 @@
+# Because Bottlerocket does not have an initramfs, modules required to mount
+# the root filesystem must be set to y.
+
+# The root filesystem is ext4
+CONFIG_EXT4_FS=y
+
+# btrfs support for compatibility
+CONFIG_BTRFS_FS=m
+CONFIG_BTRFS_FS_POSIX_ACL=y
+
+# Support for squashfs used to provide kernel headers with zstd compression
+CONFIG_SQUASHFS=m
+CONFIG_SQUASHFS_FILE_CACHE=y
+# CONFIG_SQUASHFS_FILE_DIRECT is not set
+CONFIG_SQUASHFS_DECOMP_SINGLE=y
+# CONFIG_SQUASHFS_DECOMP_MULTI is not set
+# CONFIG_SQUASHFS_DECOMP_MULTI_PERCPU is not set
+CONFIG_SQUASHFS_XATTR=y
+CONFIG_SQUASHFS_ZLIB=y
+CONFIG_SQUASHFS_LZ4=y
+CONFIG_SQUASHFS_LZO=y
+CONFIG_SQUASHFS_XZ=y
+CONFIG_SQUASHFS_ZSTD=y
+# CONFIG_SQUASHFS_4K_DEVBLK_SIZE is not set
+# CONFIG_SQUASHFS_EMBEDDED is not set
+CONFIG_SQUASHFS_FRAGMENT_CACHE_SIZE=3
+
+# NVMe support
+CONFIG_BLK_DEV_NVME=y
+CONFIG_NVME_CORE=y
+
+# Xen blkfront for Xen-based EC2 platforms
+CONFIG_XEN_BLKDEV_FRONTEND=y
+
+# virtio for local testing with QEMU
+CONFIG_VIRTIO=y
+CONFIG_VIRTIO_BLK=y
+CONFIG_VIRTIO_PCI=y
+
+# dm-verity and enabling it on the kernel command line
+CONFIG_BLK_DEV_DM=y
+CONFIG_DAX=y
+CONFIG_DM_INIT=y
+CONFIG_DM_VERITY=y
+
+# TCMU/LIO
+CONFIG_TCM_USER2=m
+
+# EFI
+CONFIG_EFI=y
+CONFIG_EFI_STUB=y
+CONFIG_EFI_MIXED=y
+
+# EFI video
+CONFIG_FB=y
+CONFIG_FB_EFI=y
+CONFIG_FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER=y
+
+# yama LSM for ptrace restrictions
+CONFIG_SECURITY_YAMA=y
+
+# Do not allow SELinux to be disabled at boot.
+# CONFIG_SECURITY_SELINUX_BOOTPARAM is not set
+
+# Do not allow SELinux to be disabled at runtime.
+# CONFIG_SECURITY_SELINUX_DISABLE is not set
+
+# Do not allow SELinux to use `enforcing=0` behavior.
+# CONFIG_SECURITY_SELINUX_DEVELOP is not set
+
+# Check the protection applied by the kernel for mmap and mprotect,
+# rather than the protection requested by userspace.
+CONFIG_SECURITY_SELINUX_CHECKREQPROT_VALUE=0
+
+# Enable support for the kernel lockdown security module.
+CONFIG_SECURITY_LOCKDOWN_LSM=y
+
+# Enable lockdown early so that if the option is present on the
+# kernel command line, it can be enforced.
+CONFIG_SECURITY_LOCKDOWN_LSM_EARLY=y
+
+# disable integrity measurement architecture
+# CONFIG_IMA is not set
+
+# Disable SafeSetID LSM
+# CONFIG_SECURITY_SAFESETID is not set
+
+# enable /proc/config.gz
+CONFIG_IKCONFIG=y
+CONFIG_IKCONFIG_PROC=y
+
+# kernel headers at /sys/kernel/kheaders.tar.xz
+CONFIG_IKHEADERS=y
+
+# BTF debug info at /sys/kernel/btf/vmlinux
+CONFIG_DEBUG_INFO_BTF=y
+
+# We don't want to extend the kernel command line with any upstream defaults;
+# Bottlerocket uses a fairly custom setup that needs tight control over it.
+# CONFIG_CMDLINE_EXTEND is not set
+
+# We don't want to unpack the initramfs passed by the bootloader. The intent of
+# this option is to ensure that the built-in initramfs is used. Since we do not
+# have a built-in initramfs, in practice this means we will never unpack any
+# initramfs.
+#
+# We rely on `CONFIG_BLK_DEV_INITRD` for boot config support, so we can't just
+# disable the functionality altogether.
+CONFIG_INITRAMFS_FORCE=y
+
+# Enable ZSTD kernel image compression
+CONFIG_HAVE_KERNEL_ZSTD=y
+CONFIG_KERNEL_ZSTD=y
+CONFIG_ZSTD_COMPRESS=y
+CONFIG_ZSTD_DECOMPRESS=y
+CONFIG_DECOMPRESS_ZSTD=y
+
+# Enable xz modules compression
+# CONFIG_MODULE_COMPRESS_NONE is not set
+CONFIG_MODULE_COMPRESS_XZ=y
+
+# Load i8042 controller, keyboard, and mouse as modules, to avoid waiting for
+# them before mounting the root device.
+CONFIG_SERIO_I8042=m
+CONFIG_KEYBOARD_ATKBD=m
+CONFIG_MOUSE_PS2=m
+# CONFIG_MOUSE_PS2_ALPS is not set
+# CONFIG_MOUSE_PS2_BYD is not set
+# CONFIG_MOUSE_PS2_LOGIPS2PP is not set
+# CONFIG_MOUSE_PS2_SYNAPTICS is not set
+# CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS is not set
+# CONFIG_MOUSE_PS2_CYPRESS is not set
+# CONFIG_MOUSE_PS2_TRACKPOINT is not set
+# CONFIG_MOUSE_PS2_ELANTECH is not set
+# CONFIG_MOUSE_PS2_SENTELIC is not set
+# CONFIG_MOUSE_PS2_TOUCHKIT is not set
+# CONFIG_MOUSE_PS2_FOCALTECH is not set
+
+# Add virtio drivers for development setups running as guests in qemu
+CONFIG_VIRTIO_CONSOLE=m
+CONFIG_HW_RANDOM_VIRTIO=m
+
+# Add support for IPMI drivers
+CONFIG_IPMI_HANDLER=m
+
+# Add support for bootconfig
+CONFIG_BOOT_CONFIG=y
+
+# Enables support for checkpoint/restore
+CONFIG_CHECKPOINT_RESTORE=y
+
+# Disable unused filesystems.
+# CONFIG_AFS_FS is not set
+# CONFIG_CRAMFS is not set
+# CONFIG_ECRYPT_FS is not set
+# CONFIG_EXT2_FS is not set
+# CONFIG_EXT3_FS is not set
+CONFIG_EXT4_USE_FOR_EXT2=y
+# CONFIG_GFS2_FS is not set
+# CONFIG_HFS_FS is not set
+# CONFIG_HFSPLUS_FS is not set
+# CONFIG_JFS_FS is not set
+# CONFIG_JFFS2_FS is not set
+# CONFIG_NFS_V2 is not set
+# CONFIG_NILFS2_FS is not set
+# CONFIG_NTFS_FS is not set
+# CONFIG_ROMFS_FS is not set
+# CONFIG_UFS_FS is not set
+# CONFIG_ZONEFS_FS is not set
+# CONFIG_NTFS3_FS is not set
+
+# Disable unused network protocols.
+# CONFIG_AF_RXRPC is not set
+# CONFIG_ATM is not set
+# CONFIG_CAN is not set
+# CONFIG_HSR is not set
+# CONFIG_IP_DCCP is not set
+# CONFIG_L2TP is not set
+# CONFIG_RDS is not set
+# CONFIG_RFKILL is not set
+# CONFIG_TIPC is not set
+
+# Disable USB-attached network interfaces, unused in the cloud and on server-grade hardware.
+# CONFIG_USB_NET_DRIVERS is not set
+
+# Disable unused qdiscs
+#   - sch_cake targets home routers and residential links
+# CONFIG_NET_SCH_CAKE is not set
+
+# Provide minimal iSCSI via TCP support for initiator and target mode
+# initiator side
+CONFIG_ISCSI_TCP=m
+CONFIG_ISCSI_BOOT_SYSFS=m
+CONFIG_SCSI_ISCSI_ATTRS=m
+# target side
+CONFIG_ISCSI_TARGET=m
+# CONFIG_INFINIBAND_ISERT is not set
