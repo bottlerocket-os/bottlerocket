@@ -21,6 +21,7 @@ source-groups = [
     "shimpei",
     "driverdog",
     "cfsignal",
+    "bloodhound",
 ]
 package-features = [ "systemd-networkd" ]
 
