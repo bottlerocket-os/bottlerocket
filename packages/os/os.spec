@@ -26,6 +26,7 @@ Source7: host-ctr-toml
 Source8: oci-default-hooks-json
 Source9: cfsignal-toml
 Source10: warm-pool-wait-toml
+Source11: bottlerocket-cis-checks-metadata-json
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -370,7 +371,7 @@ for p in \
   migrator prairiedog certdog \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
-  shimpei bloodhound \
+  shimpei bloodhound bottlerocket-checks \
   %{?with_ecs_runtime: ecs-settings-applier} \
   %{?with_aws_platform: shibaken cfsignal} \
   %{?with_aws_k8s_family: pluto} \
@@ -379,6 +380,15 @@ for p in \
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
+
+# Add the bloodhound checker symlinks
+mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket
+for p in \
+  br01020100 br01060000 br03040103 br03040203 \
+; do
+  ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-checks %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
+done
+install -m 0644 %{S:11} %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/metadata.json
 
 for p in apiclient ; do
   install -p -m 0755 ${HOME}/.cache/.static/%{__cargo_target_static}/release/${p} %{buildroot}%{_cross_bindir}
@@ -614,5 +624,7 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 
 %files -n %{_cross_os}bloodhound
 %{_cross_bindir}/bloodhound
+%{_cross_bindir}/bottlerocket-checks
+%{_cross_libexecdir}/cis-checks/bottlerocket
 
 %changelog
