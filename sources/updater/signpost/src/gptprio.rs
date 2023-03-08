@@ -34,6 +34,14 @@ impl GptPrio {
     pub(crate) fn will_boot(self) -> bool {
         (self.priority() > 0 && self.tries_left() > 0) || self.successful()
     }
+
+    pub(crate) fn boot_has_succeeded(&mut self) {
+        self.0.set_bit(57, true);
+    }
+
+    pub(crate) fn has_boot_succeeded(&self) -> bool {
+        self.0.get_bit(57)
+    }
 }
 
 impl From<u64> for GptPrio {
@@ -78,5 +86,10 @@ mod tests {
         prio.set_successful(false);
         assert_eq!(prio.0, 0x5400555555555555);
         assert_eq!(prio.will_boot(), false);
+
+        prio = GptPrio(0x0000000000000000);
+        assert_eq!(prio.has_boot_succeeded(), false);
+        prio.boot_has_succeeded();
+        assert_eq!(prio.has_boot_succeeded(), true);
     }
 }

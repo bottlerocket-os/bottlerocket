@@ -2,7 +2,7 @@
 # shellcheck disable=SC2034  # Variables are used externally by rpm2img
 
 ###############################################################################
-# Section 1: partition type GUIDs
+# Section 1: partition type GUIDs and partition GUIDs
 
 # Define partition type GUIDs for all OS-managed partitions. This is required
 # for the boot partition, where we set gptprio bits in the GUID-specific use
@@ -40,6 +40,11 @@ EFI_SYSTEM_TYPECODE="C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
 # for an alternate bank.
 EFI_BACKUP_TYPECODE="B39CE39C-0A00-B4AB-2D11-F18F8237A21C"
 
+# Define partition GUIDs for the data partitions. We use the GUID for determining
+# which data partition to label and use at boot.
+BOTTLEROCKET_DATA_A_PARTGUID="5b94e8df-28b8-485c-9d19-362263b5944c"
+BOTTLEROCKET_DATA_B_PARTGUID="69040874-417d-4e26-a764-7885f22007ea"
+
 ###############################################################################
 # Section 2: fixed size partitions and reservations
 
@@ -61,6 +66,9 @@ OVERHEAD_MIB="$((GPT_MIB * 2 + BIOS_MIB))"
 # under 2MB, so this will suffice for now. It would be possible to increase the
 # EFI partition size by taking space from the "reserved" area below.
 EFI_MIB="5" # one per bank
+
+# Allocate 1 MiB for the initial data partition A.
+DATA_A_MIB="1" # one per disk
 
 ###############################################################################
 # Section 3: variable sized partitions
@@ -102,7 +110,8 @@ PRIVATE_SCALE_FACTOR="24"
 #          | Hash partition B         5 MiB* |          500 MiB
 #          | Reserved partition B    10 MiB* |
 #          +---------------------------------+
-#          | Private partition       18 MiB* | (image size * 24 as MiB) - prelude
+#          | Private partition       17 MiB* | (image size * 24 as MiB) - prelude - DATA-A size
+#          | Data partition A         1 MiB  | Data partition A
 # Postlude | GPT footer               1 MiB  | GPT is fixed, private partition grows.
 #          +---------------------------------+
 
@@ -139,6 +148,8 @@ set_partition_sizes() {
 
   # Private space scales per GiB, minus the BIOS and GPT partition overhead.
   private_mib=$((os_image_gib * PRIVATE_SCALE_FACTOR - OVERHEAD_MIB))
+  # We need 1 MiB of space for data partition A.
+  private_mib=$((private_mib - DATA_A_MIB))
 
   # Skip the GPT label at start of disk.
   local offset
@@ -176,16 +187,21 @@ set_partition_sizes() {
 
   case "${partition_plan}" in
     split)
+      # For data partition A that lives on the OS image
+      pp_offset["DATA-A"]="${offset}"
+      pp_size["DATA-A"]="${DATA_A_MIB}"
+      ((offset += DATA_A_MIB))
+
       # For a split data image, the first and last MiB are reserved for the GPT
-      # labels, and the rest is for the "data" partition.
-      pp_size["DATA"]="$((data_image_gib * 1024 - GPT_MIB * 2))"
-      pp_offset["DATA"]="1"
+      # labels, and the rest is for data partition B.
+      pp_size["DATA-B"]="$((data_image_gib * 1024 - GPT_MIB * 2))"
+      pp_offset["DATA-B"]="1"
       ;;
     unified)
       # For a unified image, we've already accounted for the GPT label space in
-      # the earlier calculations, so all the space is for the "data" partition.
-      pp_size["DATA"]="$((data_image_gib * 1024))"
-      pp_offset["DATA"]="${offset}"
+      # the earlier calculations, so all the space is for the data partition.
+      pp_size["DATA-A"]="$((data_image_gib * 1024))"
+      pp_offset["DATA-A"]="${offset}"
       ((offset += data_image_gib * 1024))
       ;;
     *)
@@ -200,9 +216,12 @@ set_partition_labels() {
   local -n pp_label
   pp_label="${1:?}"
   pp_label["BIOS"]="BIOS-BOOT"
-  pp_label["DATA"]="BOTTLEROCKET-DATA"
   pp_label["EFI-A"]="EFI-SYSTEM"
   pp_label["EFI-B"]="EFI-BACKUP"
+  # Empty label for the data partitions. We're labeling the data partition
+  # during boot.
+  pp_label["DATA-A"]=""
+  pp_label["DATA-B"]=""
   pp_label["PRIVATE"]="BOTTLEROCKET-PRIVATE"
   for part in BOOT ROOT HASH RESERVED ; do
     for bank in A B ; do
@@ -216,7 +235,8 @@ set_partition_types() {
   local -n pp_type
   pp_type="${1:?}"
   pp_type["BIOS"]="${BIOS_BOOT_TYPECODE}"
-  pp_type["DATA"]="${BOTTLEROCKET_DATA_TYPECODE}"
+  pp_type["DATA-A"]="${BOTTLEROCKET_DATA_TYPECODE}"
+  pp_type["DATA-B"]="${BOTTLEROCKET_DATA_TYPECODE}"
   pp_type["EFI-A"]="${EFI_SYSTEM_TYPECODE}"
   pp_type["EFI-B"]="${EFI_BACKUP_TYPECODE}"
   pp_type["PRIVATE"]="${BOTTLEROCKET_PRIVATE_TYPECODE}"
@@ -227,5 +247,18 @@ set_partition_types() {
       typecode="${!typecode}"
       pp_type["${part}-${bank}"]="${typecode}"
     done
+  done
+}
+
+# Populate the caller's table with GPT partition UUIDs for DATA-A and
+# DATA-B partitions.
+set_partition_uuids() {
+  local -n pp_uuid
+  pp_uuid="${1:?}"
+  local uuid
+  for bank in A B ; do
+    uuid="BOTTLEROCKET_DATA_${bank}_PARTGUID"
+    uuid="${!uuid}"
+    pp_uuid["DATA-${bank}"]="${uuid}"
   done
 }

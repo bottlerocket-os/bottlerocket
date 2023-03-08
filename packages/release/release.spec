@@ -57,6 +57,8 @@ Source1043: repart-local.service
 Source1044: mask-local-mnt.service
 Source1045: mask-local-opt.service
 Source1046: mask-local-var.service
+Source1047: label-data-b.service
+Source1048: label-data-a.service
 
 # Services for kdump support
 Source1060: capture-kernel-dump.service
@@ -114,7 +116,7 @@ Requires: %{_cross_os}util-linux
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 install -p -m 0644 %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 
-install -d %{buildroot}%{_cross_libdir}/repart.d
+install -d %{buildroot}%{_cross_libdir}/repart.d/
 install -p -m 0644 %{S:96} %{buildroot}%{_cross_libdir}/repart.d/80-local.conf
 
 install -d %{buildroot}%{_cross_sysctldir}
@@ -139,7 +141,7 @@ install -p -m 0644 \
   %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} %{S:1006} %{S:1007} \
   %{S:1008} %{S:1009} %{S:1010} %{S:1011} %{S:1012} %{S:1013} %{S:1015} \
   %{S:1040} %{S:1041} %{S:1042} %{S:1043} %{S:1044} %{S:1045} %{S:1046} \
-  %{S:1060} %{S:1061} %{S:1062} %{S:1080} %{S:1014} \
+  %{S:1047} %{S:1048} %{S:1060} %{S:1061} %{S:1062} %{S:1080} %{S:1014} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
@@ -220,6 +222,8 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_unitdir}/mask-local-opt.service
 %{_cross_unitdir}/mask-local-var.service
 %{_cross_unitdir}/root-.aws.mount
+%{_cross_unitdir}/label-data-b.service
+%{_cross_unitdir}/label-data-a.service
 %dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 %{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 %dir %{_cross_templatedir}
