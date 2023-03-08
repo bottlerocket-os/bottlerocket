@@ -11,16 +11,15 @@ async-trait = "0.1"
 aws-config = "0.54.1"
 aws-sdk-ec2 = "0.24"
 base64 = "0.20"
-bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.5", tag = "v0.0.5"}
+bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.6", tag = "v0.0.6"}
 bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
 clap = { version = "3", features = ["derive", "env"] }
 env_logger = "0.10"
 futures = "0.3"
 handlebars = "4"
-kube-client = { version = "0.75"}
 log = "0.4"
 maplit = "1"
-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.5", tag = "v0.0.5"}
+testsys-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.6", tag = "v0.0.6"}
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 fastrand = "1"
 serde = { version = "1", features = ["derive"] }

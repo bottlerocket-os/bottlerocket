@@ -13,7 +13,7 @@ home = "0.5"
 lazy_static = "1"
 log = "0.4"
 maplit="1"
-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.5", tag = "v0.0.5"}
+testsys-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.6", tag = "v0.0.6"}
 serde = { version = "1", features = ["derive"]  }
 serde_yaml = "0.8"
 snafu = "0.7"

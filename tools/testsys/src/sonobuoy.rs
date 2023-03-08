@@ -5,9 +5,9 @@ use bottlerocket_types::agent_config::{
     SonobuoyConfig, SonobuoyMode, WorkloadConfig, WorkloadTest,
 };
 use maplit::btreemap;
-use model::Test;
 use snafu::ResultExt;
 use std::fmt::Display;
+use testsys_model::Test;
 
 /// Create a Sonobuoy CRD for K8s conformance and quick testing.
 pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
@@ -110,6 +110,7 @@ pub(crate) fn workload_crd(test_input: TestInput) -> Result<Test> {
         .map(|(name, image)| WorkloadTest {
             name: name.to_string(),
             image: image.to_string(),
+            ..Default::default()
         })
         .collect();
     if plugins.is_empty() {
@@ -142,7 +143,7 @@ pub(crate) fn workload_crd(test_input: TestInput) -> Result<Test> {
         )
         .keep_running(true)
         .kubeconfig_base64_template(cluster_resource_name, "encodedKubeconfig")
-        .plugins(plugins)
+        .tests(plugins)
         .set_secrets(Some(test_input.crd_input.config.secrets.to_owned()))
         .set_labels(Some(labels))
         .build(format!(

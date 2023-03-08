@@ -7,8 +7,6 @@ use crate::vmware_k8s::VmwareK8sCreator;
 use bottlerocket_variant::Variant;
 use clap::Parser;
 use log::{debug, info};
-use model::test_manager::TestManager;
-use model::SecretName;
 use pubsys_config::vmware::{
     Datacenter, DatacenterBuilder, DatacenterCreds, DatacenterCredsBuilder, DatacenterCredsConfig,
     VMWARE_CREDS_PATH,
@@ -21,6 +19,8 @@ use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::str::FromStr;
 use testsys_config::{GenericVariantConfig, TestConfig};
+use testsys_model::test_manager::TestManager;
+use testsys_model::SecretName;
 
 /// Run a set of tests for a given arch and variant
 #[derive(Debug, Parser)]

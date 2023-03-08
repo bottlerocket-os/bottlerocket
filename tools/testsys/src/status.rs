@@ -1,10 +1,12 @@
 use crate::error::{self, Result};
 use clap::Parser;
 use log::{debug, info};
-use model::test_manager::{CrdState, CrdType, SelectionParams, StatusProgress, TestManager};
 use serde::Deserialize;
 use serde_plain::derive_fromstr_from_deserialize;
 use snafu::ResultExt;
+use testsys_model::test_manager::{
+    CrdState, CrdType, SelectionParams, StatusProgress, TestManager,
+};
 
 /// Check the status of testsys objects.
 #[derive(Debug, Parser)]

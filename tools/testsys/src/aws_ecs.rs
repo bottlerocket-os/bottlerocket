@@ -8,9 +8,9 @@ use crate::migration::migration_crd;
 use bottlerocket_types::agent_config::{ClusterType, EcsClusterConfig, EcsTestConfig};
 use log::debug;
 use maplit::btreemap;
-use model::{Crd, DestructionPolicy};
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
+use testsys_model::{Crd, DestructionPolicy};
 
 /// A `CrdCreator` responsible for creating crd related to `aws-ecs` variants.
 pub(crate) struct AwsEcsCreator {

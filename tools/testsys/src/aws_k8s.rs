@@ -10,11 +10,11 @@ use bottlerocket_types::agent_config::{
     ClusterType, CreationPolicy, EksClusterConfig, EksctlConfig, K8sVersion,
 };
 use maplit::btreemap;
-use model::{Crd, DestructionPolicy};
 use serde_yaml::Value;
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::str::FromStr;
+use testsys_model::{Crd, DestructionPolicy};
 
 /// A `CrdCreator` responsible for creating crd related to `aws-k8s` variants.
 pub(crate) struct AwsK8sCreator {

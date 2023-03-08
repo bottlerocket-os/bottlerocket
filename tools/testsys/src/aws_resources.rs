@@ -4,12 +4,12 @@ use aws_sdk_ec2::model::{Filter, Image};
 use aws_sdk_ec2::Region;
 use bottlerocket_types::agent_config::{ClusterType, CustomUserData, Ec2Config};
 use maplit::btreemap;
-use model::{DestructionPolicy, Resource};
 use serde::Deserialize;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::fs::File;
 use std::iter::repeat_with;
+use testsys_model::{DestructionPolicy, Resource};
 
 /// Get the AMI for the given `region` from the `ami_input` file.
 pub(crate) fn ami(ami_input: &str, region: &str) -> Result<String> {

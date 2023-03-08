@@ -3,13 +3,13 @@ pub use error::Error;
 use handlebars::Handlebars;
 use log::{debug, trace, warn};
 use maplit::btreemap;
-use model::constants::TESTSYS_VERSION;
-use model::{DestructionPolicy, SecretName};
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::Path;
+use testsys_model::constants::TESTSYS_VERSION;
+use testsys_model::{DestructionPolicy, SecretName};
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 /// Configuration needed to run tests

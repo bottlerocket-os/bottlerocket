@@ -2,7 +2,7 @@ use crate::error::Result;
 use clap::Parser;
 use futures::TryStreamExt;
 use log::info;
-use model::test_manager::{CrdState, CrdType, DeleteEvent, SelectionParams, TestManager};
+use testsys_model::test_manager::{CrdState, CrdType, DeleteEvent, SelectionParams, TestManager};
 
 /// Delete all tests and resources from a testsys cluster.
 #[derive(Debug, Parser)]

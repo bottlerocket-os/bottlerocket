@@ -1,8 +1,8 @@
 use crate::error::{self, Result};
 use clap::Parser;
 use futures::TryStreamExt;
-use model::test_manager::{ResourceState, TestManager};
-use snafu::{OptionExt, ResultExt};
+use snafu::OptionExt;
+use testsys_model::test_manager::{ResourceState, TestManager};
 use unescape::unescape;
 
 /// Stream the logs of an object from a testsys cluster.
@@ -30,13 +30,13 @@ impl Logs {
         match (self.test, self.resource, self.resource_state) {
             (Some(test), None, None) => {
                 let mut logs = client.test_logs(test, self.follow).await?;
-                while let Some(line) = logs.try_next().await.context(error::KubeClientSnafu)? {
+                while let Some(line) = logs.try_next().await? {
                     println!("{}", unescape(&String::from_utf8_lossy(&line)).context(error::InvalidSnafu{what: "Unable to unescape log string"})?);
                 }
             }
             (None, Some(resource), Some(state)) => {
                 let mut logs = client.resource_logs(resource, state, self.follow).await?;
-                while let Some(line) = logs.try_next().await.context(error::KubeClientSnafu)? {
+                while let Some(line) = logs.try_next().await? {
                     println!("{}", unescape(&String::from_utf8_lossy(&line)).context(error::InvalidSnafu{what: "Unable to unescape log string"})?);
                 }
             }

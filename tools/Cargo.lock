@@ -144,7 +144,7 @@ dependencies = [
  "http",
  "hyper",
  "ring",
- "time 0.3.19",
+ "time",
  "tokio",
  "tower",
  "tracing",
@@ -444,7 +444,7 @@ dependencies = [
  "percent-encoding",
  "regex",
  "sha2",
- "time 0.3.19",
+ "time",
  "tracing",
 ]
 
@@ -600,7 +600,7 @@ dependencies = [
  "itoa",
  "num-integer",
  "ryu",
- "time 0.3.19",
+ "time",
 ]
 
 [[package]]
@@ -681,16 +681,16 @@ dependencies = [
 
 [[package]]
 name = "bottlerocket-types"
-version = "0.0.5"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.5#d8a03928552d8bb2c1eec94271d76dcb4e47dcb4"
+version = "0.0.6"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.6#a69b7006887249f89238b428a9acb6a0050dd384"
 dependencies = [
  "builder-derive",
  "configuration-derive",
- "model",
  "serde",
  "serde_json",
  "serde_plain",
  "serde_yaml",
+ "testsys-model",
 ]
 
 [[package]]
@@ -713,8 +713,8 @@ dependencies = [
 
 [[package]]
 name = "builder-derive"
-version = "0.0.5"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.5#d8a03928552d8bb2c1eec94271d76dcb4e47dcb4"
+version = "0.0.6"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.6#a69b7006887249f89238b428a9acb6a0050dd384"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -748,6 +748,12 @@ name = "bumpalo"
 version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d261e256854913907f67ed06efbc3338dfe6179796deefc1ff763fc1aee5535"
+
+[[package]]
+name = "bytecount"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c676a478f63e9fa2dd5368a42f28bba0d6c560b775f38583c8bbaa7fcd67c9c"
 
 [[package]]
 name = "byteorder"
@@ -805,12 +811,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16b0a3d9ed01224b22057780a37bb8c5dbfe1be8ba48678e7bf57ec4b385411f"
 dependencies = [
  "iana-time-zone",
- "js-sys",
  "num-integer",
  "num-traits",
  "serde",
- "time 0.1.43",
- "wasm-bindgen",
  "winapi",
 ]
 
@@ -906,8 +909,8 @@ dependencies = [
 
 [[package]]
 name = "configuration-derive"
-version = "0.0.5"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.5#d8a03928552d8bb2c1eec94271d76dcb4e47dcb4"
+version = "0.0.6"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.6#a69b7006887249f89238b428a9acb6a0050dd384"
 dependencies = [
  "quote",
  "syn",
@@ -1671,19 +1674,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyper-tls"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6183ddfa99b85da61a140bea0efc93fdf56ceaa041b37d553518030827f9905"
-dependencies = [
- "bytes",
- "hyper",
- "native-tls",
- "tokio",
- "tokio-native-tls",
-]
-
-[[package]]
 name = "iana-time-zone"
 version = "0.1.53"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1825,12 +1815,13 @@ dependencies = [
 
 [[package]]
 name = "json-patch"
-version = "0.2.7"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb3fa5a61630976fc4c353c70297f2e93f1930e3ccee574d59d618ccbd5154ce"
+checksum = "e712e62827c382a77b87f590532febb1f8b2fdbc3eefa1ee37fe7281687075ef"
 dependencies = [
  "serde",
  "serde_json",
+ "thiserror",
  "treediff",
 ]
 
@@ -1847,11 +1838,11 @@ dependencies = [
 
 [[package]]
 name = "k8s-openapi"
-version = "0.16.0"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d9455388f4977de4d0934efa9f7d36296295537d774574113a20f6082de03da"
+checksum = "3d1985030683a2bac402cbda61222195de80d3f66b4c87ab56e5fea379bd98c3"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.20.0",
  "bytes",
  "chrono",
  "serde",
@@ -1861,9 +1852,9 @@ dependencies = [
 
 [[package]]
 name = "kube"
-version = "0.75.0"
+version = "0.78.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bb19108692aeafebb108fd0a1c381c06ac4c03859652599420975165e939b8a"
+checksum = "53ee2ba94546e32a5aef943e5831c6ac25592ff8dcfa8b2a06e0aaea90c69188"
 dependencies = [
  "k8s-openapi",
  "kube-client",
@@ -1873,11 +1864,11 @@ dependencies = [
 
 [[package]]
 name = "kube-client"
-version = "0.75.0"
+version = "0.78.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97e1a80ecd1b1438a2fc004549e155d47250b9e01fbfcf4cfbe9c8b56a085593"
+checksum = "7c9ca1f597bd48ed26f45f601bf2fa3aaa0933b8d1652d883b8444519b72af4a"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.20.0",
  "bytes",
  "chrono",
  "dirs-next",
@@ -1888,7 +1879,6 @@ dependencies = [
  "hyper",
  "hyper-openssl",
  "hyper-timeout",
- "hyper-tls",
  "jsonpath_lib",
  "k8s-openapi",
  "kube-core",
@@ -1902,7 +1892,6 @@ dependencies = [
  "serde_yaml",
  "thiserror",
  "tokio",
- "tokio-native-tls",
  "tokio-tungstenite",
  "tokio-util",
  "tower",
@@ -1912,9 +1901,9 @@ dependencies = [
 
 [[package]]
 name = "kube-core"
-version = "0.75.0"
+version = "0.78.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4d780f2bb048eeef64a4c6b2582d26a0fe19e30b4d3cc9e081616e1779c5d47"
+checksum = "61f2c6d1a2d1584859499eb05a41c5a44713818041621fa7515cfdbdf4769ea7"
 dependencies = [
  "chrono",
  "form_urlencoded",
@@ -1930,9 +1919,9 @@ dependencies = [
 
 [[package]]
 name = "kube-derive"
-version = "0.75.0"
+version = "0.78.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98459d53b2841237392cd6959956185b2df15c19d32c3b275ed6ca7b7ee1adae"
+checksum = "3e1dfe288fd87029f87c5713ddf585a4221e1b5be8f8c7c02ba28f5211f2a6d7"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -2066,55 +2055,6 @@ dependencies = [
  "log",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys 0.45.0",
-]
-
-[[package]]
-name = "model"
-version = "0.0.5"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.5#d8a03928552d8bb2c1eec94271d76dcb4e47dcb4"
-dependencies = [
- "async-recursion",
- "async-trait",
- "base64 0.20.0",
- "bytes",
- "chrono",
- "futures",
- "http",
- "json-patch",
- "k8s-openapi",
- "kube",
- "lazy_static",
- "log",
- "maplit",
- "regex",
- "schemars",
- "serde",
- "serde_json",
- "serde_plain",
- "serde_yaml",
- "snafu",
- "tabled",
- "tokio",
- "tokio-util",
- "topological-sort",
-]
-
-[[package]]
-name = "native-tls"
-version = "0.2.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07226173c32f2926027b63cce4bcd8076c3552846cbe7925f3aaffeac0a3b92e"
-dependencies = [
- "lazy_static",
- "libc",
- "log",
- "openssl",
- "openssl-probe",
- "openssl-sys",
- "schannel",
- "security-framework",
- "security-framework-sys",
- "tempfile",
 ]
 
 [[package]]
@@ -2298,10 +2238,12 @@ checksum = "7f222829ae9293e33a9f5e9f440c6760a3d450a64affe1846486b140db81c1f4"
 
 [[package]]
 name = "papergrid"
-version = "0.3.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63709d10e2c2ec58f7bd91d8258d27ce80de090064b0ddf3a4bf38b907b61b8a"
+checksum = "1526bb6aa9f10ec339fb10360f22c57edf81d5678d0278e93bc12a47ffbe4b01"
 dependencies = [
+ "bytecount",
+ "fnv",
  "unicode-width",
 ]
 
@@ -3039,17 +2981,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sha-1"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5058ada175748e33390e40e872bd0fe59a19f265d0158daa551c5a88a76009c"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "digest",
-]
-
-[[package]]
 name = "sha1"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3113,7 +3044,7 @@ checksum = "48dfff04aade74dd495b007c831cd6f4e0cee19c344dd9dc0884c0289b70a786"
 dependencies = [
  "log",
  "termcolor",
- "time 0.3.19",
+ "time",
 ]
 
 [[package]]
@@ -3231,20 +3162,23 @@ dependencies = [
 
 [[package]]
 name = "tabled"
-version = "0.6.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d15827061abcf689257b1841c8e2732b1dfcc3ef825b24ce6c606e1e9e1a7bde"
+checksum = "56c3ee73732ffceaea7b8f6b719ce3bb17f253fa27461ffeaf568ebd0cdb4b85"
 dependencies = [
  "papergrid",
  "tabled_derive",
+ "unicode-width",
 ]
 
 [[package]]
 name = "tabled_derive"
-version = "0.3.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "278ea3921cee8c5a69e0542998a089f7a14fa43c9c4e4f9951295da89bd0c943"
+checksum = "beca1b4eaceb4f2755df858b88d9b9315b7ccfd1ffd0d7a48a52602301f01a57"
 dependencies = [
+ "heck 0.4.1",
+ "proc-macro-error",
  "proc-macro2",
  "quote",
  "syn",
@@ -3297,10 +3231,8 @@ dependencies = [
  "fastrand",
  "futures",
  "handlebars",
- "kube-client",
  "log",
  "maplit",
- "model",
  "pubsys-config",
  "serde",
  "serde_json",
@@ -3309,6 +3241,7 @@ dependencies = [
  "snafu",
  "term_size",
  "testsys-config",
+ "testsys-model",
  "tokio",
  "unescape",
 ]
@@ -3323,12 +3256,43 @@ dependencies = [
  "lazy_static",
  "log",
  "maplit",
- "model",
  "serde",
  "serde_yaml",
  "snafu",
+ "testsys-model",
  "toml",
  "url",
+]
+
+[[package]]
+name = "testsys-model"
+version = "0.0.6"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.6#a69b7006887249f89238b428a9acb6a0050dd384"
+dependencies = [
+ "async-recursion",
+ "async-trait",
+ "base64 0.20.0",
+ "bytes",
+ "chrono",
+ "futures",
+ "http",
+ "json-patch",
+ "k8s-openapi",
+ "kube",
+ "lazy_static",
+ "log",
+ "maplit",
+ "regex",
+ "schemars",
+ "serde",
+ "serde_json",
+ "serde_plain",
+ "serde_yaml",
+ "snafu",
+ "tabled",
+ "tokio",
+ "tokio-util",
+ "topological-sort",
 ]
 
 [[package]]
@@ -3364,16 +3328,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "time"
-version = "0.1.43"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca8a50ef2360fbd1eeb0ecd46795a87a19024eb4b53c5dc916ca1fd95fe62438"
-dependencies = [
- "libc",
- "winapi",
 ]
 
 [[package]]
@@ -3472,16 +3426,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tokio-native-tls"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbae76ab933c85776efabc971569dd6119c580d8f5d448769dec1764bf796ef2"
-dependencies = [
- "native-tls",
- "tokio",
-]
-
-[[package]]
 name = "tokio-openssl"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3517,9 +3461,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-tungstenite"
-version = "0.17.2"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f714dd15bead90401d77e04243611caec13726c2408afd5b31901dfcdcb3b181"
+checksum = "54319c93411147bced34cb5609a80e0a8e44c5999c93903a81cd866630ec0bfd"
 dependencies = [
  "futures-util",
  "log",
@@ -3697,9 +3641,9 @@ dependencies = [
 
 [[package]]
 name = "treediff"
-version = "3.0.2"
+version = "4.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "761e8d5ad7ce14bb82b7e61ccc0ca961005a275a060b9644a2431aa11553c2ff"
+checksum = "52984d277bdf2a751072b5df30ec0377febdb02f7696d64c2d7d54630bac4303"
 dependencies = [
  "serde_json",
 ]
@@ -3712,9 +3656,9 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 
 [[package]]
 name = "tungstenite"
-version = "0.17.3"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e27992fd6a8c29ee7eef28fc78349aa244134e10ad447ce3b9f0ac0ed0fa4ce0"
+checksum = "30ee6ab729cd4cf0fd55218530c4522ed30b7b6081752839b68fcec8d0960788"
 dependencies = [
  "base64 0.13.1",
  "byteorder",
@@ -3723,7 +3667,7 @@ dependencies = [
  "httparse",
  "log",
  "rand",
- "sha-1",
+ "sha1",
  "thiserror",
  "url",
  "utf-8",
