@@ -46,6 +46,7 @@ lazy_static! {
         m.insert("eu-west-1", "328549459982");
         m.insert("eu-west-2", "328549459982");
         m.insert("eu-west-3", "328549459982");
+        m.insert("il-central-1", "288123944683");
         m.insert("me-central-1", "553577323255");
         m.insert("me-south-1", "509306038620");
         m.insert("sa-east-1", "328549459982");
@@ -91,6 +92,7 @@ lazy_static! {
         m.insert("eu-west-1", "602401143452");
         m.insert("eu-west-2", "602401143452");
         m.insert("eu-west-3", "602401143452");
+        m.insert("il-central-1", "066635153087");
         m.insert("me-central-1", "759879836304");
         m.insert("me-south-1", "558608220178");
         m.insert("sa-east-1", "602401143452");
