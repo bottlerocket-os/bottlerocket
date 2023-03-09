@@ -12,8 +12,9 @@ path = "pkg.rs"
 releases-url = "https://github.com/containernetworking/cni/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/containernetworking/cni/archive/v0.8.1/cni-0.8.1.tar.gz"
-sha512 = "b869e76806c6e259743715831ddf5754a56e79fa7f25435e54e3f0648700e473e5778630e592f5c5d181058e74c7542aeac5c4f3d8cd26b83f7758bb186f43e9"
+url = "https://github.com/containernetworking/cni/archive/v1.1.2/cni-1.1.2.tar.gz"
+sha512 = "dc4795fb03b8dc9d116692e0dd0feb1b57a481ed7414c8dc376a892725b0b3d9dd8b04b2be09073b95c8c9eec2c0165d0353f6be643647f4c4de0114b9dd5930"
+bundle-modules = [ "go" ]
 
 # RPM BuildRequires
 [build-dependencies]
