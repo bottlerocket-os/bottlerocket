@@ -2,6 +2,8 @@
 Description=Prepare Boot Directory (/boot)
 RefuseManualStart=true
 RefuseManualStop=true
+After=mark-successful-boot.service
+Requires=mark-successful-boot.service
 
 [Service]
 Type=oneshot
