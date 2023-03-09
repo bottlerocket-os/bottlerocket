@@ -26,7 +26,7 @@ dependencies = [
  "docker-init",
  "docker-proxy",
  "iputils",
- "kernel-5_15",
+ "kernel-6_1",
  "login",
  "release",
  "strace",
@@ -463,6 +463,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kernel-6_1"
+version = "0.1.0"
+dependencies = [
+ "microcode",
+]
+
+[[package]]
 name = "kexec-tools"
 version = "0.1.0"
 dependencies = [
@@ -838,7 +845,7 @@ dependencies = [
  "docker-init",
  "docker-proxy",
  "iputils",
- "kernel-5_15",
+ "kernel-6_1",
  "login",
  "release",
  "strace",
@@ -1080,7 +1087,7 @@ dependencies = [
  "docker-init",
  "docker-proxy",
  "iputils",
- "kernel-5_15",
+ "kernel-6_1",
  "login",
  "open-vm-tools",
  "release",
