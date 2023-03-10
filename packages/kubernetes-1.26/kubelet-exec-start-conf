@@ -2,7 +2,7 @@
 ExecStart=
 ExecStart=/usr/bin/kubelet \
 {{#unless settings.kubernetes.standalone-mode}}
-{{#if (eq settings.kubernetes.cloud-provider "")}}
+{{#if (eq settings.kubernetes.cloud-provider "\"\"")}}
     --cloud-provider "" \
 {{else}}
     --cloud-provider "external" \
