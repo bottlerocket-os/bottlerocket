@@ -109,8 +109,7 @@ ROOT_IMAGE="$(mktemp)"
 DATA_IMAGE="$(mktemp)"
 EFI_IMAGE="$(mktemp)"
 PRIVATE_IMAGE="$(mktemp)"
-BOTTLEROCKET_DATA_A="$(mktemp)"
-BOTTLEROCKET_DATA_B="$(mktemp)"
+BOTTLEROCKET_DATA="$(mktemp)"
 
 ROOT_MOUNT="$(mktemp -d)"
 BOOT_MOUNT="$(mktemp -d)"
@@ -402,25 +401,33 @@ dd if="${PRIVATE_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[PRI
 UNLABELED=$(find "${DATA_MOUNT}" \
     | awk -v root="${DATA_MOUNT}" '{gsub(root"/","/"); gsub(root,"/"); print "ea_rm", $1, "security.selinux"}')
 
-for side in A B ; do
-  if [ "${side}" == "B" ] && [ "${PARTITION_PLAN}" == "unified" ] ; then
-    continue
-  fi
-  dev="BOTTLEROCKET_DATA_${side}"
-  dev="${!dev}"
-  mkfs.ext4 -d "${DATA_MOUNT}" "${dev}" "${partsize["DATA-${side}"]}M"
-  echo "${UNLABELED}" | debugfs -w -f - "${dev}"
-done
+mkfs_data() {
+  local target size offset
+  target="${1:?}"
+  size="${2:?}"
+  offset="${3:?}"
+  mkfs.ext4 -m 0 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" "${size}"
+  echo "${UNLABELED}" | debugfs -w -f - "${BOTTLEROCKET_DATA}"
+  dd if="${BOTTLEROCKET_DATA}" of="${target}" conv=notrunc bs=1M seek="${offset}"
+}
 
+# Decide which data filesystem to create at build time based on layout.
+#
+# The DATA-A partition will always exist, but for the "split" layout, it will be
+# too small to provide the desired filesystem parameters (inode count, etc) when
+# it is grown later on. Hence this filesystem is only created for "unified".
+#
+# The DATA-B partition does not exist on the "unified" layout, which anticipates
+# a single storage device. Hence this filesystem is only created for "split".
+#
+# If the other partition is available at runtime, the filesystem will be created
+# during first boot instead, providing flexibility at the cost of a minor delay.
 case "${PARTITION_PLAN}" in
-  split)
-    # Only create data partition B on data image in "split" image layout configurations
-    dd if="${BOTTLEROCKET_DATA_B}" of="${DATA_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA-B]}"
-
-    dd if="${BOTTLEROCKET_DATA_A}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA-A]}"
-    ;;
   unified)
-    dd if="${BOTTLEROCKET_DATA_A}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[DATA-A]}"
+    mkfs_data "${OS_IMAGE}" "${partsize["DATA-A"]}M" "${partoff["DATA-A"]}"
+    ;;
+  split)
+    mkfs_data "${DATA_IMAGE}" "${partsize["DATA-B"]}M" "${partoff["DATA-B"]}"
     ;;
 esac
 

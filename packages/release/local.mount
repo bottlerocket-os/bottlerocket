@@ -3,6 +3,8 @@ Description=Local Directory (/local)
 DefaultDependencies=no
 Conflicts=umount.target
 Before=local-fs.target umount.target
+After=prepare-local-fs.service
+Requires=prepare-local-fs.service
 
 [Mount]
 What=/dev/disk/by-partlabel/BOTTLEROCKET-DATA

@@ -1,7 +1,7 @@
 [Unit]
 Description=Checks and marks if boot has ever succeeded before
 DefaultDependencies=no
-Before=label-data-alternative.service label-data-preferred.service
+Before=label-data-a.service label-data-b.service
 RequiresMountsFor=/etc
 
 [Service]

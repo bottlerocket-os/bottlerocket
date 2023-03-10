@@ -1,0 +1,19 @@
+[Unit]
+Description=Prepare Local Filesystem (/local)
+DefaultDependencies=no
+Wants=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
+After=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+
+# Create the filesystem on the partition, if it doesn't exist.
+ExecStart=/usr/lib/systemd/systemd-makefs ext4 /dev/disk/by-partlabel/BOTTLEROCKET-DATA
+
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+WantedBy=local-fs.target
