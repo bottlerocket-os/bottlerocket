@@ -26,12 +26,6 @@
 ; Unprivileged components cannot interact with privileged processes.
 (neverallow unprivileged_s privileged_s (processes (interact)))
 
-
-; Host subjects are denied the `noatsecure` permission to ensure that
-; the environment is sanitized during all domain transitions. Suppress
-; this audit message since otherwise it adds a lot of noise
-(dontaudit all_s all_s (process (noatsecure)))
-
 ; PID 1 starts as "kernel_t" and becomes "init_t".
 (typetransition kernel_t init_exec_t process init_t)
 (allow kernel_t init_t (processes (transform)))
