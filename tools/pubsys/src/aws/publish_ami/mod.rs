@@ -399,12 +399,14 @@ pub(crate) async fn modify_regional_snapshots(
             }
             Err(e) => {
                 error_count += 1;
-                error!(
-                    "Failed to modify permissions in {} for snapshots [{}]: {}",
-                    region.as_ref(),
-                    snapshot_ids.join(", "),
-                    e
-                );
+                if let Error::ModifyImageAttribute { source: err, .. } = e {
+                    error!(
+                        "Failed to modify permissions in {} for snapshots [{}]: {:?}",
+                        region.as_ref(),
+                        snapshot_ids.join(", "),
+                        err.into_service_error().code().unwrap_or("unknown"),
+                    );
+                }
             }
         }
     }
@@ -483,7 +485,9 @@ pub(crate) async fn modify_regional_images(
                 error_count += 1;
                 error!(
                     "Modifying permissions of {} in {} failed: {}",
-                    image_id, region, e
+                    image_id,
+                    region,
+                    e.into_service_error().code().unwrap_or("unknown"),
                 );
             }
         }
