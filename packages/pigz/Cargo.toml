@@ -1,0 +1,22 @@
+[package]
+name = "pigz"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://zlib.net/pigz/pigz-2.7.tar.gz"
+sha512 = "9f9f61de4a0307fc057dc4e31a98bd8d706d9e709ecde0be02a871534fddf6a1fe1321158aa72708603aaaece43f83d2423b127f7689b6219b23aea4f989e8f5"
+
+# RPM BuildRequires
+[build-dependencies]
+glibc = { path = "../glibc" }
+libz = { path = "../libz" }
+
+# RPM Requires
+[dependencies]
+# None
