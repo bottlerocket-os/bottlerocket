@@ -331,8 +331,12 @@ pub(crate) async fn modify_snapshots(
         let response_future = ec2_client
             .modify_snapshot_attribute()
             .set_attribute(Some(SnapshotAttributeName::CreateVolumePermission))
-            .set_user_ids(Some(modify_opts.user_ids.clone()))
-            .set_group_names(Some(modify_opts.group_names.clone()))
+            .set_user_ids(
+                (!modify_opts.user_ids.is_empty()).then_some(modify_opts.user_ids.clone()),
+            )
+            .set_group_names(
+                (!modify_opts.group_names.is_empty()).then_some(modify_opts.group_names.clone()),
+            )
             .set_operation_type(Some(operation.clone()))
             .set_snapshot_id(Some(snapshot_id.clone()))
             .send();
@@ -435,10 +439,18 @@ pub(crate) async fn modify_image(
         .set_attribute(Some(
             ImageAttributeName::LaunchPermission.as_ref().to_string(),
         ))
-        .set_user_ids(Some(modify_opts.user_ids.clone()))
-        .set_user_groups(Some(modify_opts.group_names.clone()))
-        .set_organization_arns(Some(modify_opts.organization_arns.clone()))
-        .set_organizational_unit_arns(Some(modify_opts.organizational_unit_arns.clone()))
+        .set_user_ids((!modify_opts.user_ids.is_empty()).then_some(modify_opts.user_ids.clone()))
+        .set_user_groups(
+            (!modify_opts.group_names.is_empty()).then_some(modify_opts.group_names.clone()),
+        )
+        .set_organization_arns(
+            (!modify_opts.organization_arns.is_empty())
+                .then_some(modify_opts.organization_arns.clone()),
+        )
+        .set_organizational_unit_arns(
+            (!modify_opts.organizational_unit_arns.is_empty())
+                .then_some(modify_opts.organizational_unit_arns.clone()),
+        )
         .set_operation_type(Some(operation.clone()))
         .set_image_id(Some(image_id.to_string()))
         .send()
