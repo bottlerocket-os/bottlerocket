@@ -43,7 +43,7 @@ where
             let len = names_chunk.len();
             let get_future = ssm_client
                 .get_parameters()
-                .set_names(Some(names_chunk.to_vec()))
+                .set_names((!names_chunk.is_empty()).then_some(names_chunk.to_vec().clone()))
                 .send();
 
             // Store the region so we can include it in errors and the output map
