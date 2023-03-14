@@ -24,47 +24,47 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/aws-k8s-1.22/mod.rs)
 * [Default settings](src/aws-k8s-1.22/defaults.d/)
 
-### aws-k8s-1.22-nvidia: Kubernetes 1.22 NVIDIA
+## aws-k8s-1.22-nvidia: Kubernetes 1.22 NVIDIA
 
 * [Model](src/aws-k8s-1.22-nvidia/mod.rs)
 * [Default settings](src/aws-k8s-1.22-nvidia/defaults.d/)
 
 ## aws-k8s-1.23: Kubernetes 1.23
 
-* [Model](src/aws-k8s-1.23/mod.rs)
-* [Default settings](src/aws-k8s-1.23/defaults.d/)
+* [Model](src/aws-k8s-1.26/mod.rs)
+* [Default settings](src/aws-k8s-1.26/defaults.d/)
 
-### aws-k8s-1.23-nvidia: Kubernetes 1.23 NVIDIA
+## aws-k8s-1.23-nvidia: Kubernetes 1.23 NVIDIA
 
-* [Model](src/aws-k8s-1.23-nvidia/mod.rs)
-* [Default settings](src/aws-k8s-1.23-nvidia/defaults.d/)
+* [Model](src/aws-k8s-1.26-nvidia/mod.rs)
+* [Default settings](src/aws-k8s-1.26-nvidia/defaults.d/)
 
 ## aws-k8s-1.24: Kubernetes 1.24
 
-* [Model](src/aws-k8s-1.24/mod.rs)
-* [Default settings](src/aws-k8s-1.24/defaults.d/)
+* [Model](src/aws-k8s-1.26/mod.rs)
+* [Default settings](src/aws-k8s-1.26/defaults.d/)
 
-### aws-k8s-1.24-nvidia: Kubernetes 1.24 NVIDIA
+## aws-k8s-1.24-nvidia: Kubernetes 1.24 NVIDIA
 
-* [Model](src/aws-k8s-1.24-nvidia/mod.rs)
-* [Default settings](src/aws-k8s-1.24-nvidia/defaults.d/)
+* [Model](src/aws-k8s-1.26-nvidia/mod.rs)
+* [Default settings](src/aws-k8s-1.26-nvidia/defaults.d/)
 
 ## aws-k8s-1.25: Kubernetes 1.25
 
-* [Model](src/aws-k8s-1.25/mod.rs)
-* [Default settings](src/aws-k8s-1.25/defaults.d/)
+* [Model](src/aws-k8s-1.26/mod.rs)
+* [Default settings](src/aws-k8s-1.26/defaults.d/)
 
-### aws-k8s-1.25-nvidia: Kubernetes 1.25 NVIDIA
+## aws-k8s-1.25-nvidia: Kubernetes 1.25 NVIDIA
 
-* [Model](src/aws-k8s-1.25-nvidia/mod.rs)
-* [Default settings](src/aws-k8s-1.25-nvidia/defaults.d/)
+* [Model](src/aws-k8s-1.26-nvidia/mod.rs)
+* [Default settings](src/aws-k8s-1.26-nvidia/defaults.d/)
 
 ## aws-k8s-1.26: Kubernetes 1.26
 
 * [Model](src/aws-k8s-1.26/mod.rs)
 * [Default settings](src/aws-k8s-1.26/defaults.d/)
 
-### aws-k8s-1.26-nvidia: Kubernetes 1.26 NVIDIA
+## aws-k8s-1.26-nvidia: Kubernetes 1.26 NVIDIA
 
 * [Model](src/aws-k8s-1.26-nvidia/mod.rs)
 * [Default settings](src/aws-k8s-1.26-nvidia/defaults.d/)
@@ -91,18 +91,23 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 ## vmware-k8s-1.23: VMware Kubernetes 1.23
 
-* [Model](src/vmware-k8s-1.23/mod.rs)
-* [Default settings](src/vmware-k8s-1.23/defaults.d/)
+* [Model](src/vmware-k8s-1.26/mod.rs)
+* [Default settings](src/vmware-k8s-1.26/defaults.d/)
 
 ## vmware-k8s-1.24: VMware Kubernetes 1.24
 
-* [Model](src/vmware-k8s-1.24/mod.rs)
-* [Default settings](src/vmware-k8s-1.24/defaults.d/)
+* [Model](src/vmware-k8s-1.26/mod.rs)
+* [Default settings](src/vmware-k8s-1.26/defaults.d/)
 
 ## vmware-k8s-1.25: VMware Kubernetes 1.25
 
-* [Model](src/vmware-k8s-1.25/mod.rs)
-* [Default settings](src/vmware-k8s-1.25/defaults.d/)
+* [Model](src/vmware-k8s-1.26/mod.rs)
+* [Default settings](src/vmware-k8s-1.26/defaults.d/)
+
+## vmware-k8s-1.26: VMware Kubernetes 1.26
+
+* [Model](src/vmware-k8s-1.26/mod.rs)
+* [Default settings](src/vmware-k8s-1.26/defaults.d/)
 
 ## metal-dev: Metal development build
 
@@ -116,18 +121,23 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 ## metal-k8s-1.23: Metal Kubernetes 1.23
 
-* [Model](src/metal-k8s-1.23/mod.rs)
-* [Default settings](src/metal-k8s-1.23/defaults.d/)
+* [Model](src/metal-k8s-1.26/mod.rs)
+* [Default settings](src/metal-k8s-1.26/defaults.d/)
 
 ## metal-k8s-1.24: Metal Kubernetes 1.24
 
-* [Model](src/metal-k8s-1.24/mod.rs)
-* [Default settings](src/metal-k8s-1.24/defaults.d/)
+* [Model](src/metal-k8s-1.26/mod.rs)
+* [Default settings](src/metal-k8s-1.26/defaults.d/)
 
 ## metal-k8s-1.25: Metal Kubernetes 1.25
 
-* [Model](src/metal-k8s-1.25/mod.rs)
-* [Default settings](src/metal-k8s-1.25/defaults.d/)
+* [Model](src/metal-k8s-1.26/mod.rs)
+* [Default settings](src/metal-k8s-1.26/defaults.d/)
+
+## metal-k8s-1.26: Metal Kubernetes 1.26
+
+* [Model](src/metal-k8s-1.26/mod.rs)
+* [Default settings](src/metal-k8s-1.26/defaults.d/)
 
 # This directory
 
