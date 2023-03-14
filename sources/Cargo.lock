@@ -369,6 +369,7 @@ dependencies = [
  "simplelog",
  "snafu",
  "thar-be-updates",
+ "tokio",
  "toml",
  "walkdir",
 ]

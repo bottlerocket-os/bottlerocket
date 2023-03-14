@@ -450,3 +450,51 @@ paths:
           description: "Connection upgraded to WebSocket"
         500:
           description: "Server error"
+
+  /report:
+    get:
+      summary: "Get available report types"
+      operationId: "get_reports"
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                type: array
+                $ref: "Report"
+        500:
+          description: "Server error"
+
+  /report/cis:
+    get:
+      summary: "Get CIS Bottlerocket benchmark report"
+      operationId: "cis-report"
+      parameters:
+        - in: query
+          name: level
+          description: "The CIS compliance level to test (1 or 2). Default level is 1."
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2
+          required: false
+        - in: query
+          name: format
+          description: "The CIS compliance report format (text or json). Default format is text."
+          schema:
+            type: string
+          required: false
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                $ref: "String"
+        400:
+          description: "Bad request input"
+        422:
+          description: "Unprocessable request"
+        500:
+          description: "Server error"

@@ -133,6 +133,22 @@ pub enum Error {
     #[snafu(display("Failed to reboot, exit code: {}, stderr: {}", exit_code, stderr))]
     Reboot { exit_code: i32, stderr: String },
 
+    #[snafu(display("Unable to generate report: {}", source))]
+    ReportExec { source: io::Error },
+
+    #[snafu(display(
+        "Failed to generate report, exit code: {}, stderr: {}",
+        exit_code,
+        stderr
+    ))]
+    ReportResult { exit_code: i32, stderr: String },
+
+    #[snafu(display("Report type must be specified"))]
+    ReportTypeMissing {},
+
+    #[snafu(display("Report type '{}' is not supported", report_type))]
+    ReportNotSupported { report_type: String },
+
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
     // Update related errors

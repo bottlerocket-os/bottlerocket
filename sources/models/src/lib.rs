@@ -519,3 +519,9 @@ struct OciDefaultsResourceLimit {
     hard_limit: u32,
     soft_limit: u32,
 }
+
+#[model(add_option = false)]
+struct Report {
+    name: String,
+    description: String,
+}
