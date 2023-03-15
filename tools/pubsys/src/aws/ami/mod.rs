@@ -358,7 +358,11 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
             }
             Err(e) => {
                 saw_error = true;
-                error!("Copy to {} failed: {}", region, e);
+                error!(
+                    "Copy to {} failed: {}",
+                    region,
+                    e.into_service_error().code().unwrap_or("unknown")
+                );
             }
         }
     }
