@@ -55,7 +55,7 @@
 * Update Bottlerocket SDK to v0.30.2 ([#2866], [#2857], [#2836])
 * Remove outdated `rust_2018_idioms` enforcement ([#2837])
 * Update Rust edition to `2021` ([#2835])
-* Upgraded Rust code dependencies ([#2816], [#2869], [#2851], [#2736])
+* Upgraded Rust code dependencies ([#2816], [#2869], [#2851], [#2736], [#2895])
 * Upgraded Go code dependencies ([#2828], [#2826], [#2813])
 * Rename `ncurses` to `libncurses` ([#2769])
 * Update schnauzer's registry map ([#2867])
@@ -142,6 +142,7 @@
 [#2876]: https://github.com/bottlerocket-os/bottlerocket/pull/2876
 [#2879]: https://github.com/bottlerocket-os/bottlerocket/pull/2879
 [#2880]: https://github.com/bottlerocket-os/bottlerocket/pull/2880
+[#2895]: https://github.com/bottlerocket-os/bottlerocket/pull/2895
 
 # v 1.12.0 (2022-01-24)
 
