@@ -74,7 +74,7 @@ Our sample package has the following manifest.
 [package]
 name = "libwoof"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 publish = false
 build = "build.rs"
 
