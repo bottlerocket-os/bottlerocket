@@ -9,7 +9,7 @@ mod static_address;
 mod vlan;
 
 use crate::interface_id::{InterfaceId, InterfaceName, MacAddress};
-use crate::net_config::devices::bonding::{BondMonitoringConfig, NetBondV1};
+use crate::net_config::devices::bonding::{BondMonitoringConfigV1, NetBondV1};
 use crate::net_config::devices::interface::NetInterfaceV2;
 use crate::net_config::devices::vlan::NetVlanV1;
 use crate::net_config::devices::NetworkDeviceV1;
@@ -234,10 +234,10 @@ where
         wicked_bond.min_links = config.min_links;
 
         match &config.monitoring_config {
-            BondMonitoringConfig::MiiMon(config) => {
+            BondMonitoringConfigV1::MiiMon(config) => {
                 wicked_bond.mii_monitoring = Some(WickedMiiMonitoringConfig::from(config.clone()))
             }
-            BondMonitoringConfig::ArpMon(config) => {
+            BondMonitoringConfigV1::ArpMon(config) => {
                 wicked_bond.arp_monitoring = Some(WickedArpMonitoringConfig::from(config.clone()))
             }
         }
