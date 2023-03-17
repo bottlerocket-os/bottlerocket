@@ -34,6 +34,7 @@ hotdog = { path = "../hotdog" }
 iproute = { path = "../iproute" }
 iptables = { path = "../iptables" }
 kexec-tools = { path = "../../packages/kexec-tools" }
+keyutils = { path = "../keyutils" }
 libaudit = { path = "../libaudit" }
 libgcc = { path = "../libgcc" }
 libstd-rust = { path = "../libstd-rust" }
