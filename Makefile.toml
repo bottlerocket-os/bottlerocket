@@ -440,6 +440,7 @@ export VARIANT="${BUILDSYS_VARIANT}"
 
 # For rust first-party source code
 if ! docker run --rm \
+   -u $(id -u):$(id -g) \
    -e CARGO_HOME="/tmp/.cargo" \
    -v "${CARGO_HOME}":/tmp/.cargo \
    -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
@@ -452,6 +453,7 @@ if ! docker run --rm \
 fi
 
 if ! docker run --rm \
+   -u $(id -u):$(id -g) \
    -e CARGO_HOME="/tmp/.cargo" \
    -v "${CARGO_HOME}":/tmp/.cargo \
    -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
