@@ -1177,7 +1177,7 @@ RPM itself is not in the image - it's just a common and convenient package defin
 
 We currently package the following major third-party components:
 
-* Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [packaging](packages/kernel-5.4/))
+* Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [5.10 packaging](packages/kernel-5.10/), [5.15 packaging](packages/kernel-5.15/))
 * glibc ([background](https://www.gnu.org/software/libc/), [packaging](packages/glibc/))
 * Buildroot as build toolchain ([background](https://buildroot.org/), via the [SDK](https://github.com/bottlerocket-os/bottlerocket-sdk))
 * GRUB, with patches for partition flip updates ([background](https://www.gnu.org/software/grub/), [packaging](packages/grub/))
