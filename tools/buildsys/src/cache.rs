@@ -14,8 +14,10 @@ pub(crate) mod error;
 use error::Result;
 
 use buildsys::manifest;
+use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use sha2::{Digest, Sha512};
 use snafu::{ensure, OptionExt, ResultExt};
+use std::env;
 use std::fs::{self, File};
 use std::io::{self, BufWriter};
 use std::path::{Path, PathBuf};
@@ -77,8 +79,26 @@ impl LookasideCache {
     /// then verifies the contents against the SHA-512 hash provided.
     fn fetch_file<P: AsRef<Path>>(url: &str, path: P, hash: &str) -> Result<()> {
         let path = path.as_ref();
-        let mut resp =
-            reqwest::blocking::get(url).context(error::ExternalFileRequestSnafu { url })?;
+
+        let version = Self::getenv("BUILDSYS_VERSION_FULL")?;
+
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            USER_AGENT,
+            HeaderValue::from_str(&format!(
+                "Bottlerocket buildsys {version} (https://github.com/bottlerocket-os/bottlerocket)"
+            ))
+            .unwrap_or(HeaderValue::from_static(
+                "Bottlerocket buildsys (https://github.com/bottlerocket-os/bottlerocket)",
+            )),
+        );
+
+        let client = reqwest::blocking::Client::new();
+        let mut resp = client
+            .get(url)
+            .headers(headers)
+            .send()
+            .context(error::ExternalFileRequestSnafu { url })?;
         let status = resp.status();
         ensure!(
             status.is_success(),
@@ -98,6 +118,10 @@ impl LookasideCache {
                 Err(e)
             }
         }
+    }
+
+    fn getenv(var: &str) -> Result<String> {
+        env::var(var).context(error::EnvironmentSnafu { var: (var) })
     }
 
     fn extract_file_name(url: &str) -> Result<PathBuf> {

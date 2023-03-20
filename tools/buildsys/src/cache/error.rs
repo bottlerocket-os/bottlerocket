@@ -6,6 +6,12 @@ use std::path::PathBuf;
 #[snafu(visibility(pub(super)))]
 #[allow(clippy::enum_variant_names)]
 pub(crate) enum Error {
+    #[snafu(display("Missing environment variable '{}'", var))]
+    Environment {
+        var: String,
+        source: std::env::VarError,
+    },
+
     #[snafu(display("Bad file name '{}'", path.display()))]
     ExternalFileName { path: PathBuf },
 
