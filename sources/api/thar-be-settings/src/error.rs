@@ -1,3 +1,4 @@
+use core::num;
 use http::StatusCode;
 use snafu::Snafu;
 use std::io;
@@ -25,6 +26,13 @@ pub enum Error {
         path: PathBuf,
         pathtype: &'static str,
         source: io::Error,
+    },
+
+    #[snafu(display("Failed to set template {} to mode {}: {}", path.display(), mode, source))]
+    TemplateMode {
+        path: PathBuf,
+        mode: String,
+        source: num::ParseIntError,
     },
 
     #[snafu(display("Failed to run restart command - '{}': {}", command, source))]

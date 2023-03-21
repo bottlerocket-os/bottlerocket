@@ -737,6 +737,7 @@ mod test {
             hashmap!("foo".to_string() => ConfigurationFile {
                 path: "file".try_into().unwrap(),
                 template_path: "template".try_into().unwrap(),
+                mode: None,
             })
         );
 

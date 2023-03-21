@@ -3,11 +3,14 @@ use crate::{error, Result};
 use itertools::join;
 use snafu::{ensure, ResultExt};
 use std::collections::HashSet;
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::prelude::*;
+use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const SYSTEMCTL_DAEMON_RELOAD: &str = "systemctl daemon-reload";
+const DEFAULT_FILE_MODE: u32 = 0o644;
 
 /// Query the API for ConfigurationFile data
 #[allow(clippy::implicit_hasher)]
@@ -63,12 +66,18 @@ pub fn render_config_files(
         let try_rendered = registry.render(&name, &settings);
         if strict {
             let rendered = try_rendered.context(error::TemplateRenderSnafu { template: name })?;
-            rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered));
+            rendered_configs.push(RenderedConfigFile::new(
+                &metadata.path,
+                rendered,
+                &metadata.mode,
+            ));
         } else {
             match try_rendered {
-                Ok(rendered) => {
-                    rendered_configs.push(RenderedConfigFile::new(&metadata.path, rendered))
-                }
+                Ok(rendered) => rendered_configs.push(RenderedConfigFile::new(
+                    &metadata.path,
+                    rendered,
+                    &metadata.mode,
+                )),
                 Err(err) => warn!("Unable to render template '{}': {}", &name, err),
             }
         }
@@ -129,13 +138,15 @@ pub fn reload_config_files(rendered_configs: &[RenderedConfigFile]) -> Result<()
 pub struct RenderedConfigFile {
     path: PathBuf,
     rendered: String,
+    mode: Option<String>,
 }
 
 impl RenderedConfigFile {
-    fn new(path: &str, rendered: String) -> RenderedConfigFile {
+    fn new(path: &str, rendered: String, mode: &Option<String>) -> RenderedConfigFile {
         RenderedConfigFile {
             path: PathBuf::from(&path),
             rendered,
+            mode: mode.to_owned(),
         }
     }
 
@@ -148,10 +159,32 @@ impl RenderedConfigFile {
             })?;
         };
 
-        fs::write(&self.path, self.rendered.as_bytes()).context(error::TemplateWriteSnafu {
-            path: &self.path,
-            pathtype: "file",
-        })
+        let mut binding = OpenOptions::new();
+        let options = binding.write(true).create(true).mode(DEFAULT_FILE_MODE);
+
+        // See if this file has a config setting for a specific mode, but don't error if we are
+        // not able to honor that request.
+        if let Some(mode) = &self.mode {
+            let mode_int =
+                u32::from_str_radix(mode.as_str(), 8).context(error::TemplateModeSnafu {
+                    path: &self.path,
+                    mode,
+                })?;
+            options.mode(mode_int);
+        }
+
+        let mut file = options
+            .open(&self.path)
+            .context(error::TemplateWriteSnafu {
+                path: &self.path,
+                pathtype: "file",
+            })?;
+
+        file.write_all(self.rendered.as_bytes())
+            .context(error::TemplateWriteSnafu {
+                path: &self.path,
+                pathtype: "file",
+            })
     }
 
     /// Checks whether the config file needs `systemd` to reload.
