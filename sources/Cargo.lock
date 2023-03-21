@@ -562,6 +562,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-profile-cred-provider"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-sdk-cloudformation"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
