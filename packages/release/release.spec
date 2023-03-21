@@ -98,6 +98,7 @@ Requires: %{_cross_os}hotdog
 Requires: %{_cross_os}iproute
 Requires: %{_cross_os}iptables
 Requires: %{_cross_os}kexec-tools
+Requires: %{_cross_os}keyutils
 Requires: %{_cross_os}makedumpfile
 Requires: %{_cross_os}os
 Requires: %{_cross_os}policycoreutils

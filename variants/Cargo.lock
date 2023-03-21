@@ -455,6 +455,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "keyutils"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "kmod"
 version = "0.1.0"
 dependencies = [
@@ -980,6 +987,7 @@ dependencies = [
  "iproute",
  "iptables",
  "kexec-tools",
+ "keyutils",
  "libaudit",
  "libgcc",
  "libstd-rust",
