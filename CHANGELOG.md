@@ -1,3 +1,22 @@
+# v1.13.1 (2022-03-21)
+
+## OS Changes
+
+* Enforce a minimum size of 20GiB for the data partition ([#2920])
+* Add `keyutils` package to enable mounting CIFS shares ([#2907])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Fix AWS profile rendering in credential provider ([#2904])
+* Change CredentialProviderConfig api version to `v1beta1` for Kubernetes 1.25 variants ([#2906])
+
+[#2904]: https://github.com/bottlerocket-os/bottlerocket/pull/2904
+[#2906]: https://github.com/bottlerocket-os/bottlerocket/pull/2906
+[#2907]: https://github.com/bottlerocket-os/bottlerocket/pull/2907
+[#2920]: https://github.com/bottlerocket-os/bottlerocket/pull/2920
+
 # v1.13.0 (2022-03-15)
 
 ## OS Changes
