@@ -57,3 +57,6 @@ restart-commands = ["/usr/bin/static-pods"]
 
 [metadata.settings.kubernetes.static-pods]
 affected-services = ["static-pods"]
+
+[metadata.settings.aws.profile]
+affected-services = ["kubernetes"]
