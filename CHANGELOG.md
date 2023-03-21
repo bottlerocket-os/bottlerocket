@@ -1,3 +1,15 @@
+# v1.13.1 (2022-03-??)
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Fix aws.profile rendering in cred-provider template ([#2904])
+* Change CredentialProviderConfig API version to v1beta1 ([#2908])
+
+[#2904]: https://github.com/bottlerocket-os/bottlerocket/pull/2904
+[#2908]: https://github.com/bottlerocket-os/bottlerocket/pull/2908
+
 # v1.13.0 (2022-03-15)
 
 ## OS Changes
