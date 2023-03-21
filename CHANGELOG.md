@@ -1,8 +1,8 @@
-# v1.13.1 (2022-03-21)
+# v1.13.1 (2022-03-23)
 
 ## OS Changes
 
-* Enforce a minimum size of 20GiB for the data partition ([#2920])
+* Improve logic around repartitioning and disk expansion by using symlinks to differentiate "fallback" and "preferred" data partitions ([#2935])
 * Add `keyutils` package to enable mounting CIFS shares ([#2907])
 
 ## Orchestrator Changes
@@ -15,7 +15,7 @@
 [#2904]: https://github.com/bottlerocket-os/bottlerocket/pull/2904
 [#2906]: https://github.com/bottlerocket-os/bottlerocket/pull/2906
 [#2907]: https://github.com/bottlerocket-os/bottlerocket/pull/2907
-[#2920]: https://github.com/bottlerocket-os/bottlerocket/pull/2920
+[#2935]: https://github.com/bottlerocket-os/bottlerocket/pull/2935
 
 # v1.13.0 (2022-03-15)
 
