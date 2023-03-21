@@ -12,6 +12,7 @@ nodeGroups:
     instanceType: m5.large
     desiredCapacity: 4
     amiFamily: Bottlerocket
+    disableIMDSv1: true
     iam:
        attachPolicyARNs:
           - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
