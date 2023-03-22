@@ -1,5 +1,5 @@
 Name: %{_cross_os}grep
-Version: 3.8
+Version: 3.9
 Release: 1%{?dist}
 Summary: GNU grep utility
 URL: https://www.gnu.org/software/grep/
