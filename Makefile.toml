@@ -1402,6 +1402,36 @@ rm -rf ${BUILDSYS_STATE_DIR}
 '''
 ]
 
+# Deletes cached code used for Bottlerocket builds
+[tasks.purge-cache]
+dependencies = [
+  "purge-go-vendor",
+  "purge-cargo",
+]
+
+# This task will delete vendored Go code, primarily, the Go module cache.
+# The Go module cache is intentionally readonly and does not have writable
+# subdirectories or files. So, we first need to perform the `chmod` in order to
+# have permissions to delete it.
+# See for more context: https://github.com/golang/go/issues/27455
+[tasks.purge-go-vendor]
+script_runner = "bash"
+script = [
+    '''
+    chmod -R 755 ${GO_MOD_CACHE}
+    rm -rf ${GO_MOD_CACHE}
+    '''
+]
+
+# This task will remove all the cached Rust code found in the cargo home dir
+[tasks.purge-cargo]
+script_runner = "bash"
+script = [
+    '''
+    rm -rf ${CARGO_HOME}
+    '''
+]
+
 [tasks.test-tools]
 dependencies = ["setup", "fetch-sources"]
 script = [
