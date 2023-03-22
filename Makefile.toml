@@ -677,7 +677,7 @@ fi
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
 # Parse the variant into its components and set additional variables.
-eval $(bottlerocket-variant)
+eval "$(bottlerocket-variant)"
 export BUILDSYS_VARIANT_PLATFORM="${BUILDSYS_VARIANT_PLATFORM:?}"
 export BUILDSYS_VARIANT_RUNTIME="${BUILDSYS_VARIANT_RUNTIME:?}"
 export BUILDSYS_VARIANT_FAMILY="${BUILDSYS_VARIANT_FAMILY:?}"
@@ -702,7 +702,7 @@ script = [
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
 
 # Parse the variant into its components and set additional variables.
-eval $(bottlerocket-variant)
+eval "$(bottlerocket-variant)"
 export BUILDSYS_VARIANT_PLATFORM="${BUILDSYS_VARIANT_PLATFORM:?}"
 export BUILDSYS_VARIANT_RUNTIME="${BUILDSYS_VARIANT_RUNTIME:?}"
 export BUILDSYS_VARIANT_FAMILY="${BUILDSYS_VARIANT_FAMILY:?}"
