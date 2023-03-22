@@ -518,6 +518,8 @@ If you downgrade from v1.14.0 to an earlier version, and you have these values s
 * `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.
 * `settings.kubernetes.registry-qps`: The registry pull QPS.
 * `settings.kubernetes.server-tls-bootstrap`: Enables or disables server certificate bootstrap. When enabled, the kubelet will request a certificate from the certificates.k8s.io API. This requires an approver to approve the certificate signing requests (CSR). Defaults to `true`.
+* `settings.kubernetes.shutdown-grace-period`: Delay the node should wait for pod termination before shutdown. Default is `0s`.
+* `settings.kubernetes.shutdown-grace-period-for-critical-pods`: The portion of the shutdown delay that should be dedicated to critical pod shutdown. Default is `0s`.
 * `settings.kubernetes.standalone-mode`: Whether to run the kubelet in standalone mode, without connecting to an API server. Defaults to `false`.
 * `settings.kubernetes.system-reserved`: Resources reserved for system components.
 

@@ -6,6 +6,8 @@ fn run() -> Result<()> {
     migrate(AddSettingsMigration(&[
         "settings.kubernetes.cpu-manager-policy-options",
         "settings.kubernetes.cpu-cfs-quota-enforced",
+        "settings.kubernetes.shutdown-grace-period",
+        "settings.kubernetes.shutdown-grace-period-for-critical-pods",
     ]))
 }
 

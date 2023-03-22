@@ -256,6 +256,8 @@ struct KubernetesSettings {
     credential_providers: HashMap<Identifier, CredentialProvider>,
     server_certificate: ValidBase64,
     server_key: ValidBase64,
+    shutdown_grace_period: KubernetesDurationValue,
+    shutdown_grace_period_for_critical_pods: KubernetesDurationValue,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.

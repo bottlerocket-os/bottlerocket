@@ -135,3 +135,9 @@ containerLogMaxSize: {{settings.kubernetes.container-log-max-size}}
 {{#if settings.kubernetes.container-log-max-files includeZero=true}}
 containerLogMaxFiles: {{settings.kubernetes.container-log-max-files}}
 {{/if}}
+{{#if settings.kubernetes.shutdown-grace-period}}
+shutdownGracePeriod: {{settings.kubernetes.shutdown-grace-period}}
+{{/if}}
+{{#if settings.kubernetes.shutdown-grace-period-for-critical-pods}}
+shutdownGracePeriodCriticalPods: {{settings.kubernetes.shutdown-grace-period-for-critical-pods}}
+{{/if}}
