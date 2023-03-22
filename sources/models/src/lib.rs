@@ -174,6 +174,7 @@ mod de;
 
 use modeled_types::KubernetesCPUManagerPolicyOption;
 use modeled_types::KubernetesEvictionKey;
+use modeled_types::NonNegativeInteger;
 pub use variant::*;
 
 // Types used to communicate between client and server for 'apiclient exec'.
@@ -232,7 +233,7 @@ struct KubernetesSettings {
     eviction_hard: HashMap<KubernetesEvictionKey, KubernetesThresholdValue>,
     eviction_soft: HashMap<KubernetesEvictionKey, KubernetesThresholdValue>,
     eviction_soft_grace_period: HashMap<KubernetesEvictionKey, KubernetesDurationValue>,
-    eviction_max_pod_grace_period: i32,
+    eviction_max_pod_grace_period: NonNegativeInteger,
     kube_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
     system_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
     allowed_unsafe_sysctls: Vec<SingleLineString>,

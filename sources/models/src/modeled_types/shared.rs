@@ -1,6 +1,9 @@
 use super::error;
 use lazy_static::lazy_static;
 use regex::Regex;
+use scalar::traits::{Scalar, Validate};
+use scalar::ValidationError;
+use scalar_derive::Scalar;
 use semver::Version;
 use serde::de::Error as _;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -1128,5 +1131,46 @@ mod test_valid_kmod_key {
         assert!(KmodKey::try_from("kernel\nModule").is_err());
         assert!(KmodKey::try_from("🐡").is_err());
         assert!(KmodKey::try_from(vec!["z"; KMOD_KEY_LENGTH + 1].join("")).is_err());
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// Input value that needs to be a positive value, but should not be greater
+/// than an i32::MAX.
+#[derive(Debug, PartialEq, Scalar)]
+pub struct NonNegativeInteger {
+    inner: i32,
+}
+
+impl Validate for NonNegativeInteger {
+    fn validate<I: Into<i32>>(input: I) -> Result<NonNegativeInteger, ValidationError> {
+        let inner: i32 = input.into();
+        if inner < 0 {
+            Err(ValidationError::new(
+                "number must be great than or equal to 0",
+            ))
+        } else {
+            Ok(Self { inner })
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_positive_integer {
+    use super::NonNegativeInteger;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn valid_positive_integer() {
+        assert!(NonNegativeInteger::try_from(0).is_ok());
+        assert!(NonNegativeInteger::try_from(i32::MAX).is_ok());
+        assert!(NonNegativeInteger::try_from(42).is_ok());
+    }
+
+    #[test]
+    fn invalid_positive_integer() {
+        assert!(NonNegativeInteger::try_from(i32::MIN).is_err());
+        assert!(NonNegativeInteger::try_from(-1).is_err());
     }
 }
