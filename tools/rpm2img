@@ -147,7 +147,7 @@ set_partition_sizes \
   partsize partoff
 set_partition_labels partlabel
 set_partition_types parttype
-set_partition_uuids partguid
+set_partition_uuids partguid "${PARTITION_PLAN}"
 
 declare -a partargs
 for part in \
