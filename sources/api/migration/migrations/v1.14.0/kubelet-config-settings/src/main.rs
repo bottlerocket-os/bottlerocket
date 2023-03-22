@@ -5,6 +5,7 @@ use std::process;
 fn run() -> Result<()> {
     migrate(AddSettingsMigration(&[
         "settings.kubernetes.cpu-manager-policy-options",
+        "settings.kubernetes.cpu-cfs-quota-enforced",
     ]))
 }
 

@@ -242,6 +242,7 @@ struct KubernetesSettings {
     kube_api_burst: i32,
     container_log_max_size: KubernetesQuantityValue,
     container_log_max_files: i32,
+    cpu_cfs_quota_enforced: bool,
     cpu_manager_policy: CpuManagerPolicy,
     cpu_manager_reconcile_period: KubernetesDurationValue,
     cpu_manager_policy_options: Vec<KubernetesCPUManagerPolicyOption>,

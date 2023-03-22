@@ -76,6 +76,7 @@ systemReserved:
   {{/each}}
 systemReservedCgroup: "/system"
 {{/if}}
+cpuCFSQuota: {{default true settings.kubernetes.cpu-cfs-quota-enforced}}
 cpuManagerPolicy: {{default "none" settings.kubernetes.cpu-manager-policy}}
 {{#if settings.kubernetes.cpu-manager-reconcile-period}}
 cpuManagerReconcilePeriod: {{settings.kubernetes.cpu-manager-reconcile-period}}
