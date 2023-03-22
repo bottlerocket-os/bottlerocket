@@ -41,6 +41,21 @@ evictionHard:
   {{@key}}: "{{this}}"
   {{/each}}
 {{/if}}
+{{#if settings.kubernetes.eviction-soft}}
+evictionSoft:
+  {{#each settings.kubernetes.eviction-soft}}
+  {{@key}}: "{{this}}"
+  {{/each}}
+{{/if}}
+{{#if settings.kubernetes.eviction-soft-grace-period}}
+evictionSoftGracePeriod:
+  {{#each settings.kubernetes.eviction-soft-grace-period}}
+  {{@key}}: "{{this}}"
+  {{/each}}
+{{/if}}
+{{#if settings.kubernetes.eviction-max-pod-grace-period}}
+evictionMaxPodGracePeriod: {{settings.kubernetes.eviction-max-pod-grace-period}}
+{{/if}}
 {{#if settings.kubernetes.allowed-unsafe-sysctls}}
 allowedUnsafeSysctls: {{settings.kubernetes.allowed-unsafe-sysctls}}
 {{/if}}

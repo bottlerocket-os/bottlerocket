@@ -477,37 +477,50 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.event-burst`: The maximum size of a burst of event creations.
 * `settings.kubernetes.event-qps`: The maximum event creations per second.
 * `settings.kubernetes.eviction-hard`: The signals and thresholds that trigger pod eviction.
+* `settings.kubernetes.eviction-max-pod-grace-period`: Maximum grace period, in seconds, to wait for pod termination before soft eviction. Default is `0`.
+* `settings.kubernetes.eviction-soft`: The signals and thresholds that trigger pod eviction with a provided grace period.
+* `settings.kubernetes.eviction-soft-grace-period`: Delay for each signal to wait for pod termination before eviction.
+
   Remember to quote signals (since they all contain ".") and to quote all values.
 
-  Example user data for setting up eviction hard:
+  Example user data for setting up eviction values:
 
   ```toml
   [settings.kubernetes.eviction-hard]
   "memory.available" = "15%"
+
+  [settings.kubernetes.eviction-soft]
+  "memory.available" = "12%"
+
+  [settings.kubernetes.eviction-soft-grace-period]
+  "memory.available" = "30s"
+
+  [settings.kubernetes]
+  "eviction-max-pod-grace-period" = 40
   ```
 
 * `settings.kubernetes.image-gc-high-threshold-percent`: The percent of disk usage after which image garbage collection is always run, expressed as an integer from 0-100 inclusive.
 * `settings.kubernetes.image-gc-low-threshold-percent`: The percent of disk usage before which image garbage collection is never run, expressed as an integer from 0-100 inclusive.
 
-Since v1.14.0 `image-gc-high-threshold-percent` and `image-gc-low-threshold-percent` can be represented as numbers.
-For example:
+  Since v1.14.0 `image-gc-high-threshold-percent` and `image-gc-low-threshold-percent` can be represented as numbers.
+  For example:
 
-```toml
-[settings.kubernetes]
-image-gc-high-threshold-percent = 85
-image-gc-low-threshold-percent = 80
-```
+  ```toml
+  [settings.kubernetes]
+  image-gc-high-threshold-percent = 85
+  image-gc-low-threshold-percent = 80
+  ```
 
-For backward compatibility, both string and numeric representations are accepted since v1.14.0.
-Prior to v1.14.0 these needed to be represented as strings, for example:
+  For backward compatibility, both string and numeric representations are accepted since v1.14.0.
+  Prior to v1.14.0 these needed to be represented as strings, for example:
 
-```toml
-[settings.kubernetes]
-image-gc-high-threshold-percent = "85"
-image-gc-low-threshold-percent = "80"
-```
+  ```toml
+  [settings.kubernetes]
+  image-gc-high-threshold-percent = "85"
+  image-gc-low-threshold-percent = "80"
+  ```
 
-If you downgrade from v1.14.0 to an earlier version, and you have these values set as numbers, they will be converted to strings on downgrade.
+  If you downgrade from v1.14.0 to an earlier version, and you have these values set as numbers, they will be converted to strings on downgrade.
 
 * `settings.kubernetes.kube-api-burst`: The burst to allow while talking with kubernetes.
 * `settings.kubernetes.kube-api-qps`: The QPS to use while talking with kubernetes apiserver.

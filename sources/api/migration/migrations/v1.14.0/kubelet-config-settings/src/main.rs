@@ -8,6 +8,9 @@ fn run() -> Result<()> {
         "settings.kubernetes.cpu-cfs-quota-enforced",
         "settings.kubernetes.shutdown-grace-period",
         "settings.kubernetes.shutdown-grace-period-for-critical-pods",
+        "settings.kubernetes.eviction-soft",
+        "settings.kubernetes.eviction-soft-grace-period",
+        "settings.kubernetes.eviction-max-pod-grace-period",
     ]))
 }
 

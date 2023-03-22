@@ -173,6 +173,7 @@ mod variant;
 mod de;
 
 use modeled_types::KubernetesCPUManagerPolicyOption;
+use modeled_types::KubernetesEvictionKey;
 pub use variant::*;
 
 // Types used to communicate between client and server for 'apiclient exec'.
@@ -193,11 +194,11 @@ use crate::modeled_types::{
     DNSDomain, ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     ECSDurationValue, EtcHostsEntries, FriendlyVersion, Identifier, IntegerPercent, KmodKey,
     KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesCloudProvider,
-    KubernetesClusterDnsIp, KubernetesClusterName, KubernetesDurationValue,
-    KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue, KubernetesQuantityValue,
-    KubernetesReservedResourceKey, KubernetesTaintValue, KubernetesThresholdValue, Lockdown,
-    OciDefaultsCapability, OciDefaultsResourceLimitType, PemCertificateString, SingleLineString,
-    SysctlKey, TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
+    KubernetesClusterDnsIp, KubernetesClusterName, KubernetesDurationValue, KubernetesLabelKey,
+    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
+    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, OciDefaultsCapability,
+    OciDefaultsResourceLimitType, PemCertificateString, SingleLineString, SysctlKey,
+    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -228,7 +229,10 @@ struct KubernetesSettings {
     authentication_mode: KubernetesAuthenticationMode,
     bootstrap_token: KubernetesBootstrapToken,
     standalone_mode: bool,
-    eviction_hard: HashMap<KubernetesEvictionHardKey, KubernetesThresholdValue>,
+    eviction_hard: HashMap<KubernetesEvictionKey, KubernetesThresholdValue>,
+    eviction_soft: HashMap<KubernetesEvictionKey, KubernetesThresholdValue>,
+    eviction_soft_grace_period: HashMap<KubernetesEvictionKey, KubernetesDurationValue>,
+    eviction_max_pod_grace_period: i32,
     kube_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
     system_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
     allowed_unsafe_sysctls: Vec<SingleLineString>,
