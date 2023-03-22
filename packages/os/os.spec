@@ -59,6 +59,7 @@ Source204: netdog-tmpfiles.conf
 # 3xx sources: udev rules
 Source300: ephemeral-storage.rules
 Source301: ebs-volumes.rules
+Source302: supplemental-storage.rules
 
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}apiclient
@@ -443,6 +444,7 @@ install -p -m 0644 %{S:204} %{buildroot}%{_cross_tmpfilesdir}/netdog.conf
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-storage.rules
 install -p -m 0644 %{S:301} %{buildroot}%{_cross_udevrulesdir}/81-ebs-volumes.rules
+install -p -m 0644 %{S:302} %{buildroot}%{_cross_udevrulesdir}/82-supplemental-storage.rules
 
 %if %{with vmware_platform}
 install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
@@ -523,6 +525,7 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %{_cross_bindir}/ghostdog
 %{_cross_udevrulesdir}/80-ephemeral-storage.rules
 %{_cross_udevrulesdir}/81-ebs-volumes.rules
+%{_cross_udevrulesdir}/82-supplemental-storage.rules
 
 %files -n %{_cross_os}signpost
 %{_cross_bindir}/signpost

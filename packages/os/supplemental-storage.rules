@@ -1,0 +1,24 @@
+# supplemental storage links: /dev/disk/by-volume-type-partuuid
+#
+# The purpose of the additional links is to encode what kind of backing device
+# the partition resides on, for cases where systemd units need this information
+# for conditional logic.
+
+ACTION=="remove", GOTO="supplemental_storage_end"
+SUBSYSTEM!="block", GOTO="supplemental_storage_end"
+ENV{DEVTYPE}!="partition", GOTO="supplemental_storage_end"
+
+# Only these drivers have "interesting" volume types.
+KERNEL!="nvme*|xvd*|vd*", GOTO="supplemental_storage_end"
+
+# Set the volume type for each supported driver, annotating it with the volume
+# sub-type, if any.
+ENV{BOTTLEROCKET_VOLUME_TYPE}!="?*", KERNEL=="nvme*", ATTRS{model}=="Amazon EC2 NVMe Instance Storage*", ENV{BOTTLEROCKET_VOLUME_TYPE}="nvme-instance-store"
+ENV{BOTTLEROCKET_VOLUME_TYPE}!="?*", KERNEL=="nvme*", ATTRS{model}=="Amazon Elastic Block Store*", ENV{BOTTLEROCKET_VOLUME_TYPE}="nvme-ebs"
+ENV{BOTTLEROCKET_VOLUME_TYPE}!="?*", KERNEL=="nvme*", ENV{BOTTLEROCKET_VOLUME_TYPE}="nvme"
+ENV{BOTTLEROCKET_VOLUME_TYPE}!="?*", KERNEL=="xvd*", ENV{BOTTLEROCKET_VOLUME_TYPE}="xen"
+ENV{BOTTLEROCKET_VOLUME_TYPE}!="?*", KERNEL=="vd*", ENV{BOTTLEROCKET_VOLUME_TYPE}="virtio"
+
+ENV{ID_PART_ENTRY_UUID}=="?*" SYMLINK+="disk/by-volume-type-partuuid/$env{BOTTLEROCKET_VOLUME_TYPE}-$env{ID_PART_ENTRY_UUID}"
+
+LABEL="supplemental_storage_end"
