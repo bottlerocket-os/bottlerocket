@@ -1,11 +1,13 @@
 use super::validate_addressing;
 use super::{error, Dhcp4ConfigV1, Dhcp6ConfigV1, Result, RouteV1, StaticConfigV1, Validate};
+use crate::bonding::{
+    ArpMonitoringConfigV1, BondModeV1, BondMonitoringConfigV1, MiiMonitoringConfigV1,
+};
 use crate::interface_id::InterfaceName;
 use crate::net_config::devices::generate_addressing_validation;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use snafu::ensure;
-use std::net::IpAddr;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -77,31 +79,6 @@ impl Validate for NetBondV1 {
     }
 }
 
-// Currently only mode 1 (active-backup) is supported but eventually 0-6 could be added
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub(crate) enum BondModeV1 {
-    ActiveBackup,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(untagged)]
-pub(crate) enum BondMonitoringConfigV1 {
-    MiiMon(MiiMonitoringConfigV1),
-    ArpMon(ArpMonitoringConfigV1),
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct MiiMonitoringConfigV1 {
-    #[serde(rename = "miimon-frequency-ms")]
-    pub(crate) frequency: u32,
-    #[serde(rename = "miimon-updelay-ms")]
-    pub(crate) updelay: u32,
-    #[serde(rename = "miimon-downdelay-ms")]
-    pub(crate) downdelay: u32,
-}
-
 impl Validate for MiiMonitoringConfigV1 {
     fn validate(&self) -> Result<()> {
         ensure!(
@@ -122,17 +99,6 @@ impl Validate for MiiMonitoringConfigV1 {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct ArpMonitoringConfigV1 {
-    #[serde(rename = "arpmon-interval-ms")]
-    pub(crate) interval: u32,
-    #[serde(rename = "arpmon-validate")]
-    pub(crate) validate: ArpValidateV1,
-    #[serde(rename = "arpmon-targets")]
-    pub(crate) targets: Vec<IpAddr>,
-}
-
 impl Validate for ArpMonitoringConfigV1 {
     fn validate(&self) -> Result<()> {
         ensure!(
@@ -151,13 +117,4 @@ impl Validate for ArpMonitoringConfigV1 {
         );
         Ok(())
     }
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub(crate) enum ArpValidateV1 {
-    Active,
-    All,
-    Backup,
-    None,
 }

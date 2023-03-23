@@ -30,6 +30,7 @@ is meant to be used as a restart command for DNS API settings.
 extern crate serde_plain;
 
 mod addressing;
+mod bonding;
 mod cli;
 mod dns;
 mod interface_id;
