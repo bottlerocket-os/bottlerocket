@@ -7,7 +7,7 @@ pub(crate) mod interface;
 pub(crate) mod vlan;
 
 use super::{error, Result, Validate};
-use crate::net_config::{Dhcp4ConfigV1, Dhcp6ConfigV1, RouteV1, StaticConfigV1};
+use crate::addressing::{Dhcp4ConfigV1, Dhcp6ConfigV1, RouteV1, StaticConfigV1};
 use bonding::NetBondV1;
 use interface::NetInterfaceV2;
 use serde::Deserialize;

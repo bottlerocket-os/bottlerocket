@@ -1,10 +1,10 @@
 //! The `v1` module contains the first version of the network configuration and implements the
 //! appropriate traits.
 
-use super::{error, Dhcp4ConfigV1, Dhcp6ConfigV1, Error, Interfaces, Result, Validate};
+use super::{error, Error, Interfaces, Result, Validate};
+use crate::addressing::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6OptionsV1};
 use crate::{
     interface_id::{InterfaceId, InterfaceName},
-    net_config::{Dhcp4OptionsV1, Dhcp6OptionsV1},
     wicked::{WickedDhcp4, WickedDhcp6, WickedInterface},
 };
 use indexmap::indexmap;
