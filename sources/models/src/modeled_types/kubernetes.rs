@@ -4,10 +4,12 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // Just need serde's Error in scope to get its trait methods
 use super::error;
 use serde::de::Error as _;
+use serde_json::Value;
 use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
 use std::convert::TryFrom;
 use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 use std::ops::Deref;
 
@@ -1007,140 +1009,188 @@ mod test_topology_manager_policy {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-/// imageGCHighThresholdPercent is the percent of disk usage after which image
-/// garbage collection is always run. The percent is calculated by dividing this
-/// field value by 100, so this field must be between 0 and 100, inclusive. When
-/// specified, the value must be greater than imageGCLowThresholdPercent.
+/// This enum is used by `IntegerPercent` to "remember" how the number was deserialized.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+enum IntegerPercentMode {
+    Number,
+    String,
+}
+
+/// This type allows for the representation of `imageGCHighThresholdPercent` and
+/// `imageGCHighThresholdPercent` as numbers in Bottlerocket userdata and API interactions.
+/// See https://github.com/bottlerocket-os/bottlerocket/issues/2883
+///
+/// The type "remembers" whether it was deserialized from a string or a number and reserializes the
+/// same way. This allows for backward compatibility where users may expect these to be strings, but
+/// allows for new userdata/API-interactions to represent these as numbers.
+///
+/// ## About Kubernetes GC Threshold Percent
+///
+/// `imageGCHighThresholdPercent` and `imageGCHighThresholdPercent` are percentages of disk usage
+/// after which image garbage collection is always run. The percent is calculated by dividing by
+/// 100, so this field must be between 0 and 100, inclusive. When specified, the value of
+/// `imageGCHighThresholdPercent` must be greater than `imageGCHighThresholdPercent`, however this
+/// is not enforced by the Bottlerocket API.
 /// Default: 85
 /// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct ImageGCHighThresholdPercent {
-    inner: String,
+///
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct IntegerPercent {
+    value: i32,
+    mode: IntegerPercentMode,
 }
 
-impl TryFrom<&str> for ImageGCHighThresholdPercent {
-    type Error = error::Error;
-
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        let parsed_input: i32 = input
-            .parse::<i32>()
-            .context(error::ParseIntSnafu { input })?;
+impl IntegerPercent {
+    fn new(value: i32, mode: IntegerPercentMode) -> Result<Self, error::Error> {
         ensure!(
-            !input.is_empty(),
-            error::InvalidImageGCHighThresholdPercentSnafu {
-                input,
-                msg: "must not be empty",
-            }
-        );
-        ensure!(
-            (IMAGE_GC_THRESHOLD_MIN..=IMAGE_GC_THRESHOLD_MAX).contains(&parsed_input),
-            error::InvalidImageGCHighThresholdPercentSnafu {
-                input,
+            (IMAGE_GC_THRESHOLD_MIN..=IMAGE_GC_THRESHOLD_MAX).contains(&value),
+            error::InvalidImageGCLowThresholdPercentSnafu {
+                input: value.to_string(),
                 msg: "must be between 0 and 100 (inclusive)"
             }
         );
-
-        Ok(ImageGCHighThresholdPercent {
-            inner: input.to_owned(),
-        })
+        Ok(Self { value, mode })
     }
 }
-string_impls_for!(ImageGCHighThresholdPercent, "ImageGCHighThresholdPercent");
 
-#[cfg(test)]
-mod test_image_gc_high_threshold_percent {
-    use super::ImageGCHighThresholdPercent;
-    use std::convert::TryFrom;
+impl Display for IntegerPercent {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        Display::fmt(&self.value, f)
+    }
+}
 
-    // test 1: good values should succeed
-    #[test]
-    fn image_gc_high_threshold_percent_between_0_and_100_inclusive() {
-        for ok in &["0", "1", "99", "100"] {
-            ImageGCHighThresholdPercent::try_from(*ok).unwrap();
+impl Serialize for IntegerPercent {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self.mode {
+            IntegerPercentMode::Number => self.value.serialize(serializer),
+            IntegerPercentMode::String => {
+                let s = self.value.to_string();
+                s.serialize(serializer)
+            }
         }
     }
-
-    // test 2: values too low should return Errors
-    #[test]
-    fn image_gc_high_threshold_percent_less_than_0_fails() {
-        ImageGCHighThresholdPercent::try_from("-1").unwrap_err();
-    }
-
-    // test 3: values too high should return Errors
-    #[test]
-    fn image_gc_high_threshold_percent_greater_than_100_fails() {
-        ImageGCHighThresholdPercent::try_from("101").unwrap_err();
-    }
 }
 
-// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+impl<'de> Deserialize<'de> for IntegerPercent {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        // We need to deserialize it first into a type that can handle both numbers and strings.
+        let json_value = Value::deserialize(deserializer)?;
 
-/// imageGCLowThresholdPercent is the percent of disk usage before which image
-/// garbage collection is never run. Lowest disk usage to garbage collect to.
-/// The percent is calculated by dividing this field value by 100, so the field
-/// value must be between 0 and 100, inclusive. When specified, the value must
-/// be less than imageGCHighThresholdPercent.
-/// Default: 80
-/// https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+        // We expect the json_value to be either a string or a number, but either way we need to
+        // convert it to a string and parse it because we cannot cast a json number to i32.
+        let (s, mode) = match &json_value {
+            Value::Number(n) => (n.to_string(), IntegerPercentMode::Number),
+            Value::String(s) => (s.clone(), IntegerPercentMode::String),
+            _ => {
+                return Err(D::Error::custom(format!(
+                    "Unable to deserialize value, it is not a number or a string: {:?}",
+                    json_value,
+                )))
+            }
+        };
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct ImageGCLowThresholdPercent {
-    inner: String,
-}
-
-impl TryFrom<&str> for ImageGCLowThresholdPercent {
-    type Error = error::Error;
-
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        let parsed_input: i32 = input
+        let value = s
             .parse::<i32>()
-            .context(error::ParseIntSnafu { input })?;
-        ensure!(
-            !input.is_empty(),
-            error::InvalidImageGCLowThresholdPercentSnafu {
-                input,
-                msg: "must not be empty",
-            }
-        );
-        ensure!(
-            (IMAGE_GC_THRESHOLD_MIN..=IMAGE_GC_THRESHOLD_MAX).contains(&parsed_input),
-            error::InvalidImageGCLowThresholdPercentSnafu {
-                input,
-                msg: "must be between 0 and 100 (inclusive)"
-            }
-        );
+            .map_err(|e| D::Error::custom(format!("Unable to parse {} as an integer: {}", s, e)))?;
 
-        Ok(ImageGCLowThresholdPercent {
-            inner: input.to_owned(),
-        })
+        // This new function will clamp the range to 0..100 with a nice error message.
+        Self::new(value, mode).map_err(|e| D::Error::custom(e.to_string()))
     }
 }
-string_impls_for!(ImageGCLowThresholdPercent, "ImageGCLowThresholdPercent");
 
 #[cfg(test)]
-mod test_image_gc_low_threshold_percent {
-    use super::ImageGCLowThresholdPercent;
-    use std::convert::TryFrom;
+mod test_integer_percent {
+    use super::{IntegerPercent, IntegerPercentMode};
+    use serde::{Deserialize, Serialize};
+    use serde_json::json;
+    use serde_plain::derive_fromstr_from_deserialize;
+    use std::fmt::Debug;
+    use std::str::FromStr;
 
-    // test 1: good values should succeed
+    #[derive(Debug, Serialize, Deserialize)]
+    struct Object {
+        number: IntegerPercent,
+    }
+
     #[test]
-    fn image_gc_low_threshold_percent_between_0_and_100_inclusive() {
-        for ok in &["0", "1", "99", "100"] {
-            ImageGCLowThresholdPercent::try_from(*ok).unwrap();
+    fn valid_string_42() {
+        let json_value = json!({"number":"42"});
+        let json = serde_json::to_string_pretty(&json_value).unwrap();
+        let object: Object = serde_json::from_value(json_value).unwrap();
+        assert_eq!(object.number.value, 42);
+        assert!(matches!(object.number.mode, IntegerPercentMode::String));
+        let serialized = serde_json::to_string_pretty(&object).unwrap();
+        assert_eq!(json, serialized);
+    }
+
+    #[test]
+    fn valid_number_42() {
+        let json_value = json!({"number":42});
+        let json = serde_json::to_string_pretty(&json_value).unwrap();
+        let object: Object = serde_json::from_value(json_value).unwrap();
+        assert_eq!(object.number.value, 42);
+        assert!(matches!(object.number.mode, IntegerPercentMode::Number));
+        let serialized = serde_json::to_string_pretty(&object).unwrap();
+        assert_eq!(json, serialized);
+    }
+
+    #[test]
+    fn invalid_string_not_a_number() {
+        let json_value = json!({"number":"foo"});
+        assert!(serde_json::from_value::<Object>(json_value).is_err());
+    }
+
+    #[test]
+    fn invalid_string_out_of_range() {
+        let json_value = json!({"number":"99999999"});
+        assert!(serde_json::from_value::<Object>(json_value).is_err());
+    }
+
+    #[test]
+    fn invalid_number_out_of_range() {
+        let json_value = json!({"number":99999999});
+        assert!(serde_json::from_value::<Object>(json_value).is_err());
+    }
+
+    // Adding these impls to preserve legacy tests as they were written.
+    derive_fromstr_from_deserialize!(IntegerPercent);
+    impl TryFrom<&str> for IntegerPercent {
+        type Error = serde_plain::Error;
+        fn try_from(value: &str) -> Result<Self, Self::Error> {
+            Self::from_str(value)
         }
     }
 
-    // test 2: values too low should return Errors
+    // legacy test 1: good values should succeed
     #[test]
-    fn image_gc_low_threshold_percent_less_than_0_fails() {
-        ImageGCLowThresholdPercent::try_from("-1").unwrap_err();
+    fn image_gc_threshold_percent_between_0_and_100_inclusive() {
+        for ok in &["0", "1", "99", "100"] {
+            IntegerPercent::try_from(*ok).unwrap();
+        }
     }
 
-    // test 3: values too high should return Errors
+    // legacy test 2: values too low should return Errors
     #[test]
-    fn image_gc_low_threshold_percent_greater_than_100_fails() {
-        ImageGCLowThresholdPercent::try_from("101").unwrap_err();
+    fn image_gc_threshold_percent_less_than_0_fails() {
+        IntegerPercent::try_from("-1").unwrap_err();
+    }
+
+    // legacy test 3: values too high should return Errors
+    #[test]
+    fn image_gc_threshold_percent_greater_than_100_fails() {
+        IntegerPercent::try_from("101").unwrap_err();
+    }
+
+    // pseudo-legacy test 4: empty values should return Errors
+    #[test]
+    fn image_gc_threshold_percent_empty() {
+        IntegerPercent::try_from("").unwrap_err();
     }
 }
 
