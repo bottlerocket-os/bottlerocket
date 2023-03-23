@@ -434,6 +434,11 @@ The following settings are optional and allow you to further configure your clus
     "*.dkr.ecr.us-east-2.amazonaws.com",
     "*.dkr.ecr.us-west-2.amazonaws.com"
   ]
+
+  [settings.kubernetes.credential-providers.ecr-credential-provider.environment]
+  # The following are not used with ecr-credential-provider, but are provided for illustration
+  "KEY" = "abc123xyz"
+  "GOMAXPROCS" = "2"
   ```
 
   **Note:** `ecr-credential-provider` is currently the only supported provider.

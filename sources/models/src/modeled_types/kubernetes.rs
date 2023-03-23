@@ -7,6 +7,7 @@ use serde::de::Error as _;
 use serde_json::Value;
 use snafu::{ensure, ResultExt};
 use std::borrow::Borrow;
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -1315,12 +1316,15 @@ mod test_cluster_dns_ip {
     }
 }
 
+type EnvVarMap = HashMap<SingleLineString, SingleLineString>;
+
 /// CredentialProvider contains the settings for a credential provider for use
 /// in CredentialProviderConfig.
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct CredentialProvider {
     enabled: bool,
     image_patterns: Vec<SingleLineString>,
     cache_duration: Option<KubernetesDurationValue>,
+    environment: Option<EnvVarMap>,
 }
