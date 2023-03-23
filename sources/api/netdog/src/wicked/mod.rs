@@ -10,7 +10,7 @@ mod vlan;
 
 use crate::bonding::BondMonitoringConfigV1;
 use crate::interface_id::{InterfaceId, InterfaceName, MacAddress};
-use crate::net_config::devices::bonding::NetBondV1;
+use crate::net_config::devices::bond::NetBondV1;
 use crate::net_config::devices::interface::NetInterfaceV2;
 use crate::net_config::devices::vlan::NetVlanV1;
 use crate::net_config::devices::NetworkDeviceV1;
