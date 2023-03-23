@@ -42,8 +42,8 @@ EFI_BACKUP_TYPECODE="B39CE39C-0A00-B4AB-2D11-F18F8237A21C"
 
 # Define partition GUIDs for the data partitions. We use the GUID for determining
 # which data partition to label and use at boot.
-BOTTLEROCKET_DATA_A_PARTGUID="5b94e8df-28b8-485c-9d19-362263b5944c"
-BOTTLEROCKET_DATA_B_PARTGUID="69040874-417d-4e26-a764-7885f22007ea"
+BOTTLEROCKET_DATA_PREFERRED_PARTGUID="5b94e8df-28b8-485c-9d19-362263b5944c"
+BOTTLEROCKET_DATA_FALLBACK_PARTGUID="69040874-417d-4e26-a764-7885f22007ea"
 
 ###############################################################################
 # Section 2: fixed size partitions and reservations
@@ -255,10 +255,22 @@ set_partition_types() {
 set_partition_uuids() {
   local -n pp_uuid
   pp_uuid="${1:?}"
-  local uuid
-  for bank in A B ; do
-    uuid="BOTTLEROCKET_DATA_${bank}_PARTGUID"
-    uuid="${!uuid}"
-    pp_uuid["DATA-${bank}"]="${uuid}"
-  done
+  # Whether we're building a layout for a "split" image, where OS and data
+  # volumes are on separate disks, or a "unified" image, where they share the
+  # same disk.
+  partition_plan="${2:?}"
+  case "${partition_plan}" in
+    split)
+      pp_uuid["DATA-A"]="${BOTTLEROCKET_DATA_FALLBACK_PARTGUID}"
+      pp_uuid["DATA-B"]="${BOTTLEROCKET_DATA_PREFERRED_PARTGUID}"
+      ;;
+    unified)
+      pp_uuid["DATA-A"]="${BOTTLEROCKET_DATA_PREFERRED_PARTGUID}"
+      pp_uuid["DATA-B"]="${BOTTLEROCKET_DATA_FALLBACK_PARTGUID}"
+      ;;
+    *)
+      echo "unknown partition plan '${partition_plan}'" >&2
+      exit 1
+      ;;
+  esac
 }
