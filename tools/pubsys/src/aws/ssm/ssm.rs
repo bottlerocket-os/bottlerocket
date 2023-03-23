@@ -148,7 +148,7 @@ pub(crate) async fn set_parameters(
 
     // We run all requests in a batch, and any failed requests are added to the next batch for
     // retry
-    let mut failed_parameters: HashMap<Region, Vec<(String, SdkError<_>)>> = HashMap::new();
+    let mut failed_parameters: HashMap<Region, Vec<(String, String)>> = HashMap::new();
     let max_failures = 5;
 
     /// Stores the values we need to be able to retry requests
@@ -235,11 +235,13 @@ pub(crate) async fn set_parameters(
         // For each error response, check if we should retry or bail.
         for (context, response) in responses {
             if let Err(e) = response {
-                // Throttling errors in Rusoto are structured like this:
-                // RusotoError::Unknown(BufferedHttpResponse {status: 400, body: "{\"__type\":\"ThrottlingException\",\"message\":\"Rate exceeded\"}", headers: ...})
-                // Even if we were to do a structural match, we would still have to string match
-                // the body of the error.  Simpler to match the string form.
-                if e.to_string().contains("ThrottlingException") {
+                // Throttling errors are not currently surfaced in AWS SDK Rust, doing a string match is best we can do
+                let error_type = e
+                    .into_service_error()
+                    .code()
+                    .unwrap_or("unknown")
+                    .to_owned();
+                if error_type.contains("ThrottlingException") {
                     // We only want to increase the interval once per loop, not once per error,
                     // because when you get throttled you're likely to get a bunch of throttling
                     // errors at once.
@@ -253,7 +255,7 @@ pub(crate) async fn set_parameters(
                     failed_parameters
                         .entry(context.region.clone())
                         .or_default()
-                        .push((context.name.to_string(), e));
+                        .push((context.name.to_string(), error_type));
                 } else {
                     // Increase failure counter and try again.
                     let context = RequestContext {
@@ -262,7 +264,7 @@ pub(crate) async fn set_parameters(
                     };
                     debug!(
                         "Request attempt {} of {} failed in {}: {}",
-                        context.failures, max_failures, context.region, e
+                        context.failures, max_failures, context.region, error_type
                     );
                     contexts.push(context);
                 }
@@ -326,13 +328,14 @@ mod error {
     use aws_sdk_ssm::error::GetParametersError;
     use aws_sdk_ssm::types::SdkError;
     use snafu::Snafu;
+    use std::error::Error as _;
     use std::time::Duration;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     #[allow(clippy::large_enum_variant)]
     pub(crate) enum Error {
-        #[snafu(display("Failed to fetch SSM parameters in {}: {}", region, source))]
+        #[snafu(display("Failed to fetch SSM parameters in {}: {}", region, source.source().map(|x| x.to_string()).unwrap_or("unknown".to_string())))]
         GetParameters {
             region: String,
             source: SdkError<GetParametersError>,
