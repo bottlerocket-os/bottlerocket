@@ -162,8 +162,7 @@ impl RenderedConfigFile {
         let mut binding = OpenOptions::new();
         let options = binding.write(true).create(true).mode(DEFAULT_FILE_MODE);
 
-        // See if this file has a config setting for a specific mode, but don't error if we are
-        // not able to honor that request.
+        // See if this file has a config setting for a specific mode
         if let Some(mode) = &self.mode {
             let mode_int =
                 u32::from_str_radix(mode.as_str(), 8).context(error::TemplateModeSnafu {
