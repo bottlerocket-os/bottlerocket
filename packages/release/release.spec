@@ -57,8 +57,8 @@ Source1043: repart-local.service
 Source1044: mask-local-mnt.service
 Source1045: mask-local-opt.service
 Source1046: mask-local-var.service
-Source1047: label-data-b.service
-Source1048: label-data-a.service
+Source1047: repart-data-preferred.service
+Source1048: repart-data-fallback.service
 Source1049: prepare-local-fs.service
 
 # Services for kdump support
@@ -225,8 +225,8 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_unitdir}/mask-local-opt.service
 %{_cross_unitdir}/mask-local-var.service
 %{_cross_unitdir}/root-.aws.mount
-%{_cross_unitdir}/label-data-b.service
-%{_cross_unitdir}/label-data-a.service
+%{_cross_unitdir}/repart-data-preferred.service
+%{_cross_unitdir}/repart-data-fallback.service
 %{_cross_unitdir}/prepare-local-fs.service
 %dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 %{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
