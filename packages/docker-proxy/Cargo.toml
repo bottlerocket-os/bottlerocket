@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "https://github.com/docker/libnetwork/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/moby/libnetwork/archive/0dde5c895075df6e3630e76f750a447cf63f4789/libnetwork-0dde5c895075df6e3630e76f750a447cf63f4789.tar.gz"
-sha512 = "d73e2091c9aeefce501f5900d6c0c108d89e7970f1e091f7db4e05123536357311e65aa8210493f2386aaf4d68aac2ddf66c2c600054b87438d2f2ddd7e39584"
+url = "https://github.com/moby/libnetwork/archive/f7cdd0e7adbf0818e384178093aa67e38ffdb112/libnetwork-f7cdd0e7adbf0818e384178093aa67e38ffdb112.tar.gz"
+sha512 = "45e2acdd3cd059e6b1cc670b30e3d68b274e04b7c056ba031e0476c605b9264827defc280b20e09a339afcf853a83aae93e2fb28931df8b13dcd151a6a4da74c"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
