@@ -468,8 +468,29 @@ The following settings are optional and allow you to further configure your clus
   "memory.available" = "15%"
   ```
 
-* `settings.kubernetes.image-gc-high-threshold-percent`: The percent of disk usage after which image garbage collection is always run.
-* `settings.kubernetes.image-gc-low-threshold-percent`: The percent of disk usage before which image garbage collection is never run.
+* `settings.kubernetes.image-gc-high-threshold-percent`: The percent of disk usage after which image garbage collection is always run, expressed as an integer from 0-100 inclusive.
+* `settings.kubernetes.image-gc-low-threshold-percent`: The percent of disk usage before which image garbage collection is never run, expressed as an integer from 0-100 inclusive.
+
+Since v1.14.0 `image-gc-high-threshold-percent` and `image-gc-low-threshold-percent` can be represented as numbers.
+For example:
+
+```toml
+[settings.kubernetes]
+image-gc-high-threshold-percent = 85
+image-gc-low-threshold-percent = 80
+```
+
+For backward compatibility, both string and numeric representations are accepted since v1.14.0.
+Prior to v1.14.0 these needed to be represented as strings, for example:
+
+```toml
+[settings.kubernetes]
+image-gc-high-threshold-percent = "85"
+image-gc-low-threshold-percent = "80"
+```
+
+If you downgrade from v1.14.0 to an earlier version, and you have these values set as numbers, they will be converted to strings on downgrade.
+
 * `settings.kubernetes.kube-api-burst`: The burst to allow while talking with kubernetes.
 * `settings.kubernetes.kube-api-qps`: The QPS to use while talking with kubernetes apiserver.
 * `settings.kubernetes.log-level`: Adjust the logging verbosity of the `kubelet` process.
