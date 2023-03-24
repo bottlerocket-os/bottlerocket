@@ -192,4 +192,6 @@ version = "1.14.0"
 "(1.13.0, 1.13.1)" = [
     "migrate_v1.13.1_aws-profile-cred-provider.lz4",
 ]
-"(1.13.1, 1.14.0)" = []
+"(1.13.1, 1.14.0)" = [
+    "migrate_v1.14.0_kubernetes-gc-percent-type-change.lz4"
+]
