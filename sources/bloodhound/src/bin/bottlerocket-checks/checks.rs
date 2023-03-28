@@ -415,3 +415,39 @@ impl Checker for BR03020200Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03020300Checker {}
+
+impl Checker for BR03020300Checker {
+    fn execute(&self) -> CheckerResult {
+        let settings = [
+            "net.ipv4.conf.all.secure_redirects",
+            "net.ipv4.conf.default.secure_redirects",
+        ];
+
+        let output = [
+            "net.ipv4.conf.all.secure_redirects = 0",
+            "net.ipv4.conf.default.secure_redirects = 0",
+        ];
+
+        check_output_contains!(
+            SYSCTL_CMD,
+            settings,
+            &output,
+            "unable to verify secure redirect settings",
+            "secure redirects not disabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure secure ICMP redirects are not accepted".to_string(),
+            id: "3.2.3".to_string(),
+            level: 2,
+            name: "br03020300".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
