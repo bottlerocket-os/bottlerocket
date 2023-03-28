@@ -299,3 +299,39 @@ impl Checker for BR02010101Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03010100Checker {}
+
+impl Checker for BR03010100Checker {
+    fn execute(&self) -> CheckerResult {
+        let settings = [
+            "net.ipv4.conf.all.send_redirects",
+            "net.ipv4.conf.default.send_redirects",
+        ];
+
+        let output = [
+            "net.ipv4.conf.all.send_redirects = 0",
+            "net.ipv4.conf.default.send_redirects = 0",
+        ];
+
+        check_output_contains!(
+            SYSCTL_CMD,
+            settings,
+            &output,
+            "unable to verify redirect settings",
+            "redirects not disabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure packet redirect sending is disabled".to_string(),
+            id: "3.1.1".to_string(),
+            level: 2,
+            name: "br03010100".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
