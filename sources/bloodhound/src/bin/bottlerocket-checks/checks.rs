@@ -4,6 +4,7 @@ use std::process::Command;
 
 const PROC_MODULES_FILE: &str = "/proc/modules";
 const PROC_CMDLINE_FILE: &str = "/proc/cmdline";
+const LOCKDOWN_FILE: &str = "/sys/kernel/security/lockdown";
 const SYSCTL_CMD: &str = "/usr/sbin/sysctl";
 const MODPROBE_CMD: &str = "/bin/modprobe";
 const SESTATUS_CMD: &str = "/usr/bin/sestatus";
@@ -229,6 +230,31 @@ impl Checker for BR01050100Checker {
             id: "1.5.1".to_string(),
             level: 1,
             name: "br01050100".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR01050200Checker {}
+
+impl Checker for BR01050200Checker {
+    fn execute(&self) -> CheckerResult {
+        check_file_contains!(
+            LOCKDOWN_FILE,
+            &["[integrity]"],
+            "unable to verify lockdown mode",
+            "lockdown integrity mode is not enabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure Lockdown is configured".to_string(),
+            id: "1.5.2".to_string(),
+            level: 2,
+            name: "br01050200".to_string(),
             mode: Mode::Automatic,
         }
     }
