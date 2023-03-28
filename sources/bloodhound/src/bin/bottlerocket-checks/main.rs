@@ -61,6 +61,7 @@ fn main() {
             id: "3.4.2.3".to_string(),
             level: 1,
         }),
+        "br04010101" => Box::new(BR04010101Checker {}),
         &_ => {
             eprintln!("Command {} is not supported.", cmd_name);
             return;

@@ -6,6 +6,7 @@ const PROC_MODULES_FILE: &str = "/proc/modules";
 const PROC_CMDLINE_FILE: &str = "/proc/cmdline";
 const LOCKDOWN_FILE: &str = "/sys/kernel/security/lockdown";
 const CHRONY_CONF_FILE: &str = "/etc/chrony.conf";
+const JOURNALD_CONF_FILE: &str = "/usr/lib/systemd/journald.conf.d/journald.conf";
 const SYSCTL_CMD: &str = "/usr/sbin/sysctl";
 const SYSTEMCTL_CMD: &str = "/usr/bin/systemctl";
 const MODPROBE_CMD: &str = "/bin/modprobe";
@@ -818,6 +819,31 @@ impl Checker for BR03040202Checker {
             id: "3.4.2.2".to_string(),
             level: 2,
             name: "br03040202".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR04010101Checker {}
+
+impl Checker for BR04010101Checker {
+    fn execute(&self) -> CheckerResult {
+        check_file_contains!(
+            JOURNALD_CONF_FILE,
+            &["Storage=persistent"],
+            "unable to verify journald settings",
+            "journald is not configured"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure journald is configured to write logs to persistent disk".to_string(),
+            id: "4.1.1.1".to_string(),
+            level: 1,
+            name: "br04010101".to_string(),
             mode: Mode::Automatic,
         }
     }
