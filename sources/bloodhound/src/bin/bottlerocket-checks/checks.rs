@@ -2,6 +2,7 @@ use bloodhound::results::{CheckStatus, Checker, CheckerMetadata, CheckerResult, 
 use bloodhound::*;
 
 const PROC_MODULES_FILE: &str = "/proc/modules";
+const PROC_CMDLINE_FILE: &str = "/proc/cmdline";
 const MODPROBE_CMD: &str = "/bin/modprobe";
 
 // =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
@@ -34,6 +35,35 @@ impl Checker for BR01010101Checker {
             id: "1.1.1.1".to_string(),
             level: 2,
             name: "br01010101".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR01030100Checker {}
+
+impl Checker for BR01030100Checker {
+    fn execute(&self) -> CheckerResult {
+        check_file_contains!(
+            PROC_CMDLINE_FILE,
+            &[
+                "dm-mod.create=root,,,ro,0",
+                "root=/dev/dm-0",
+                "restart_on_corruption",
+            ],
+            "unable to verify cmdline includes dm-verity settings",
+            "unable to verify dm-verity enforcement, settings not found"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure dm-verity is configured".to_string(),
+            id: "1.3.1".to_string(),
+            level: 1,
+            name: "br01030100".to_string(),
             mode: Mode::Automatic,
         }
     }

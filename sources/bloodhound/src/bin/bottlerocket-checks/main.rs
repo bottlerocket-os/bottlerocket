@@ -21,6 +21,7 @@ fn main() {
             id: "1.2.1".to_string(),
             level: 1,
         }),
+        "br01030100" => Box::new(BR01030100Checker {}),
         "br01060000" => Box::new(ManualChecker {
             name: cmd_name.to_string(),
             title: "Ensure updates, patches, and additional security software are installed"
