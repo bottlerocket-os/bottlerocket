@@ -487,3 +487,29 @@ impl Checker for BR03020400Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03020500Checker {}
+
+impl Checker for BR03020500Checker {
+    fn execute(&self) -> CheckerResult {
+        check_output_contains!(
+            SYSCTL_CMD,
+            ["net.ipv4.icmp_echo_ignore_broadcasts"],
+            &["net.ipv4.icmp_echo_ignore_broadcasts = 1"],
+            "unable to verify broadcast ICMP requests setting",
+            "broadcast ICMP requests not ignored"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure broadcast ICMP requests are ignored".to_string(),
+            id: "3.2.5".to_string(),
+            level: 1,
+            name: "br03020500".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
