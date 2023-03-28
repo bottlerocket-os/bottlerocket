@@ -565,3 +565,41 @@ impl Checker for BR03020700Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03030100Checker {}
+
+impl Checker for BR03030100Checker {
+    fn execute(&self) -> CheckerResult {
+        let result = check_file_contains!(
+            PROC_MODULES_FILE,
+            &["sctp"],
+            "unable to parse modules to check for sctp",
+            "sctp is currently loaded"
+        );
+
+        // Check if we need to continue
+        if result.status == CheckStatus::FAIL {
+            return result;
+        }
+
+        check_output_contains!(
+            MODPROBE_CMD,
+            ["-n", "-v", "sctp"],
+            &["install /bin/true"],
+            "unable to parse modprobe output to check if sctp is enabled",
+            "modprobe for sctp is not disabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure SCTP is disabled".to_string(),
+            id: "3.3.1".to_string(),
+            level: 2,
+            name: "br03030100".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
