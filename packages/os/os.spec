@@ -387,7 +387,7 @@ for p in \
   br01020100 br01060000 br03040103 br03040203 \
   br01010101 br01030100 br01040100 br01040200 br01040300 br01040400 \
   br01050100 br01050200 br02010101 br03010100 br03020100 br03020200 \
-  br03020300 br03020400 br03020500 br03020600 \
+  br03020300 br03020400 br03020500 br03020600 br03020700 \
 ; do
   ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-checks %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
 done

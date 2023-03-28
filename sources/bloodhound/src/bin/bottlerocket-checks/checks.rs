@@ -539,3 +539,29 @@ impl Checker for BR03020600Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03020700Checker {}
+
+impl Checker for BR03020700Checker {
+    fn execute(&self) -> CheckerResult {
+        check_output_contains!(
+            SYSCTL_CMD,
+            ["net.ipv4.tcp_syncookies"],
+            &["net.ipv4.tcp_syncookies = 1"],
+            "unable to verify SYN flood cookie protection setting",
+            "SYN flood cookie protection not enabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure TCP SYN Cookies is enabled".to_string(),
+            id: "3.2.7".to_string(),
+            level: 1,
+            name: "br03020700".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
