@@ -1,6 +1,6 @@
 use crate::interface_id::InterfaceName;
 use crate::net_config::devices::bonding::{
-    ArpMonitoringConfig, ArpValidate, BondMode, MiiMonitoringConfig,
+    ArpMonitoringConfigV1, ArpValidateV1, BondModeV1, MiiMonitoringConfigV1,
 };
 
 use serde::Serialize;
@@ -60,16 +60,16 @@ pub(crate) enum WickedBondMode {
     PrimaryBackup,
 }
 
-impl From<BondMode> for WickedBondMode {
-    fn from(mode: BondMode) -> Self {
+impl From<BondModeV1> for WickedBondMode {
+    fn from(mode: BondModeV1) -> Self {
         match mode {
-            BondMode::ActiveBackup => WickedBondMode::PrimaryBackup,
+            BondModeV1::ActiveBackup => WickedBondMode::PrimaryBackup,
         }
     }
 }
 
-impl From<MiiMonitoringConfig> for WickedMiiMonitoringConfig {
-    fn from(config: MiiMonitoringConfig) -> Self {
+impl From<MiiMonitoringConfigV1> for WickedMiiMonitoringConfig {
+    fn from(config: MiiMonitoringConfigV1) -> Self {
         WickedMiiMonitoringConfig {
             frequency: config.frequency,
             updelay: config.updelay,
@@ -79,8 +79,8 @@ impl From<MiiMonitoringConfig> for WickedMiiMonitoringConfig {
     }
 }
 
-impl From<ArpMonitoringConfig> for WickedArpMonitoringConfig {
-    fn from(config: ArpMonitoringConfig) -> Self {
+impl From<ArpMonitoringConfigV1> for WickedArpMonitoringConfig {
+    fn from(config: ArpMonitoringConfigV1) -> Self {
         let mut t_vec = Vec::new();
         for t in config.targets {
             t_vec.push(ArpTarget(t))
@@ -143,13 +143,13 @@ pub(crate) enum WickedArpValidate {
     None,
 }
 
-impl From<ArpValidate> for WickedArpValidate {
-    fn from(validate: ArpValidate) -> Self {
+impl From<ArpValidateV1> for WickedArpValidate {
+    fn from(validate: ArpValidateV1) -> Self {
         match validate {
-            ArpValidate::Active => WickedArpValidate::Active,
-            ArpValidate::All => WickedArpValidate::All,
-            ArpValidate::Backup => WickedArpValidate::Backup,
-            ArpValidate::None => WickedArpValidate::None,
+            ArpValidateV1::Active => WickedArpValidate::Active,
+            ArpValidateV1::All => WickedArpValidate::All,
+            ArpValidateV1::Backup => WickedArpValidate::Backup,
+            ArpValidateV1::None => WickedArpValidate::None,
         }
     }
 }

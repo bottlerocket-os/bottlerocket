@@ -19,11 +19,11 @@ pub(crate) struct NetBondV1 {
     #[serde(rename = "route")]
     pub(crate) routes: Option<Vec<RouteV1>>,
     kind: String,
-    pub(crate) mode: BondMode,
+    pub(crate) mode: BondModeV1,
     #[serde(rename = "min-links")]
     pub(crate) min_links: Option<usize>,
     #[serde(rename = "monitoring")]
-    pub(crate) monitoring_config: BondMonitoringConfig,
+    pub(crate) monitoring_config: BondMonitoringConfigV1,
     pub(crate) interfaces: Vec<InterfaceName>,
 }
 
@@ -69,8 +69,8 @@ impl Validate for NetBondV1 {
         }
         // Validate monitoring configuration
         match &self.monitoring_config {
-            BondMonitoringConfig::MiiMon(config) => config.validate()?,
-            BondMonitoringConfig::ArpMon(config) => config.validate()?,
+            BondMonitoringConfigV1::MiiMon(config) => config.validate()?,
+            BondMonitoringConfigV1::ArpMon(config) => config.validate()?,
         }
 
         Ok(())
@@ -80,20 +80,20 @@ impl Validate for NetBondV1 {
 // Currently only mode 1 (active-backup) is supported but eventually 0-6 could be added
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) enum BondMode {
+pub(crate) enum BondModeV1 {
     ActiveBackup,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(untagged)]
-pub(crate) enum BondMonitoringConfig {
-    MiiMon(MiiMonitoringConfig),
-    ArpMon(ArpMonitoringConfig),
+pub(crate) enum BondMonitoringConfigV1 {
+    MiiMon(MiiMonitoringConfigV1),
+    ArpMon(ArpMonitoringConfigV1),
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct MiiMonitoringConfig {
+pub(crate) struct MiiMonitoringConfigV1 {
     #[serde(rename = "miimon-frequency-ms")]
     pub(crate) frequency: u32,
     #[serde(rename = "miimon-updelay-ms")]
@@ -102,7 +102,7 @@ pub(crate) struct MiiMonitoringConfig {
     pub(crate) downdelay: u32,
 }
 
-impl Validate for MiiMonitoringConfig {
+impl Validate for MiiMonitoringConfigV1 {
     fn validate(&self) -> Result<()> {
         ensure!(
             self.frequency > 0,
@@ -124,16 +124,16 @@ impl Validate for MiiMonitoringConfig {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct ArpMonitoringConfig {
+pub(crate) struct ArpMonitoringConfigV1 {
     #[serde(rename = "arpmon-interval-ms")]
     pub(crate) interval: u32,
     #[serde(rename = "arpmon-validate")]
-    pub(crate) validate: ArpValidate,
+    pub(crate) validate: ArpValidateV1,
     #[serde(rename = "arpmon-targets")]
     pub(crate) targets: Vec<IpAddr>,
 }
 
-impl Validate for ArpMonitoringConfig {
+impl Validate for ArpMonitoringConfigV1 {
     fn validate(&self) -> Result<()> {
         ensure!(
             self.interval > 0,
@@ -155,7 +155,7 @@ impl Validate for ArpMonitoringConfig {
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub(crate) enum ArpValidate {
+pub(crate) enum ArpValidateV1 {
     Active,
     All,
     Backup,
