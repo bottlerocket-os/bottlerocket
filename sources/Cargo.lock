@@ -1006,6 +1006,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "walkdir",
 ]
 
 [[package]]

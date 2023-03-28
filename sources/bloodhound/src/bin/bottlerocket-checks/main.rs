@@ -62,6 +62,7 @@ fn main() {
             level: 1,
         }),
         "br04010101" => Box::new(BR04010101Checker {}),
+        "br04010200" => Box::new(BR04010200Checker {}),
         &_ => {
             eprintln!("Command {} is not supported.", cmd_name);
             return;
