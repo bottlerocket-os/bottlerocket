@@ -66,21 +66,65 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
+    let search_strs = [search_str];
+    look_for_strings_in_output(cmd, args, &search_strs)
+}
+
+/// Executes a command and checks if the given `search_strs` are in the output.
+pub fn look_for_strings_in_output<I, S>(cmd: &str, args: I, search_strs: &[&str]) -> Option<bool>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
     if let Ok(output) = Command::new(cmd).args(args).output() {
         if output.status.success() {
-            let mut found = false;
+            let mut matched = 0;
+
             let mp_output = String::from_utf8_lossy(&output.stdout).to_string();
             for line in mp_output.lines() {
-                found |= line.contains(search_str);
+                for search_str in search_strs {
+                    if line.contains(search_str) {
+                        matched += 1;
+                    }
+                }
             }
 
-            Some(found)
+            Some(search_strs.len() <= matched)
         } else {
             None
         }
     } else {
         None
     }
+}
+
+/// Execute a command and check if the output contains all provided strings, getting a `CheckerResult` of its findings.
+///
+/// If all `strings_to_match` are found in the output, the `CheckerResult` returned will have a `CheckStatus::PASS`.
+///
+/// If one or more of `strings_to_match` are not found in the output, then even if some are found the `CheckerResult`
+/// returned will have a `CheckStatus::FAIL` and the `error` field will contain `unable_to_find_error` as its content.
+///
+/// If execution fails or the output cannot be read, returned status will be `CheckStatus::SKIP` indicating a manual
+/// check will need to be performed and the `error` field will contain the `unable_to_check_error` value.
+#[macro_export]
+macro_rules! check_output_contains {
+    ($cmd:expr, $args:expr, $strings_to_match:expr, $unable_to_check_error:expr, $unable_to_find_error:expr) => {{
+        let mut result = CheckerResult::default();
+
+        if let Some(found) = look_for_strings_in_output($cmd, $args, $strings_to_match) {
+            if found {
+                result.status = results::CheckStatus::PASS;
+            } else {
+                result.error = $unable_to_find_error.to_string();
+                result.status = results::CheckStatus::FAIL;
+            }
+        } else {
+            result.error = $unable_to_check_error.to_string();
+        }
+
+        result
+    }};
 }
 
 #[cfg(test)]
@@ -214,6 +258,34 @@ mod test_utils {
     #[test]
     fn test_string_in_output_bad_cmd() {
         let result = look_for_string_in_output("ekko", [""], "blah");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_strings_in_output_found() {
+        let cmd_output = "'insmod /lib/modules/5.15.90/kernel/drivers/cdrom/cdrom.ko.xz
+        insmod /lib/modules/5.15.90/kernel/lib/crc-itu-t.ko.xz
+        install /bin/true'";
+
+        let found =
+            look_for_strings_in_output("echo", [cmd_output], &["5.15.90", "install /bin/true"])
+                .unwrap();
+        assert!(found);
+    }
+
+    #[test]
+    fn test_strings_in_output_not_found() {
+        let cmd_output = "'insmod /lib/modules/5.15.90/kernel/fs/udf/udf.ko.xz'";
+
+        let found =
+            look_for_strings_in_output("echo", [cmd_output], &["5.15.90", "install /bin/true"])
+                .unwrap();
+        assert!(!found);
+    }
+
+    #[test]
+    fn test_strings_in_output_bad_cmd() {
+        let result = look_for_strings_in_output("ekko", [""], &["blah"]);
         assert!(result.is_none());
     }
 }

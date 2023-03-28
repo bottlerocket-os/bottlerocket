@@ -3,6 +3,7 @@ use bloodhound::*;
 
 const PROC_MODULES_FILE: &str = "/proc/modules";
 const PROC_CMDLINE_FILE: &str = "/proc/cmdline";
+const SYSCTL_CMD: &str = "/usr/sbin/sysctl";
 const MODPROBE_CMD: &str = "/bin/modprobe";
 
 // =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
@@ -64,6 +65,32 @@ impl Checker for BR01030100Checker {
             id: "1.3.1".to_string(),
             level: 1,
             name: "br01030100".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR01040100Checker {}
+
+impl Checker for BR01040100Checker {
+    fn execute(&self) -> CheckerResult {
+        check_output_contains!(
+            SYSCTL_CMD,
+            ["fs.suid_dumpable"],
+            &["fs.suid_dumpable = 0"],
+            "unable to verify fs.suid_dumpable setting",
+            "setuid core dumps are not disabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure setuid programs do not create core dumps".to_string(),
+            id: "1.4.1".to_string(),
+            level: 1,
+            name: "br01040100".to_string(),
             mode: Mode::Automatic,
         }
     }
