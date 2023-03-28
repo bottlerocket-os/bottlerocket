@@ -1,4 +1,7 @@
+mod checks;
+
 use bloodhound::results::*;
+use checks::*;
 use std::env;
 use std::path::Path;
 
@@ -11,6 +14,7 @@ fn main() {
         .unwrap_or_default();
 
     let checker: Box<dyn Checker> = match cmd_name {
+        "br01010101" => Box::new(BR01010101Checker {}),
         "br01020100" => Box::new(ManualChecker {
             name: cmd_name.to_string(),
             title: "Ensure software update repositories are configured".to_string(),
