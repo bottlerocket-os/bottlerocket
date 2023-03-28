@@ -335,3 +335,43 @@ impl Checker for BR03010100Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03020100Checker {}
+
+impl Checker for BR03020100Checker {
+    fn execute(&self) -> CheckerResult {
+        let settings = [
+            "net.ipv4.conf.all.accept_source_route",
+            "net.ipv4.conf.default.accept_source_route",
+            "net.ipv6.conf.all.accept_source_route",
+            "net.ipv6.conf.default.accept_source_route",
+        ];
+
+        let output = [
+            "net.ipv4.conf.all.accept_source_route = 0",
+            "net.ipv4.conf.default.accept_source_route = 0",
+            "net.ipv6.conf.all.accept_source_route = 0",
+            "net.ipv6.conf.default.accept_source_route = 0",
+        ];
+
+        check_output_contains!(
+            SYSCTL_CMD,
+            settings,
+            &output,
+            "unable to verify source route settings",
+            "accept source route not disabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure source routed packets are not accepted".to_string(),
+            id: "3.2.1".to_string(),
+            level: 2,
+            name: "br03020100".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
