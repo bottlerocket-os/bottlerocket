@@ -147,3 +147,30 @@ impl Checker for BR01040300Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR01040400Checker {}
+
+impl Checker for BR01040400Checker {
+    fn execute(&self) -> CheckerResult {
+        check_output_contains!(
+            SYSCTL_CMD,
+            ["user.max_user_namespaces"],
+            &["user.max_user_namespaces = 0"],
+            "unable to verify user.max_user_namespaces setting",
+            "user namespaces are not disabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure user namespaces are disabled".to_string(),
+            id: "1.4.4".to_string(),
+            level: 2,
+            name: "br01040400".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+

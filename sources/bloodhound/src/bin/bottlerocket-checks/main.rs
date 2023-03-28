@@ -25,6 +25,7 @@ fn main() {
         "br01040100" => Box::new(BR01040100Checker {}),
         "br01040200" => Box::new(BR01040200Checker {}),
         "br01040300" => Box::new(BR01040300Checker {}),
+        "br01040400" => Box::new(BR01040400Checker {}),
         "br01060000" => Box::new(ManualChecker {
             name: cmd_name.to_string(),
             title: "Ensure updates, patches, and additional security software are installed"
