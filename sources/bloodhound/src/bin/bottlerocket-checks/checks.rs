@@ -121,3 +121,29 @@ impl Checker for BR01040200Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR01040300Checker {}
+
+impl Checker for BR01040300Checker {
+    fn execute(&self) -> CheckerResult {
+        check_output_contains!(
+            SYSCTL_CMD,
+            ["kernel.unprivileged_bpf_disabled"],
+            &["kernel.unprivileged_bpf_disabled = 1"],
+            "unable to verify kernel.unprivileged_bpf_disabled setting",
+            "unprivileged eBPF is not disabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure unprivileged eBPF is disabled".to_string(),
+            id: "1.4.3".to_string(),
+            level: 1,
+            name: "br01040300".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
