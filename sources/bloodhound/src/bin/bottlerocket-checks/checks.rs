@@ -375,3 +375,43 @@ impl Checker for BR03020100Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03020200Checker {}
+
+impl Checker for BR03020200Checker {
+    fn execute(&self) -> CheckerResult {
+        let settings = [
+            "net.ipv4.conf.all.accept_redirects",
+            "net.ipv4.conf.default.accept_redirects",
+            "net.ipv6.conf.all.accept_redirects",
+            "net.ipv6.conf.default.accept_redirects",
+        ];
+
+        let output = [
+            "net.ipv4.conf.all.accept_redirects = 0",
+            "net.ipv4.conf.default.accept_redirects = 0",
+            "net.ipv6.conf.all.accept_redirects = 0",
+            "net.ipv6.conf.default.accept_redirects = 0",
+        ];
+
+        check_output_contains!(
+            SYSCTL_CMD,
+            settings,
+            &output,
+            "unable to verify redirect settings",
+            "accept redirects not disabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure ICMP redirects are not accepted".to_string(),
+            id: "3.2.2".to_string(),
+            level: 2,
+            name: "br03020200".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
