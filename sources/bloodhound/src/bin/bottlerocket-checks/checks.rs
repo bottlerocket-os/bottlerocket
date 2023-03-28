@@ -1,10 +1,12 @@
 use bloodhound::results::{CheckStatus, Checker, CheckerMetadata, CheckerResult, Mode};
 use bloodhound::*;
+use std::process::Command;
 
 const PROC_MODULES_FILE: &str = "/proc/modules";
 const PROC_CMDLINE_FILE: &str = "/proc/cmdline";
 const SYSCTL_CMD: &str = "/usr/sbin/sysctl";
 const MODPROBE_CMD: &str = "/bin/modprobe";
+const SESTATUS_CMD: &str = "/usr/bin/sestatus";
 
 // =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
 
@@ -174,3 +176,60 @@ impl Checker for BR01040400Checker {
     }
 }
 
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR01050100Checker {}
+
+impl Checker for BR01050100Checker {
+    fn execute(&self) -> CheckerResult {
+        let mut result = CheckerResult::default();
+
+        // Trying to avoid bringing in regex for now
+        let to_match = &[
+            ("SELinux status: ", " enabled"),
+            ("Loaded policy name: ", " fortified"),
+            ("Current mode: ", " enforcing"),
+            ("Mode from config file: ", " enforcing"),
+            ("Policy MLS status: ", " enabled"),
+            ("Policy deny_unknown status: ", " denied"),
+            ("Memory protection checking: ", " actual (secure)"),
+        ];
+
+        if let Ok(output) = Command::new(SESTATUS_CMD).output() {
+            let mut matched = 0;
+
+            if output.status.success() {
+                let mp_output = String::from_utf8_lossy(&output.stdout).to_string();
+                for line in mp_output.lines() {
+                    for match_line in to_match {
+                        if line.contains(match_line.0) && line.contains(match_line.1) {
+                            matched += 1;
+                            break;
+                        }
+                    }
+                }
+
+                if to_match.len() == matched {
+                    result.status = CheckStatus::PASS;
+                } else {
+                    result.error = "Unable to find expected SELinux values".to_string();
+                    result.status = CheckStatus::FAIL;
+                }
+            }
+        } else {
+            result.error = "unable to verify SELinux settings".to_string();
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure SELinux is configured".to_string(),
+            id: "1.5.1".to_string(),
+            level: 1,
+            name: "br01050100".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
