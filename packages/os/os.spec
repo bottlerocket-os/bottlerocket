@@ -386,7 +386,7 @@ mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket
 for p in \
   br01020100 br01060000 br03040103 br03040203 \
   br01010101 br01030100 br01040100 br01040200 br01040300 br01040400 \
-  br01050100 br01050200 \
+  br01050100 br01050200 br02010101 \
 ; do
   ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-checks %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
 done

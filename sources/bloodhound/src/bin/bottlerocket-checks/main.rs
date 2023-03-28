@@ -35,6 +35,7 @@ fn main() {
             id: "1.6".to_string(),
             level: 1,
         }),
+        "br02010101" => Box::new(BR02010101Checker {}),
         "br03040103" => Box::new(ManualChecker {
             name: cmd_name.to_string(),
             title: "Ensure IPv4 outbound and established connections are configured".to_string(),

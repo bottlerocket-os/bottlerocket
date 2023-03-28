@@ -5,7 +5,9 @@ use std::process::Command;
 const PROC_MODULES_FILE: &str = "/proc/modules";
 const PROC_CMDLINE_FILE: &str = "/proc/cmdline";
 const LOCKDOWN_FILE: &str = "/sys/kernel/security/lockdown";
+const CHRONY_CONF_FILE: &str = "/etc/chrony.conf";
 const SYSCTL_CMD: &str = "/usr/sbin/sysctl";
+const SYSTEMCTL_CMD: &str = "/usr/bin/systemctl";
 const MODPROBE_CMD: &str = "/bin/modprobe";
 const SESTATUS_CMD: &str = "/usr/bin/sestatus";
 
@@ -255,6 +257,44 @@ impl Checker for BR01050200Checker {
             id: "1.5.2".to_string(),
             level: 2,
             name: "br01050200".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR02010101Checker {}
+
+impl Checker for BR02010101Checker {
+    fn execute(&self) -> CheckerResult {
+        let result = check_file_contains!(
+            CHRONY_CONF_FILE,
+            &["pool"],
+            "unable to verify time-servers setting",
+            "no ntp servers are configured"
+        );
+
+        // Check if we need to continue
+        if result.status == CheckStatus::FAIL {
+            return result;
+        }
+
+        check_output_contains!(
+            SYSTEMCTL_CMD,
+            ["is-active", "chronyd"],
+            &["active"],
+            "unable to verify chronyd service enabled",
+            "chronyd NTP service is not enabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure chrony is configured".to_string(),
+            id: "2.1.1.1".to_string(),
+            level: 1,
+            name: "br02010101".to_string(),
             mode: Mode::Automatic,
         }
     }
