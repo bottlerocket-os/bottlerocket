@@ -513,3 +513,29 @@ impl Checker for BR03020500Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03020600Checker {}
+
+impl Checker for BR03020600Checker {
+    fn execute(&self) -> CheckerResult {
+        check_output_contains!(
+            SYSCTL_CMD,
+            ["net.ipv4.icmp_ignore_bogus_error_responses"],
+            &["net.ipv4.icmp_ignore_bogus_error_responses = 1"],
+            "unable to verify bogus ICMP bogus requests setting",
+            "ignore bogus ICMP requests not ignored"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure bogus ICMP responses are ignored".to_string(),
+            id: "3.2.6".to_string(),
+            level: 1,
+            name: "br03020600".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
