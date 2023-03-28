@@ -40,6 +40,7 @@ fn main() {
         "br03020100" => Box::new(BR03020100Checker {}),
         "br03020200" => Box::new(BR03020200Checker {}),
         "br03020300" => Box::new(BR03020300Checker {}),
+        "br03020400" => Box::new(BR03020400Checker {}),
         "br03040103" => Box::new(ManualChecker {
             name: cmd_name.to_string(),
             title: "Ensure IPv4 outbound and established connections are configured".to_string(),

@@ -451,3 +451,39 @@ impl Checker for BR03020300Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03020400Checker {}
+
+impl Checker for BR03020400Checker {
+    fn execute(&self) -> CheckerResult {
+        let settings = [
+            "net.ipv4.conf.all.log_martians",
+            "net.ipv4.conf.default.log_martians",
+        ];
+
+        let output = [
+            "net.ipv4.conf.all.log_martians = 1",
+            "net.ipv4.conf.default.log_martians = 1",
+        ];
+
+        check_output_contains!(
+            SYSCTL_CMD,
+            settings,
+            &output,
+            "unable to verify martian packet logging settings",
+            "martian packet logging not enabled"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure suspicious packets are logged".to_string(),
+            id: "3.2.4".to_string(),
+            level: 2,
+            name: "br03020400".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
