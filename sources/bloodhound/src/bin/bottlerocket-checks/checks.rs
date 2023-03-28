@@ -11,6 +11,7 @@ const SYSTEMCTL_CMD: &str = "/usr/bin/systemctl";
 const MODPROBE_CMD: &str = "/bin/modprobe";
 const SESTATUS_CMD: &str = "/usr/bin/sestatus";
 const IPTABLES_CMD: &str = "/usr/sbin/iptables";
+const IP6TABLES_CMD: &str = "/usr/sbin/ip6tables";
 
 // =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
 
@@ -710,6 +711,38 @@ impl Checker for BR03040102Checker {
             id: "3.4.1.2".to_string(),
             level: 2,
             name: "br03040102".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct BR03040201Checker {}
+
+impl Checker for BR03040201Checker {
+    fn execute(&self) -> CheckerResult {
+        let output = &[
+            "Chain INPUT (policy DROP)",
+            "Chain FORWARD (policy DROP)",
+            "Chain OUTPUT (policy DROP)",
+        ];
+
+        check_output_contains!(
+            IP6TABLES_CMD,
+            ["-L"],
+            output,
+            "unable to verify ip6tables settings",
+            "unable to find expected ip6tables values"
+        )
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure IPv6 default deny firewall policy".to_string(),
+            id: "3.4.2.1".to_string(),
+            level: 2,
+            name: "br03040201".to_string(),
             mode: Mode::Automatic,
         }
     }
