@@ -161,7 +161,7 @@ Note: all models share the same `Cargo.toml`.
 */
 
 // Clippy has a false positive in the presence of the Scalar macro.
-#![allow(clippy::derive_hash_xor_eq)]
+#![allow(clippy::derived_hash_with_manual_eq)]
 
 // "Modeled types" are types with special ser/de behavior used for validation.
 pub mod modeled_types;
