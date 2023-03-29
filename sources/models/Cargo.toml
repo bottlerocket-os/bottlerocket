@@ -21,6 +21,7 @@ scalar = { path = "scalar", version = "0.1" }
 scalar-derive = { path = "scalar-derive", version = "0.1" }
 semver = "1"
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 serde_plain = "1"
 snafu = "0.7"
 toml = "0.5"
