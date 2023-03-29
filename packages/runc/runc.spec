@@ -1,8 +1,8 @@
 %global goproject github.com/opencontainers
 %global gorepo runc
 %global goimport %{goproject}/%{gorepo}
-%global commit 5fd4c4d144137e991c4acebb2146ab1483a97925
-%global gover 1.1.4
+%global commit f19387a6bec4944c770f7668ab51c4348d9c2f38
+%global gover 1.1.5
 
 %global _dwz_low_mem_die_limit 0
 
