@@ -22,6 +22,14 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # When Go packages are built, buildsys will vendor in dependent Go code for
+  # that package and bundle it up in a tarball. This env variable is consumed
+  # and used to configure Go to directly download code from its upstream source.
+  # This is a useful early signal during GitHub actions to see if there are
+  # upstream Go code problems.
+  GOPROXY: direct
+
 jobs:
   build:
     runs-on:
