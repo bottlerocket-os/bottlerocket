@@ -1,4 +1,23 @@
-# v1.13.1 (2022-03-23)
+# v1.13.2 (2023-04-03)
+
+## OS Changes
+
+* Update kernel-5.10 to 5.10.173 and kernel-5.15 to 5.15.102 ([#2948])
+* Update `runc` to version 1.1.5 ([#2946])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Update to Kubernetes v1.26.2 ([#2929])
+* Update `aws-iam-authenticator` package to v0.6.8 ([#2965])
+
+[#2948]: https://github.com/bottlerocket-os/bottlerocket/pull/2948
+[#2946]: https://github.com/bottlerocket-os/bottlerocket/pull/2946
+[#2929]: https://github.com/bottlerocket-os/bottlerocket/pull/2929
+[#2965]: https://github.com/bottlerocket-os/bottlerocket/pull/2965
+
+# v1.13.1 (2023-03-23)
 
 ## OS Changes
 
@@ -17,7 +36,7 @@
 [#2907]: https://github.com/bottlerocket-os/bottlerocket/pull/2907
 [#2935]: https://github.com/bottlerocket-os/bottlerocket/pull/2935
 
-# v1.13.0 (2022-03-15)
+# v1.13.0 (2023-03-15)
 
 ## OS Changes
 
@@ -163,7 +182,7 @@
 [#2880]: https://github.com/bottlerocket-os/bottlerocket/pull/2880
 [#2895]: https://github.com/bottlerocket-os/bottlerocket/pull/2895
 
-# v 1.12.0 (2022-01-24)
+# v 1.12.0 (2023-01-24)
 
 ## OS Changes
 
