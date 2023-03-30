@@ -2488,6 +2488,7 @@ dependencies = [
  "simplelog",
  "snafu",
  "structopt",
+ "tabled",
  "tempfile",
  "tinytemplate",
  "tokio",
