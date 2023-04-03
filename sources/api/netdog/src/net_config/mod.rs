@@ -5,20 +5,18 @@
 //! These structures are the user-facing options for configuring one or more network interfaces.
 
 pub(crate) mod devices;
-mod dhcp;
 mod error;
-mod static_address;
 mod v1;
 mod v2;
 mod v3;
 
+use crate::addressing::StaticConfigV1;
 use crate::interface_id::InterfaceId;
 use crate::wicked::WickedInterface;
-pub(crate) use dhcp::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6OptionsV1};
 pub(crate) use error::{Error, Result};
+use ipnet::IpNet;
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
-pub(crate) use static_address::{RouteTo, RouteV1, StaticConfigV1};
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
@@ -64,6 +62,19 @@ trait Validate {
 impl<V: Validate> Validate for Box<V> {
     fn validate(&self) -> Result<()> {
         (**self).validate()
+    }
+}
+
+impl Validate for StaticConfigV1 {
+    fn validate(&self) -> Result<()> {
+        ensure!(
+            self.addresses.iter().all(|a| matches!(a, IpNet::V4(_)))
+                || self.addresses.iter().all(|a| matches!(a, IpNet::V6(_))),
+            error::InvalidNetConfigSnafu {
+                reason: "static configuration must only contain all IPv4 or all IPv6 addresses"
+            }
+        );
+        Ok(())
     }
 }
 

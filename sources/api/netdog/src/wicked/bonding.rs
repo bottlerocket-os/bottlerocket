@@ -1,8 +1,5 @@
+use crate::bonding::{ArpMonitoringConfigV1, ArpValidateV1, BondModeV1, MiiMonitoringConfigV1};
 use crate::interface_id::InterfaceName;
-use crate::net_config::devices::bonding::{
-    ArpMonitoringConfigV1, ArpValidateV1, BondModeV1, MiiMonitoringConfigV1,
-};
-
 use serde::Serialize;
 use std::net::IpAddr;
 

@@ -1,4 +1,4 @@
-use crate::net_config::{RouteTo, RouteV1, StaticConfigV1};
+use crate::addressing::{RouteTo, RouteV1, StaticConfigV1};
 use ipnet::IpNet;
 use lazy_static::lazy_static;
 use serde::Serialize;

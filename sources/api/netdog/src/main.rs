@@ -29,6 +29,8 @@ is meant to be used as a restart command for DNS API settings.
 #[macro_use]
 extern crate serde_plain;
 
+mod addressing;
+mod bonding;
 mod cli;
 mod dns;
 mod interface_id;

@@ -1,4 +1,4 @@
-use crate::net_config::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6OptionsV1};
+use crate::addressing::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6OptionsV1};
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

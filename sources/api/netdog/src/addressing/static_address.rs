@@ -1,8 +1,6 @@
-use super::error::{InvalidNetConfigSnafu, Result as ValidateResult};
-use crate::net_config::Validate;
 use ipnet::IpNet;
 use serde::Deserialize;
-use snafu::{ensure, ResultExt};
+use snafu::ResultExt;
 use std::collections::BTreeSet;
 use std::convert::TryFrom;
 use std::net::IpAddr;
@@ -47,19 +45,6 @@ impl TryFrom<String> for RouteTo {
                 RouteTo::Ip(ip)
             }
         })
-    }
-}
-
-impl Validate for StaticConfigV1 {
-    fn validate(&self) -> ValidateResult<()> {
-        ensure!(
-            self.addresses.iter().all(|a| matches!(a, IpNet::V4(_)))
-                || self.addresses.iter().all(|a| matches!(a, IpNet::V6(_))),
-            InvalidNetConfigSnafu {
-                reason: "static configuration must only contain all IPv4 or all IPv6 addresses"
-            }
-        );
-        Ok(())
     }
 }
 
