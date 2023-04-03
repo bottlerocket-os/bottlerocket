@@ -17,6 +17,7 @@ Requires: %{_cross_os}libnftnl
 Requires: %{_cross_os}libnetfilter_conntrack
 
 Patch1001: 1001-extensions-NAT-Fix-for-Werror-format-security.patch
+Patch1002: 1002-ip6tables-Fix-checking-existence-of-rule.patch
 
 %description
 %{summary}.
