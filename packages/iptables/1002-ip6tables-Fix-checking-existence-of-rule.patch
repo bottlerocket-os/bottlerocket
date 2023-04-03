@@ -1,0 +1,31 @@
+From ba75342ff3e01605258810eb7f5683d8e326ffd8 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Mon, 3 Apr 2023 22:20:23 +0200
+Subject: [PATCH] ip6tables: Fix checking existence of rule
+
+Pass the proper entry size when creating a match mask for checking the
+existence of a rule. Failing to do so causes wrong results.
+
+Reported-by: Jonathan Caicedo <jonathan@jcaicedo.com>
+Fixes: eb2546a846776 ("xshared: Share make_delete_mask() between ip{,6}tables")
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ iptables/ip6tables.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/iptables/ip6tables.c b/iptables/ip6tables.c
+index 345af451..9afc32c1 100644
+--- a/iptables/ip6tables.c
++++ b/iptables/ip6tables.c
+@@ -331,7 +331,7 @@ check_entry(const xt_chainlabel chain, struct ip6t_entry *fw,
+ 	int ret = 1;
+ 	unsigned char *mask;
+ 
+-	mask = make_delete_mask(matches, target, sizeof(fw));
++	mask = make_delete_mask(matches, target, sizeof(*fw));
+ 	for (i = 0; i < nsaddrs; i++) {
+ 		fw->ipv6.src = saddrs[i];
+ 		fw->ipv6.smsk = smasks[i];
+-- 
+2.25.1
+
