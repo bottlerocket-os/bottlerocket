@@ -32,8 +32,9 @@ Compare kernel configurations before and after a series of commits.
 
     -a, --after         new Git revision to compare from
     -b, --before        baseline Git revision to compare against
-    -k, --kernel        kernel versions to compare configs for, may be given
-                        multiple times (optional, defaults to all kernels)
+    -v, --variant       variant to pick kernel from to compare configs for, may
+                        be given multiple times (optional, defaults to this list:
+                        'aws-k8s-1.23', 'metal-k8s-1.23', 'aws-dev', 'metal-dev')
     -o, --output-dir    path to the output directory; must not exist yet
     -h, --help          show this help text
 
@@ -66,6 +67,7 @@ usage_error() {
 #
 
 kernel_versions=()
+variants=()
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -73,8 +75,8 @@ while [[ $# -gt 0 ]]; do
             shift; gitrev_after_arg=$1 ;;
         -b|--before)
             shift; gitrev_before_arg=$1 ;;
-        -k|--kernel)
-            shift; kernel_versions+=( "$1" ) ;;
+        -v|--variant)
+            shift; variants+=( "$1" ) ;;
         -o|--output-dir)
             shift; output_dir=$1 ;;
         -h|--help)
@@ -85,18 +87,14 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-if [[ ${#kernel_versions[@]} -eq 0 ]]; then
-    kernel_versions=( 5.10 5.15 )
-else
-    for kver in "${kernel_versions[@]}"; do
-        case ${kver} in
-            5.10) continue ;;
-            5.15) continue ;;
-            *)    bail "Unknown kernel version '${kver}'" ;;
-        esac
-    done
+if [[ ${#variants[@]} -eq 0 ]]; then
+    variants=( aws-k8s-1.23 metal-k8s-1.23 aws-dev metal-dev )
 fi
-readonly kernel_versions
+
+for var in "${variants[@]}"; do
+    [[ -d variants/${var} ]] || bail "Unknown variant '${var}'"
+done
+readonly variants
 
 [[ -n ${output_dir} ]] || usage_error 'require -o|--output-dir'
 [[ -e ${output_dir} ]] && bail "Output directory '${output_dir}' exists already, not touching it"
@@ -147,80 +145,72 @@ for state in before after; do
     gitrev_var=gitrev_${state}
     git checkout --quiet "${!gitrev_var}" || bail "Cannot check out '${!gitrev_var}'."
 
-    for arch in aarch64 x86_64; do
+    for variant in "${variants[@]}"; do
 
-        for kver in "${kernel_versions[@]}"; do
+        arches=()
+        IFS=" " read -r -a arches <<< "$(grep "supported-arches" "variants/${variant}/Cargo.toml" | cut -d ' ' -f 3 | tr -d '"[]')"
+        if [[ ${#arches[@]} -eq 0 ]]; then
+            arches=( aarch64 x86_64 )
+        fi
 
-            variants=()
-            case ${kver} in
-                5.10)
-                    variants+=( 'aws-k8s-1.23' )
-                    if [[ ${arch} = x86_64 ]]; then
-                        variants+=( 'metal-k8s-1.23' )
-                    fi
-                    ;;
-                5.15)
-                    variants+=( 'aws-dev' 'metal-dev' )
-                    ;;
-                *)
-                    bail "No known variants build kernel ${kver}."
-                    ;;
+        kver=$(grep "packages/kernel" "variants/${variant}/Cargo.toml" | cut -d ' ' -f 1 | cut -d '-' -f 2 | tr '_' '.')
+
+        kernel_versions+=( "${kver}" )
+
+        for arch in "${arches[@]}"; do
+
+            debug_id="state=${state} arch=${arch} variant=${variant} kernel=${kver}"
+
+            IFS=- read -ra variant_parts <<<"${variant}"
+            variant_platform="${variant_parts[0]}"
+            variant_runtime="${variant_parts[1]}"
+            variant_family="${variant_platform}-${variant_runtime}"
+
+            #
+            # Run build
+            #
+
+            cargo make \
+                    -e BUILDSYS_ARCH="${arch}" \
+                    -e BUILDSYS_VARIANT="${variant}" \
+                    -e BUILDSYS_VARIANT_PLATFORM="${variant_platform}" \
+                    -e BUILDSYS_VARIANT_RUNTIME="${variant_runtime}" \
+                    -e BUILDSYS_VARIANT_FAMILY="${variant_family}" \
+                    -e PACKAGE="kernel-${kver/./_}" \
+                    build-package \
+                || bail "Build failed for ${debug_id}"
+
+            #
+            # Find kernel RPM
+            #
+
+            shopt -s nullglob
+            kernel_rpms=(
+                ./build/rpms/bottlerocket-"${arch}"-*kernel-"${kver}"-"${kver}".*.rpm
+            )
+            shopt -u nullglob
+
+            case ${#kernel_rpms[@]} in
+                0) bail "No kernel RPM found for ${debug_id}" ;;
+                1) kernel_rpm=${kernel_rpms[0]} ;;
+                *) bail "More than one kernel RPM found for ${debug_id}" ;;
             esac
 
-            for variant in "${variants[@]}"; do
+            kver_full=$(echo "${kernel_rpm}" | cut -d '-' -f 5)
+            #
+            # Extract kernel config
+            #
 
-                debug_id="state=${state} arch=${arch} variant=${variant}"
-
-                IFS=- read -ra variant_parts <<<"${variant}"
-                variant_platform="${variant_parts[0]}"
-                variant_runtime="${variant_parts[1]}"
-                variant_family="${variant_platform}-${variant_runtime}"
-
-                #
-                # Run build
-                #
-
-                cargo make \
-                        -e BUILDSYS_ARCH="${arch}" \
-                        -e BUILDSYS_VARIANT="${variant}" \
-                        -e BUILDSYS_VARIANT_PLATFORM="${variant_platform}" \
-                        -e BUILDSYS_VARIANT_RUNTIME="${variant_runtime}" \
-                        -e BUILDSYS_VARIANT_FAMILY="${variant_family}" \
-                        -e PACKAGE="kernel-${kver/./_}" \
-                        build-package \
-                    || bail "Build failed for ${debug_id}"
-
-                #
-                # Find kernel RPM
-                #
-
-                shopt -s nullglob
-                kernel_rpms=(
-                    ./build/rpms/bottlerocket-"${arch}"-*kernel-"${kver}"-"${kver}".*.rpm
-                )
-                shopt -u nullglob
-
-                case ${#kernel_rpms[@]} in
-                    0) bail "No kernel RPM found for ${debug_id}" ;;
-                    1) kernel_rpm=${kernel_rpms[0]} ;;
-                    *) bail "More than one kernel RPM found for ${debug_id}" ;;
-                esac
+            config_path=${output_dir}/config-${arch}-${variant}-${state}
+            rpm2cpio "${kernel_rpm}" \
+                | cpio --quiet --extract --to-stdout ./boot/config >"${config_path}"
+            [[ -s "${config_path}" ]] || bail "Failed to extract config for ${debug_id}"
 
 
-                #
-                # Extract kernel config
-                #
+            echo "config-${arch}-${variant}-${state} -> ${kver_full}" >> "${output_dir}"/kver_mapping
+        done #arch
 
-                config_path=${output_dir}/config-${arch}-${kver}-${variant}-${state}
-                rpm2cpio "${kernel_rpm}" \
-                    | cpio --quiet --extract --to-stdout ./boot/config >"${config_path}"
-                [[ -s "${config_path}" ]] || bail "Failed to extract config for ${debug_id}"
-
-            done  # variant
-
-        done  # kver
-
-    done  # arch
+    done #variant
 
 done  # state
 
