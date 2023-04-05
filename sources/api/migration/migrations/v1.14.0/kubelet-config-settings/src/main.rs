@@ -11,6 +11,7 @@ fn run() -> Result<()> {
         "settings.kubernetes.eviction-soft",
         "settings.kubernetes.eviction-soft-grace-period",
         "settings.kubernetes.eviction-max-pod-grace-period",
+        "settings.kubernetes.memory-manager-policy",
     ]))
 }
 

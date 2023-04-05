@@ -174,6 +174,8 @@ mod de;
 
 use modeled_types::KubernetesCPUManagerPolicyOption;
 use modeled_types::KubernetesEvictionKey;
+use modeled_types::KubernetesMemoryManagerPolicy;
+use modeled_types::KubernetesMemoryReservation;
 use modeled_types::NonNegativeInteger;
 pub use variant::*;
 
@@ -263,6 +265,8 @@ struct KubernetesSettings {
     server_key: ValidBase64,
     shutdown_grace_period: KubernetesDurationValue,
     shutdown_grace_period_for_critical_pods: KubernetesDurationValue,
+    memory_manager_reserved_memory: HashMap<Identifier, KubernetesMemoryReservation>,
+    memory_manager_policy: KubernetesMemoryManagerPolicy,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.

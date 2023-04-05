@@ -155,3 +155,26 @@ shutdownGracePeriod: {{settings.kubernetes.shutdown-grace-period}}
 {{#if settings.kubernetes.shutdown-grace-period-for-critical-pods}}
 shutdownGracePeriodCriticalPods: {{settings.kubernetes.shutdown-grace-period-for-critical-pods}}
 {{/if}}
+{{#if settings.kubernetes.memory-manager-reserved-memory}}
+{{#if (any_enabled settings.kubernetes.memory-manager-reserved-memory)}}
+{{#if settings.kubernetes.memory-manager-policy}}
+memoryManagerPolicy: {{settings.kubernetes.memory-manager-policy}}
+{{/if}}
+reservedMemory:
+{{#each settings.kubernetes.memory-manager-reserved-memory}}
+{{#if this.enabled}}
+  - numaNode: {{@key}}
+    limits:
+{{#if this.memory}}
+      memory: {{this.memory}}
+{{/if}}
+{{#if this.hugepages-1Gi}}
+      hugepages-1Gi: {{this.hugepages-1Gi}}
+{{/if}}
+{{#if this.hugepages-2Mi}}
+      hugepages-2Mi: {{this.hugepages-2Mi}}
+{{/if}}
+{{/if}}
+{{/each}}
+{{/if}}
+{{/if}}

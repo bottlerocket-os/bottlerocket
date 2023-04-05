@@ -2249,6 +2249,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-prefix-config-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubernetes-gc-percent-type-change"
 version = "0.1.0"
 dependencies = [

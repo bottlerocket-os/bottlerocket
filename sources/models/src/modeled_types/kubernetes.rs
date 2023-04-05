@@ -1339,3 +1339,75 @@ mod test_kubernetes_cpu_manager_policy_option {
         }
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesMemoryReservationKey represents a string that contains a valid Kubernetes memory
+/// resource reservation key.
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Scalar)]
+pub enum KubernetesMemoryReservationKey {
+    #[serde(rename = "memory")]
+    Memory,
+    #[serde(rename = "hugepages-2Mi")]
+    HugePages2Mi,
+    #[serde(rename = "hugepages-1Gi")]
+    HugePages1Gi,
+}
+
+#[cfg(test)]
+mod test_memory_reservation_key {
+    use super::KubernetesMemoryReservationKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_memory_reservation_key() {
+        for ok in &["memory", "hugepages-2Mi", "hugepages-1Gi"] {
+            KubernetesMemoryReservationKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_memory_reservation_key() {
+        for err in &["", "cpu", "hugepages-1Mi", "HugePages_1Gi", &"a".repeat(64)] {
+            KubernetesMemoryReservationKey::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+/// KubernetesMemoryReservation enables setting kubelet reserved memory values.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct KubernetesMemoryReservation {
+    enabled: bool,
+    #[serde(flatten)]
+    limits: HashMap<KubernetesMemoryReservationKey, KubernetesQuantityValue>,
+}
+
+/// KubernetesMemoryManagerPolicy represents the valid options for the memory manager policy.
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Scalar)]
+pub enum KubernetesMemoryManagerPolicy {
+    #[serde(alias = "static")]
+    Static,
+    #[serde(alias = "none")]
+    None,
+}
+
+#[cfg(test)]
+mod test_kubernetes_memory_manager_policy {
+    use super::KubernetesMemoryManagerPolicy;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_policy_key() {
+        for ok in &["Static", "static", "None", "none"] {
+            KubernetesMemoryManagerPolicy::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_policy_key() {
+        for err in &["", "dynamic", &"a".repeat(64)] {
+            KubernetesMemoryManagerPolicy::try_from(*err).unwrap_err();
+        }
+    }
+}

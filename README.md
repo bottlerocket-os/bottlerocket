@@ -526,6 +526,34 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.kube-api-qps`: The QPS to use while talking with kubernetes apiserver.
 * `settings.kubernetes.log-level`: Adjust the logging verbosity of the `kubelet` process.
   The default log level is 2, with higher numbers enabling more verbose logging.
+* `settings.kubernetes.memory-manager-policy`: The memory management policy to use: `None` (default) or `Static`.
+  Note, when using the `Static` policy you should also set `settings.kubernetes.memory-manager-reserved-memory` values.
+* `settings.kubernetes.memory-manager-reserved-memory`: Used to set the total amount of reserved memory for a node.
+  These settings are used to configure memory manager policy when `settings.kubernetes.memory-manager-policy` is set to `Static`.
+
+  `memory-manager-reserved-memory` is set per NUMA node. For example:
+
+  ```toml
+  [settings.kubernetes]
+  "memory-manager-policy" = "Static"
+
+  [settings.kubernetes.memory-manager-reserved-memory.0]
+  # Reserve a single 1GiB huge page along with 674MiB of memory
+  "enabled" = true
+  "memory" = "674Mi"
+  "hugepages-1Gi" = "1Gi"
+
+  [settings.kubernetes.memory-manager-reserved-memory.1]
+  # Reserve 1,074 2MiB huge pages
+  "enabled" = true
+  "hugepages-2Mi" = "2148Mi"
+  ```
+
+  **Warning:** `memory-manager-reserved-memory` settings are an advanced configuration and requires a clear understanding of what you are setting.
+  Misconfiguration of reserved memory settings may cause the Kubernetes `kubelet` process to fail.
+  It can be very difficult to recover from configuration errors.
+  Use the memory reservation information from `kubectl describe node` and make sure you understand the Kubernetes documentation related to the [memory manager](https://kubernetes.io/docs/tasks/administer-cluster/memory-manager/) and how to [reserve compute resources for system daemons](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/).
+
 * `settings.kubernetes.pod-pids-limit`: The maximum number of processes per pod.
 * `settings.kubernetes.provider-id`: This sets the unique ID of the instance that an external provider (i.e. cloudprovider) can use to identify a specific node.
 * `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.
