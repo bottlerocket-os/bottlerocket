@@ -35,24 +35,6 @@ impl Migration for AddSettingsMigration<'_> {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-/// Similar to the above, this migration is for when we add a single setting.
-/// We are retaining this migration helper in case there are migrations already using it.
-#[deprecated(note = "Please use `AddSettingsMigration` instead")]
-pub struct AddSettingMigration(pub &'static str);
-
-#[allow(deprecated)]
-impl Migration for AddSettingMigration {
-    fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
-        AddSettingsMigration(&[self.0]).forward(input)
-    }
-
-    fn backward(&mut self, input: MigrationData) -> Result<MigrationData> {
-        AddSettingsMigration(&[self.0]).backward(input)
-    }
-}
-
-// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
-
 /// We use this migration when we add a cluster of settings under known prefixes and want to make
 /// sure they're removed before we go back to old versions that don't understand them.  Normally
 /// you'd use AddSettingsMigration since you know the key names, but this is useful for
@@ -201,24 +183,6 @@ impl Migration for RemoveSettingsMigration<'_> {
             self.0
         );
         Ok(input)
-    }
-}
-
-// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
-
-/// Similar to the above, this migration is for when we need to remove a single setting.
-/// We are retaining this migration helper in case there are migrations already using it.
-#[deprecated(note = "Please use `RemoveSettingsMigration` instead")]
-pub struct RemoveSettingMigration(pub &'static str);
-
-#[allow(deprecated)]
-impl Migration for RemoveSettingMigration {
-    fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
-        RemoveSettingsMigration(&[self.0]).forward(input)
-    }
-
-    fn backward(&mut self, input: MigrationData) -> Result<MigrationData> {
-        RemoveSettingsMigration(&[self.0]).backward(input)
     }
 }
 
