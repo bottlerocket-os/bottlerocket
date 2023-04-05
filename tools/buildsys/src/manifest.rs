@@ -12,7 +12,7 @@ to store configuration for other tools. We recognize the following keys.
 `source-groups` is a list of directories in the top-level `sources` directory,
 each of which contains a set of related Rust projects. Changes to files in
 these groups should trigger a rebuild.
-```
+```ignore
 [package.metadata.build-package]
 source-groups = ["api"]
 ```
@@ -21,7 +21,7 @@ source-groups = ["api"]
 as additional dependencies for the build. If the path for the external
 file name is not provided, it will be taken from the last path component
 of the URL.
-```
+```ignore
 [[package.metadata.build-package.external-files]]
 path = "foo"
 url = "https://foo"
@@ -61,7 +61,7 @@ of some upstream archive is "my-package.tar.gz", the output archive would be
 named `bundled-my-package.tar.gz`. This output path may then be referenced
 within an RPM spec or when creating a package in order to access the vendored
 upstream dependencies during build time.
-```
+```ignore
 [[package.metadata.build-package.external-files]]
 path = "foo"
 url = "https://foo"
@@ -75,7 +75,7 @@ bundle-output-path = "path/to/output.tar.gz"
 if you have a package with "." in its name, for example, which Cargo doesn't
 allow.  This means the directory name and spec file name can use your preferred
 naming.
-```
+```ignore
 [package.metadata.build-package]
 package-name = "better.name"
 ```
@@ -84,7 +84,7 @@ package-name = "better.name"
 building a new variant, and defaults to false; set it to true if a package is
 using the variant to affect its build process.
 
-```
+```ignore
 [package.metadata.build-package]
 variant-sensitive = true
 ```
@@ -93,7 +93,7 @@ Some packages might only be sensitive to certain components of the variant
 tuple, such as the platform, runtime, or family. The `variant-sensitive` field
 can also take a string to indicate the source of the sensitivity.
 
-```
+```ignore
 [package.metadata.build-package]
 # sensitive to platform, like "metal" or "aws"
 variant-sensitive = "platform"
@@ -110,7 +110,7 @@ useful when the way the package is built changes based on whether a particular
 image feature is enabled for the current variant, rather than when the variant
 tuple changes.
 
-```
+```ignore
 [package.metadata.build-package]
 package-features = [
     "grub-set-private-var",
@@ -119,7 +119,7 @@ package-features = [
 
 `releases-url` is ignored by buildsys, but can be used by packager maintainers
 to indicate a good URL for checking whether the software has had a new release.
-```
+```ignore
 [package.metadata.build-package]
 releases-url = "https://www.example.com/releases"
 ```
@@ -127,14 +127,14 @@ releases-url = "https://www.example.com/releases"
 ## Metadata for variants
 
 `included-packages` is a list of packages that should be included in a variant.
-```
+```ignore
 [package.metadata.build-variant]
 included-packages = ["release"]
 ```
 
 `image-format` is the desired format for the built images.
 This can be `raw` (the default), `vmdk`, or `qcow2`.
-```
+```ignore
 [package.metadata.build-variant]
 image-format = "vmdk"
 ```
@@ -163,7 +163,7 @@ single "os" image volume. The hint will be ignored if the combined size of the
 `partition-plan` is the desired strategy for image partitioning.
 This can be `split` (the default) for "os" and "data" images backed by separate
 volumes, or `unified` to have "os" and "data" share the same volume.
-```
+```ignore
 [package.metadata.build-variant.image-layout]
 os-image-size-gib = 2
 data-image-size-gib = 1
@@ -174,14 +174,14 @@ partition-plan = "split"
 `supported-arches` is the list of architectures the variant is able to run on.
 The values can be `x86_64` and `aarch64`.
 If not specified, the variant can run on any of those architectures.
-```
+```ignore
 [package.metadata.build-variant]
 supported-arches = ["x86_64"]
 ```
 
 `kernel-parameters` is a list of extra parameters to be added to the kernel command line.
 The given parameters are inserted at the start of the command line.
-```
+```ignore
 [package.metadata.build-variant]
 kernel-parameters = [
    "console=ttyS42",
@@ -193,14 +193,14 @@ to conditionally use or exclude certain firmware-level features in variants.
 `grub-set-private-var` means that the grub image for the current variant includes the command to
 find the BOTTLEROCKET_PRIVATE partition and set the appropriate `$private` variable for the grub
 config file to consume. This feature flag is a prerequisite for Boot Config support.
-```
+```ignore
 [package.metadata.build-variant.image-features]
 grub-set-private-var = true
 ```
 
 `systemd-networkd` uses the `systemd-networkd` network backend in place of `wicked`.  This feature
 flag is meant primarily for development, and will be removed when development has completed.
-```
+```ignore
 [package.metadata.build-variant.image-features]
 systemd-networkd = true
 ```
@@ -210,7 +210,7 @@ boot, i.e. the host will use cgroup v2 by default. This feature flag allows
 old variants to continue booting with cgroup v1 and new variants to move to
 cgroup v2, while users will still be able to override the default via command
 line arguments set in the boot configuration.
-```
+```ignore
 [package.metadata.build-variant.image-features]
 unified-cgroup-hierarchy = true
 ```
