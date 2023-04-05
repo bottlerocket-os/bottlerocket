@@ -256,3 +256,24 @@ echo
 # Generate combined report of changes
 head -v -n 999999 "${output_dir}"/*-diff >"${output_dir}"/diff-report
 echo "A full report has been placed in '${output_dir}/diff-report'"
+
+# Generate combined report in tabular form (csv)
+echo "config change" > "${output_dir}"/diff-table
+cat "${output_dir}"/*-diff | sort | uniq >> "${output_dir}"/diff-table
+
+for config_diff in "${output_dir}"/config-*-diff; do
+    variant_name=$(echo "${config_diff}" | sed -e "s%^${output_dir}/config-%%" -e "s%-diff$%%")
+    kver_before=$(grep "${variant_name}-before" "${output_dir}/kver_mapping" | cut -d ' ' -f 3)
+    kver_after=$(grep "${variant_name}-after" "${output_dir}/kver_mapping" | cut -d ' ' -f 3)
+    col_name="${variant_name} (${kver_before} -> ${kver_after})"
+
+    sed -i "s/$/,/" "${output_dir}"/diff-table
+    sed -i "/^config change/ s/$/${col_name}/" "${output_dir}"/diff-table
+
+    mapfile -t diff_lines < "${config_diff}"
+
+    for line in "${diff_lines[@]}"; do
+        sed -i "/^${line}/ s/$/x/" "${output_dir}"/diff-table
+    done
+done
+echo "A tabular report in csv-format has been placed in '${output_dir}/diff-table'"
