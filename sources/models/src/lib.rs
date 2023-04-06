@@ -172,6 +172,7 @@ mod variant;
 // The "de" module contains custom deserialization trait implementation for models.
 mod de;
 
+use modeled_types::KubernetesCPUManagerPolicyOption;
 pub use variant::*;
 
 // Types used to communicate between client and server for 'apiclient exec'.
@@ -243,6 +244,7 @@ struct KubernetesSettings {
     container_log_max_files: i32,
     cpu_manager_policy: CpuManagerPolicy,
     cpu_manager_reconcile_period: KubernetesDurationValue,
+    cpu_manager_policy_options: Vec<KubernetesCPUManagerPolicyOption>,
     topology_manager_scope: TopologyManagerScope,
     topology_manager_policy: TopologyManagerPolicy,
     pod_pids_limit: i64,

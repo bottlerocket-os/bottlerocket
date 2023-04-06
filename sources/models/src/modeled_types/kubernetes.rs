@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use regex::Regex;
+use scalar_derive::Scalar;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 // Just need serde's Error in scope to get its trait methods
 use super::error;
@@ -1327,4 +1328,33 @@ pub struct CredentialProvider {
     image_patterns: Vec<SingleLineString>,
     cache_duration: Option<KubernetesDurationValue>,
     environment: Option<EnvVarMap>,
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesCPUManagerPolicyOption values are the possible option names for the cpuManagerPolicyOptions.
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Scalar)]
+pub enum KubernetesCPUManagerPolicyOption {
+    #[serde(rename = "full-pcpus-only")]
+    FullPCPUsOnly,
+}
+
+#[cfg(test)]
+mod test_kubernetes_cpu_manager_policy_option {
+    use super::KubernetesCPUManagerPolicyOption;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_cpu_manager_policy_option() {
+        for ok in &["full-pcpus-only"] {
+            KubernetesCPUManagerPolicyOption::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_cpu_manager_policy_option() {
+        for err in &["fullPCPUSOnly", "", "align-by-socket"] {
+            KubernetesCPUManagerPolicyOption::try_from(*err).unwrap_err();
+        }
+    }
 }
