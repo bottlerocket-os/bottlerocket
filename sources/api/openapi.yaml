@@ -339,7 +339,6 @@ paths:
           style: form
           explode: false
           required: false
-      parameters:
         - in: query
           name: prefix
           description: "Specific key prefix to query. This parameter will be ignored if 'names' is also supplied"
