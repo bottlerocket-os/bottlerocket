@@ -297,7 +297,7 @@ pub(crate) struct BuildContext<'a> {
 }
 
 /// A map of SsmKey to its value
-type SsmParameters = HashMap<SsmKey, String>;
+pub(crate) type SsmParameters = HashMap<SsmKey, String>;
 
 /// Parse the AMI input file
 fn parse_ami_input(regions: &[String], ssm_args: &SsmArgs) -> Result<HashMap<Region, Image>> {

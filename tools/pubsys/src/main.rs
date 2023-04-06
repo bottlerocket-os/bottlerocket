@@ -10,6 +10,7 @@ Currently implemented:
 * Marking EC2 AMIs public (or private again)
 * setting SSM parameters based on built AMIs
 * promoting SSM parameters from versioned entries to named (e.g. 'latest')
+* validating SSM parameters by comparing the returned parameters in a region to a given list of parameters
 
 To be implemented:
 * high-level document describing pubsys usage with examples
@@ -114,6 +115,14 @@ fn run() -> Result<()> {
                     .context(error::PromoteSsmSnafu)
             })
         }
+        SubCommand::ValidateSsm(ref validate_ssm_args) => {
+            let rt = Runtime::new().context(error::RuntimeSnafu)?;
+            rt.block_on(async {
+                aws::validate_ssm::run(&args, validate_ssm_args)
+                    .await
+                    .context(error::ValidateSsmSnafu)
+            })
+        }
         SubCommand::UploadOva(ref upload_args) => {
             vmware::upload_ova::run(&args, upload_args).context(error::UploadOvaSnafu)
         }
@@ -130,7 +139,7 @@ fn main() {
 /// Automates publishing of Bottlerocket updates
 #[derive(Debug, StructOpt)]
 #[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
-struct Args {
+pub struct Args {
     #[structopt(global = true, long, default_value = "INFO")]
     /// How much detail to log; from least to most: ERROR, WARN, INFO, DEBUG, TRACE
     log_level: LevelFilter,
@@ -155,6 +164,7 @@ enum SubCommand {
 
     Ssm(aws::ssm::SsmArgs),
     PromoteSsm(aws::promote_ssm::PromoteArgs),
+    ValidateSsm(aws::validate_ssm::ValidateSsmArgs),
 
     UploadOva(vmware::upload_ova::UploadArgs),
 }
@@ -223,6 +233,11 @@ mod error {
         #[snafu(display("Failed to upload OVA: {}", source))]
         UploadOva {
             source: crate::vmware::upload_ova::Error,
+        },
+
+        #[snafu(display("Failed to validate SSM parameters: {}", source))]
+        ValidateSsm {
+            source: crate::aws::validate_ssm::Error,
         },
     }
 
