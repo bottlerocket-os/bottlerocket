@@ -1,11 +1,14 @@
 //! The ami module owns the 'ami' subcommand and controls the process of registering and copying
 //! EC2 AMIs.
 
+pub(crate) mod launch_permissions;
 pub(crate) mod public;
 mod register;
 mod snapshot;
 pub(crate) mod wait;
 
+use crate::aws::ami::launch_permissions::get_launch_permissions;
+use crate::aws::ami::public::ami_is_public;
 use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots, ModifyOptions};
 use crate::aws::{client::build_client_config, parse_arch, region_from_string};
 use crate::Args;
@@ -26,7 +29,6 @@ use register::{get_ami_id, register_image, RegisteredIds};
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
-use std::fs::File;
 use std::path::PathBuf;
 use structopt::{clap, StructOpt};
 use wait::wait_for_ami;
@@ -78,10 +80,7 @@ pub(crate) async fn run(args: &Args, ami_args: &AmiArgs) -> Result<()> {
         Ok(amis) => {
             // Write the AMI IDs to file if requested
             if let Some(ref path) = ami_args.ami_output {
-                let file = File::create(path).context(error::FileCreateSnafu { path })?;
-                serde_json::to_writer_pretty(file, &amis)
-                    .context(error::SerializeSnafu { path })?;
-                info!("Wrote AMI data to {}", path.display());
+                write_amis(path, &amis).context(error::WriteAmisSnafu { path })?;
             }
             Ok(())
         }
@@ -141,6 +140,10 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
         region: base_region.as_ref(),
     })?;
 
+    // If the AMI does not exist yet, `public` should be false and `launch_permissions` empty
+    let mut public = false;
+    let mut launch_permissions = vec![];
+
     let (ids_of_image, already_registered) = if let Some(found_id) = maybe_id {
         warn!(
             "Found '{}' already registered in {}: {}",
@@ -153,9 +156,25 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
                 region: base_region.as_ref(),
             })?;
         let found_ids = RegisteredIds {
-            image_id: found_id,
+            image_id: found_id.clone(),
             snapshot_ids,
         };
+
+        public = ami_is_public(&base_ec2_client, base_region.as_ref(), &found_id)
+            .await
+            .context(error::IsAmiPublicSnafu {
+                image_id: found_id.clone(),
+                region: base_region.to_string(),
+            })?;
+
+        launch_permissions =
+            get_launch_permissions(&base_ec2_client, base_region.as_ref(), &found_id)
+                .await
+                .context(error::DescribeImageAttributeSnafu {
+                    image_id: found_id,
+                    region: base_region.to_string(),
+                })?;
+
         (found_ids, true)
     } else {
         let new_ids = register_image(ami_args, &base_region, base_ebs_client, &base_ec2_client)
@@ -174,7 +193,12 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
 
     amis.insert(
         base_region.as_ref().to_string(),
-        Image::new(&ids_of_image.image_id, &ami_args.name),
+        Image::new(
+            &ids_of_image.image_id,
+            &ami_args.name,
+            Some(public),
+            Some(launch_permissions),
+        ),
     );
 
     // If we don't need to copy AMIs, we're done.
@@ -294,7 +318,25 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
                 "Found '{}' already registered in {}: {}",
                 ami_args.name, region, id
             );
-            amis.insert(region.as_ref().to_string(), Image::new(&id, &ami_args.name));
+            let public = ami_is_public(&ec2_clients[&region], region.as_ref(), &id)
+                .await
+                .context(error::IsAmiPublicSnafu {
+                    image_id: id.clone(),
+                    region: base_region.to_string(),
+                })?;
+
+            let launch_permissions =
+                get_launch_permissions(&ec2_clients[&region], region.as_ref(), &id)
+                    .await
+                    .context(error::DescribeImageAttributeSnafu {
+                        region: region.as_ref(),
+                        image_id: id.clone(),
+                    })?;
+
+            amis.insert(
+                region.as_ref().to_string(),
+                Image::new(&id, &ami_args.name, Some(public), Some(launch_permissions)),
+            );
             continue;
         }
 
@@ -346,7 +388,7 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
                     );
                     amis.insert(
                         region.as_ref().to_string(),
-                        Image::new(&image_id, &ami_args.name),
+                        Image::new(&image_id, &ami_args.name, Some(false), Some(vec![])),
                     );
                 } else {
                     saw_error = true;
@@ -379,13 +421,22 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
 pub(crate) struct Image {
     pub(crate) id: String,
     pub(crate) name: String,
+    pub(crate) public: Option<bool>,
+    pub(crate) launch_permissions: Option<Vec<LaunchPermissionDef>>,
 }
 
 impl Image {
-    fn new(id: &str, name: &str) -> Self {
+    fn new(
+        id: &str,
+        name: &str,
+        public: Option<bool>,
+        launch_permissions: Option<Vec<LaunchPermissionDef>>,
+    ) -> Self {
         Self {
             id: id.to_string(),
             name: name.to_string(),
+            public,
+            launch_permissions,
         }
     }
 }
@@ -442,10 +493,13 @@ async fn get_account_ids(
 mod error {
     use crate::aws::{ami, publish_ami};
     use aws_sdk_ec2::error::ModifyImageAttributeError;
+    use aws_sdk_ec2::model::LaunchPermission;
     use aws_sdk_ec2::types::SdkError;
     use aws_sdk_sts::error::GetCallerIdentityError;
     use snafu::Snafu;
     use std::path::PathBuf;
+
+    use super::public;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
@@ -455,6 +509,18 @@ mod error {
 
         #[snafu(display("Error reading config: {}", source))]
         Config { source: pubsys_config::Error },
+
+        #[snafu(display(
+            "Failed to describe image attributes for image {} in region {}: {}",
+            image_id,
+            region,
+            source
+        ))]
+        DescribeImageAttribute {
+            image_id: String,
+            region: String,
+            source: super::launch_permissions::Error,
+        },
 
         #[snafu(display("Failed to create file '{}': {}", path.display(), source))]
         FileCreate {
@@ -502,6 +568,21 @@ mod error {
             source: SdkError<ModifyImageAttributeError>,
         },
 
+        #[snafu(display(
+            "Failed to check if AMI with id {} is public in {}: {}",
+            image_id,
+            region,
+            source
+        ))]
+        IsAmiPublic {
+            image_id: String,
+            region: String,
+            source: public::Error,
+        },
+
+        #[snafu(display("Invalid launch permission: {:?}", launch_permission))]
+        InvalidLaunchPermission { launch_permission: LaunchPermission },
+
         #[snafu(display("Infra.toml is missing {}", missing))]
         MissingConfig { missing: String },
 
@@ -519,19 +600,23 @@ mod error {
             source: ami::register::Error,
         },
 
-        #[snafu(display("Failed to serialize output to '{}': {}", path.display(), source))]
-        Serialize {
-            path: PathBuf,
-            source: serde_json::Error,
-        },
-
         #[snafu(display("AMI '{}' in {} did not become available: {}", id, region, source))]
         WaitAmi {
             id: String,
             region: String,
             source: ami::wait::Error,
         },
+
+        #[snafu(display("Failed to write AMIs to '{}': {}", path.display(), source))]
+        WriteAmis {
+            path: PathBuf,
+            source: publish_ami::Error,
+        },
     }
 }
 pub(crate) use error::Error;
+
+use self::launch_permissions::LaunchPermissionDef;
+
+use super::publish_ami::write_amis;
 type Result<T> = std::result::Result<T, error::Error>;
