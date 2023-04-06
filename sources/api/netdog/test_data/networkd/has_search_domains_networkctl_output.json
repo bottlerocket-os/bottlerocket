@@ -1,0 +1,525 @@
+{
+	"Index" : 2,
+	"Name" : "eth0",
+	"AlternativeNames" : [
+		"enX0"
+	],
+	"Type" : "ether",
+	"Driver" : "vif",
+	"Flags" : 69699,
+	"FlagsString" : "up,broadcast,running,multicast,lower-up",
+	"KernelOperationalState" : 6,
+	"KernelOperationalStateString" : "up",
+	"MTU" : 1500,
+	"MinimumMTU" : 68,
+	"MaximumMTU" : 65535,
+	"HardwareAddress" : [
+		6,
+		8,
+		13,
+		137,
+		48,
+		197
+	],
+	"PermanentHardwareAddress" : [
+		6,
+		8,
+		13,
+		137,
+		48,
+		197
+	],
+	"BroadcastAddress" : [
+		255,
+		255,
+		255,
+		255,
+		255,
+		255
+	],
+	"IPv6LinkLocalAddress" : [
+		254,
+		128,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		4,
+		8,
+		13,
+		255,
+		254,
+		137,
+		48,
+		197
+	],
+	"AdministrativeState" : "configured",
+	"OperationalState" : "routable",
+	"CarrierState" : "carrier",
+	"AddressState" : "routable",
+	"IPv4AddressState" : "routable",
+	"IPv6AddressState" : "degraded",
+	"OnlineState" : "online",
+	"NetworkFile" : "/etc/systemd/network/20-dhcp.network",
+	"RequiredForOnline" : true,
+	"RequiredOperationalStateForOnline" : [
+		"degraded",
+		"routable"
+	],
+	"RequiredFamilyForOnline" : "any",
+	"ActivationPolicy" : "up",
+	"LinkFile" : "/usr/lib/systemd/network/99-default.link",
+	"Path" : "xen-vif-0",
+	"DNS" : [
+		{
+			"Family" : 2,
+			"Address" : [
+				172,
+				31,
+				0,
+				2
+			],
+			"ConfigSource" : "DHCPv4",
+			"ConfigProvider" : [
+				172,
+				31,
+				16,
+				1
+			]
+		}
+	],
+	"SearchDomains" : [
+		{
+			"Domain" : "us-west-2.compute.internal",
+			"ConfigSource" : "DHCPv4",
+			"ConfigProvider" : [
+				172,
+				31,
+				16,
+				1
+			]
+		}
+	],
+	"DNSSettings" : [
+		{
+			"LLMNR" : "yes",
+			"ConfigSource" : "static"
+		},
+		{
+			"MDNS" : "no",
+			"ConfigSource" : "static"
+		}
+	],
+	"Addresses" : [
+		{
+			"Family" : 10,
+			"Address" : [
+				254,
+				128,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				4,
+				8,
+				13,
+				255,
+				254,
+				137,
+				48,
+				197
+			],
+			"PrefixLength" : 64,
+			"Scope" : 253,
+			"ScopeString" : "link",
+			"Flags" : 128,
+			"FlagsString" : "permanent",
+			"ConfigSource" : "foreign",
+			"ConfigState" : "configured"
+		},
+		{
+			"Family" : 2,
+			"Address" : [
+				172,
+				31,
+				28,
+				92
+			],
+			"Broadcast" : [
+				172,
+				31,
+				31,
+				255
+			],
+			"PrefixLength" : 20,
+			"Scope" : 0,
+			"ScopeString" : "global",
+			"Flags" : 0,
+			"FlagsString" : null,
+			"PreferredLifetimeUsec" : 3448420705936,
+			"ValidLifetimeUsec" : 3448420705936,
+			"ConfigSource" : "DHCPv4",
+			"ConfigState" : "configured",
+			"ConfigProvider" : [
+				172,
+				31,
+				16,
+				1
+			]
+		}
+	],
+	"Routes" : [
+		{
+			"Family" : 2,
+			"Destination" : [
+				172,
+				31,
+				16,
+				0
+			],
+			"DestinationPrefixLength" : 20,
+			"PreferredSource" : [
+				172,
+				31,
+				28,
+				92
+			],
+			"Scope" : 253,
+			"ScopeString" : "link",
+			"Protocol" : 2,
+			"ProtocolString" : "kernel",
+			"Type" : 1,
+			"TypeString" : "unicast",
+			"Priority" : 10,
+			"Table" : 254,
+			"TableString" : "main(254)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "foreign",
+			"ConfigState" : "configured"
+		},
+		{
+			"Family" : 2,
+			"Destination" : [
+				172,
+				31,
+				28,
+				92
+			],
+			"DestinationPrefixLength" : 32,
+			"PreferredSource" : [
+				172,
+				31,
+				28,
+				92
+			],
+			"Scope" : 254,
+			"ScopeString" : "host",
+			"Protocol" : 2,
+			"ProtocolString" : "kernel",
+			"Type" : 2,
+			"TypeString" : "local",
+			"Priority" : 0,
+			"Table" : 255,
+			"TableString" : "local(255)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "foreign",
+			"ConfigState" : "configured"
+		},
+		{
+			"Family" : 2,
+			"Destination" : [
+				172,
+				31,
+				16,
+				0
+			],
+			"DestinationPrefixLength" : 20,
+			"PreferredSource" : [
+				172,
+				31,
+				28,
+				92
+			],
+			"Scope" : 253,
+			"ScopeString" : "link",
+			"Protocol" : 2,
+			"ProtocolString" : "kernel",
+			"Type" : 1,
+			"TypeString" : "unicast",
+			"Priority" : 0,
+			"Table" : 254,
+			"TableString" : "main(254)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "foreign",
+			"ConfigState" : "configured"
+		},
+		{
+			"Family" : 10,
+			"Destination" : [
+				255,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"DestinationPrefixLength" : 8,
+			"Scope" : 0,
+			"ScopeString" : "global",
+			"Protocol" : 2,
+			"ProtocolString" : "kernel",
+			"Type" : 5,
+			"TypeString" : "multicast",
+			"Priority" : 256,
+			"Table" : 255,
+			"TableString" : "local(255)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "foreign",
+			"ConfigState" : "configured"
+		},
+		{
+			"Family" : 2,
+			"Destination" : [
+				0,
+				0,
+				0,
+				0
+			],
+			"DestinationPrefixLength" : 0,
+			"Gateway" : [
+				172,
+				31,
+				16,
+				1
+			],
+			"PreferredSource" : [
+				172,
+				31,
+				28,
+				92
+			],
+			"Scope" : 0,
+			"ScopeString" : "global",
+			"Protocol" : 16,
+			"ProtocolString" : "16",
+			"Type" : 1,
+			"TypeString" : "unicast",
+			"Priority" : 10,
+			"Table" : 254,
+			"TableString" : "main(254)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "DHCPv4",
+			"ConfigState" : "configuring,configured",
+			"ConfigProvider" : [
+				172,
+				31,
+				16,
+				1
+			]
+		},
+		{
+			"Family" : 10,
+			"Destination" : [
+				254,
+				128,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0
+			],
+			"DestinationPrefixLength" : 64,
+			"Scope" : 0,
+			"ScopeString" : "global",
+			"Protocol" : 2,
+			"ProtocolString" : "kernel",
+			"Type" : 1,
+			"TypeString" : "unicast",
+			"Priority" : 256,
+			"Table" : 254,
+			"TableString" : "main(254)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "foreign",
+			"ConfigState" : "configured"
+		},
+		{
+			"Family" : 2,
+			"Destination" : [
+				172,
+				31,
+				0,
+				2
+			],
+			"DestinationPrefixLength" : 32,
+			"Gateway" : [
+				172,
+				31,
+				16,
+				1
+			],
+			"PreferredSource" : [
+				172,
+				31,
+				28,
+				92
+			],
+			"Scope" : 0,
+			"ScopeString" : "global",
+			"Protocol" : 16,
+			"ProtocolString" : "16",
+			"Type" : 1,
+			"TypeString" : "unicast",
+			"Priority" : 10,
+			"Table" : 254,
+			"TableString" : "main(254)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "DHCPv4",
+			"ConfigState" : "configuring,configured",
+			"ConfigProvider" : [
+				172,
+				31,
+				16,
+				1
+			]
+		},
+		{
+			"Family" : 2,
+			"Destination" : [
+				172,
+				31,
+				31,
+				255
+			],
+			"DestinationPrefixLength" : 32,
+			"PreferredSource" : [
+				172,
+				31,
+				28,
+				92
+			],
+			"Scope" : 253,
+			"ScopeString" : "link",
+			"Protocol" : 2,
+			"ProtocolString" : "kernel",
+			"Type" : 3,
+			"TypeString" : "broadcast",
+			"Priority" : 0,
+			"Table" : 255,
+			"TableString" : "local(255)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "foreign",
+			"ConfigState" : "configured"
+		},
+		{
+			"Family" : 2,
+			"Destination" : [
+				172,
+				31,
+				16,
+				1
+			],
+			"DestinationPrefixLength" : 32,
+			"PreferredSource" : [
+				172,
+				31,
+				28,
+				92
+			],
+			"Scope" : 253,
+			"ScopeString" : "link",
+			"Protocol" : 16,
+			"ProtocolString" : "16",
+			"Type" : 1,
+			"TypeString" : "unicast",
+			"Priority" : 10,
+			"Table" : 254,
+			"TableString" : "main(254)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "DHCPv4",
+			"ConfigState" : "configuring,configured",
+			"ConfigProvider" : [
+				172,
+				31,
+				16,
+				1
+			]
+		},
+		{
+			"Family" : 10,
+			"Destination" : [
+				254,
+				128,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				4,
+				8,
+				13,
+				255,
+				254,
+				137,
+				48,
+				197
+			],
+			"DestinationPrefixLength" : 128,
+			"Scope" : 0,
+			"ScopeString" : "global",
+			"Protocol" : 2,
+			"ProtocolString" : "kernel",
+			"Type" : 2,
+			"TypeString" : "local",
+			"Priority" : 0,
+			"Table" : 255,
+			"TableString" : "local(255)",
+			"Preference" : 0,
+			"Flags" : 0,
+			"FlagsString" : "",
+			"ConfigSource" : "foreign",
+			"ConfigState" : "configured"
+		}
+	]
+}

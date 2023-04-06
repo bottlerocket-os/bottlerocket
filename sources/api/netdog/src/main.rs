@@ -34,8 +34,11 @@ mod bonding;
 mod cli;
 mod dns;
 mod interface_id;
+#[cfg(net_backend = "wicked")]
 mod lease;
 mod net_config;
+#[cfg(net_backend = "systemd-networkd")]
+mod networkd_status;
 mod wicked;
 
 use argh::FromArgs;
@@ -51,9 +54,12 @@ static DEFAULT_NET_CONFIG_FILE: &str = "/var/lib/bottlerocket/net.toml";
 static OVERRIDE_NET_CONFIG_FILE: &str = "/var/lib/netdog/net.toml";
 static PRIMARY_SYSCTL_CONF: &str = "/etc/sysctl.d/90-primary_interface.conf";
 static SYSCTL_MARKER_FILE: &str = "/run/netdog/primary_sysctls_set";
-static SYSTEMD_SYSCTL: &str = "/usr/lib/systemd/systemd-sysctl";
+#[cfg(net_backend = "wicked")]
 static LEASE_DIR: &str = "/run/wicked";
 static SYS_CLASS_NET: &str = "/sys/class/net";
+static SYSTEMD_SYSCTL: &str = "/usr/lib/systemd/systemd-sysctl";
+#[cfg(net_backend = "systemd-networkd")]
+static NETWORKCTL: &str = "/usr/bin/networkctl";
 
 /// Stores user-supplied arguments.
 #[derive(FromArgs, PartialEq, Debug)]
@@ -65,25 +71,33 @@ struct Args {
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand)]
 enum SubCommand {
+    #[cfg(net_backend = "wicked")]
     Install(cli::InstallArgs),
+    #[cfg(net_backend = "wicked")]
     Remove(cli::RemoveArgs),
     NodeIp(cli::NodeIpArgs),
     GenerateHostname(cli::GenerateHostnameArgs),
     GenerateNetConfig(cli::GenerateNetConfigArgs),
     SetHostname(cli::SetHostnameArgs),
     WriteResolvConf(cli::WriteResolvConfArgs),
+    #[cfg(net_backend = "systemd-networkd")]
+    WritePrimaryInterfaceStatus(cli::WritePrimaryInterfaceStatusArgs),
 }
 
 async fn run() -> cli::Result<()> {
     let args: Args = argh::from_env();
     match args.subcommand {
+        #[cfg(net_backend = "wicked")]
         SubCommand::Install(args) => cli::install::run(args)?,
+        #[cfg(net_backend = "wicked")]
         SubCommand::Remove(args) => cli::remove::run(args)?,
         SubCommand::NodeIp(_) => cli::node_ip::run()?,
         SubCommand::GenerateHostname(_) => cli::generate_hostname::run().await?,
         SubCommand::GenerateNetConfig(_) => cli::generate_net_config::run()?,
         SubCommand::SetHostname(args) => cli::set_hostname::run(args)?,
         SubCommand::WriteResolvConf(_) => cli::write_resolv_conf::run()?,
+        #[cfg(net_backend = "systemd-networkd")]
+        SubCommand::WritePrimaryInterfaceStatus(_) => cli::write_primary_interface_status::run()?,
     }
     Ok(())
 }

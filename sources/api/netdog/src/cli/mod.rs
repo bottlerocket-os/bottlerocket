@@ -1,22 +1,40 @@
 pub(crate) mod generate_hostname;
 pub(crate) mod generate_net_config;
-pub(crate) mod install;
 pub(crate) mod node_ip;
-pub(crate) mod remove;
 pub(crate) mod set_hostname;
 pub(crate) mod write_resolv_conf;
 
-use crate::{PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS, SYS_CLASS_NET};
+#[cfg(net_backend = "wicked")]
+pub(crate) mod install;
+#[cfg(net_backend = "wicked")]
+pub(crate) mod remove;
+
+#[cfg(net_backend = "systemd-networkd")]
+pub(crate) mod write_primary_interface_status;
+
+use crate::{
+    PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS, PRIMARY_SYSCTL_CONF, SYSCTL_MARKER_FILE,
+    SYSTEMD_SYSCTL, SYS_CLASS_NET,
+};
 pub(crate) use generate_hostname::GenerateHostnameArgs;
 pub(crate) use generate_net_config::GenerateNetConfigArgs;
-pub(crate) use install::InstallArgs;
 pub(crate) use node_ip::NodeIpArgs;
-pub(crate) use remove::RemoveArgs;
 use serde::{Deserialize, Serialize};
 pub(crate) use set_hostname::SetHostnameArgs;
-use snafu::{OptionExt, ResultExt};
+use snafu::{ensure, OptionExt, ResultExt};
+use std::fmt::Write;
 use std::fs;
+use std::path::Path;
+use std::process::Command;
 pub(crate) use write_resolv_conf::WriteResolvConfArgs;
+
+#[cfg(net_backend = "wicked")]
+pub(crate) use install::InstallArgs;
+#[cfg(net_backend = "wicked")]
+pub(crate) use remove::RemoveArgs;
+
+#[cfg(net_backend = "systemd-networkd")]
+pub(crate) use write_primary_interface_status::WritePrimaryInterfaceStatusArgs;
 
 #[derive(Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -90,9 +108,83 @@ fn primary_interface_name() -> Result<String> {
     error::NonExistentMacSnafu { mac: primary_mac }.fail()
 }
 
+/// Set sysctl settings for provided interface
+// This manages the logic around ensuring required sysctls is up to date for the primary interface.
+fn write_primary_interface_sysctl(interface: String) -> Result<()> {
+    // If we haven't already, set and apply default sysctls for the primary network
+    // interface
+    if !Path::exists(Path::new(PRIMARY_SYSCTL_CONF)) {
+        write_interface_sysctl(interface, PRIMARY_SYSCTL_CONF)?;
+    };
+
+    // Execute `systemd-sysctl` with our configuration file to set the sysctls
+    if !Path::exists(Path::new(SYSCTL_MARKER_FILE)) {
+        let systemd_sysctl_result = Command::new(SYSTEMD_SYSCTL)
+            .arg(PRIMARY_SYSCTL_CONF)
+            .output()
+            .context(error::SystemdSysctlExecutionSnafu)?;
+        ensure!(
+            systemd_sysctl_result.status.success(),
+            error::FailedSystemdSysctlSnafu {
+                stderr: String::from_utf8_lossy(&systemd_sysctl_result.stderr)
+            }
+        );
+
+        fs::write(SYSCTL_MARKER_FILE, "").unwrap_or_else(|e| {
+            eprintln!(
+                "Failed to create marker file {}, netdog may attempt to set sysctls again: {}",
+                SYSCTL_MARKER_FILE, e
+            )
+        });
+    };
+    Ok(())
+}
+
+/// Write the default sysctls for a given interface to a given path
+fn write_interface_sysctl<S, P>(interface: S, path: P) -> Result<()>
+where
+    S: AsRef<str>,
+    P: AsRef<Path>,
+{
+    let interface = interface.as_ref();
+    let path = path.as_ref();
+    // Note: The dash (-) preceding the "net..." variable assignment below is important; it
+    // ensures failure to set the variable for any reason will be logged, but not cause the sysctl
+    // service to fail
+    // Accept router advertisement (RA) packets even if IPv6 forwarding is enabled on interface
+    let ipv6_accept_ra = format!("-net.ipv6.conf.{}.accept_ra = 2", interface);
+    // Enable loose mode for reverse path filter
+    let ipv4_rp_filter = format!("-net.ipv4.conf.{}.rp_filter = 2", interface);
+
+    let mut output = String::new();
+    writeln!(output, "{}", ipv6_accept_ra).context(error::SysctlConfBuildSnafu)?;
+    writeln!(output, "{}", ipv4_rp_filter).context(error::SysctlConfBuildSnafu)?;
+
+    fs::write(path, output).context(error::SysctlConfWriteSnafu { path })?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_sysctls() {
+        let interface = "eno1";
+        let fake_file = tempfile::NamedTempFile::new().unwrap();
+        let expected = "-net.ipv6.conf.eno1.accept_ra = 2\n-net.ipv4.conf.eno1.rp_filter = 2\n";
+        write_interface_sysctl(interface, &fake_file).unwrap();
+        assert_eq!(std::fs::read_to_string(&fake_file).unwrap(), expected);
+    }
+}
+
 /// Potential errors during netdog execution
 mod error {
-    use crate::{dns, interface_id, lease, net_config, wicked};
+    #[cfg(net_backend = "wicked")]
+    use crate::lease;
+    #[cfg(net_backend = "systemd-networkd")]
+    use crate::networkd_status;
+    use crate::{dns, interface_id, net_config, wicked};
     use snafu::Snafu;
     use std::ffi::OsString;
     use std::io;
@@ -147,6 +239,7 @@ mod error {
             source: serde_json::error::Error,
         },
 
+        #[cfg(net_backend = "wicked")]
         #[snafu(display("Failed to read/parse lease data: {}", source))]
         LeaseParseFailed { source: lease::Error },
 
@@ -191,6 +284,21 @@ mod error {
 
         #[snafu(display("Failed to run 'systemd-sysctl': {}", source))]
         SystemdSysctlExecution { source: io::Error },
+
+        #[snafu(display("Failed to parse networkctl status for interface: {}", source))]
+        NetworkctlParse { source: io::Error },
+
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Failed to retrieve networkctl status: {}", source))]
+        NetworkDInterfaceStatus {
+            source: networkd_status::NetworkDStatusError,
+        },
+
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Unable to determine primary interface IP Address: {}", source))]
+        PrimaryInterfaceAddress {
+            source: networkd_status::NetworkDStatusError,
+        },
     }
 }
 
