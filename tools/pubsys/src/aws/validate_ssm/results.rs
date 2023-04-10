@@ -69,10 +69,6 @@ pub struct SsmValidationResult {
     #[serde(serialize_with = "serialize_region")]
     pub(crate) region: Region,
 
-    /// The ID of the AMI the parameter is associated with
-    #[tabled(display_with = "display_option")]
-    pub(crate) ami_id: Option<String>,
-
     /// The validation status of the parameter
     pub(crate) status: SsmValidationResultStatus,
 }
@@ -97,7 +93,6 @@ impl SsmValidationResult {
         expected_value: Option<String>,
         actual_value: Option<String>,
         region: Region,
-        ami_id: Option<String>,
     ) -> SsmValidationResult {
         // Determine the validation status based on equality, presence, and absence of expected and
         // actual parameter values
@@ -114,7 +109,6 @@ impl SsmValidationResult {
             expected_value,
             actual_value,
             region,
-            ami_id,
             status,
         }
     }
@@ -264,7 +258,7 @@ mod test {
             (Region::new("us-west-2"), Ok(HashSet::from([]))),
             (Region::new("us-east-1"), Ok(HashSet::from([]))),
         ]));
-        let results_filtered = results.get_results_for_status(&vec![
+        let results_filtered = results.get_results_for_status(&[
             SsmValidationResultStatus::Correct,
             SsmValidationResultStatus::Incorrect,
             SsmValidationResultStatus::Missing,
@@ -286,28 +280,24 @@ mod test {
                         Some("test3-parameter-value".to_string()),
                         None,
                         Region::new("us-west-2"),
-                        Some("test3-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test1-parameter-name".to_string(),
                         Some("test1-parameter-value".to_string()),
                         Some("test1-parameter-value".to_string()),
                         Region::new("us-west-2"),
-                        Some("test1-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test2-parameter-name".to_string(),
                         Some("test2-parameter-value".to_string()),
                         Some("test2-parameter-value-wrong".to_string()),
                         Region::new("us-west-2"),
-                        Some("test2-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test4-parameter-name".to_string(),
                         None,
                         Some("test4-parameter-value".to_string()),
                         Region::new("us-west-2"),
-                        None,
                     ),
                 ])),
             ),
@@ -319,34 +309,30 @@ mod test {
                         Some("test3-parameter-value".to_string()),
                         None,
                         Region::new("us-east-1"),
-                        Some("test3-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test1-parameter-name".to_string(),
                         Some("test1-parameter-value".to_string()),
                         Some("test1-parameter-value".to_string()),
                         Region::new("us-east-1"),
-                        Some("test1-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test2-parameter-name".to_string(),
                         Some("test2-parameter-value".to_string()),
                         Some("test2-parameter-value-wrong".to_string()),
                         Region::new("us-east-1"),
-                        Some("test2-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test4-parameter-name".to_string(),
                         None,
                         Some("test4-parameter-value".to_string()),
                         Region::new("us-east-1"),
-                        None,
                     ),
                 ])),
             ),
         ]));
         let results_filtered =
-            results.get_results_for_status(&vec![SsmValidationResultStatus::Correct]);
+            results.get_results_for_status(&[SsmValidationResultStatus::Correct]);
 
         assert_eq!(
             results_filtered,
@@ -356,14 +342,12 @@ mod test {
                     Some("test1-parameter-value".to_string()),
                     Some("test1-parameter-value".to_string()),
                     Region::new("us-west-2"),
-                    Some("test1-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test1-parameter-name".to_string(),
                     Some("test1-parameter-value".to_string()),
                     Some("test1-parameter-value".to_string()),
                     Region::new("us-east-1"),
-                    Some("test1-image-id".to_string()),
                 )
             ])
         );
@@ -381,28 +365,24 @@ mod test {
                         Some("test3-parameter-value".to_string()),
                         None,
                         Region::new("us-west-2"),
-                        Some("test3-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test1-parameter-name".to_string(),
                         Some("test1-parameter-value".to_string()),
                         Some("test1-parameter-value".to_string()),
                         Region::new("us-west-2"),
-                        Some("test1-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test2-parameter-name".to_string(),
                         Some("test2-parameter-value".to_string()),
                         Some("test2-parameter-value-wrong".to_string()),
                         Region::new("us-west-2"),
-                        Some("test2-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test4-parameter-name".to_string(),
                         None,
                         Some("test4-parameter-value".to_string()),
                         Region::new("us-west-2"),
-                        None,
                     ),
                 ])),
             ),
@@ -414,33 +394,29 @@ mod test {
                         Some("test3-parameter-value".to_string()),
                         None,
                         Region::new("us-east-1"),
-                        Some("test3-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test1-parameter-name".to_string(),
                         Some("test1-parameter-value".to_string()),
                         Some("test1-parameter-value".to_string()),
                         Region::new("us-east-1"),
-                        Some("test1-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test2-parameter-name".to_string(),
                         Some("test2-parameter-value".to_string()),
                         Some("test2-parameter-value-wrong".to_string()),
                         Region::new("us-east-1"),
-                        Some("test2-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test4-parameter-name".to_string(),
                         None,
                         Some("test4-parameter-value".to_string()),
                         Region::new("us-east-1"),
-                        None,
                     ),
                 ])),
             ),
         ]));
-        let results_filtered = results.get_results_for_status(&vec![
+        let results_filtered = results.get_results_for_status(&[
             SsmValidationResultStatus::Correct,
             SsmValidationResultStatus::Incorrect,
         ]);
@@ -453,28 +429,24 @@ mod test {
                     Some("test1-parameter-value".to_string()),
                     Some("test1-parameter-value".to_string()),
                     Region::new("us-west-2"),
-                    Some("test1-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test1-parameter-name".to_string(),
                     Some("test1-parameter-value".to_string()),
                     Some("test1-parameter-value".to_string()),
                     Region::new("us-east-1"),
-                    Some("test1-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test2-parameter-name".to_string(),
                     Some("test2-parameter-value".to_string()),
                     Some("test2-parameter-value-wrong".to_string()),
                     Region::new("us-west-2"),
-                    Some("test2-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test2-parameter-name".to_string(),
                     Some("test2-parameter-value".to_string()),
                     Some("test2-parameter-value-wrong".to_string()),
                     Region::new("us-east-1"),
-                    Some("test2-image-id".to_string()),
                 )
             ])
         );
@@ -492,28 +464,24 @@ mod test {
                         Some("test3-parameter-value".to_string()),
                         None,
                         Region::new("us-west-2"),
-                        Some("test3-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test1-parameter-name".to_string(),
                         Some("test1-parameter-value".to_string()),
                         Some("test1-parameter-value".to_string()),
                         Region::new("us-west-2"),
-                        Some("test1-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test2-parameter-name".to_string(),
                         Some("test2-parameter-value".to_string()),
                         Some("test2-parameter-value-wrong".to_string()),
                         Region::new("us-west-2"),
-                        Some("test2-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test4-parameter-name".to_string(),
                         None,
                         Some("test4-parameter-value".to_string()),
                         Region::new("us-west-2"),
-                        None,
                     ),
                 ])),
             ),
@@ -525,33 +493,29 @@ mod test {
                         Some("test3-parameter-value".to_string()),
                         None,
                         Region::new("us-east-1"),
-                        Some("test3-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test1-parameter-name".to_string(),
                         Some("test1-parameter-value".to_string()),
                         Some("test1-parameter-value".to_string()),
                         Region::new("us-east-1"),
-                        Some("test1-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test2-parameter-name".to_string(),
                         Some("test2-parameter-value".to_string()),
                         Some("test2-parameter-value-wrong".to_string()),
                         Region::new("us-east-1"),
-                        Some("test2-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test4-parameter-name".to_string(),
                         None,
                         Some("test4-parameter-value".to_string()),
                         Region::new("us-east-1"),
-                        None,
                     ),
                 ])),
             ),
         ]));
-        let results_filtered = results.get_results_for_status(&vec![
+        let results_filtered = results.get_results_for_status(&[
             SsmValidationResultStatus::Correct,
             SsmValidationResultStatus::Incorrect,
             SsmValidationResultStatus::Missing,
@@ -566,56 +530,48 @@ mod test {
                     Some("test1-parameter-value".to_string()),
                     Some("test1-parameter-value".to_string()),
                     Region::new("us-west-2"),
-                    Some("test1-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test1-parameter-name".to_string(),
                     Some("test1-parameter-value".to_string()),
                     Some("test1-parameter-value".to_string()),
                     Region::new("us-east-1"),
-                    Some("test1-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test2-parameter-name".to_string(),
                     Some("test2-parameter-value".to_string()),
                     Some("test2-parameter-value-wrong".to_string()),
                     Region::new("us-west-2"),
-                    Some("test2-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test2-parameter-name".to_string(),
                     Some("test2-parameter-value".to_string()),
                     Some("test2-parameter-value-wrong".to_string()),
                     Region::new("us-east-1"),
-                    Some("test2-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test3-parameter-name".to_string(),
                     Some("test3-parameter-value".to_string()),
                     None,
                     Region::new("us-west-2"),
-                    Some("test3-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test4-parameter-name".to_string(),
                     None,
                     Some("test4-parameter-value".to_string()),
                     Region::new("us-west-2"),
-                    None,
                 ),
                 &SsmValidationResult::new(
                     "test3-parameter-name".to_string(),
                     Some("test3-parameter-value".to_string()),
                     None,
                     Region::new("us-east-1"),
-                    Some("test3-image-id".to_string()),
                 ),
                 &SsmValidationResult::new(
                     "test4-parameter-name".to_string(),
                     None,
                     Some("test4-parameter-value".to_string()),
                     Region::new("us-east-1"),
-                    None,
                 )
             ])
         );
@@ -633,21 +589,18 @@ mod test {
                         Some("test1-parameter-value".to_string()),
                         Some("test1-parameter-value".to_string()),
                         Region::new("us-west-2"),
-                        Some("test1-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test2-parameter-name".to_string(),
                         Some("test2-parameter-value".to_string()),
                         Some("test2-parameter-value-wrong".to_string()),
                         Region::new("us-west-2"),
-                        Some("test2-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test4-parameter-name".to_string(),
                         None,
                         Some("test4-parameter-value".to_string()),
                         Region::new("us-west-2"),
-                        None,
                     ),
                 ])),
             ),
@@ -659,27 +612,24 @@ mod test {
                         Some("test1-parameter-value".to_string()),
                         Some("test1-parameter-value".to_string()),
                         Region::new("us-east-1"),
-                        Some("test1-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test2-parameter-name".to_string(),
                         Some("test2-parameter-value".to_string()),
                         Some("test2-parameter-value-wrong".to_string()),
                         Region::new("us-east-1"),
-                        Some("test2-image-id".to_string()),
                     ),
                     SsmValidationResult::new(
                         "test4-parameter-name".to_string(),
                         None,
                         Some("test4-parameter-value".to_string()),
                         Region::new("us-east-1"),
-                        None,
                     ),
                 ])),
             ),
         ]));
         let results_filtered =
-            results.get_results_for_status(&vec![SsmValidationResultStatus::Missing]);
+            results.get_results_for_status(&[SsmValidationResultStatus::Missing]);
 
         assert_eq!(results_filtered, HashSet::new());
     }
