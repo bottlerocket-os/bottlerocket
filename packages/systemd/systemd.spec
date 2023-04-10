@@ -13,6 +13,28 @@ Source2: systemd-modules-load.conf
 Source3: journald.conf
 Source4: issue
 
+# Backports for fixing udev skipping kernel uevents under special circumstances
+#  * https://github.com/systemd/systemd/commit/2d40f02ee4317233365f53c85234be3af6b000a6
+#  * https://github.com/systemd/systemd/pull/22717
+#  * https://github.com/systemd/systemd/commit/400e3d21f8cae53a8ba9f9567f244fbf6f3e076c
+#  * https://github.com/systemd/systemd/commit/4f294ffdf18ab9f187400dbbab593a980e60be89
+#  * https://github.com/systemd/systemd/commit/c02fb80479b23e70f4ad6f7717eec5c9444aa7f4
+# From v251:
+Patch0001: 0001-errno-util-add-ERRNO_IS_DEVICE_ABSENT-macro.patch
+Patch0002: 0002-udev-drop-unnecessary-clone-of-received-sd-device-ob.patch
+Patch0003: 0003-udev-introduce-device_broadcast-helper-function.patch
+Patch0004: 0004-udev-assume-there-is-no-blocker-when-failed-to-check.patch
+Patch0005: 0005-udev-store-action-in-struct-Event.patch
+Patch0006: 0006-udev-requeue-event-when-the-corresponding-block-devi.patch
+Patch0007: 0007-udev-only-ignore-ENOENT-or-friends-which-suggest-the.patch
+Patch0008: 0008-udev-split-worker_lock_block_device-into-two.patch
+Patch0009: 0009-udev-assume-block-device-is-not-locked-when-a-new-ev.patch
+#  From v252:
+Patch0010: 0010-udev-fix-inversed-inequality-for-timeout-of-retrying.patch
+Patch0011: 0011-udev-certainly-restart-event-for-previously-locked-d.patch
+#  From v251:
+Patch0012: 0012-udev-try-to-reload-selinux-label-database-less-frequ.patch
+
 # Local patch to work around the fact that /var is a bind mount from
 # /local/var, and we want the /local/var/run symlink to point to /run.
 Patch9001: 9001-use-absolute-path-for-var-run-symlink.patch
