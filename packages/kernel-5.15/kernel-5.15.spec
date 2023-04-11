@@ -19,6 +19,8 @@ Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
 Patch1002: 1002-Revert-kbuild-hide-tools-build-targets-from-external.patch
 # Enable INITRAMFS_FORCE config option for our use case.
 Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
+# Backport of bpf jit limit adjustments, see https://github.com/awslabs/amazon-eks-ami/issues/1179
+Patch1004: 1004-bpf-Adjust-insufficient-default-bpf_jit_limit.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
