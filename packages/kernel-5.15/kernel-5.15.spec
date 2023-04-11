@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-5.15
-Version: 5.15.90
+Version: 5.15.102
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/c6618e1460b8ace4707e17615e7bcb6c9654796d739014a1d7f6d6e2a70d8bfe/kernel-5.15.90-54.138.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/567d93a3639fa16d002a80a970223b8dc134fc4d1214125b379750ee689a76ea/kernel-5.15.102-61.139.amzn2.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
@@ -19,6 +19,8 @@ Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
 Patch1002: 1002-Revert-kbuild-hide-tools-build-targets-from-external.patch
 # Enable INITRAMFS_FORCE config option for our use case.
 Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
+# Backport of bpf jit limit adjustments, see https://github.com/awslabs/amazon-eks-ami/issues/1179
+Patch1004: 1004-bpf-Adjust-insufficient-default-bpf_jit_limit.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel

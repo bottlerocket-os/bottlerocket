@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-5.10
-Version: 5.10.165
+Version: 5.10.173
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/f4682a5336292f734ea4abbbad28a4d460ebad6578e4fbfd26de479f9ff8f84d/kernel-5.10.165-143.735.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/bfdedd54405ee75070fa9b53342399680e3145e362f41deb1276de2082625061/kernel-5.10.173-154.642.amzn2.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
@@ -17,6 +17,8 @@ Source103: config-bottlerocket-vmware
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
 # Enable INITRAMFS_FORCE config option for our use case.
 Patch1002: 1002-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
+# Backport of bpf jit limit adjustments, see https://github.com/awslabs/amazon-eks-ami/issues/1179
+Patch1003: 1003-bpf-Adjust-insufficient-default-bpf_jit_limit.patch
 
 # Add zstd support for compressed kernel modules
 Patch2000: 2000-kbuild-move-module-strip-compression-code-into-scrip.patch
