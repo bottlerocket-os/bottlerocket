@@ -11,7 +11,6 @@ use crate::Args;
 use aws_sdk_ssm::{Client as SsmClient, Region};
 use log::{info, trace};
 use pubsys_config::InfraConfig;
-use serde::Deserialize;
 use snafu::ResultExt;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
@@ -22,45 +21,28 @@ use structopt::{clap, StructOpt};
 #[derive(Debug, StructOpt)]
 #[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
 pub struct ValidateSsmArgs {
-    /// File holding the validation configuration
+    /// File holding the expected parameters
     #[structopt(long, parse(from_os_str))]
-    validation_config_path: PathBuf,
+    expected_parameters_path: PathBuf,
+
+    /// If this flag is set, check for unexpected parameters in the validation regions. If not,
+    /// only the parameters present in the expected parameters file will be validated.
+    #[structopt(long)]
+    check_unexpected: bool,
 
     /// Optional path where the validation results should be written
     #[structopt(long, parse(from_os_str))]
     write_results_path: Option<PathBuf>,
 
-    #[structopt(long, requires = "write-results-path")]
     /// Optional filter to only write validation results with these statuses to the above path
     /// Available statuses are: `Correct`, `Incorrect`, `Missing`, `Unexpected`
+    #[structopt(long, requires = "write-results-path")]
     write_results_filter: Option<Vec<SsmValidationResultStatus>>,
 
     /// If this flag is added, print the results summary table as JSON instead of a
     /// plaintext table
     #[structopt(long)]
     json: bool,
-}
-
-/// Structure of the validation configuration file
-#[derive(Debug, Deserialize)]
-pub(crate) struct ValidationConfig {
-    /// Vec of paths to JSON files containing expected metadata (image ids and SSM parameters)
-    expected_metadata_lists: Vec<PathBuf>,
-
-    /// Vec of regions where the parameters should be validated
-    validation_regions: Vec<String>,
-}
-
-/// A structure that allows us to store a parameter value along with the AMI ID it refers to. In
-/// some cases, then AMI ID *is* the parameter value and both fields will hold the AMI ID. In other
-/// cases the parameter value is not the AMI ID, but we need to remember which AMI ID it refers to.
-#[derive(Debug, PartialEq, Eq)]
-pub(crate) struct SsmValue {
-    /// The value of the SSM parameter
-    pub(crate) value: String,
-
-    /// The ID of the AMI the parameter is associated with, used for validation result reporting
-    pub(crate) ami_id: String,
 }
 
 /// Performs SSM parameter validation and returns the `SsmValidationResults` object
@@ -78,40 +60,21 @@ pub async fn validate(
 
     trace!("Parsed infra config: {:#?}", infra_config);
 
-    // Read the validation config file and parse it into the `ValidationConfig` struct
-    let validation_config_file = File::open(&validate_ssm_args.validation_config_path).context(
-        error::ReadValidationConfigSnafu {
-            path: validate_ssm_args.validation_config_path.clone(),
-        },
-    )?;
-    let validation_config: ValidationConfig = serde_json::from_reader(validation_config_file)
-        .context(error::ParseValidationConfigSnafu)?;
-
     let ssm_prefix = aws.ssm_prefix.as_deref().unwrap_or("");
 
-    // Parse the parameter lists found in the validation config
-    info!("Parsing expected parameter lists");
-    let expected_parameters = parse_parameter_lists(
-        validation_config.expected_metadata_lists,
-        &validation_config.validation_regions,
-    )
-    .await?;
+    // Parse the file holding expected parameters
+    info!("Parsing expected parameters file");
+    let expected_parameters =
+        parse_expected_parameters(&validate_ssm_args.expected_parameters_path).await?;
 
-    info!("Parsed expected parameter lists");
-
-    // Create a Vec of Regions based on the region names in the validation config
-    let validation_regions: Vec<Region> = validation_config
-        .validation_regions
-        .iter()
-        .map(|s| Region::new(s.clone()))
-        .collect();
+    info!("Parsed expected parameters file");
 
     // Create a HashMap of SsmClients, one for each region where validation should happen
-    let base_region = &validation_regions[0];
-    let mut ssm_clients = HashMap::with_capacity(validation_regions.len());
+    let base_region = Region::new(aws.regions[0].clone());
+    let mut ssm_clients = HashMap::with_capacity(expected_parameters.len());
 
-    for region in &validation_regions {
-        let client_config = build_client_config(region, base_region, &aws).await;
+    for region in expected_parameters.keys() {
+        let client_config = build_client_config(region, &base_region, &aws).await;
         let ssm_client = SsmClient::new(&client_config);
         ssm_clients.insert(region.clone(), ssm_client);
     }
@@ -132,6 +95,7 @@ pub async fn validate(
                         validate_parameters_in_region(
                             expected_parameters.get(region).unwrap_or(&HashMap::new()),
                             &result,
+                            validate_ssm_args.check_unexpected,
                         )
                     }),
                 )
@@ -170,12 +134,13 @@ pub async fn validate(
     Ok(validation_results)
 }
 
-/// Validates SSM parameters in a single region, based on a HashMap (SsmKey, SsmValue) of expected
+/// Validates SSM parameters in a single region, based on a HashMap (SsmKey, String) of expected
 /// parameters and a HashMap (SsmKey, String) of actual retrieved parameters. Returns a HashSet of
 /// SsmValidationResult objects.
 pub(crate) fn validate_parameters_in_region(
-    expected_parameters: &HashMap<SsmKey, SsmValue>,
+    expected_parameters: &HashMap<SsmKey, String>,
     actual_parameters: &SsmParameters,
+    check_unexpected: bool,
 ) -> HashSet<SsmValidationResult> {
     // Clone the HashMap of actual parameters so items can be removed
     let mut actual_parameters = actual_parameters.clone();
@@ -186,87 +151,68 @@ pub(crate) fn validate_parameters_in_region(
     for (ssm_key, ssm_value) in expected_parameters {
         results.insert(SsmValidationResult::new(
             ssm_key.name.to_owned(),
-            Some(ssm_value.value.clone()),
+            Some(ssm_value.clone()),
             actual_parameters.get(ssm_key).map(|v| v.to_owned()),
             ssm_key.region.clone(),
-            Some(ssm_value.ami_id.clone()),
         ));
         actual_parameters.remove(ssm_key);
     }
 
-    // Any remaining parameters in `actual_parameters` were not present in `expected_parameters`
-    // and therefore get the `Unexpected` status
-    for (ssm_key, ssm_value) in actual_parameters {
-        results.insert(SsmValidationResult::new(
-            ssm_key.name.to_owned(),
-            None,
-            Some(ssm_value),
-            ssm_key.region.clone(),
-            None,
-        ));
+    if check_unexpected {
+        // Any remaining parameters in `actual_parameters` were not present in `expected_parameters`
+        // and therefore get the `Unexpected` status
+        for (ssm_key, ssm_value) in actual_parameters {
+            results.insert(SsmValidationResult::new(
+                ssm_key.name.to_owned(),
+                None,
+                Some(ssm_value),
+                ssm_key.region.clone(),
+            ));
+        }
     }
     results
 }
 
 type RegionName = String;
-type AmiId = String;
 type ParameterName = String;
 type ParameterValue = String;
 
-/// Parse the lists of parameters whose paths are in `parameter_lists`. Only parse the parameters
-/// in the regions present in `validation_regions`. Return a HashMap of Region mapped to a HashMap
-/// of the parameters in that region, with each parameter being a mapping of `SsmKey` to `SsmValue`.
-pub(crate) async fn parse_parameter_lists(
-    parameter_lists: Vec<PathBuf>,
-    validation_regions: &[String],
-) -> Result<HashMap<Region, HashMap<SsmKey, SsmValue>>> {
-    let mut parameter_map: HashMap<Region, HashMap<SsmKey, SsmValue>> = HashMap::new();
-    for parameter_list_path in parameter_lists {
-        // Parse the JSON list as a HashMap of region_name, mapped to a HashMap of ami_id, mapped to
-        // a HashMap of parameter_name and parameter_value
-        let parameter_list: HashMap<
-            RegionName,
-            HashMap<AmiId, HashMap<ParameterName, ParameterValue>>,
-        > = serde_json::from_reader(&File::open(parameter_list_path.clone()).context(
-            error::ReadExpectedParameterListSnafu {
-                path: parameter_list_path,
+/// Parse the file holding expected parameters. Return a HashMap of Region mapped to a HashMap
+/// of the parameters in that region, with each parameter being a mapping of `SsmKey` to its
+/// value as `String`.
+pub(crate) async fn parse_expected_parameters(
+    expected_parameters_file: &PathBuf,
+) -> Result<HashMap<Region, HashMap<SsmKey, String>>> {
+    // Parse the JSON file as a HashMap of region_name, mapped to a HashMap of parameter_name and
+    // parameter_value
+    let expected_parameters: HashMap<RegionName, HashMap<ParameterName, ParameterValue>> =
+        serde_json::from_reader(&File::open(expected_parameters_file.clone()).context(
+            error::ReadExpectedParameterFileSnafu {
+                path: expected_parameters_file,
             },
         )?)
-        .context(error::ParseExpectedParameterListSnafu)?;
+        .context(error::ParseExpectedParameterFileSnafu)?;
 
-        // Iterate over the parsed HashMap, converting the nested HashMap into a HashMap of Region
-        // mapped to a HashMap of SsmKey, SsmValue
-        parameter_list
-            .iter()
-            .filter(|(region, _)| validation_regions.contains(region))
-            .flat_map(|(region, ami_ids)| {
-                ami_ids
-                    .iter()
-                    .map(move |(ami_id, param_names)| (region, ami_id, param_names))
-            })
-            .flat_map(|(region, ami_id, params)| {
-                params.iter().map(move |(parameter_name, parameter_value)| {
-                    (
-                        region.clone(),
-                        ami_id.clone(),
-                        parameter_name.clone(),
-                        parameter_value.clone(),
-                    )
-                })
-            })
-            .for_each(|(region, ami_id, parameter_name, parameter_value)| {
-                parameter_map
-                    .entry(Region::new(region.clone()))
-                    .or_insert(HashMap::new())
-                    .insert(
-                        SsmKey::new(Region::new(region), parameter_name),
-                        SsmValue {
-                            value: parameter_value,
-                            ami_id,
-                        },
-                    );
-            });
-    }
+    // Iterate over the parsed HashMap, converting the nested HashMap into a HashMap of Region
+    // mapped to a HashMap of SsmKey, String
+    let parameter_map = expected_parameters
+        .into_iter()
+        .map(|(region, parameters)| {
+            (
+                Region::new(region.clone()),
+                parameters
+                    .into_iter()
+                    .map(|(parameter_name, parameter_value)| {
+                        (
+                            SsmKey::new(Region::new(region.clone()), parameter_name),
+                            parameter_value,
+                        )
+                    })
+                    .collect::<HashMap<SsmKey, String>>(),
+            )
+        })
+        .collect();
+
     Ok(parameter_map)
 }
 
@@ -330,11 +276,11 @@ mod error {
         #[snafu(display("Failed to validate SSM parameters in region: {}", region))]
         ValidateSsmRegion { region: String },
 
-        #[snafu(display("Failed to parse AMI list: {}", source))]
-        ParseExpectedParameterList { source: serde_json::Error },
+        #[snafu(display("Failed to parse expected parameters file: {}", source))]
+        ParseExpectedParameterFile { source: serde_json::Error },
 
-        #[snafu(display("Failed to read AMI list: {}", path.display()))]
-        ReadExpectedParameterList {
+        #[snafu(display("Failed to read expected parameters file: {}", path.display()))]
+        ReadExpectedParameterFile {
             source: std::io::Error,
             path: PathBuf,
         },
@@ -363,7 +309,7 @@ type Result<T> = std::result::Result<T, error::Error>;
 mod test {
     use crate::aws::{
         ssm::{SsmKey, SsmParameters},
-        validate_ssm::{results::SsmValidationResult, validate_parameters_in_region, SsmValue},
+        validate_ssm::{results::SsmValidationResult, validate_parameters_in_region},
     };
     use aws_sdk_ssm::Region;
     use std::collections::{HashMap, HashSet};
@@ -373,36 +319,27 @@ mod test {
     // Tests validation of parameters where the expected value is equal to the actual value
     #[test]
     fn validate_parameters_all_correct() {
-        let expected_parameters: HashMap<SsmKey, SsmValue> = HashMap::from([
+        let expected_parameters: HashMap<SsmKey, String> = HashMap::from([
             (
                 SsmKey {
                     region: Region::new("us-west-2"),
                     name: "test1-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test1-parameter-value".to_string(),
-                    ami_id: "test1-image-id".to_string(),
-                },
+                "test1-parameter-value".to_string(),
             ),
             (
                 SsmKey {
                     region: Region::new("us-west-2"),
                     name: "test2-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test2-parameter-value".to_string(),
-                    ami_id: "test2-image-id".to_string(),
-                },
+                "test2-parameter-value".to_string(),
             ),
             (
                 SsmKey {
                     region: Region::new("us-east-1"),
                     name: "test3-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test3-parameter-value".to_string(),
-                    ami_id: "test3-image-id".to_string(),
-                },
+                "test3-parameter-value".to_string(),
             ),
         ]);
         let actual_parameters: SsmParameters = HashMap::from([
@@ -434,24 +371,21 @@ mod test {
                 Some("test3-parameter-value".to_string()),
                 Some("test3-parameter-value".to_string()),
                 Region::new("us-east-1"),
-                Some("test3-image-id".to_string()),
             ),
             SsmValidationResult::new(
                 "test1-parameter-name".to_string(),
                 Some("test1-parameter-value".to_string()),
                 Some("test1-parameter-value".to_string()),
                 Region::new("us-west-2"),
-                Some("test1-image-id".to_string()),
             ),
             SsmValidationResult::new(
                 "test2-parameter-name".to_string(),
                 Some("test2-parameter-value".to_string()),
                 Some("test2-parameter-value".to_string()),
                 Region::new("us-west-2"),
-                Some("test2-image-id".to_string()),
             ),
         ]);
-        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters);
+        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters, true);
 
         assert_eq!(results, expected_results);
     }
@@ -459,36 +393,27 @@ mod test {
     // Tests validation of parameters where the expected value is different from the actual value
     #[test]
     fn validate_parameters_all_incorrect() {
-        let expected_parameters: HashMap<SsmKey, SsmValue> = HashMap::from([
+        let expected_parameters: HashMap<SsmKey, String> = HashMap::from([
             (
                 SsmKey {
                     region: Region::new("us-west-2"),
                     name: "test1-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test1-parameter-value".to_string(),
-                    ami_id: "test1-image-id".to_string(),
-                },
+                "test1-parameter-value".to_string(),
             ),
             (
                 SsmKey {
                     region: Region::new("us-west-2"),
                     name: "test2-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test2-parameter-value".to_string(),
-                    ami_id: "test2-image-id".to_string(),
-                },
+                "test2-parameter-value".to_string(),
             ),
             (
                 SsmKey {
                     region: Region::new("us-east-1"),
                     name: "test3-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test3-parameter-value".to_string(),
-                    ami_id: "test3-image-id".to_string(),
-                },
+                "test3-parameter-value".to_string(),
             ),
         ]);
         let actual_parameters: SsmParameters = HashMap::from([
@@ -520,24 +445,21 @@ mod test {
                 Some("test3-parameter-value".to_string()),
                 Some("test3-parameter-value-wrong".to_string()),
                 Region::new("us-east-1"),
-                Some("test3-image-id".to_string()),
             ),
             SsmValidationResult::new(
                 "test1-parameter-name".to_string(),
                 Some("test1-parameter-value".to_string()),
                 Some("test1-parameter-value-wrong".to_string()),
                 Region::new("us-west-2"),
-                Some("test1-image-id".to_string()),
             ),
             SsmValidationResult::new(
                 "test2-parameter-name".to_string(),
                 Some("test2-parameter-value".to_string()),
                 Some("test2-parameter-value-wrong".to_string()),
                 Region::new("us-west-2"),
-                Some("test2-image-id".to_string()),
             ),
         ]);
-        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters);
+        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters, true);
 
         assert_eq!(results, expected_results);
     }
@@ -545,36 +467,27 @@ mod test {
     // Tests validation of parameters where the actual value is missing
     #[test]
     fn validate_parameters_all_missing() {
-        let expected_parameters: HashMap<SsmKey, SsmValue> = HashMap::from([
+        let expected_parameters: HashMap<SsmKey, String> = HashMap::from([
             (
                 SsmKey {
                     region: Region::new("us-west-2"),
                     name: "test1-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test1-parameter-value".to_string(),
-                    ami_id: "test1-image-id".to_string(),
-                },
+                "test1-parameter-value".to_string(),
             ),
             (
                 SsmKey {
                     region: Region::new("us-west-2"),
                     name: "test2-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test2-parameter-value".to_string(),
-                    ami_id: "test2-image-id".to_string(),
-                },
+                "test2-parameter-value".to_string(),
             ),
             (
                 SsmKey {
                     region: Region::new("us-east-1"),
                     name: "test3-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test3-parameter-value".to_string(),
-                    ami_id: "test3-image-id".to_string(),
-                },
+                "test3-parameter-value".to_string(),
             ),
         ]);
         let actual_parameters: SsmParameters = HashMap::new();
@@ -584,24 +497,21 @@ mod test {
                 Some("test3-parameter-value".to_string()),
                 None,
                 Region::new("us-east-1"),
-                Some("test3-image-id".to_string()),
             ),
             SsmValidationResult::new(
                 "test1-parameter-name".to_string(),
                 Some("test1-parameter-value".to_string()),
                 None,
                 Region::new("us-west-2"),
-                Some("test1-image-id".to_string()),
             ),
             SsmValidationResult::new(
                 "test2-parameter-name".to_string(),
                 Some("test2-parameter-value".to_string()),
                 None,
                 Region::new("us-west-2"),
-                Some("test2-image-id".to_string()),
             ),
         ]);
-        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters);
+        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters, true);
 
         assert_eq!(results, expected_results);
     }
@@ -609,7 +519,7 @@ mod test {
     // Tests validation of parameters where the expected value is missing
     #[test]
     fn validate_parameters_all_unexpected() {
-        let expected_parameters: HashMap<SsmKey, SsmValue> = HashMap::new();
+        let expected_parameters: HashMap<SsmKey, String> = HashMap::new();
         let actual_parameters: SsmParameters = HashMap::from([
             (
                 SsmKey {
@@ -639,24 +549,21 @@ mod test {
                 None,
                 Some("test3-parameter-value".to_string()),
                 Region::new("us-east-1"),
-                None,
             ),
             SsmValidationResult::new(
                 "test1-parameter-name".to_string(),
                 None,
                 Some("test1-parameter-value".to_string()),
                 Region::new("us-west-2"),
-                None,
             ),
             SsmValidationResult::new(
                 "test2-parameter-name".to_string(),
                 None,
                 Some("test2-parameter-value".to_string()),
                 Region::new("us-west-2"),
-                None,
             ),
         ]);
-        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters);
+        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters, true);
 
         assert_eq!(results, expected_results);
     }
@@ -665,36 +572,27 @@ mod test {
     // happens once
     #[test]
     fn validate_parameters_mixed() {
-        let expected_parameters: HashMap<SsmKey, SsmValue> = HashMap::from([
+        let expected_parameters: HashMap<SsmKey, String> = HashMap::from([
             (
                 SsmKey {
                     region: Region::new("us-west-2"),
                     name: "test1-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test1-parameter-value".to_string(),
-                    ami_id: "test1-image-id".to_string(),
-                },
+                "test1-parameter-value".to_string(),
             ),
             (
                 SsmKey {
                     region: Region::new("us-west-2"),
                     name: "test2-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test2-parameter-value".to_string(),
-                    ami_id: "test2-image-id".to_string(),
-                },
+                "test2-parameter-value".to_string(),
             ),
             (
                 SsmKey {
                     region: Region::new("us-east-1"),
                     name: "test3-parameter-name".to_string(),
                 },
-                SsmValue {
-                    value: "test3-parameter-value".to_string(),
-                    ami_id: "test3-image-id".to_string(),
-                },
+                "test3-parameter-value".to_string(),
             ),
         ]);
         let actual_parameters: SsmParameters = HashMap::from([
@@ -726,31 +624,103 @@ mod test {
                 Some("test3-parameter-value".to_string()),
                 None,
                 Region::new("us-east-1"),
-                Some("test3-image-id".to_string()),
             ),
             SsmValidationResult::new(
                 "test1-parameter-name".to_string(),
                 Some("test1-parameter-value".to_string()),
                 Some("test1-parameter-value".to_string()),
                 Region::new("us-west-2"),
-                Some("test1-image-id".to_string()),
             ),
             SsmValidationResult::new(
                 "test2-parameter-name".to_string(),
                 Some("test2-parameter-value".to_string()),
                 Some("test2-parameter-value-wrong".to_string()),
                 Region::new("us-west-2"),
-                Some("test2-image-id".to_string()),
             ),
             SsmValidationResult::new(
                 "test4-parameter-name".to_string(),
                 None,
                 Some("test4-parameter-value".to_string()),
                 Region::new("us-east-1"),
-                None,
             ),
         ]);
-        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters);
+        let results = validate_parameters_in_region(&expected_parameters, &actual_parameters, true);
+
+        assert_eq!(results, expected_results);
+    }
+
+    // Tests validation of parameters where each status (Correct, Incorrect, Missing, Unexpected)
+    // happens once and `--check-unexpected` is false
+    #[test]
+    fn validate_parameters_mixed_unexpected_false() {
+        let expected_parameters: HashMap<SsmKey, String> = HashMap::from([
+            (
+                SsmKey {
+                    region: Region::new("us-west-2"),
+                    name: "test1-parameter-name".to_string(),
+                },
+                "test1-parameter-value".to_string(),
+            ),
+            (
+                SsmKey {
+                    region: Region::new("us-west-2"),
+                    name: "test2-parameter-name".to_string(),
+                },
+                "test2-parameter-value".to_string(),
+            ),
+            (
+                SsmKey {
+                    region: Region::new("us-east-1"),
+                    name: "test3-parameter-name".to_string(),
+                },
+                "test3-parameter-value".to_string(),
+            ),
+        ]);
+        let actual_parameters: SsmParameters = HashMap::from([
+            (
+                SsmKey {
+                    region: Region::new("us-west-2"),
+                    name: "test1-parameter-name".to_string(),
+                },
+                "test1-parameter-value".to_string(),
+            ),
+            (
+                SsmKey {
+                    region: Region::new("us-west-2"),
+                    name: "test2-parameter-name".to_string(),
+                },
+                "test2-parameter-value-wrong".to_string(),
+            ),
+            (
+                SsmKey {
+                    region: Region::new("us-east-1"),
+                    name: "test4-parameter-name".to_string(),
+                },
+                "test4-parameter-value".to_string(),
+            ),
+        ]);
+        let expected_results = HashSet::from_iter(vec![
+            SsmValidationResult::new(
+                "test3-parameter-name".to_string(),
+                Some("test3-parameter-value".to_string()),
+                None,
+                Region::new("us-east-1"),
+            ),
+            SsmValidationResult::new(
+                "test1-parameter-name".to_string(),
+                Some("test1-parameter-value".to_string()),
+                Some("test1-parameter-value".to_string()),
+                Region::new("us-west-2"),
+            ),
+            SsmValidationResult::new(
+                "test2-parameter-name".to_string(),
+                Some("test2-parameter-value".to_string()),
+                Some("test2-parameter-value-wrong".to_string()),
+                Region::new("us-west-2"),
+            ),
+        ]);
+        let results =
+            validate_parameters_in_region(&expected_parameters, &actual_parameters, false);
 
         assert_eq!(results, expected_results);
     }
