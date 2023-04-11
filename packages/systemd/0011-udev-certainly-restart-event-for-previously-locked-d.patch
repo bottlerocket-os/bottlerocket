@@ -1,0 +1,85 @@
+From 93b17554058e18e9a71d97c5d0be51d969a7291d Mon Sep 17 00:00:00 2001
+From: Yu Watanabe <watanabe.yu+github@gmail.com>
+Date: Fri, 26 Aug 2022 00:16:17 +0900
+Subject: [PATCH 11/12] udev: certainly restart event for previously locked
+ device
+
+If udevd receives a uevent for a locked block device, then the event
+is requeued. However, the queued event will be processed only when at
+least one sd_event_source is processed. Hence, if udevd has no event
+under processing, or receives no new uevent, etc., then the requeued
+event will be never processed.
+
+Follow-up for 400e3d21f8cae53a8ba9f9567f244fbf6f3e076c.
+
+Fixes #24439.
+---
+ src/udev/udevd.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/src/udev/udevd.c b/src/udev/udevd.c
+index dd200b241c..6707befecf 100644
+--- a/src/udev/udevd.c
++++ b/src/udev/udevd.c
+@@ -128,8 +128,11 @@ typedef struct Event {
+         sd_device_action_t action;
+         uint64_t seqnum;
+         uint64_t blocker_seqnum;
++
++        /* Used when the device is locked by another program. */
+         usec_t retry_again_next_usec;
+         usec_t retry_again_timeout_usec;
++        sd_event_source *retry_event_source;
+ 
+         sd_event_source *timeout_warning_event;
+         sd_event_source *timeout_event;
+@@ -171,6 +174,9 @@ static Event *event_free(Event *event) {
+         LIST_REMOVE(event, event->manager->events, event);
+         sd_device_unref(event->dev);
+ 
++        /* Do not use sd_event_source_disable_unref() here, as this is called by both workers and the
++         * main process. */
++        sd_event_source_unref(event->retry_event_source);
+         sd_event_source_unref(event->timeout_warning_event);
+         sd_event_source_unref(event->timeout_event);
+ 
+@@ -757,6 +763,8 @@ static int event_run(Event *event) {
+ 
+         log_device_uevent(event->dev, "Device ready for processing");
+ 
++        (void) event_source_disable(event->retry_event_source);
++
+         manager = event->manager;
+         HASHMAP_FOREACH(worker, manager->workers) {
+                 if (worker->state != WORKER_IDLE)
+@@ -1003,6 +1011,11 @@ static int event_queue_start(Manager *manager) {
+         return 0;
+ }
+ 
++static int on_event_retry(sd_event_source *s, uint64_t usec, void *userdata) {
++        /* This does nothing. The on_post() callback will start the event if there exists an idle worker. */
++        return 1;
++}
++
+ static int event_requeue(Event *event) {
+         usec_t now_usec;
+         int r;
+@@ -1033,6 +1046,15 @@ static int event_requeue(Event *event) {
+         if (event->retry_again_timeout_usec == 0)
+                 event->retry_again_timeout_usec = usec_add(now_usec, EVENT_RETRY_TIMEOUT_USEC);
+ 
++        r = event_reset_time_relative(event->manager->event, &event->retry_event_source,
++                                      CLOCK_MONOTONIC, EVENT_RETRY_INTERVAL_USEC, 0,
++                                      on_event_retry, NULL,
++                                      0, "retry-event", true);
++        if (r < 0)
++                return log_device_warning_errno(event->dev, r, "Failed to reset timer event source for retrying event, "
++                                                "skipping event (SEQNUM=%"PRIu64", ACTION=%s): %m",
++                                                event->seqnum, strna(device_action_to_string(event->action)));
++
+         if (event->worker && event->worker->event == event)
+                 event->worker->event = NULL;
+         event->worker = NULL;
+-- 
+2.25.1
+

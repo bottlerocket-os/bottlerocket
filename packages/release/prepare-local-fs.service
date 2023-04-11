@@ -1,6 +1,7 @@
 [Unit]
 Description=Prepare Local Filesystem (/local)
 DefaultDependencies=no
+Before=local-fs.target
 Wants=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
 After=dev-disk-by\x2dpartlabel-BOTTLEROCKET\x2dDATA.device
 RefuseManualStart=true
@@ -11,6 +12,11 @@ Type=oneshot
 
 # Create the filesystem on the partition, if it doesn't exist.
 ExecStart=/usr/lib/systemd/systemd-makefs ext4 /dev/disk/by-partlabel/BOTTLEROCKET-DATA
+
+# Stop and mask the repart-data-* oneshots in case they're waiting on non-existent data partitions.
+# 'BOTTLEROCKET-DATA' already exists so we can move on.
+ExecStart=/usr/bin/systemctl stop repart-data-preferred repart-data-fallback --no-block
+ExecStart=/usr/bin/systemctl mask repart-data-preferred repart-data-fallback --no-block
 
 RemainAfterExit=true
 StandardError=journal+console
