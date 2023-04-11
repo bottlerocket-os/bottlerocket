@@ -1,3 +1,16 @@
+# v1.13.3 (2023-04-17)
+
+## OS Changes
+
+* Update kernel-5.10 to 5.10.173 and kernel-5.15 to 5.15.102 ([#2948], [#3002])
+* Fix check for rule existence in ip6tables v1.8.9  ([#3001])
+* Backport systemd fixes for skipped udevd events ([#2999])
+
+[#2948]: https://github.com/bottlerocket-os/bottlerocket/pull/2948
+[#2999]: https://github.com/bottlerocket-os/bottlerocket/pull/2999
+[#3001]: https://github.com/bottlerocket-os/bottlerocket/pull/3001
+[#3002]: https://github.com/bottlerocket-os/bottlerocket/pull/3002
+
 # v1.13.2 (2023-04-04)
 
 ## OS Changes
