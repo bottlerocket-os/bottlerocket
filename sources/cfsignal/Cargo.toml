@@ -13,7 +13,7 @@ serde = { version = "1", features = ["derive"] }
 simplelog = "0.12"
 snafu = { version = "0.7" }
 toml = "0.5"
-tokio = { version = "~1.20", default-features = false, features = ["macros", "rt-multi-thread"] }
+tokio = { version = "~1.25", default-features = false, features = ["macros", "rt-multi-thread"] }
 aws-config = "0.48"
 aws-sdk-cloudformation = "0.18"
 aws-types = "0.48"
