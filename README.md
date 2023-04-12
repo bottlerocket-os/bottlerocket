@@ -1123,6 +1123,8 @@ They can be overridden for testing purposes in [the same way as other settings](
   ```
 
   **Note**: If `settings.aws.profile` is not set, the setting will fallback to the "default" profile.
+  In general it is recommended not to include a `[profile default]` section in the `aws.config` contents though.
+  This may have unintended side effects for other AWS services running on the node (e.g. `aws-iam-authenticator`).
 
   **Note:** The `config`, `credentials`, and `profile` are optional and do not need to be set when using an Instance Profile when running on an AWS instance.
 
