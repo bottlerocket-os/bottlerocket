@@ -470,7 +470,6 @@ if ! docker run --rm \
    -e CARGO_HOME="/tmp/.cargo" \
    -v "${CARGO_HOME}":/tmp/.cargo \
    -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
-   -v "${BUILDSYS_ROOT_DIR}/tools":/tmp/tools \
    -e VARIANT \
    "${BUILDSYS_SDK_IMAGE}" \
    cargo clippy \
