@@ -81,7 +81,7 @@ This Policy is based in part on the [open source trademark policy defined by the
 If you build Bottlerocket from unmodified source and redistribute the results, you may use "Bottlerocket" only if it is clear in both the name of your distribution and the content associated with it that your distribution is your build of Bottlerocket and not the official build, and you must identify the commit from which it is built, including the commit date.
 
 **2. What OS changes do I need to make to a modified version of Bottlerocket to comply with this Policy?**
-You must modify the os-release file to either use Bottlerocket according to this Policy or to remove the Bottlerocket Trademarks. This can be done by modifying both `packages/release/release.spec and tools/rpm2img`. Names of the system root (e.g. `/x86_64-bottlerocket-linux-gnu/sys-root`), partition labels, directory paths, and service file descriptions do not need to be changed to comply with this Policy.
+You must modify the os-release file to either use Bottlerocket according to this Policy or to remove the Bottlerocket Trademarks. This can be done by modifying both `packages/release/release.spec` and `tools/rpm2img`. Names of the system root (e.g. `/x86_64-bottlerocket-linux-gnu/sys-root`), partition labels, directory paths, and service file descriptions do not need to be changed to comply with this Policy.
 
 **3. What can I do if I see abuse of the Bottlerocket Trademarks?**
 If you are aware of confusing or misleading use or other misuse of the Bottlerocket Trademarks, you may contact us as described above at trademarks@amazon.com so we can investigate further.
