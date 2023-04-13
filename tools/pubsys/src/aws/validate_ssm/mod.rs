@@ -64,8 +64,7 @@ pub async fn validate(
 
     // Parse the file holding expected parameters
     info!("Parsing expected parameters file");
-    let expected_parameters =
-        parse_expected_parameters(&validate_ssm_args.expected_parameters_path).await?;
+    let expected_parameters = parse_parameters(&validate_ssm_args.expected_parameters_path).await?;
 
     info!("Parsed expected parameters file");
 
@@ -180,7 +179,7 @@ type ParameterValue = String;
 /// Parse the file holding expected parameters. Return a HashMap of Region mapped to a HashMap
 /// of the parameters in that region, with each parameter being a mapping of `SsmKey` to its
 /// value as `String`.
-pub(crate) async fn parse_expected_parameters(
+pub(crate) async fn parse_parameters(
     expected_parameters_file: &PathBuf,
 ) -> Result<HashMap<Region, HashMap<SsmKey, String>>> {
     // Parse the JSON file as a HashMap of region_name, mapped to a HashMap of parameter_name and
@@ -232,7 +231,7 @@ pub(crate) async fn run(args: &Args, validate_ssm_args: &ValidateSsmArgs) -> Res
     Ok(())
 }
 
-mod error {
+pub(crate) mod error {
     use crate::aws::ssm::ssm;
     use snafu::Snafu;
     use std::path::PathBuf;

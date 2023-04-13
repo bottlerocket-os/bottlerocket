@@ -6,6 +6,7 @@ pub(crate) mod ssm;
 pub(crate) mod template;
 
 use self::template::RenderedParameter;
+use crate::aws::ssm::template::RenderedParametersMap;
 use crate::aws::{
     ami::public::ami_is_public, ami::Image, client::build_client_config, parse_arch,
     region_from_string,
@@ -65,6 +66,10 @@ pub(crate) struct SsmArgs {
     /// Allows publishing non-public images to the `/aws/` namespace
     #[structopt(long)]
     allow_private_images: bool,
+
+    /// If set, writes the generated SSM parameters to this path
+    #[structopt(long)]
+    ssm_parameter_output: Option<PathBuf>,
 }
 
 /// Wrapper struct over parameter update and AWS clients needed to execute on it.
@@ -129,6 +134,14 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
         template::render_parameters(template_parameters, &amis, ssm_prefix, &build_context)
             .context(error::RenderTemplatesSnafu)?;
     trace!("Generated templated parameters: {:#?}", new_parameters);
+
+    // If the path to an output file was given, write the rendered parameters to this file
+    if let Some(ssm_parameter_output) = &ssm_args.ssm_parameter_output {
+        write_rendered_parameters(
+            ssm_parameter_output,
+            &RenderedParametersMap::from(&new_parameters).rendered_parameters,
+        )?;
+    }
 
     // Generate AWS Clients to use for the updates.
     let mut param_update_ops: Vec<SsmParamUpdateOp> = Vec::with_capacity(new_parameters.len());
@@ -210,6 +223,31 @@ pub(crate) async fn run(args: &Args, ssm_args: &SsmArgs) -> Result<()> {
         .context(error::ValidateSsmSnafu)?;
 
     info!("All parameters match requested values.");
+    Ok(())
+}
+
+/// Write rendered parameters to the file at `ssm_parameters_output`
+pub(crate) fn write_rendered_parameters(
+    ssm_parameters_output: &PathBuf,
+    parameters: &HashMap<String, HashMap<String, String>>,
+) -> Result<()> {
+    info!(
+        "Writing rendered SSM parameters to {:#?}",
+        ssm_parameters_output
+    );
+
+    serde_json::to_writer_pretty(
+        &File::create(ssm_parameters_output).context(error::WriteRenderedSsmParametersSnafu {
+            path: ssm_parameters_output,
+        })?,
+        &parameters,
+    )
+    .context(error::ParseRenderedSsmParametersSnafu)?;
+
+    info!(
+        "Wrote rendered SSM parameters to {:#?}",
+        ssm_parameters_output
+    );
     Ok(())
 }
 
@@ -485,6 +523,17 @@ mod error {
 
         ValidateSsm {
             source: ssm::Error,
+        },
+
+        #[snafu(display("Failed to parse rendered SSM parameters to JSON: {}", source))]
+        ParseRenderedSsmParameters {
+            source: serde_json::Error,
+        },
+
+        #[snafu(display("Failed to write rendered SSM parameters to {:#?}: {}", path, source))]
+        WriteRenderedSsmParameters {
+            path: PathBuf,
+            source: std::io::Error,
         },
     }
 }
