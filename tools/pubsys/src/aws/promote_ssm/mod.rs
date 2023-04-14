@@ -2,7 +2,9 @@
 //! SSM parameters from one version to another
 
 use crate::aws::client::build_client_config;
+use crate::aws::ssm::template::RenderedParametersMap;
 use crate::aws::ssm::{key_difference, ssm, template, BuildContext, SsmKey};
+use crate::aws::validate_ssm::parse_parameters;
 use crate::aws::{parse_arch, region_from_string};
 use crate::Args;
 use aws_sdk_ec2::model::ArchitectureValues;
@@ -41,6 +43,11 @@ pub(crate) struct PromoteArgs {
     /// File holding the parameter templates
     #[structopt(long)]
     template_path: PathBuf,
+
+    /// If set, contains the path to the file holding the original SSM parameters
+    /// and where the newly promoted parameters will be written
+    #[structopt(long)]
+    ssm_parameter_output: Option<PathBuf>,
 }
 
 /// Common entrypoint from main()
@@ -200,6 +207,14 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
         return Ok(());
     }
 
+    // If an output file path was given, read the existing parameters in `ssm_parameter_output` and
+    // write the newly promoted parameters to `ssm_parameter_output` along with the original
+    // parameters
+    if let Some(ssm_parameter_output) = &promote_args.ssm_parameter_output {
+        append_rendered_parameters(ssm_parameter_output, &set_parameters, source_target_map)
+            .await?;
+    }
+
     // SSM set   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
     info!("Setting updated SSM parameters.");
@@ -216,8 +231,88 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     Ok(())
 }
 
+/// Read parameters in given file, add newly promoted parameters, and write combined parameters to
+/// the given file
+async fn append_rendered_parameters(
+    ssm_parameters_output: &PathBuf,
+    set_parameters: &HashMap<SsmKey, String>,
+    source_target_map: HashMap<&String, &String>,
+) -> Result<()> {
+    // If the file doesn't exist, assume that there are no existing parameters
+    let parsed_parameters = parse_parameters(&ssm_parameters_output.to_owned())
+        .await
+        .or_else({
+            |e| match e {
+                crate::aws::validate_ssm::Error::ReadExpectedParameterFile { .. } => {
+                    Ok(HashMap::new())
+                }
+                _ => Err(e),
+            }
+        })
+        .context(error::ParseExistingSsmParametersSnafu {
+            path: ssm_parameters_output,
+        })?;
+
+    let combined_parameters: HashMap<Region, HashMap<SsmKey, String>> =
+        combine_parameters(parsed_parameters, set_parameters, source_target_map);
+
+    write_rendered_parameters(
+        ssm_parameters_output,
+        &RenderedParametersMap::from(combined_parameters).rendered_parameters,
+    )
+    .context(error::WriteRenderedSsmParametersSnafu {
+        path: ssm_parameters_output,
+    })?;
+
+    Ok(())
+}
+
+/// Return a HashMap of Region mapped to a HashMap of SsmKey, String pairs, representing the newly
+/// promoted parameters as well as the original parameters. In case of a parameter collision,
+/// the parameter takes the promoted value.
+fn combine_parameters(
+    source_parameters: HashMap<Region, HashMap<SsmKey, String>>,
+    set_parameters: &HashMap<SsmKey, String>,
+    source_target_map: HashMap<&String, &String>,
+) -> HashMap<Region, HashMap<SsmKey, String>> {
+    let mut combined_parameters: HashMap<Region, HashMap<SsmKey, String>> = HashMap::new();
+
+    source_parameters
+        .iter()
+        .flat_map(|(region, parameters)| {
+            parameters
+                .iter()
+                .map(move |(ssm_key, ssm_value)| (region, ssm_key, ssm_value))
+        })
+        .for_each(|(region, ssm_key, ssm_value)| {
+            let add_parameters = vec![
+                (ssm_key.clone(), ssm_value.clone()),
+                (
+                    SsmKey::new(region.clone(), source_target_map[&ssm_key.name].to_string()),
+                    set_parameters[&SsmKey::new(
+                        region.clone(),
+                        source_target_map[&ssm_key.name].to_string(),
+                    )]
+                        .clone(),
+                ),
+            ];
+
+            combined_parameters
+                .entry(region.clone())
+                .or_insert(HashMap::new())
+                .extend(add_parameters);
+        });
+
+    combined_parameters
+}
+
 mod error {
-    use crate::aws::ssm::{ssm, template};
+    use std::path::PathBuf;
+
+    use crate::aws::{
+        ssm::{ssm, template},
+        validate_ssm,
+    };
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
@@ -261,7 +356,232 @@ mod error {
         ValidateSsm {
             source: ssm::Error,
         },
+
+        #[snafu(display(
+            "Failed to parse existing SSM parameters at path {:?}: {}",
+            path,
+            source,
+        ))]
+        ParseExistingSsmParameters {
+            source: validate_ssm::error::Error,
+            path: PathBuf,
+        },
+
+        #[snafu(display("Failed to parse rendered SSM parameters to JSON: {}", source))]
+        ParseRenderedSsmParameters {
+            source: serde_json::Error,
+        },
+
+        #[snafu(display("Failed to write rendered SSM parameters to {}: {}", path.display(), source))]
+        WriteRenderedSsmParameters {
+            path: PathBuf,
+            source: crate::aws::ssm::Error,
+        },
     }
 }
 pub(crate) use error::Error;
+
+use super::ssm::write_rendered_parameters;
 type Result<T> = std::result::Result<T, error::Error>;
+
+#[cfg(test)]
+mod test {
+    use std::collections::HashMap;
+
+    use crate::aws::{promote_ssm::combine_parameters, ssm::SsmKey};
+    use aws_sdk_ssm::Region;
+
+    #[test]
+    fn combined_parameters() {
+        let existing_parameters = HashMap::from([
+            (
+                Region::new("us-west-2"),
+                HashMap::from([
+                    (
+                        SsmKey::new(Region::new("us-west-2"), "test1-parameter-name".to_string()),
+                        "test1-parameter-value".to_string(),
+                    ),
+                    (
+                        SsmKey::new(Region::new("us-west-2"), "test2-parameter-name".to_string()),
+                        "test2-parameter-value".to_string(),
+                    ),
+                ]),
+            ),
+            (
+                Region::new("us-east-1"),
+                HashMap::from([(
+                    SsmKey::new(Region::new("us-east-1"), "test3-parameter-name".to_string()),
+                    "test3-parameter-value".to_string(),
+                )]),
+            ),
+        ]);
+        let set_parameters = HashMap::from([
+            (
+                SsmKey::new(
+                    Region::new("us-west-2"),
+                    "test1-parameter-name-promoted".to_string(),
+                ),
+                "test1-parameter-value".to_string(),
+            ),
+            (
+                SsmKey::new(
+                    Region::new("us-west-2"),
+                    "test2-parameter-name-promoted".to_string(),
+                ),
+                "test2-parameter-value".to_string(),
+            ),
+            (
+                SsmKey::new(
+                    Region::new("us-east-1"),
+                    "test3-parameter-name-promoted".to_string(),
+                ),
+                "test3-parameter-value".to_string(),
+            ),
+        ]);
+        let test1_parameter_name = "test1-parameter-name".to_string();
+        let test2_parameter_name = "test2-parameter-name".to_string();
+        let test3_parameter_name = "test3-parameter-name".to_string();
+        let test1_parameter_name_promoted = "test1-parameter-name-promoted".to_string();
+        let test2_parameter_name_promoted = "test2-parameter-name-promoted".to_string();
+        let test3_parameter_name_promoted = "test3-parameter-name-promoted".to_string();
+        let source_target_map = HashMap::from([
+            (&test1_parameter_name, &test1_parameter_name_promoted),
+            (&test2_parameter_name, &test2_parameter_name_promoted),
+            (&test3_parameter_name, &test3_parameter_name_promoted),
+        ]);
+        let map = combine_parameters(existing_parameters, &set_parameters, source_target_map);
+        let expected_map = HashMap::from([
+            (
+                Region::new("us-west-2"),
+                HashMap::from([
+                    (
+                        SsmKey::new(Region::new("us-west-2"), "test1-parameter-name".to_string()),
+                        "test1-parameter-value".to_string(),
+                    ),
+                    (
+                        SsmKey::new(Region::new("us-west-2"), "test2-parameter-name".to_string()),
+                        "test2-parameter-value".to_string(),
+                    ),
+                    (
+                        SsmKey::new(
+                            Region::new("us-west-2"),
+                            "test1-parameter-name-promoted".to_string(),
+                        ),
+                        "test1-parameter-value".to_string(),
+                    ),
+                    (
+                        SsmKey::new(
+                            Region::new("us-west-2"),
+                            "test2-parameter-name-promoted".to_string(),
+                        ),
+                        "test2-parameter-value".to_string(),
+                    ),
+                ]),
+            ),
+            (
+                Region::new("us-east-1"),
+                HashMap::from([
+                    (
+                        SsmKey::new(Region::new("us-east-1"), "test3-parameter-name".to_string()),
+                        "test3-parameter-value".to_string(),
+                    ),
+                    (
+                        SsmKey::new(
+                            Region::new("us-east-1"),
+                            "test3-parameter-name-promoted".to_string(),
+                        ),
+                        "test3-parameter-value".to_string(),
+                    ),
+                ]),
+            ),
+        ]);
+        assert_eq!(map, expected_map);
+    }
+
+    #[test]
+    fn combined_parameters_overwrite() {
+        let existing_parameters = HashMap::from([
+            (
+                Region::new("us-west-2"),
+                HashMap::from([
+                    (
+                        SsmKey::new(Region::new("us-west-2"), "test1-parameter-name".to_string()),
+                        "test1-parameter-value".to_string(),
+                    ),
+                    (
+                        SsmKey::new(Region::new("us-west-2"), "test2-parameter-name".to_string()),
+                        "test2-parameter-value".to_string(),
+                    ),
+                ]),
+            ),
+            (
+                Region::new("us-east-1"),
+                HashMap::from([(
+                    SsmKey::new(Region::new("us-east-1"), "test3-parameter-name".to_string()),
+                    "test3-parameter-value".to_string(),
+                )]),
+            ),
+        ]);
+        let set_parameters = HashMap::from([
+            (
+                SsmKey::new(Region::new("us-west-2"), "test1-parameter-name".to_string()),
+                "test1-parameter-value-new".to_string(),
+            ),
+            (
+                SsmKey::new(Region::new("us-west-2"), "test2-parameter-name".to_string()),
+                "test2-parameter-value-new".to_string(),
+            ),
+            (
+                SsmKey::new(
+                    Region::new("us-east-1"),
+                    "test3-parameter-name-promoted".to_string(),
+                ),
+                "test3-parameter-value".to_string(),
+            ),
+        ]);
+        let test1_parameter_name = "test1-parameter-name".to_string();
+        let test2_parameter_name = "test2-parameter-name".to_string();
+        let test3_parameter_name = "test3-parameter-name".to_string();
+        let test1_parameter_name_promoted = "test1-parameter-name".to_string();
+        let test2_parameter_name_promoted = "test2-parameter-name".to_string();
+        let test3_parameter_name_promoted = "test3-parameter-name-promoted".to_string();
+        let source_target_map = HashMap::from([
+            (&test1_parameter_name, &test1_parameter_name_promoted),
+            (&test2_parameter_name, &test2_parameter_name_promoted),
+            (&test3_parameter_name, &test3_parameter_name_promoted),
+        ]);
+        let map = combine_parameters(existing_parameters, &set_parameters, source_target_map);
+        let expected_map = HashMap::from([
+            (
+                Region::new("us-west-2"),
+                HashMap::from([
+                    (
+                        SsmKey::new(Region::new("us-west-2"), "test1-parameter-name".to_string()),
+                        "test1-parameter-value-new".to_string(),
+                    ),
+                    (
+                        SsmKey::new(Region::new("us-west-2"), "test2-parameter-name".to_string()),
+                        "test2-parameter-value-new".to_string(),
+                    ),
+                ]),
+            ),
+            (
+                Region::new("us-east-1"),
+                HashMap::from([
+                    (
+                        SsmKey::new(Region::new("us-east-1"), "test3-parameter-name".to_string()),
+                        "test3-parameter-value".to_string(),
+                    ),
+                    (
+                        SsmKey::new(
+                            Region::new("us-east-1"),
+                            "test3-parameter-name-promoted".to_string(),
+                        ),
+                        "test3-parameter-value".to_string(),
+                    ),
+                ]),
+            ),
+        ]);
+        assert_eq!(map, expected_map);
+    }
+}
