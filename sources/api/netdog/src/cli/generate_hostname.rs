@@ -32,26 +32,25 @@ pub(crate) async fn run() -> Result<()> {
         .context(error::CurrentIpReadFailedSnafu { path: CURRENT_IP })?;
     let ip = IpAddr::from_str(&ip_string).context(error::IpFromStringSnafu { ip: &ip_string })?;
 
-    // First, attempt to lookup the hostname via DNS
-    let hostname: Option<String> = Retry::spawn(retry_strategy(), || async { lookup_addr(&ip) })
-        .await
-        .map_err(|e| {
-            eprintln!("Reverse DNS lookup failed: {}", e);
-            e
-        })
-        .ok();
-
-    // If the DNS lookup fails, try any platform-specific mechanisms that exist.
-    let hostname = if hostname.is_none() {
+    // First, try any platform-specific mechanism that exists.
+    let hostname =
         // The interaction between async and `Result.or_else()` chaining makes this the most ergonomic way to write this...
         platform::query_platform_hostname()
             .await
             .map_err(|e| {
                 eprintln!("Failed to find hostname from platform: {}", e);
                 e
+            }).ok().flatten();
+
+    // If the platform-specific mechanism fails, attempt to lookup the hostname via DNS
+    let hostname = if hostname.is_none() {
+        Retry::spawn(retry_strategy(), || async { lookup_addr(&ip) })
+            .await
+            .map_err(|e| {
+                eprintln!("Reverse DNS lookup failed: {}", e);
+                e
             })
             .ok()
-            .flatten()
     } else {
         hostname
     }
