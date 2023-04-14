@@ -8,6 +8,7 @@ pub(crate) mod ami;
 pub(crate) mod promote_ssm;
 pub(crate) mod publish_ami;
 pub(crate) mod ssm;
+pub(crate) mod validate_ami;
 pub(crate) mod validate_ssm;
 
 /// Builds a Region from the given region name.
