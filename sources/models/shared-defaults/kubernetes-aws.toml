@@ -9,6 +9,7 @@ cloud-provider = "aws"
 max-pods.setting-generator = "pluto max-pods"
 cluster-dns-ip.setting-generator = "pluto cluster-dns-ip"
 node-ip.setting-generator = "pluto node-ip"
+provider-id.setting-generator = "pluto provider-id"
 affected-services = ["kubernetes"]
 
 [metadata.settings.kubernetes.pod-infra-container-image]
