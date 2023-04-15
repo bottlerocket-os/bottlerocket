@@ -193,4 +193,6 @@ version = "1.13.3"
     "migrate_v1.13.1_aws-profile-cred-provider.lz4",
 ]
 "(1.13.1, 1.13.2)" = []
-"(1.13.2, 1.13.3)" = []
+"(1.13.2, 1.13.3)" = [
+    "migrate_v1.13.3_aws-k8s-provider-id-gen.lz4",
+]

@@ -562,6 +562,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-k8s-provider-id-gen"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-profile-cred-provider"
 version = "0.1.0"
 dependencies = [
