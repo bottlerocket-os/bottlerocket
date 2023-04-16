@@ -22,7 +22,6 @@ use std::sync::RwLock;
 use http::StatusCode;
 use log::{debug, info, trace, warn};
 use reqwest::Client;
-use serde_json::Value;
 use snafu::{ensure, OptionExt, ResultExt};
 use tokio::time::{timeout, Duration};
 use tokio_retry::{strategy::FibonacciBackoff, Retry};
@@ -81,20 +80,34 @@ impl ImdsClient {
         self.fetch_imds(PINNED_SCHEMA, "user-data").await
     }
 
-    /// Returns the region described in the identity document.
-    pub async fn fetch_region(&mut self) -> Result<Option<String>> {
+    /// Gets instance identity document from IMDS.
+    async fn fetch_identity_document(&mut self) -> Result<Option<serde_json::Value>> {
         let target = "dynamic/instance-identity/document";
         let response = match self.fetch_bytes(target).await? {
             Some(response) => response,
             None => return Ok(None),
         };
-        let identity_document: Value =
-            serde_json::from_slice(&response).context(error::SerdeSnafu)?;
-        let region = identity_document
-            .get("region")
-            .and_then(|value| value.as_str())
-            .map(|region| region.to_string());
-        Ok(region)
+        serde_json::from_slice(&response)
+            .context(error::SerdeSnafu)
+            .map(Some)
+    }
+
+    /// Returns the region described in the identity document.
+    pub async fn fetch_region(&mut self) -> Result<Option<String>> {
+        Ok(self.fetch_identity_document().await?.and_then(|doc| {
+            doc.get("region")
+                .and_then(|value| value.as_str())
+                .map(|region| region.to_string())
+        }))
+    }
+
+    /// Returns the availability zone described in the identity document.
+    pub async fn fetch_zone(&mut self) -> Result<Option<String>> {
+        Ok(self.fetch_identity_document().await?.and_then(|doc| {
+            doc.get("availabilityZone")
+                .and_then(|value| value.as_str())
+                .map(|az| az.to_string())
+        }))
     }
 
     /// Returns the partition that the instance is in.

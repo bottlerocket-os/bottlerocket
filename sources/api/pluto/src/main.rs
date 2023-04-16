@@ -286,6 +286,25 @@ async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
     }
 }
 
+/// Gets the provider ID that should be associated with the node
+async fn get_provider_id(client: &mut ImdsClient) -> Result<String> {
+    let instance_id = client
+        .fetch_instance_id()
+        .await
+        .context(error::ImdsRequestSnafu)?
+        .context(error::ImdsNoneSnafu {
+            what: "instance ID",
+        })?;
+
+    let zone = client
+        .fetch_zone()
+        .await
+        .context(error::ImdsRequestSnafu)?
+        .context(error::ImdsNoneSnafu { what: "zone" })?;
+
+    Ok(format!("aws:///{}/{}", zone, instance_id))
+}
+
 /// Print usage message.
 fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
@@ -313,7 +332,7 @@ async fn run() -> Result<()> {
         "max-pods" => get_max_pods(&mut client)
             .await
             .map_err(|_| process::exit(2)),
-
+        "provider-id" => get_provider_id(&mut client).await,
         _ => usage(),
     }?;
 

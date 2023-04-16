@@ -41,6 +41,7 @@ members = [
     "api/migration/migrations/v1.13.0/aws-control-container-v0-7-1",
     "api/migration/migrations/v1.13.0/public-control-container-v0-7-1",
     "api/migration/migrations/v1.13.1/aws-profile-cred-provider",
+    "api/migration/migrations/v1.13.3/aws-k8s-provider-id-gen",
 
     "bottlerocket-release",
 
