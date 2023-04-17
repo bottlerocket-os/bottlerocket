@@ -261,6 +261,12 @@ pub struct GenericVariantConfig {
     pub control_plane_endpoint: Option<String>,
     /// The path to userdata that should be used for Bottlerocket launch
     pub userdata: Option<String>,
+    /// The directory containing Bottlerocket images. For metal, this is the directory containing
+    /// gzipped images.
+    pub os_image_dir: Option<String>,
+    /// The hardware that should be used for provisioning Bottlerocket. For metal, this is the
+    /// hardware csv that is passed to EKS Anywhere.
+    pub hardware_csv: Option<String>,
     /// The workload tests that should be run
     #[serde(default)]
     pub workloads: BTreeMap<String, String>,
@@ -298,6 +304,8 @@ impl GenericVariantConfig {
             conformance_registry: self.conformance_registry.or(other.conformance_registry),
             control_plane_endpoint: self.control_plane_endpoint.or(other.control_plane_endpoint),
             userdata: self.userdata.or(other.userdata),
+            os_image_dir: self.os_image_dir.or(other.os_image_dir),
+            hardware_csv: self.hardware_csv.or(other.hardware_csv),
             workloads,
             dev: self.dev.merge(other.dev),
         }
@@ -358,6 +366,7 @@ pub struct TestsysImages {
     pub eks_resource_agent_image: Option<String>,
     pub ecs_resource_agent_image: Option<String>,
     pub vsphere_k8s_cluster_resource_agent_image: Option<String>,
+    pub metal_k8s_cluster_resource_agent_image: Option<String>,
     pub ec2_resource_agent_image: Option<String>,
     pub vsphere_vm_resource_agent_image: Option<String>,
     pub sonobuoy_test_agent_image: Option<String>,
@@ -381,6 +390,10 @@ impl TestsysImages {
             ecs_resource_agent_image: Some(format!("{}/ecs-resource-agent:{tag}", registry)),
             vsphere_k8s_cluster_resource_agent_image: Some(format!(
                 "{}/vsphere-k8s-cluster-resource-agent:{tag}",
+                registry
+            )),
+            metal_k8s_cluster_resource_agent_image: Some(format!(
+                "{}/metal-k8s-cluster-resource-agent:{tag}",
                 registry
             )),
             ec2_resource_agent_image: Some(format!("{}/ec2-resource-agent:{tag}", registry)),
@@ -408,6 +421,9 @@ impl TestsysImages {
             vsphere_k8s_cluster_resource_agent_image: self
                 .vsphere_k8s_cluster_resource_agent_image
                 .or(other.vsphere_k8s_cluster_resource_agent_image),
+            metal_k8s_cluster_resource_agent_image: self
+                .metal_k8s_cluster_resource_agent_image
+                .or(other.metal_k8s_cluster_resource_agent_image),
             vsphere_vm_resource_agent_image: self
                 .vsphere_vm_resource_agent_image
                 .or(other.vsphere_vm_resource_agent_image),

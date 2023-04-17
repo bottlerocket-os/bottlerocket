@@ -222,6 +222,7 @@ impl<'a> CrdInput<'a> {
             "agent-role".to_string() => some_or_null(&self.config.agent_role),
             "conformance-image".to_string() => some_or_null(&self.config.conformance_image),
             "conformance-registry".to_string() => some_or_null(&self.config.conformance_registry),
+            "control-plane-endpoint".to_string() => some_or_null(&self.config.control_plane_endpoint),
         }
     }
 
@@ -282,8 +283,15 @@ impl<'a> CrdInput<'a> {
             // Check for <TESTSYS_FOLDER>/shared/clusters/<CLUSTER-NAME>.yaml
             self.tests_directory
                 .join("shared")
-                .join("cluster-config")
+                .join("clusters")
                 .join(cluster_name)
+                .with_extension("yaml"),
+            // Check for <TESTSYS_FOLDER>/shared/clusters/<CLUSTER-NAME>/cluster.yaml
+            self.tests_directory
+                .join("shared")
+                .join("clusters")
+                .join(cluster_name)
+                .join("cluster")
                 .with_extension("yaml"),
         ];
 
@@ -315,6 +323,84 @@ impl<'a> CrdInput<'a> {
 
         Ok(Some(rendered_config))
     }
+
+    /// Find the hardware csv file for the given hardware csv name and test type.
+    fn hardware_csv_file_path(&self, hardware_csv: &str) -> Option<PathBuf> {
+        let test_type = &self.test_type.to_string();
+        // List all acceptable paths to the custom crd to allow users some freedom in the way
+        // `tests` is organized.
+        let acceptable_paths = vec![
+            // Check for <TESTSYS_FOLDER>/<TEST-TYPE>/<HARDWARE_CSV>.csv
+            self.tests_directory
+                .join(test_type)
+                .join(hardware_csv)
+                .with_extension("csv"),
+            // Check for <TESTSYS_FOLDER>/shared/<HARDWARE_CSV>.csv
+            self.tests_directory
+                .join("shared")
+                .join(hardware_csv)
+                .with_extension("csv"),
+            // Check for <TESTSYS_FOLDER>/shared/cluster-config/<HARDWARE_CSV>.csv
+            self.tests_directory
+                .join("shared")
+                .join("cluster-config")
+                .join(hardware_csv)
+                .with_extension("csv"),
+            // Check for <TESTSYS_FOLDER>/shared/clusters/<HARDWARE_CSV>.csv
+            self.tests_directory
+                .join("shared")
+                .join("clusters")
+                .join(hardware_csv)
+                .with_extension("csv"),
+        ];
+
+        // Find the first acceptable path that exists and return that.
+        acceptable_paths.into_iter().find(|path| path.exists())
+    }
+
+    /// Find the resolved cluster config file for the given cluster name and test type if it exists.
+    fn resolved_hardware_csv(&self) -> Result<Option<String>> {
+        let hardware_csv = match &self.config.hardware_csv {
+            Some(hardware_csv) => hardware_csv,
+            None => return Ok(None),
+        };
+
+        // If the hardware csv is csv like, it probably is a csv; otherwise, it is a path to the
+        // hardware csv.
+        if hardware_csv.contains(',') {
+            return Ok(Some(hardware_csv.to_string()));
+        }
+
+        let path = match self.hardware_csv_file_path(hardware_csv) {
+            None => return Ok(None),
+            Some(path) => path,
+        };
+
+        info!("Using hardware csv at {}", path.display());
+
+        let config = fs::read_to_string(&path).context(error::FileSnafu { path })?;
+        Ok(Some(config))
+    }
+
+    fn hardware_for_cluster(&self, cluster_name: &str) -> Result<Option<String>> {
+        // Check for <TESTSYS_FOLDER>/shared/clusters/<CLUSTER-NAME>/hardware.csv
+        let path = self
+            .tests_directory
+            .join("shared")
+            .join("clusters")
+            .join(cluster_name)
+            .join("hardware")
+            .with_extension("csv");
+
+        if !path.exists() {
+            return Ok(None);
+        }
+
+        info!("Using hardware csv at {}", path.display());
+
+        let config = fs::read_to_string(&path).context(error::FileSnafu { path })?;
+        Ok(Some(config))
+    }
 }
 
 /// Take the value of the `Option` or `"null"` if the `Option` was `None`
@@ -327,7 +413,7 @@ fn some_or_null(field: &Option<String>) -> String {
 #[async_trait::async_trait]
 pub(crate) trait CrdCreator: Sync {
     /// Return the image id that should be used for normal testing.
-    fn image_id(&self, crd_input: &CrdInput) -> Result<String>;
+    async fn image_id(&self, crd_input: &CrdInput) -> Result<String>;
 
     /// Return the image id that should be used as the starting point for migration testing.
     async fn starting_image_id(&self, crd_input: &CrdInput) -> Result<String>;
@@ -369,15 +455,45 @@ pub(crate) trait CrdCreator: Sync {
         crd_input: &CrdInput,
     ) -> Result<Vec<Crd>> {
         let mut crds = Vec::new();
+        let image_id = match &test_type {
+            KnownTestType::Migration => {
+                if let Some(image_id) = &crd_input.starting_image_id {
+                    debug!(
+                        "Using the provided starting image id for migration testing '{}'",
+                        image_id
+                    );
+                    image_id.to_string()
+                } else {
+                    let image_id = self.starting_image_id(crd_input).await?;
+                    debug!(
+                        "A starting image id was not provided, '{}' will be used instead.",
+                        image_id
+                    );
+                    image_id
+                }
+            }
+            _ => self.image_id(crd_input).await?,
+        };
         for cluster_name in &crd_input.cluster_names()? {
             let cluster_output = self
                 .cluster_crd(ClusterInput {
                     cluster_name,
+                    image_id: &image_id,
                     crd_input,
                     cluster_config: &crd_input.resolved_cluster_config(
                         cluster_name,
-                        &mut self.additional_fields(&test_type.to_string()),
+                        &mut self
+                            .additional_fields(&test_type.to_string())
+                            .into_iter()
+                            // Add the image id incase it is needed for cluster creation
+                            .chain(Some(("image-id".to_string(), image_id.clone())).into_iter())
+                            .collect::<BTreeMap<String, String>>(),
                     )?,
+                    hardware_csv: &crd_input
+                        .resolved_hardware_csv()
+                        .transpose()
+                        .or_else(|| crd_input.hardware_for_cluster(cluster_name).transpose())
+                        .transpose()?,
                 })
                 .await?;
             let cluster_crd_name = cluster_output.crd_name();
@@ -385,17 +501,17 @@ pub(crate) trait CrdCreator: Sync {
                 debug!("Cluster crd was created for '{}'", cluster_name);
                 crds.push(crd)
             }
+            let bottlerocket_output = self
+                .bottlerocket_crd(BottlerocketInput {
+                    cluster_crd_name: &cluster_crd_name,
+                    image_id: image_id.clone(),
+                    test_type,
+                    crd_input,
+                })
+                .await?;
+            let bottlerocket_crd_name = bottlerocket_output.crd_name();
             match &test_type {
                 KnownTestType::Conformance | KnownTestType::Quick => {
-                    let bottlerocket_output = self
-                        .bottlerocket_crd(BottlerocketInput {
-                            cluster_crd_name: &cluster_crd_name,
-                            image_id: self.image_id(crd_input)?,
-                            test_type,
-                            crd_input,
-                        })
-                        .await?;
-                    let bottlerocket_crd_name = bottlerocket_output.crd_name();
                     if let Some(crd) = bottlerocket_output.crd() {
                         debug!("Bottlerocket crd was created for '{}'", cluster_name);
                         crds.push(crd)
@@ -415,15 +531,6 @@ pub(crate) trait CrdCreator: Sync {
                     }
                 }
                 KnownTestType::Workload => {
-                    let bottlerocket_output = self
-                        .bottlerocket_crd(BottlerocketInput {
-                            cluster_crd_name: &cluster_crd_name,
-                            image_id: self.image_id(crd_input)?,
-                            test_type,
-                            crd_input,
-                        })
-                        .await?;
-                    let bottlerocket_crd_name = bottlerocket_output.crd_name();
                     if let Some(crd) = bottlerocket_output.crd() {
                         debug!("Bottlerocket crd was created for '{}'", cluster_name);
                         crds.push(crd)
@@ -443,29 +550,6 @@ pub(crate) trait CrdCreator: Sync {
                     }
                 }
                 KnownTestType::Migration => {
-                    let image_id = if let Some(image_id) = &crd_input.starting_image_id {
-                        debug!(
-                            "Using the provided starting image id for migration testing '{}'",
-                            image_id
-                        );
-                        image_id.to_string()
-                    } else {
-                        let image_id = self.starting_image_id(crd_input).await?;
-                        debug!(
-                            "A starting image id was not provided, '{}' will be used instead.",
-                            image_id
-                        );
-                        image_id
-                    };
-                    let bottlerocket_output = self
-                        .bottlerocket_crd(BottlerocketInput {
-                            cluster_crd_name: &cluster_crd_name,
-                            image_id,
-                            test_type,
-                            crd_input,
-                        })
-                        .await?;
-                    let bottlerocket_crd_name = bottlerocket_output.crd_name();
                     if let Some(crd) = bottlerocket_output.crd() {
                         debug!("Bottlerocket crd was created for '{}'", cluster_name);
                         crds.push(crd)
@@ -581,7 +665,7 @@ pub(crate) trait CrdCreator: Sync {
             let mut fields = crd_input.config_fields(cluster_name);
             fields.insert("api-version".to_string(), API_VERSION.to_string());
             fields.insert("namespace".to_string(), NAMESPACE.to_string());
-            fields.insert("image-id".to_string(), self.image_id(crd_input)?);
+            fields.insert("image-id".to_string(), self.image_id(crd_input).await?);
             fields.append(&mut self.additional_fields(test_type));
 
             let mut handlebars = Handlebars::new();
@@ -621,8 +705,10 @@ pub(crate) trait CrdCreator: Sync {
 /// The input used for cluster crd creation
 pub struct ClusterInput<'a> {
     pub cluster_name: &'a String,
+    pub image_id: &'a String,
     pub crd_input: &'a CrdInput<'a>,
     pub cluster_config: &'a Option<String>,
+    pub hardware_csv: &'a Option<String>,
 }
 
 /// The input used for bottlerocket crd creation

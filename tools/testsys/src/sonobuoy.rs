@@ -14,11 +14,8 @@ pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
     let cluster_resource_name = test_input
         .cluster_crd_name
         .as_ref()
-        .expect("A cluster name is required for migrations");
-    let bottlerocket_resource_name = test_input
-        .bottlerocket_crd_name
-        .as_ref()
-        .expect("A cluster name is required for migrations");
+        .expect("A cluster name is required for sonobuoy testing");
+    let bottlerocket_resource_name = test_input.bottlerocket_crd_name;
     let sonobuoy_mode = match test_input.test_type {
         KnownTestType::Conformance => SonobuoyMode::CertifiedConformance,
         KnownTestType::Quick | KnownTestType::Migration | KnownTestType::Workload => {
@@ -33,7 +30,7 @@ pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
     });
 
     SonobuoyConfig::builder()
-        .resources(bottlerocket_resource_name)
+        .set_resources(Some(bottlerocket_resource_name.iter().cloned().collect()))
         .resources(cluster_resource_name)
         .set_depends_on(Some(test_input.prev_tests))
         .set_retries(Some(5))

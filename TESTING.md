@@ -307,6 +307,59 @@ You can monitor the tests with:
 cargo make watch-test
 ```
 
+### metal-k8s
+
+First, an initial baremetal management cluster needs to be created using [`EKS Anywhere`](https://anywhere.eks.amazonaws.com/docs/getting-started/production-environment/baremetal-getstarted/#create-an-initial-cluster).
+You can then set `TESTSYS_MGMT_CLUSTER_KUBECONFIG` to the path to the management clusters kubeconfig.
+You need to [build](BUILDING.md) Bottlerocket and a publicly accessible [TUF repository](https://github.com/bottlerocket-os/bottlerocket/blob/develop/PUBLISHING.md#repo-location) to test metal variants.
+In addition to the management cluster, you will need to [prepare a hardware CSV file](https://anywhere.eks.amazonaws.com/docs/reference/baremetal/bare-preparation/#prepare-hardware-inventory) containing all machines you want to provision and a [cluster config](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/baremetal/) for the cluster.
+Create a directory in `tests/shared/clusters` with an identifier for this cluster, i.e cluster1 (`tests/shared/clusters/cluster1`).
+In that directory create 2 files, `cluster.yaml` with the EKS Anywhere cluster config, and `hardware.csv`.
+In `Test.toml` set `cluster-names = ["cluster1"]` to tell TestSys that we want the cluster config and hardware csv from the directory we just created.
+
+Metal testing also requires and additional manual step for testing.
+The Bottlerocket build system compresses the metal images with lz4, but EKS Anywhere requires them to be gzipped, so before testing make sure to uncompress the lz4 image and gzip it.
+Make sure it is downloadable from a URL accessible from the management cluster.
+The directory used should be added to `Test.toml` as `os-image-dir`.
+
+Change the commands below to the desired `metal-k8s` variant:
+
+First, build the Metal variant you want to test.
+
+```shell
+cargo make \
+  -e BUILDSYS_VARIANT="metal-k8s-1.23" \
+  -e BUILDSYS_ARCH="x86_64" \
+  build
+```
+
+Build the TUF repo containing the metal images.
+
+```shell
+cargo make \
+  -e BUILDSYS_VARIANT="metal-k8s-1.23" \
+  -e BUILDSYS_ARCH="x86_64" \
+  repo
+```
+
+Make sure you gzip the metal image and add it to your `os-image-dir`.
+
+Now, you can run the test.
+
+```shell
+cargo make \
+  -e BUILDSYS_VARIANT="metal-k8s-1.23" \
+  -e BUILDSYS_ARCH="x86_64" \
+  -e TESTSYS_MGMT_CLUSTER_KUBECONFIG=${TESTSYS_MGMT_CLUSTER_KUBECONFIG}
+  test
+```
+
+You can monitor the tests with:
+
+```shell
+cargo make watch-test
+```
+
 ## Migration Testing
 
 Migration testing is used to ensure Bottlerocket can update from one version to a new version and back.

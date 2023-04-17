@@ -21,6 +21,7 @@ mod delete;
 mod error;
 mod install;
 mod logs;
+mod metal_k8s;
 mod migration;
 mod restart_test;
 mod run;
@@ -70,8 +71,8 @@ impl TestsysArgs {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    Install(Install),
-    // We need to box run because it requires significantly more arguments than the other commands.
+    // We need to box some commands because they require significantly more arguments than the other commands.
+    Install(Box<Install>),
     Run(Box<Run>),
     Delete(Delete),
     Status(Status),
