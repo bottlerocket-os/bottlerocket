@@ -32,7 +32,9 @@ reasonable default is available.
 */
 
 mod api;
+mod ec2;
 mod eks;
+mod proxy;
 
 use imdsclient::ImdsClient;
 use snafu::{ensure, OptionExt, ResultExt};
@@ -51,8 +53,7 @@ const DEFAULT_10_RANGE_DNS_CLUSTER_IP: &str = "172.20.0.10";
 const ENI_MAX_PODS_PATH: &str = "/usr/share/eks/eni-max-pods";
 
 mod error {
-    use crate::api;
-    use crate::eks;
+    use crate::{api, ec2, eks};
     use snafu::Snafu;
     use std::net::AddrParseError;
 
@@ -64,6 +65,9 @@ mod error {
             source
         ))]
         AwsInfo { source: api::Error },
+
+        #[snafu(display("Missing AWS region"))]
+        AwsRegion,
 
         #[snafu(display("Missing field '{}' in EKS network config response", field))]
         MissingNetworkConfig { field: &'static str },
@@ -104,6 +108,9 @@ mod error {
 
         #[snafu(display("{}", source))]
         EksError { source: eks::Error },
+
+        #[snafu(display("{}", source))]
+        Ec2Error { source: ec2::Error },
 
         #[snafu(display("Failed to open eni-max-pods file at {}: {}", path, source))]
         EniMaxPodsFile {
@@ -305,6 +312,24 @@ async fn get_provider_id(client: &mut ImdsClient) -> Result<String> {
     Ok(format!("aws:///{}/{}", zone, instance_id))
 }
 
+async fn get_private_dns_name(client: &mut ImdsClient) -> Result<String> {
+    let region = api::get_aws_k8s_info()
+        .await
+        .context(error::AwsInfoSnafu)?
+        .region
+        .context(error::AwsRegionSnafu)?;
+    let instance_id = client
+        .fetch_instance_id()
+        .await
+        .context(error::ImdsRequestSnafu)?
+        .context(error::ImdsNoneSnafu {
+            what: "instance ID",
+        })?;
+    ec2::get_private_dns_name(&region, &instance_id)
+        .await
+        .context(error::Ec2Snafu)
+}
+
 /// Print usage message.
 fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
@@ -333,6 +358,7 @@ async fn run() -> Result<()> {
             .await
             .map_err(|_| process::exit(2)),
         "provider-id" => get_provider_id(&mut client).await,
+        "private-dns-name" => get_private_dns_name(&mut client).await,
         _ => usage(),
     }?;
 
