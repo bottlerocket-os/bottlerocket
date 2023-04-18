@@ -22,6 +22,9 @@ ExecStart=/usr/bin/kubelet \
     --image-credential-provider-config /etc/kubernetes/kubelet/credential-provider-config.yaml \
 {{/if}}
 {{/if}}
+{{#if settings.kubernetes.hostname-override}}
+    --hostname-override {{settings.kubernetes.hostname-override}} \
+{{/if}}
     --node-ip ${NODE_IP} \
     --node-labels "${NODE_LABELS}" \
     --register-with-taints "${NODE_TAINTS}" \
