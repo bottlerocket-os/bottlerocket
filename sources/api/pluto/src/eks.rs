@@ -106,8 +106,10 @@ pub(super) async fn get_cluster_network_config(
         let proxy_connector =
             ProxyConnector::from_proxy(https_connector, proxy).context(ProxyConnectorSnafu)?;
         let http_client = aws_smithy_client::hyper_ext::Adapter::builder().build(proxy_connector);
-        let eks_config = aws_sdk_eks::config::Builder::from(&config).build();
-        aws_sdk_eks::Client::from_conf_conn(eks_config, http_client)
+        let eks_config = aws_sdk_eks::config::Builder::from(&config)
+            .http_connector(http_client)
+            .build();
+        aws_sdk_eks::Client::from_conf(eks_config)
     } else {
         aws_sdk_eks::Client::new(&config)
     };

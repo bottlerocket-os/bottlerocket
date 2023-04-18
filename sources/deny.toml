@@ -60,8 +60,8 @@ skip = [
 ]
 
 skip-tree = [
-    # aws-sdk-rust is using an older hyper-rustls
-    { name = "hyper-rustls", version = "=0.22.1" },
+    # hyper-proxy is using an older hyper-rustls
+    { name = "hyper-proxy", version = "=0.9.1" },
     # structopt pulls in an older version of clap
     { name = "structopt", version = "=0.3.26" },
     # tungstenite is using an older sha-1
