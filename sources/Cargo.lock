@@ -220,6 +220,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-hostname-override"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "add-hostname-override-metadata"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "add-k8s-autoscaling-warm-pool-setting"
 version = "0.1.0"
 dependencies = [
