@@ -15,6 +15,7 @@ use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::io;
+use std::os::unix;
 use std::path::Path;
 use std::str::FromStr;
 use std::{env, fs, process};
@@ -23,6 +24,9 @@ use datastore::key::{Key, KeyType};
 use datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use model::modeled_types::SingleLineString;
+
+// The default path to the RPM inventory json file
+const INVENTORY_PATH: &str = "/usr/share/bottlerocket/application-inventory.json";
 
 mod error {
     use std::io;
@@ -107,6 +111,18 @@ mod error {
 
         #[snafu(display("Keys can't contain newlines: {}", source))]
         SingleLineString { source: ModeledTypesError },
+
+        #[snafu(display("Could not get parent directory from inventory symlink path: {}", path.display()))]
+        SymlinkParentDirPath { path: PathBuf },
+
+        #[snafu(display("The symlink parent dir '{}' could not be created: {}.", path.display(), source))]
+        SymlinkParentDirCreate { path: PathBuf, source: io::Error },
+
+        #[snafu(display("Could not delete old inventory symlink: {}", source))]
+        SymlinkDelete { source: io::Error },
+
+        #[snafu(display("Could not create new inventory symlink: {}", source))]
+        SymlinkCreate { source: io::Error },
     }
 }
 
@@ -385,9 +401,38 @@ fn populate_default_datastore<P: AsRef<Path>>(
     Ok(())
 }
 
+/// Creates a symlink given a source path and a destination path. Creates the
+/// necessary parent directories along the destination path.
+fn create_inventory_symlink<P1, P2>(source: P1, destination: P2) -> Result<()>
+where
+    P1: AsRef<Path>,
+    P2: AsRef<Path>,
+{
+    let parent_dir = destination
+        .as_ref()
+        .parent()
+        .context(error::SymlinkParentDirPathSnafu {
+            path: destination.as_ref(),
+        })?;
+
+    fs::create_dir_all(parent_dir)
+        .context(error::SymlinkParentDirCreateSnafu { path: parent_dir })?;
+
+    // Remove symlink if it already exists
+    if let Err(e) = fs::remove_file(&destination) {
+        if e.kind() != io::ErrorKind::NotFound {
+            return Err(e).context(error::SymlinkDeleteSnafu);
+        }
+    }
+
+    unix::fs::symlink(source, destination).context(error::SymlinkCreateSnafu)
+}
+
 /// Store the args we receive on the command line
 struct Args {
     data_store_base_path: String,
+    inventory_symlink_path: String,
+    inventory_file_path: String,
     log_level: LevelFilter,
     version: Option<Version>,
 }
@@ -398,6 +443,8 @@ fn usage() -> ! {
     eprintln!(
         r"Usage: {}
             --data-store-base-path PATH
+            --inventory-file-symlink-path PATH
+            [ --inventory-file-path PATH (default: /usr/share/bottlerocket/application-inventory.json) ]
             [ --version X.Y.Z ]
             [ --log-level trace|debug|info|warn|error ]
 
@@ -418,6 +465,8 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
     let mut data_store_base_path = None;
+    let mut inventory_symlink_path = None;
+    let mut inventory_file_path = None;
     let mut log_level = None;
     let mut version = None;
 
@@ -428,6 +477,19 @@ fn parse_args(args: env::Args) -> Args {
                 data_store_base_path = Some(iter.next().unwrap_or_else(|| {
                     usage_msg("Did not give argument to --data-store-base-path")
                 }))
+            }
+
+            "--inventory-file-symlink-path" => {
+                inventory_symlink_path = Some(iter.next().unwrap_or_else(|| {
+                    usage_msg("Did not give argument to --inventory-file-symlink-path")
+                }))
+            }
+
+            "--inventory-file-path" => {
+                inventory_file_path =
+                    Some(iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to --inventory-file-path")
+                    }))
             }
 
             "--log-level" => {
@@ -455,6 +517,8 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         data_store_base_path: data_store_base_path.unwrap_or_else(|| usage()),
+        inventory_symlink_path: inventory_symlink_path.unwrap_or_else(|| usage()),
+        inventory_file_path: inventory_file_path.unwrap_or(INVENTORY_PATH.to_string()),
         log_level: log_level.unwrap_or(LevelFilter::Info),
         version,
     }
@@ -485,6 +549,14 @@ fn run() -> Result<()> {
     info!("Populating datastore at: {}", &args.data_store_base_path);
     populate_default_datastore(&args.data_store_base_path, args.version)?;
     info!("Datastore populated");
+
+    // Create the inventory file symlink and any necessary parent directories
+    info!(
+        "Creating inventory file symlink at: {}",
+        &args.inventory_symlink_path
+    );
+    create_inventory_symlink(&args.inventory_file_path, &args.inventory_symlink_path)?;
+    info!("Inventory symlink created");
 
     Ok(())
 }
