@@ -2486,6 +2486,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
+ "serde_plain",
  "simplelog",
  "snafu",
  "structopt",

@@ -123,6 +123,14 @@ fn run() -> Result<()> {
                     .context(error::ValidateSsmSnafu)
             })
         }
+        SubCommand::ValidateAmi(ref validate_ami_args) => {
+            let rt = Runtime::new().context(error::RuntimeSnafu)?;
+            rt.block_on(async {
+                aws::validate_ami::run(&args, validate_ami_args)
+                    .await
+                    .context(error::ValidateAmiSnafu)
+            })
+        }
         SubCommand::UploadOva(ref upload_args) => {
             vmware::upload_ova::run(&args, upload_args).context(error::UploadOvaSnafu)
         }
@@ -161,6 +169,7 @@ enum SubCommand {
 
     Ami(aws::ami::AmiArgs),
     PublishAmi(aws::publish_ami::PublishArgs),
+    ValidateAmi(aws::validate_ami::ValidateAmiArgs),
 
     Ssm(aws::ssm::SsmArgs),
     PromoteSsm(aws::promote_ssm::PromoteArgs),
@@ -238,6 +247,11 @@ mod error {
         #[snafu(display("Failed to validate SSM parameters: {}", source))]
         ValidateSsm {
             source: crate::aws::validate_ssm::Error,
+        },
+
+        #[snafu(display("Failed to validate EC2 images: {}", source))]
+        ValidateAmi {
+            source: crate::aws::validate_ami::Error,
         },
     }
 
