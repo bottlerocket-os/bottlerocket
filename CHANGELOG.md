@@ -1,3 +1,20 @@
+# v1.13.4 (2023-04-24)
+
+## OS Changes
+
+* Ensure the first hostname is used when a VPC DHCP option set has multiple domains ([#3032])
+* Update `runc` to version 1.1.6 ([#3037])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Generate and pass `--hostname-override` flag to kubelet in `aws-k8s-1.26` variants ([#3033])
+
+[#3032]: https://github.com/bottlerocket-os/bottlerocket/pull/3032
+[#3033]: https://github.com/bottlerocket-os/bottlerocket/pull/3033
+[#3037]: https://github.com/bottlerocket-os/bottlerocket/pull/3037
+
 # v1.13.3 (2023-04-17)
 
 ## OS Changes
@@ -6,6 +23,11 @@
 * Fix check for rule existence in ip6tables v1.8.9  ([#3001])
 * Backport systemd fixes for skipped udevd events ([#2999])
 * Check platform-specific mechanisms for hostname first ([#3021])
+
+## Orchestrator Changes
+
+### Kubernetes
+
 * Generate 'provider-id' setting for aws-k8s variants ([#3026])
 
 [#2948]: https://github.com/bottlerocket-os/bottlerocket/pull/2948
