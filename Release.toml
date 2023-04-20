@@ -1,4 +1,4 @@
-version = "1.13.3"
+version = "1.13.4"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -195,4 +195,8 @@ version = "1.13.3"
 "(1.13.1, 1.13.2)" = []
 "(1.13.2, 1.13.3)" = [
     "migrate_v1.13.3_aws-k8s-provider-id-gen.lz4",
+]
+"(1.13.3, 1.13.4)" = [
+    "migrate_v1.13.4_add-hostname-override.lz4",
+    "migrate_v1.13.4_add-hostname-override-metadata.lz4",
 ]
