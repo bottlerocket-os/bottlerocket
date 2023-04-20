@@ -2,11 +2,7 @@
 ExecStart=
 ExecStart=/usr/bin/kubelet \
 {{#unless settings.kubernetes.standalone-mode}}
-{{#if (eq settings.kubernetes.cloud-provider "\"\"")}}
-    --cloud-provider "" \
-{{else}}
-    --cloud-provider "external" \
-{{/if}}
+    --cloud-provider {{default "external" settings.kubernetes.cloud-provider}} \
     --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
 {{#if (eq settings.kubernetes.authentication-mode "tls")}}
     --bootstrap-kubeconfig /etc/kubernetes/kubelet/bootstrap-kubeconfig \
@@ -25,6 +21,9 @@ ExecStart=/usr/bin/kubelet \
     --image-credential-provider-bin-dir /usr/libexec/kubernetes/kubelet/plugins \
     --image-credential-provider-config /etc/kubernetes/kubelet/credential-provider-config.yaml \
 {{/if}}
+{{/if}}
+{{#if settings.kubernetes.hostname-override}}
+    --hostname-override {{settings.kubernetes.hostname-override}} \
 {{/if}}
     --node-ip ${NODE_IP} \
     --node-labels "${NODE_LABELS}" \

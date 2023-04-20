@@ -261,6 +261,8 @@ struct KubernetesSettings {
     cluster_domain: DNSDomain,
     node_ip: IpAddr,
     pod_infra_container_image: SingleLineString,
+    // Generated in `aws-k8s-1.26*` variants only
+    hostname_override: ValidLinuxHostname,
 }
 
 // ECS settings.
