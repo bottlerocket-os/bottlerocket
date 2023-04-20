@@ -103,6 +103,20 @@ It also includes the required packages to configure containers to leverage NVIDI
 It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
 This variant is compatible with Kubernetes 1.26, 1.27, and 1.28 clusters.
 
+### aws-k8s-1.27: Kubernetes 1.27 node
+
+The [aws-k8s-1.27](aws-k8s-1.27/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.27, 1.28, and 1.29 clusters.
+
+### aws-k8s-1.27-nvidia: Kubernetes 1.27 NVIDIA node
+
+The [aws-k8s-1.27-nvidia](aws-k8s-1.27-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It also includes the required packages to configure containers to leverage NVIDIA GPUs.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+This variant is compatible with Kubernetes 1.27, 1.28, and 1.29 clusters.
+
 ### aws-ecs-1: Amazon ECS container instance
 
 The [aws-ecs-1](aws-ecs-1/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)
@@ -160,6 +174,13 @@ It supports self-hosted clusters.
 
 This variant is compatible with Kubernetes 1.26, 1.27, and 1.28 clusters.
 
+## vmware-k8s-1.27: VMware Kubernetes 1.26 7ode
+
+The [vmware-k8s-1.27](vmware-k8s-1.27/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
+It supports self-hosted clusters.
+
+This variant is compatible with Kubernetes 1.27, 1.28, and 1.29 clusters.
+
 ### metal-dev: Metal development build
 
 The [metal-dev](metal-dev/Cargo.toml) variant has useful packages for local development of the OS and is intended to run bare metal.
@@ -199,6 +220,13 @@ The [metal-k8s-1.26](metal-k8s-1.26/Cargo.toml) variant includes the packages ne
 It supports self-hosted clusters.
 
 This variant is compatible with Kubernetes 1.26, 1.27, and 1.28 clusters.
+
+### metal-k8s-1.27: Metal Kubernetes 1.27 node
+
+The [metal-k8s-1.27](metal-k8s-1.27/Cargo.toml) variant includes the packages needed to run a Kubernetes node on bare metal.
+It supports self-hosted clusters.
+
+This variant is compatible with Kubernetes 1.27, 1.28, and 1.29 clusters.
 
 ### Deprecated variants
 

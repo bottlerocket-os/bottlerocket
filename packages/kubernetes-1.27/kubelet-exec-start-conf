@@ -1,0 +1,33 @@
+[Service]
+ExecStart=
+ExecStart=/usr/bin/kubelet \
+{{#unless settings.kubernetes.standalone-mode}}
+    --cloud-provider {{default "external" settings.kubernetes.cloud-provider}} \
+    --kubeconfig /etc/kubernetes/kubelet/kubeconfig \
+{{#if (eq settings.kubernetes.authentication-mode "tls")}}
+    --bootstrap-kubeconfig /etc/kubernetes/kubelet/bootstrap-kubeconfig \
+{{/if}}
+{{else}}
+    --cloud-provider "" \
+{{/unless}}
+    --config /etc/kubernetes/kubelet/config \
+    --container-runtime-endpoint=unix:///run/containerd/containerd.sock \
+    --containerd=/run/containerd/containerd.sock \
+    --root-dir /var/lib/kubelet \
+    --cert-dir /var/lib/kubelet/pki \
+{{#if settings.kubernetes.credential-providers}}
+{{#if (any_enabled settings.kubernetes.credential-providers)}}
+    --image-credential-provider-bin-dir /usr/libexec/kubernetes/kubelet/plugins \
+    --image-credential-provider-config /etc/kubernetes/kubelet/credential-provider-config.yaml \
+{{/if}}
+{{/if}}
+{{#if settings.kubernetes.hostname-override}}
+    --hostname-override {{settings.kubernetes.hostname-override}} \
+{{/if}}
+    --node-ip ${NODE_IP} \
+    --node-labels "${NODE_LABELS}" \
+    --register-with-taints "${NODE_TAINTS}" \
+{{#if settings.kubernetes.log-level includeZero=true}}
+    -v {{settings.kubernetes.log-level}} \
+{{/if}}
+    --pod-infra-container-image ${POD_INFRA_CONTAINER_IMAGE}

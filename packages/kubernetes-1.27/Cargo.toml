@@ -1,0 +1,32 @@
+[package]
+# "." is not allowed in crate names, but we want a friendlier name for the
+# directory and spec file, so we override it below.
+name = "kubernetes-1_27"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+package-name = "kubernetes-1.27"
+
+[[package.metadata.build-package.external-files]]
+url = "https://distro.eks.amazonaws.com/kubernetes-1-27/releases/1/artifacts/kubernetes/v1.27.1/kubernetes-src.tar.gz"
+sha512 = "bec6b87a1cf974feb041ac684057be42d0a9abd332371bc8a8a7311d7f23e4ecba923dc9f46d4db8a5a2818976ddf7e06baef7b9fd87ff5fda27b6665b956c07"
+
+# RPM BuildRequires
+[build-dependencies]
+glibc = { path = "../glibc" }
+
+# RPM Requires
+[dependencies]
+aws-signing-helper = { path = "../aws-signing-helper" }
+ecr-credential-provider-1_27 = { path = "../ecr-credential-provider-1.27" }
+# `conntrack-tools`, `containerd` and `findutils` are only needed at runtime,
+# and are pulled in by `release`.
+# conntrack-tools = { path = "../conntrack-tools" }
+# containerd = { path = "../containerd" }
+# findutils = { path = "../findutils" }

@@ -13,18 +13,22 @@ members = [
     "aws-k8s-1.25-nvidia",
     "aws-k8s-1.26",
     "aws-k8s-1.26-nvidia",
+    "aws-k8s-1.27",
+    "aws-k8s-1.27-nvidia",
     "metal-dev",
     "metal-k8s-1.22",
     "metal-k8s-1.23",
     "metal-k8s-1.24",
     "metal-k8s-1.25",
     "metal-k8s-1.26",
+    "metal-k8s-1.27",
     "vmware-dev",
     "vmware-k8s-1.22",
     "vmware-k8s-1.23",
     "vmware-k8s-1.24",
     "vmware-k8s-1.25",
     "vmware-k8s-1.26",
+    "vmware-k8s-1.27",
 ]
 
 [profile.dev]
