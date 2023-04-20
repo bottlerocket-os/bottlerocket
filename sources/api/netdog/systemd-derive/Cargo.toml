@@ -1,0 +1,23 @@
+[package]
+name = "systemd-derive"
+version = "0.1.0"
+authors = ["Zac Mrowicki <mrowicki@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[lib]
+path = "src/lib.rs"
+proc-macro = true
+
+[dependencies]
+darling = { version = "0.14", default-features = false }
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "1", default-features = false, features = ["derive"] }
+
+[build-dependencies]
+generate-readme = { path = "../../../generate-readme", version = "0.1" }

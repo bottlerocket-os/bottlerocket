@@ -2567,6 +2567,7 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "snafu",
+ "systemd-derive",
  "tempfile",
  "tokio",
  "tokio-retry",
@@ -3815,6 +3816,17 @@ dependencies = [
  "quote",
  "syn 1.0.109",
  "unicode-xid",
+]
+
+[[package]]
+name = "systemd-derive"
+version = "0.1.0"
+dependencies = [
+ "darling",
+ "generate-readme",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]
