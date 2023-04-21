@@ -17,8 +17,6 @@ Source103: config-bottlerocket-vmware
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
 # Enable INITRAMFS_FORCE config option for our use case.
 Patch1002: 1002-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
-# Backport of bpf jit limit adjustments, see https://github.com/awslabs/amazon-eks-ami/issues/1179
-Patch1003: 1003-bpf-Adjust-insufficient-default-bpf_jit_limit.patch
 
 # Add zstd support for compressed kernel modules
 Patch2000: 2000-kbuild-move-module-strip-compression-code-into-scrip.patch
