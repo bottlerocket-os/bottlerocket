@@ -106,6 +106,10 @@ DOCKER_BUILDKIT = "1"
 # write AMI information to specifically named files.
 AMI_DATA_FILE_SUFFIX = "amis.json"
 
+# This is the filename suffix for operations that write out SSM parameter information
+# to file. It can be overridden with -e.
+SSM_DATA_FILE_SUFFIX = "ssm-params.json"
+
 # The type of testsys test that should be run.
 # `quick` will run a quick test which usually tests that the instances are reachable.
 # `conformance` will run a certified conformance test, these tests may take up to 3 hrs.
@@ -1242,6 +1246,36 @@ pubsys \
 '''
 ]
 
+[tasks.validate-ami]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# depend on publish-tools and check for the input file below to save time.
+# This does mean that `cargo make ami` must be run before `cargo make validate-ami`.
+dependencies = ["publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+expected_amis_path="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
+if [ ! -s "${expected_amis_path}" ]; then
+   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
+   exit 1
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   validate-ami \
+   \
+   --expected-amis-path "${expected_amis_path}" \
+   \
+   ${AMI_VALIDATION_RESULTS_FILTER:+--write-results-filter "${AMI_VALIDATION_RESULTS_FILTER}"} \
+   ${AMI_VALIDATION_RESULTS_PATH:+--write-results-path "${AMI_VALIDATION_RESULTS_PATH}"}
+'''
+]
+
 [tasks.ssm]
 # Rather than depend on "build", which currently rebuilds images each run, we
 # depend on publish-tools and check for the input file below to save time.
@@ -1260,6 +1294,8 @@ if [ ! -s "${ami_input}" ]; then
    exit 1
 fi
 
+ssm_parameter_output="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${SSM_DATA_FILE_SUFFIX}"
+
 pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
    \
@@ -1270,6 +1306,7 @@ pubsys \
    --variant "${BUILDSYS_VARIANT}" \
    --version "${BUILDSYS_VERSION_FULL}" \
    --template-path "${PUBLISH_SSM_TEMPLATES_PATH}" \
+   --ssm-parameter-output "${ssm_parameter_output}" \
    \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"} \
    ${ALLOW_CLOBBER:+--allow-clobber}
@@ -1292,6 +1329,8 @@ if [ -z "${target}" ]; then
    exit 1
 fi
 
+ssm_parameter_output="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${SSM_DATA_FILE_SUFFIX}"
+
 pubsys \
    --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
    \
@@ -1302,8 +1341,39 @@ pubsys \
    --source "${source}" \
    --target "${target}" \
    --template-path "${PUBLISH_SSM_TEMPLATES_PATH}" \
+   --ssm-parameter-output "${ssm_parameter_output}" \
    \
    ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
+'''
+]
+
+[tasks.validate-ssm]
+# Rather than depend on "build", which currently rebuilds images each run, we
+# depend on publish-tools and check for the input file below to save time.
+# This does mean that `cargo make ssm` must be run before `cargo make validate-ssm`.
+dependencies = ["publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+expected_parameters_path="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${SSM_DATA_FILE_SUFFIX}"
+if [ ! -s "${expected_parameters_path}" ]; then
+   echo "SSM parameters file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ssm'" >&2
+   exit 1
+fi
+
+pubsys \
+   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
+   \
+   validate-ssm \
+   \
+   --expected-parameters-path "${expected_parameters_path}" \
+   \
+   ${SSM_VALIDATION_RESULTS_FILTER:+--write-results-filter "${SSM_VALIDATION_RESULTS_FILTER}"} \
+   ${SSM_VALIDATION_RESULTS_PATH:+--write-results-path "${SSM_VALIDATION_RESULTS_PATH}"}
 '''
 ]
 
