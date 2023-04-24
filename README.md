@@ -418,6 +418,18 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.container-log-max-files`: The maximum number of container log files that can be present for a container.
 * `settings.kubernetes.container-log-max-size`: The maximum size of container log file before it is rotated.
 * `settings.kubernetes.cpu-manager-policy`: Specifies the CPU manager policy. Possible values are `static` and `none`. Defaults to `none`. If you want to allow pods with certain resource characteristics to be granted increased CPU affinity and exclusivity on the node, you can set this setting to `static`. You should reboot if you change this setting after startup - try `apiclient reboot`.
+* `settings.kubernetes.cpu-manager-policy-options`: Policy options to apply when `cpu-manager-policy` is set to `static`. Currently `full-pcpus-only` is the only option.
+
+  For example:
+
+  ```toml
+  [settings.kubernetes]
+  cpu-manager-policy = "static"
+  cpu-manager-policy-options = [
+    "full-pcpus-only"
+  ]
+  ```
+
 * `settings.kubernetes.cpu-manager-reconcile-period`: Specifies the CPU manager reconcile period, which controls how often updated CPU assignments are written to cgroupfs. The value is a duration like `30s` for 30 seconds or `1h5m` for 1 hour and 5 minutes.
 * `settings.kubernetes.credential-providers`: Contains a collection of Kubelet image credential provider settings.
   Each name under `credential-providers` is the name of the plugin to configure.
