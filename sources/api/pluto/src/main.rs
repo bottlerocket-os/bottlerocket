@@ -334,7 +334,7 @@ async fn get_private_dns_name(client: &mut ImdsClient) -> Result<String> {
 fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
-        r"Usage: {} [max-pods | cluster-dns-ip | node-ip]",
+        r"Usage: {} [max-pods | cluster-dns-ip | node-ip | provider-id | private-dns-name]",
         program_name
     );
     process::exit(1);
