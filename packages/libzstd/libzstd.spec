@@ -1,5 +1,5 @@
 Name: %{_cross_os}libzstd
-Version: 1.5.4
+Version: 1.5.5
 Release: 1%{?dist}
 Summary: Library for Zstandard compression
 License: BSD-3-Clause AND GPL-2.0-only
