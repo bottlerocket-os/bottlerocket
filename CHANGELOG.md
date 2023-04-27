@@ -1,3 +1,11 @@
+# v1.13.5 (2023-05-01)
+
+## OS Changes
+
+* Revert `runc` update to move back to 1.1.5 ([#3054])
+
+[#3054]: https://github.com/bottlerocket-os/bottlerocket/pull/3054
+
 # v1.13.4 (2023-04-24)
 
 ## OS Changes
