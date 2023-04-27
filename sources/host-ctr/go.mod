@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/aws/aws-sdk-go v1.44.208
 	github.com/awslabs/amazon-ecr-containerd-resolver v0.0.0-20230225154133-288898c0f318
-	github.com/containerd/containerd v1.6.19
+	github.com/containerd/containerd v1.6.20
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pkg/errors v0.9.1
@@ -15,26 +15,14 @@ require (
 	k8s.io/cri-api v0.26.1
 )
 
-replace (
-	// Containerd 1.6.x carries an older version of go-restful that has a CVE.
-	// As documented in containerd here: https://github.com/containerd/containerd/pull/7117
-	// this CVE cannot be executed against containerd.
-	// Regardless, this replace statement upgrades the go-restful dependency
-	// to a version that does not have this CVE
-	// and is still compatible with containerd.
-	// TODO: For containerd 1.7.x, this replace statement can be removed
-	// since containerd moved to go-restful/v3
-	github.com/emicklei/go-restful v2.9.5+incompatible => github.com/emicklei/go-restful v2.16.0+incompatible
-
-	// containerd still uses the v1alpha2 APIs in k8s.io/cri-api.
-	// These were removed in v0.26 of cri-api resulting in a dependency conflict.
-	// TODO: Remove this `replace` when containerd uses v1 of the cri-api
-	k8s.io/cri-api => k8s.io/cri-api v0.25.5
-)
+// containerd still uses the v1alpha2 APIs in k8s.io/cri-api.
+// These were removed in v0.26 of cri-api resulting in a dependency conflict.
+// TODO: Remove this `replace` when containerd uses v1 of the cri-api
+replace k8s.io/cri-api => k8s.io/cri-api v0.25.5
 
 require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/Microsoft/hcsshim v0.9.7 // indirect
+	github.com/Microsoft/hcsshim v0.9.8 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -45,7 +33,7 @@ require (
 	github.com/containerd/go-cni v1.1.7 // indirect
 	github.com/containerd/imgcrypt v1.1.7 // indirect
 	github.com/containerd/nri v0.1.0 // indirect
-	github.com/containerd/ttrpc v1.1.1-0.20220420014843-944ef4a40df3 // indirect
+	github.com/containerd/ttrpc v1.1.1 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect
 	github.com/containernetworking/cni v1.1.2 // indirect
 	github.com/containernetworking/plugins v1.1.1 // indirect
@@ -56,7 +44,6 @@ require (
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/emicklei/go-restful v2.16.0+incompatible // indirect
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
@@ -82,7 +69,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.3-0.20220303224323-02efb9a75ee1 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
