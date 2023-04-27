@@ -1,7 +1,6 @@
 //! The dns module contains the code necessary to gather DNS settings from config file,
 //! supplementing with DHCP lease if it exists.  It also contains the code necessary to write a
 //! properly formatted `resolv.conf`.
-use crate::lease::LeaseInfo;
 use crate::RESOLV_CONF;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
@@ -12,6 +11,11 @@ use std::fmt::Write;
 use std::fs;
 use std::net::IpAddr;
 use std::path::Path;
+
+#[cfg(net_backend = "wicked")]
+use crate::lease::LeaseInfo;
+#[cfg(net_backend = "systemd-networkd")]
+use crate::networkd_status::NetworkDInterfaceStatus;
 
 static DNS_CONFIG: &str = "/etc/netdog.toml";
 
@@ -26,6 +30,7 @@ pub(crate) struct DnsSettings {
 impl DnsSettings {
     /// Create a DnsSettings from TOML config file, supplementing missing settings with settings
     /// from DHCP lease if provided.  (In the case of static addressing, a DHCP lease won't exist)
+    #[cfg(net_backend = "wicked")]
     pub(crate) fn from_config_or_lease(lease: Option<&LeaseInfo>) -> Result<Self> {
         let mut settings = Self::from_config()?;
         if let Some(lease) = lease {
@@ -35,6 +40,7 @@ impl DnsSettings {
     }
 
     /// Merge missing DNS settings into `self` using DHCP lease
+    #[cfg(net_backend = "wicked")]
     fn merge_lease(&mut self, lease: &LeaseInfo) {
         if self.nameservers.is_none() {
             self.nameservers = lease.dns_servers.clone();
@@ -42,6 +48,30 @@ impl DnsSettings {
 
         if self.search.is_none() {
             self.search = lease.dns_search.clone()
+        }
+    }
+
+    /// Create a DnsSettings from TOML config file, supplementing missing settings from data in
+    /// the NetworkDInterfaceStatus.
+    #[cfg(net_backend = "systemd-networkd")]
+    pub(crate) fn from_config_or_status(status: &NetworkDInterfaceStatus) -> Result<Self> {
+        let mut settings = Self::from_config()?;
+        settings.merge_status(status);
+        Ok(settings)
+    }
+
+    #[cfg(net_backend = "systemd-networkd")]
+    fn merge_status(&mut self, status: &NetworkDInterfaceStatus) {
+        if self.nameservers.is_none() {
+            if let Some(dns_nameservers) = &status.dns {
+                self.nameservers = Some(dns_nameservers.iter().map(|n| n.address).collect());
+            }
+        }
+
+        if self.search.is_none() {
+            if let Some(search_domains) = &status.search_domains {
+                self.search = Some(search_domains.iter().map(|d| d.domain.clone()).collect());
+            }
         }
     }
 
@@ -158,6 +188,48 @@ mod tests {
             .join("dns")
     }
 
+    #[cfg(net_backend = "systemd-networkd")]
+    use crate::interface_id::InterfaceName;
+    #[cfg(net_backend = "systemd-networkd")]
+    use crate::networkd_status::{NetworkDDnsConfig, NetworkDInterfaceStatus, SearchDomain};
+
+    #[cfg(net_backend = "systemd-networkd")]
+    fn generate_networkd_interface_status_single_nameserver() -> NetworkDInterfaceStatus {
+        let addrs = vec!["192.168.0.20".parse::<IpAddr>().unwrap()];
+        NetworkDInterfaceStatus {
+            name: InterfaceName::try_from("eth0".to_string()).unwrap(),
+            dns: Some(vec![NetworkDDnsConfig {
+                address: "192.168.0.2".parse::<IpAddr>().unwrap(),
+            }]),
+            search_domains: Some(vec![SearchDomain {
+                domain: "us-west-2.compute.internal".to_string(),
+            }]),
+            addresses: addrs,
+        }
+    }
+
+    #[cfg(net_backend = "systemd-networkd")]
+    fn generate_networkd_interface_status_multiple_nameservers() -> NetworkDInterfaceStatus {
+        let addrs = vec!["192.168.0.20".parse::<IpAddr>().unwrap()];
+        let nameservers = vec![
+            NetworkDDnsConfig {
+                address: "192.168.0.2".parse::<IpAddr>().unwrap(),
+            },
+            NetworkDDnsConfig {
+                address: "1.2.3.4".parse::<IpAddr>().unwrap(),
+            },
+        ];
+
+        NetworkDInterfaceStatus {
+            name: InterfaceName::try_from("eth0".to_string()).unwrap(),
+            dns: Some(nameservers),
+            search_domains: Some(vec![SearchDomain {
+                domain: "us-west-2.compute.internal".to_string(),
+            }]),
+            addresses: addrs,
+        }
+    }
+
     #[test]
     fn dns_from_config() {
         let config = test_data().join("netdog.toml");
@@ -183,6 +255,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(net_backend = "wicked")]
     fn dns_from_lease_file() {
         let lease_path = test_data().join("leaseinfo.eth0.dhcp.ipv4");
         let lease = LeaseInfo::from_lease(&lease_path).unwrap();
@@ -201,6 +274,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(net_backend = "wicked")]
     fn write_resolv_conf_from_lease_single_nameserver() {
         let lease_path = test_data().join("leaseinfo.eth0.dhcp.ipv4");
         let lease = LeaseInfo::from_lease(&lease_path).unwrap();
@@ -215,6 +289,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(net_backend = "wicked")]
     fn write_resolv_conf_from_lease_multiple_nameservers() {
         let lease_path = test_data().join("leaseinfo.eth0.dhcp.ipv4.multiple-dns");
         let lease = LeaseInfo::from_lease(&lease_path).unwrap();
@@ -247,6 +322,60 @@ mod tests {
         // the following
         let format1 = "search us-west-2.compute.internal foo.bar.baz\nnameserver 1.2.3.4\nnameserver 2.3.4.5\n";
         let format2 = "search us-west-2.compute.internal foo.bar.baz\nnameserver 2.3.4.5\nnameserver 1.2.3.4\n";
+
+        // The resulting file must be either format 1 or 2
+        let resolv_conf = std::fs::read_to_string(&fake_file).unwrap();
+        assert_ne!(resolv_conf == format1, resolv_conf == format2)
+    }
+
+    #[test]
+    #[cfg(net_backend = "systemd-networkd")]
+    fn dns_from_status() {
+        let networkd_status = generate_networkd_interface_status_single_nameserver();
+        let mut got = DnsSettings::default();
+        got.merge_status(&networkd_status);
+
+        let mut nameservers = BTreeSet::new();
+        nameservers.insert("192.168.0.2".parse::<IpAddr>().unwrap());
+        let search = Some(vec!["us-west-2.compute.internal".to_string()]);
+        let expected = DnsSettings {
+            nameservers: Some(nameservers),
+            search,
+        };
+        assert_eq!(got, expected)
+    }
+
+    #[test]
+    #[cfg(net_backend = "systemd-networkd")]
+    fn write_resolv_conf_from_status_single_nameserver() {
+        let networkd_status = generate_networkd_interface_status_single_nameserver();
+
+        let fake_file = tempfile::NamedTempFile::new().unwrap();
+        let mut settings = DnsSettings::default();
+        settings.merge_status(&networkd_status);
+
+        settings.write_resolv_conf_impl(&fake_file).unwrap();
+
+        let expected = "search us-west-2.compute.internal\nnameserver 192.168.0.2\n";
+        assert_eq!(std::fs::read_to_string(&fake_file).unwrap(), expected);
+    }
+
+    #[test]
+    #[cfg(net_backend = "systemd-networkd")]
+    fn write_resolv_conf_from_status_multiple_nameservers() {
+        let networkd_status = generate_networkd_interface_status_multiple_nameservers();
+
+        let fake_file = tempfile::NamedTempFile::new().unwrap();
+        let mut settings = DnsSettings::default();
+        settings.merge_status(&networkd_status);
+        settings.write_resolv_conf_impl(&fake_file).unwrap();
+
+        // Since we shuffle the nameservers, it's possible for the resulting file to be either of
+        // the following
+        let format1 =
+            "search us-west-2.compute.internal\nnameserver 192.168.0.2\nnameserver 1.2.3.4\n";
+        let format2 =
+            "search us-west-2.compute.internal\nnameserver 1.2.3.4\nnameserver 192.168.0.2\n";
 
         // The resulting file must be either format 1 or 2
         let resolv_conf = std::fs::read_to_string(&fake_file).unwrap();
