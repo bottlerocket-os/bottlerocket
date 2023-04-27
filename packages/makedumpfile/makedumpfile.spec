@@ -46,6 +46,5 @@ make install
 %{_cross_attribution_file}
 %{_cross_sbindir}/makedumpfile
 %exclude %{_cross_mandir}
-%exclude %{_cross_rootdir}/etc
 %exclude %{_cross_sbindir}/makedumpfile-R.pl
-%exclude %{_cross_prefix}/share/makedumpfile-%{version}
+%exclude %{_cross_prefix}/share/makedumpfile
