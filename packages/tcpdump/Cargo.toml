@@ -12,8 +12,8 @@ path = "pkg.rs"
 releases-url = "http://www.tcpdump.org/release"
 
 [[package.metadata.build-package.external-files]]
-url = "http://www.tcpdump.org/release/tcpdump-4.99.3.tar.gz"
-sha512 = "e1442e923d89f367cfe403dc460d0d46e19a241470d56b30b7a411bedd8d21a78c428f20ffe725cbb4fa5068f7dcc5c93d206e1a8d53feb9bccc6f0cda8bf0f9"
+url = "http://www.tcpdump.org/release/tcpdump-4.99.4.tar.gz"
+sha512 = "cb51e19574707d07c0de90dd4c301955897f2c9f2a69beb7162c08f59189f55625346d1602c8d66ab2b4c626ea4b0df1f08ed8734d2d7f536d0a7840c2d6d8df"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
