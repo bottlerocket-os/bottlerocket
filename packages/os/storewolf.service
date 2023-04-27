@@ -9,7 +9,9 @@ RefuseManualStop=true
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/storewolf --data-store-base-path /var/lib/bottlerocket/datastore
+ExecStart=/usr/bin/storewolf \
+  --data-store-base-path /var/lib/bottlerocket/datastore \
+  --inventory-file-symlink-path /var/lib/bottlerocket/inventory/application.json
 RemainAfterExit=true
 StandardError=journal+console
 
