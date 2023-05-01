@@ -175,17 +175,6 @@ We use EC2 and EKS for `aws-k8s` variants and vSphere for `vmware-k8s` variants,
 
 We have attempted use sensible defaults for these behaviors when calling the `cargo make test` command.
 
-🚧 👷 **Variant Support**
-
-We haven't yet enabled `cargo make test` for every variant, though much of the underlying foundation has been laid.
-If you run `cargo make test` for a variant that is not yet enabled, it will print an error message.
-Check back here and follow the issues relevant to your variant of interest.
-
-- `aws-k8s` conformance testing is working!
-- `aws-ecs`: quick and migration testing are working!
-- `vmware-k8s`: https://github.com/bottlerocket-os/bottlerocket/issues/2151
-- `metal-k8s`: https://github.com/bottlerocket-os/bottlerocket/issues/2152
-
 ### aws-k8s
 
 You need to [build](BUILDING.md) Bottlerocket and create an AMI before you can run a test.
@@ -216,6 +205,44 @@ cargo make \
 
 ```shell
 cargo make watch-test
+```
+
+**Note**: You can provision nodes with karpenter by specifying `resource-agent-type = "karpenter"` in `Test.toml`.
+To follow the generic mapping, use the following configuration:
+
+```toml
+[aws-k8s.configuration.karpenter]
+test-type = "quick"
+resource-agent-type = "karpenter"
+block-device-mapping = [
+    {name = "/dev/xvda", volumeType = "gp3", volumeSize = 4, deleteOnTermination = true},
+    {name = "/dev/xvdb", volumeType = "gp3", volumeSize = 20, deleteOnTermination = true},
+]
+```
+
+This configuration creates a new test type for all `aws-k8s` variants called `karpenter` (the string following `.configuration` in the table heading).
+
+
+Before launching nodes with karpenter you will need to add the karpenter role to your cluster's `aws-auth` config map.
+
+```bash
+# Change to your clusters name
+CLUSTER_NAME=my-cluster
+ACCOUNT_ID=your-account-id
+REGION=us-west-2
+eksctl create iamidentity mapping \
+  -r ${REGION} \
+  --cluster ${CLUSTER_NAME} \
+  --arn arn:aws:iam::${ACCOUNT_ID}:role/KarpenterInstanceNodeRole \
+  --username system:node:{{EC2PrivateDNSName}} \
+  --group system:bootstrappers \
+  --group system:nodes
+```
+
+You can run the test by calling,
+
+```bash
+cargo make -e TESTSYS_TEST=karpenter test
 ```
 
 ### aws-ecs

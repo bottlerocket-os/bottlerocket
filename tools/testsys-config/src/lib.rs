@@ -1,3 +1,4 @@
+use bottlerocket_types::agent_config::KarpenterDeviceMapping;
 use bottlerocket_variant::Variant;
 pub use error::Error;
 use handlebars::Handlebars;
@@ -11,6 +12,7 @@ use std::path::Path;
 use testsys_model::constants::TESTSYS_VERSION;
 use testsys_model::{DestructionPolicy, SecretName};
 pub type Result<T> = std::result::Result<T, error::Error>;
+use serde_plain::derive_fromstr_from_deserialize;
 
 /// Configuration needed to run tests
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -248,6 +250,11 @@ pub struct GenericVariantConfig {
     pub cluster_names: Vec<String>,
     /// The instance type that instances should be launched with
     pub instance_type: Option<String>,
+    /// Specify how Bottlerocket instances should be launched (ec2, karpenter)
+    pub resource_agent_type: Option<ResourceAgentType>,
+    /// Launch instances with the following Block Device Mapping
+    #[serde(default)]
+    pub block_device_mapping: Vec<KarpenterDeviceMapping>,
     /// The secrets needed by the agents
     #[serde(default)]
     pub secrets: BTreeMap<String, SecretName>,
@@ -295,9 +302,17 @@ impl GenericVariantConfig {
             self.workloads
         };
 
+        let block_device_mapping = if self.block_device_mapping.is_empty() {
+            other.block_device_mapping
+        } else {
+            self.block_device_mapping
+        };
+
         Self {
             cluster_names,
             instance_type: self.instance_type.or(other.instance_type),
+            resource_agent_type: self.resource_agent_type.or(other.resource_agent_type),
+            block_device_mapping,
             secrets,
             agent_role: self.agent_role.or(other.agent_role),
             conformance_image: self.conformance_image.or(other.conformance_image),
@@ -311,6 +326,21 @@ impl GenericVariantConfig {
         }
     }
 }
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "kebab-case")]
+pub enum ResourceAgentType {
+    Karpenter,
+    Ec2,
+}
+
+impl Default for ResourceAgentType {
+    fn default() -> Self {
+        Self::Ec2
+    }
+}
+
+derive_fromstr_from_deserialize!(ResourceAgentType);
 
 /// The configuration for a specific config level (<PLATFORM>-<FLAVOR>). This may or may not be arch
 /// specific depending on it's location in `GenericConfig`.
@@ -368,6 +398,7 @@ pub struct TestsysImages {
     pub vsphere_k8s_cluster_resource_agent_image: Option<String>,
     pub metal_k8s_cluster_resource_agent_image: Option<String>,
     pub ec2_resource_agent_image: Option<String>,
+    pub ec2_karpenter_resource_agent_image: Option<String>,
     pub vsphere_vm_resource_agent_image: Option<String>,
     pub sonobuoy_test_agent_image: Option<String>,
     pub ecs_test_agent_image: Option<String>,
@@ -397,6 +428,10 @@ impl TestsysImages {
                 registry
             )),
             ec2_resource_agent_image: Some(format!("{}/ec2-resource-agent:{tag}", registry)),
+            ec2_karpenter_resource_agent_image: Some(format!(
+                "{}/ec2-karpenter-resource-agent:{tag}",
+                registry
+            )),
             vsphere_vm_resource_agent_image: Some(format!(
                 "{}/vsphere-vm-resource-agent:{tag}",
                 registry
@@ -430,6 +465,9 @@ impl TestsysImages {
             ec2_resource_agent_image: self
                 .ec2_resource_agent_image
                 .or(other.ec2_resource_agent_image),
+            ec2_karpenter_resource_agent_image: self
+                .ec2_karpenter_resource_agent_image
+                .or(other.ec2_karpenter_resource_agent_image),
             sonobuoy_test_agent_image: self
                 .sonobuoy_test_agent_image
                 .or(other.sonobuoy_test_agent_image),

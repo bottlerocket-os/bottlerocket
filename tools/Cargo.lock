@@ -3236,6 +3236,7 @@ dependencies = [
 name = "testsys-config"
 version = "0.1.0"
 dependencies = [
+ "bottlerocket-types",
  "bottlerocket-variant",
  "handlebars",
  "home",
@@ -3243,6 +3244,7 @@ dependencies = [
  "log",
  "maplit",
  "serde",
+ "serde_plain",
  "serde_yaml 0.8.26",
  "snafu",
  "testsys-model",
