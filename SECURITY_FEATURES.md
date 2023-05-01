@@ -143,8 +143,6 @@ There is no way to disable it.
 
 SELinux is a Linux Security Module (LSM) that provides a mechanism for mandatory access control (MAC).
 Processes that run as root with full capabilities are still subject to the mandatory policy restrictions.
-Host containers with the `superpowered = true` flag set are an exception, and will run in the permissive `super_t` domain.
-Permissive means that actions that are not allowed by policy will be logged but not blocked.
 
 The policy in Bottlerocket has the following objectives:
 1) Prevent most components from directly modifying the API settings.
