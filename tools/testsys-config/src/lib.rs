@@ -253,6 +253,8 @@ pub struct GenericVariantConfig {
     pub secrets: BTreeMap<String, SecretName>,
     /// The role that should be assumed for this particular variant
     pub agent_role: Option<String>,
+    /// The location of the sonobuoy testing image
+    pub sonobuoy_image: Option<String>,
     /// The custom images used for conformance testing
     pub conformance_image: Option<String>,
     /// The custom registry used for conformance testing
@@ -300,6 +302,7 @@ impl GenericVariantConfig {
             instance_type: self.instance_type.or(other.instance_type),
             secrets,
             agent_role: self.agent_role.or(other.agent_role),
+            sonobuoy_image: self.sonobuoy_image.or(other.sonobuoy_image),
             conformance_image: self.conformance_image.or(other.conformance_image),
             conformance_registry: self.conformance_registry.or(other.conformance_registry),
             control_plane_endpoint: self.control_plane_endpoint.or(other.control_plane_endpoint),

@@ -131,6 +131,11 @@ struct CliConfig {
     #[clap(long, env = "TESTSYS_TARGET_CLUSTER_NAME")]
     target_cluster_name: Option<String>,
 
+    /// The sonobuoy image that should be used for conformance testing. It may be omitted to use the default
+    /// sonobuoy image.
+    #[clap(long, env = "TESTSYS_SONOBUOY_IMAGE")]
+    sonobuoy_image: Option<String>,
+
     /// The image that should be used for conformance testing. It may be omitted to use the default
     /// testing image.
     #[clap(long, env = "TESTSYS_CONFORMANCE_IMAGE")]
@@ -179,6 +184,7 @@ impl From<CliConfig> for GenericVariantConfig {
             instance_type: val.instance_type,
             secrets: val.secret.into_iter().collect(),
             agent_role: val.assume_role,
+            sonobuoy_image: val.sonobuoy_image,
             conformance_image: val.conformance_image,
             conformance_registry: val.conformance_registry,
             control_plane_endpoint: val.control_plane_endpoint,
