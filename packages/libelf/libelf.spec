@@ -1,5 +1,5 @@
 Name: %{_cross_os}libelf
-Version: 0.188
+Version: 0.189
 Release: 1%{?dist}
 Summary: Library for ELF files
 License: GPL-2.0-or-later OR LGPL-3.0-or-later

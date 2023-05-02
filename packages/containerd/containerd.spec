@@ -2,7 +2,7 @@
 %global gorepo containerd
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.6.19
+%global gover 1.6.20
 %global rpmver %{gover}
 %global gitrev 1e1ea6e986c6c86565bc33d52e34b81b3e2bc71f
 
