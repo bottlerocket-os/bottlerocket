@@ -4,9 +4,7 @@ use log::{debug, info};
 use serde::Deserialize;
 use serde_plain::derive_fromstr_from_deserialize;
 use snafu::ResultExt;
-use testsys_model::test_manager::{
-    CrdState, CrdType, SelectionParams, StatusProgress, TestManager,
-};
+use testsys_model::test_manager::{CrdState, CrdType, SelectionParams, StatusColumn, TestManager};
 
 /// Check the status of testsys objects.
 #[derive(Debug, Parser)]
@@ -14,10 +12,6 @@ pub(crate) struct Status {
     /// Configure the output of the command (json, narrow, wide).
     #[clap(long, short = 'o')]
     output: Option<StatusOutput>,
-
-    /// Check the status of the testsys controller
-    #[clap(long, short = 'c')]
-    controller: bool,
 
     /// Focus status on a particular arch
     #[clap(long)]
@@ -64,16 +58,20 @@ impl Status {
             labels.push(format!("testsys/variant={}", variant))
         };
         let mut status = client
-            .status(
-                &SelectionParams {
-                    labels: Some(labels.join(",")),
-                    state,
-                    crd_type,
-                    ..Default::default()
-                },
-                self.controller,
-            )
+            .status(&SelectionParams {
+                labels: Some(labels.join(",")),
+                state,
+                crd_type,
+                ..Default::default()
+            })
             .await?;
+
+        status.add_column(StatusColumn::name());
+        status.add_column(StatusColumn::crd_type());
+        status.add_column(StatusColumn::state());
+        status.add_column(StatusColumn::passed());
+        status.add_column(StatusColumn::failed());
+        status.add_column(StatusColumn::skipped());
 
         match self.output {
             Some(StatusOutput::Json) => {
@@ -88,16 +86,23 @@ impl Status {
             Some(StatusOutput::Narrow) => (),
             None => {
                 status.new_column("BUILD ID", |crd| {
-                    crd.labels().get("testsys/build-id").cloned()
+                    crd.labels()
+                        .get("testsys/build-id")
+                        .cloned()
+                        .into_iter()
+                        .collect()
                 });
-                status.with_time();
+                status.add_column(StatusColumn::last_update());
             }
             Some(StatusOutput::Wide) => {
                 status.new_column("BUILD ID", |crd| {
-                    crd.labels().get("testsys/build-id").cloned()
+                    crd.labels()
+                        .get("testsys/build-id")
+                        .cloned()
+                        .into_iter()
+                        .collect()
                 });
-                status.with_time();
-                status.with_progress(StatusProgress::WithTests);
+                status.add_column(StatusColumn::last_update());
             }
         };
 
