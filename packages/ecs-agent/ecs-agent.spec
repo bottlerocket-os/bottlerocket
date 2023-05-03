@@ -68,6 +68,9 @@ Patch0004: 0004-bottlerocket-remove-unsupported-CNI-plugins.patch
 # Bottlerocket-specific - fix procfs path for non-containerized ECS agent
 Patch0005: 0005-bottlerocket-fix-procfs-path-on-host.patch
 
+# Bottlerocket-specific - fix ECS exec directories
+Patch0006: 0006-execcmd-change-execcmd-directories-for-Bottlerocket.patch
+
 # Bottlerocket-specific - filesystem location for ECS CNI plugins
 Patch1001: 1001-bottlerocket-default-filesystem-locations.patch
 
@@ -75,6 +78,7 @@ BuildRequires: %{_cross_os}glibc-devel
 
 Requires: %{_cross_os}docker-engine
 Requires: %{_cross_os}iptables
+Requires: %{_cross_os}amazon-ssm-agent
 
 %description
 %{summary}.
@@ -248,6 +252,27 @@ install -D -p -m 0644 %{S:102} %{buildroot}%{_cross_tmpfilesdir}/ecs.conf
 install -D -p -m 0644 %{S:103} %{buildroot}%{_cross_sysctldir}/90-ecs.conf
 install -D -p -m 0644 %{S:104} %{buildroot}%{_cross_templatedir}/ecs.config
 
+# Directory for agents used by the ECS agent, e.g. SSM, Service Connect
+%global managed_agents %{_cross_libexecdir}/amazon-ecs-agent/managed-agents
+install -d %{buildroot}%{managed_agents}
+
+# Directory for ECS exec artifacts
+%global ecs_exec_dir %{managed_agents}/execute-command
+install -d %{buildroot}%{ecs_exec_dir}
+
+# The ECS agent looks for real versioned directories under bin, symlinks will be
+# ignored. Thus, link the bin directory in the ssm-agent directory which contains
+# the versioned binaries.
+ln -rs %{buildroot}%{_cross_libexecdir}/amazon-ssm-agent/bin %{buildroot}/%{ecs_exec_dir}/bin
+
+# The ECS agent generates and stores configurations for ECS exec sessions inside
+# "config", thus reference it with a symlink to a directory under /var
+ln -rs %{buildroot}%{_cross_localstatedir}/ecs/managed-agents/execute-command/config %{buildroot}%{ecs_exec_dir}/config
+
+# Use the host's certificates bundle for ECS exec sessions
+install -d %{buildroot}%{ecs_exec_dir}/certs
+ln -rs %{buildroot}%{_cross_sysconfdir}/pki/tls/certs/ca-bundle.crt %{buildroot}%{ecs_exec_dir}/certs/tls-ca-bundle.pem
+
 # Prepare license and vendor information so it can be co-installable
 mv %{ecscni_gorepo}-%{ecscni_gitrev}/LICENSE %{ecscni_gorepo}-%{ecscni_gitrev}/LICENSE.%{ecscni_gorepo}
 mv %{vpccni_gorepo}-%{vpccni_gitrev}/LICENSE %{vpccni_gorepo}-%{vpccni_gitrev}/LICENSE.%{vpccni_gorepo}
@@ -289,6 +314,7 @@ mv %{vpccni_gorepo}-%{vpccni_gitrev}/vendor go-vendor/%{vpccni_gorepo}
 %{_cross_libexecdir}/amazon-ecs-agent/ecs-eni
 %{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
 %{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
+%{_cross_libexecdir}/amazon-ecs-agent/managed-agents
 %{_cross_unitdir}/ecs.service
 %{_cross_unitdir}/etc-ecs.mount
 %{_cross_tmpfilesdir}/ecs.conf

@@ -10,6 +10,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "amazon-ssm-agent"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "aws-dev"
 version = "0.1.0"
 dependencies = [
@@ -343,6 +350,7 @@ dependencies = [
 name = "ecs-agent"
 version = "0.1.0"
 dependencies = [
+ "amazon-ssm-agent",
  "glibc",
 ]
 
