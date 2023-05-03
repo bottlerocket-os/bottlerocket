@@ -1,0 +1,16 @@
+[package]
+name = "amazon-ssm-agent"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/aws/amazon-ssm-agent/archive/3.2.815.0/amazon-ssm-agent-3.2.815.0.tar.gz"
+sha512 = "724b659f7141dc9c797288f109b35c2a516f08f843d472da0d44f1a04c5fbce30fd8df0cde95be355ca2a710b146c89e1ee3bb5905c297a90b3aaccf78d9da8b"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
