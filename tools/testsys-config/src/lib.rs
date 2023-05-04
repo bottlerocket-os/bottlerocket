@@ -373,6 +373,7 @@ pub struct TestsysImages {
     pub ecs_test_agent_image: Option<String>,
     pub migration_test_agent_image: Option<String>,
     pub k8s_workload_agent_image: Option<String>,
+    pub ecs_workload_agent_image: Option<String>,
     pub controller_image: Option<String>,
     pub testsys_agent_pull_secret: Option<String>,
 }
@@ -405,6 +406,7 @@ impl TestsysImages {
             ecs_test_agent_image: Some(format!("{}/ecs-test-agent:{tag}", registry)),
             migration_test_agent_image: Some(format!("{}/migration-test-agent:{tag}", registry)),
             k8s_workload_agent_image: Some(format!("{}/k8s-workload-agent:{tag}", registry)),
+            ecs_workload_agent_image: Some(format!("{}/ecs-workload-agent:{tag}", registry)),
             controller_image: Some(format!("{}/controller:{tag}", registry)),
             testsys_agent_pull_secret: None,
         }
@@ -440,6 +442,9 @@ impl TestsysImages {
             k8s_workload_agent_image: self
                 .k8s_workload_agent_image
                 .or(other.k8s_workload_agent_image),
+            ecs_workload_agent_image: self
+                .ecs_workload_agent_image
+                .or(other.ecs_workload_agent_image),
             controller_image: self.controller_image.or(other.controller_image),
             testsys_agent_pull_secret: self
                 .testsys_agent_pull_secret

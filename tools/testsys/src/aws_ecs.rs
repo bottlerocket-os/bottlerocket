@@ -5,12 +5,14 @@ use crate::crds::{
 };
 use crate::error::{self, Result};
 use crate::migration::migration_crd;
-use bottlerocket_types::agent_config::{ClusterType, EcsClusterConfig, EcsTestConfig};
+use bottlerocket_types::agent_config::{
+    ClusterType, EcsClusterConfig, EcsTestConfig, EcsWorkloadTestConfig, WorkloadTest,
+};
 use log::debug;
 use maplit::btreemap;
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
-use testsys_model::{Crd, DestructionPolicy};
+use testsys_model::{Crd, DestructionPolicy, Test};
 
 /// A `CrdCreator` responsible for creating crd related to `aws-ecs` variants.
 pub(crate) struct AwsEcsCreator {
@@ -193,13 +195,85 @@ impl CrdCreator for AwsEcsCreator {
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(test_crd))))
     }
 
-    async fn workload_crd<'a>(&self, _test_input: TestInput<'a>) -> Result<CreateCrdOutput> {
-        Err(error::Error::Invalid {
-            what: "Workload testing is not supported for non-k8s variants".to_string(),
-        })
+    async fn workload_crd<'a>(&self, test_input: TestInput<'a>) -> Result<CreateCrdOutput> {
+        Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Test(workload_crd(
+            &self.region,
+            test_input,
+        )?))))
     }
 
     fn additional_fields(&self, _test_type: &str) -> BTreeMap<String, String> {
         btreemap! {"region".to_string() => self.region.clone()}
     }
+}
+
+/// Create a workload CRD for K8s testing.
+pub(crate) fn workload_crd(region: &str, test_input: TestInput) -> Result<Test> {
+    let cluster_resource_name = test_input
+        .cluster_crd_name
+        .as_ref()
+        .expect("A cluster name is required for ECS workload tests");
+    let bottlerocket_resource_name = test_input
+        .bottlerocket_crd_name
+        .as_ref()
+        .expect("A bottlerocket resource name is required for ECS workload tests");
+
+    let labels = test_input.crd_input.labels(btreemap! {
+        "testsys/type".to_string() => test_input.test_type.to_string(),
+        "testsys/cluster".to_string() => cluster_resource_name.to_string(),
+    });
+    let plugins: Vec<_> = test_input
+        .crd_input
+        .config
+        .workloads
+        .iter()
+        .map(|(name, image)| WorkloadTest {
+            name: name.to_string(),
+            image: image.to_string(),
+            ..Default::default()
+        })
+        .collect();
+    if plugins.is_empty() {
+        return Err(error::Error::Invalid {
+            what: "There were no plugins specified in the workload test.
+            Workloads can be specified in `Test.toml` or via the command line."
+                .to_string(),
+        });
+    }
+
+    EcsWorkloadTestConfig::builder()
+        .resources(bottlerocket_resource_name)
+        .resources(cluster_resource_name)
+        .set_depends_on(Some(test_input.prev_tests))
+        .set_retries(Some(5))
+        .image(
+            test_input
+                .crd_input
+                .images
+                .ecs_workload_agent_image
+                .to_owned()
+                .expect("The default K8s workload testing image is missing"),
+        )
+        .set_image_pull_secret(
+            test_input
+                .crd_input
+                .images
+                .testsys_agent_pull_secret
+                .to_owned(),
+        )
+        .keep_running(true)
+        .region(region.to_string())
+        .cluster_name_template(cluster_resource_name, "clusterName")
+        .assume_role(test_input.crd_input.config.agent_role.to_owned())
+        .tests(plugins)
+        .set_secrets(Some(test_input.crd_input.config.secrets.to_owned()))
+        .set_labels(Some(labels))
+        .build(format!(
+            "{}{}",
+            cluster_resource_name,
+            test_input.name_suffix.unwrap_or("-test")
+        ))
+        .context(error::BuildSnafu {
+            what: "Workload CRD",
+        })
 }

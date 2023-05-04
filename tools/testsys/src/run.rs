@@ -559,6 +559,13 @@ pub(crate) struct TestsysImages {
     )]
     pub(crate) k8s_workload: Option<String>,
 
+    /// ECS workload agent URI. If not provided the latest released test agent will be used.
+    #[clap(
+        long = "ecs-workload-agent-image",
+        env = "TESTSYS_ECS_WORKLOAD_AGENT_IMAGE"
+    )]
+    pub(crate) ecs_workload: Option<String>,
+
     /// TestSys controller URI. If not provided the latest released controller will be used.
     #[clap(long = "controller-image", env = "TESTSYS_CONTROLLER_IMAGE")]
     pub(crate) controller_uri: Option<String>,
@@ -584,6 +591,7 @@ impl From<TestsysImages> for testsys_config::TestsysImages {
             ecs_test_agent_image: val.ecs_test,
             migration_test_agent_image: val.migration_test,
             k8s_workload_agent_image: val.k8s_workload,
+            ecs_workload_agent_image: val.ecs_workload,
             controller_image: val.controller_uri,
             testsys_agent_pull_secret: val.secret,
         }
