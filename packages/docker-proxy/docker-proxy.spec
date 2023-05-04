@@ -3,7 +3,7 @@
 %global goimport %{goproject}/%{gorepo}
 # Use the libnetwork commit listed in this file for the docker version we ship:
 # https://github.com/moby/moby/blob/DOCKER-VERSION-HERE/vendor.conf
-%global commit f7cdd0e7adbf0818e384178093aa67e38ffdb112
+%global commit 0dde5c895075df6e3630e76f750a447cf63f4789
 
 %global _dwz_low_mem_die_limit 0
 
