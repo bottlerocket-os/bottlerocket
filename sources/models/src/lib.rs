@@ -454,6 +454,8 @@ pub type ConfigurationFiles = HashMap<String, ConfigurationFile>;
 struct ConfigurationFile {
     path: SingleLineString,
     template_path: SingleLineString,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    mode: Option<String>,
 }
 
 ///// Metadata

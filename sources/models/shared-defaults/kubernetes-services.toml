@@ -22,18 +22,22 @@ template-path = "/usr/share/templates/kubelet-env"
 [configuration-files.kubelet-config]
 path = "/etc/kubernetes/kubelet/config"
 template-path = "/usr/share/templates/kubelet-config"
+mode = "0600"
 
 [configuration-files.kubelet-kubeconfig]
 path = "/etc/kubernetes/kubelet/kubeconfig"
 template-path = "/usr/share/templates/kubelet-kubeconfig"
+mode = "0600"
 
 [configuration-files.kubelet-bootstrap-kubeconfig]
 path = "/etc/kubernetes/kubelet/bootstrap-kubeconfig"
 template-path = "/usr/share/templates/kubelet-bootstrap-kubeconfig"
+mode = "0600"
 
 [configuration-files.kubernetes-ca-crt]
 path = "/etc/kubernetes/pki/ca.crt"
 template-path = "/usr/share/templates/kubernetes-ca-crt"
+mode = "0600"
 
 [configuration-files.kubelet-server-crt]
 path = "/etc/kubernetes/pki/kubelet-server.crt"
@@ -46,10 +50,12 @@ template-path = "/usr/share/templates/kubelet-server-key"
 [configuration-files.kubelet-exec-start-conf]
 path = "/etc/systemd/system/kubelet.service.d/exec-start.conf"
 template-path = "/usr/share/templates/kubelet-exec-start-conf"
+mode = "0600"
 
 [configuration-files.credential-provider-config-yaml]
 path = "/etc/kubernetes/kubelet/credential-provider-config.yaml"
 template-path = "/usr/share/templates/credential-provider-config-yaml"
+mode = "0600"
 
 [services.static-pods]
 configuration-files = []
