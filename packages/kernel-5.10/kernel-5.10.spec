@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-5.10
-Version: 5.10.177
+Version: 5.10.178
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/7ca24767b6ccf9edb988e7415593fb1fef1691b323a0a5f41077742adecc881f/kernel-5.10.177-158.645.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/13be720c0258208a986213f02d549940509f5125eac626729bc5dd3612bef2f8/kernel-5.10.178-162.673.amzn2.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
