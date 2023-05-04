@@ -41,3 +41,4 @@ glibc = { path = "../glibc" }
 # docker-engine = { path = "../docker-engine" }
 # `iptables` is only needed at runtime, and is pulled in by `release`.
 # iptables = { path = "../iptables" }
+amazon-ssm-agent = { path = "../amazon-ssm-agent" }

@@ -1,0 +1,67 @@
+From c9f3e2e695fa0c426c7c9196354c5ac7f138845a Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Wed, 3 May 2023 18:23:40 +0000
+Subject: [PATCH] execcmd: change execcmd directories for Bottlerocket
+
+The ECS agent performs checks on directories that, in normal
+circumstances, are mounted on the ECS agent container.  Since the ECS
+agent runs as a service in Bottlerocket, the paths to the directories
+are different.
+
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+---
+ agent/app/agent_capability_unix.go              | 2 +-
+ agent/engine/execcmd/manager_init_task_linux.go | 4 ++--
+ agent/engine/execcmd/manager_linux.go           | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/agent/app/agent_capability_unix.go b/agent/app/agent_capability_unix.go
+index 51b4393..76492c7 100644
+--- a/agent/app/agent_capability_unix.go
++++ b/agent/app/agent_capability_unix.go
+@@ -37,7 +37,7 @@ const (
+ 	SSE41                 = "sse4_1"
+ 	SSE42                 = "sse4_2"
+ 	CpuInfoPath           = "/proc/cpuinfo"
+-	capabilityDepsRootDir = "/managed-agents"
++	capabilityDepsRootDir = "/usr/libexec/amazon-ecs-agent/managed-agents"
+ )
+ 
+ var (
+diff --git a/agent/engine/execcmd/manager_init_task_linux.go b/agent/engine/execcmd/manager_init_task_linux.go
+index 05af158..6117e55 100644
+--- a/agent/engine/execcmd/manager_init_task_linux.go
++++ b/agent/engine/execcmd/manager_init_task_linux.go
+@@ -24,7 +24,7 @@ import (
+ )
+ 
+ const (
+-	ecsAgentExecDepsDir = "/managed-agents/execute-command"
++	ecsAgentExecDepsDir = "/usr/libexec/amazon-ecs-agent/managed-agents/execute-command"
+ 
+ 	// ecsAgentDepsBinDir is the directory where ECS Agent will read versions of SSM agent
+ 	ecsAgentDepsBinDir   = ecsAgentExecDepsDir + "/bin"
+@@ -40,7 +40,7 @@ const (
+ 	ContainerLogDir    = "/var/log/amazon/ssm"
+ 	ECSAgentExecLogDir = "/log/exec"
+ 
+-	HostCertFile            = "/var/lib/ecs/deps/execute-command/certs/tls-ca-bundle.pem"
++	HostCertFile            = "/usr/libexec/amazon-ecs-agent/managed-agents/execute-command/certs/tls-ca-bundle.pem"
+ 	ContainerCertFileSuffix = "certs/amazon-ssm-agent.crt"
+ 
+ 	ContainerConfigFileSuffix = "configuration/" + containerConfigFileName
+diff --git a/agent/engine/execcmd/manager_linux.go b/agent/engine/execcmd/manager_linux.go
+index 706d5da..6322816 100644
+--- a/agent/engine/execcmd/manager_linux.go
++++ b/agent/engine/execcmd/manager_linux.go
+@@ -16,6 +16,6 @@
+ package execcmd
+ 
+ const (
+-	hostExecDepsDir = "/var/lib/ecs/deps/execute-command"
++	hostExecDepsDir = "/usr/libexec/amazon-ecs-agent/managed-agents/execute-command"
+ 	HostBinDir      = hostExecDepsDir + "/bin"
+ )
+-- 
+2.39.2
+
