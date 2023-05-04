@@ -778,7 +778,9 @@ pub struct CpuManagerPolicy {
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum ValidCpuManagerPolicy {
+    #[serde(alias = "Static")]
     Static,
+    #[serde(alias = "None")]
     None,
 }
 
@@ -802,7 +804,7 @@ mod test_cpu_manager_policy {
 
     #[test]
     fn good_cpu_manager_policy() {
-        for ok in &["static", "none"] {
+        for ok in &["Static", "static", "None", "none"] {
             CpuManagerPolicy::try_from(*ok).unwrap();
         }
     }
