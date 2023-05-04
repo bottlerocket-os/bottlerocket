@@ -140,7 +140,7 @@ on_exit "git checkout --quiet '${gitrev_original}'"
 
 mkdir -p "${output_dir}" || bail "Failed to create output directory '${output_dir}'"
 
-for state in before after; do
+for state in after before; do
 
     gitrev_var=gitrev_${state}
     git checkout --quiet "${!gitrev_var}" || bail "Cannot check out '${!gitrev_var}'."
