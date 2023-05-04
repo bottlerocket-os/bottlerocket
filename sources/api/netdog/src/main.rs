@@ -82,6 +82,8 @@ enum SubCommand {
     WriteResolvConf(cli::WriteResolvConfArgs),
     #[cfg(net_backend = "systemd-networkd")]
     WritePrimaryInterfaceStatus(cli::WritePrimaryInterfaceStatusArgs),
+    #[cfg(net_backend = "systemd-networkd")]
+    PrimaryInterface(cli::PrimaryInterfaceArgs),
 }
 
 async fn run() -> cli::Result<()> {
@@ -98,6 +100,8 @@ async fn run() -> cli::Result<()> {
         SubCommand::WriteResolvConf(_) => cli::write_resolv_conf::run()?,
         #[cfg(net_backend = "systemd-networkd")]
         SubCommand::WritePrimaryInterfaceStatus(_) => cli::write_primary_interface_status::run()?,
+        #[cfg(net_backend = "systemd-networkd")]
+        SubCommand::PrimaryInterface(_) => cli::primary_interface::run()?,
     }
     Ok(())
 }
