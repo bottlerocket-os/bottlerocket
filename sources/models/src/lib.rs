@@ -173,6 +173,10 @@ mod variant;
 mod de;
 
 use modeled_types::KubernetesCPUManagerPolicyOption;
+use modeled_types::KubernetesEvictionKey;
+use modeled_types::KubernetesMemoryManagerPolicy;
+use modeled_types::KubernetesMemoryReservation;
+use modeled_types::NonNegativeInteger;
 pub use variant::*;
 
 // Types used to communicate between client and server for 'apiclient exec'.
@@ -193,11 +197,11 @@ use crate::modeled_types::{
     DNSDomain, ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     ECSDurationValue, EtcHostsEntries, FriendlyVersion, Identifier, IntegerPercent, KmodKey,
     KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesCloudProvider,
-    KubernetesClusterDnsIp, KubernetesClusterName, KubernetesDurationValue,
-    KubernetesEvictionHardKey, KubernetesLabelKey, KubernetesLabelValue, KubernetesQuantityValue,
-    KubernetesReservedResourceKey, KubernetesTaintValue, KubernetesThresholdValue, Lockdown,
-    OciDefaultsCapability, OciDefaultsResourceLimitType, PemCertificateString, SingleLineString,
-    SysctlKey, TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
+    KubernetesClusterDnsIp, KubernetesClusterName, KubernetesDurationValue, KubernetesLabelKey,
+    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
+    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, OciDefaultsCapability,
+    OciDefaultsResourceLimitType, PemCertificateString, SingleLineString, SysctlKey,
+    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -228,7 +232,10 @@ struct KubernetesSettings {
     authentication_mode: KubernetesAuthenticationMode,
     bootstrap_token: KubernetesBootstrapToken,
     standalone_mode: bool,
-    eviction_hard: HashMap<KubernetesEvictionHardKey, KubernetesThresholdValue>,
+    eviction_hard: HashMap<KubernetesEvictionKey, KubernetesThresholdValue>,
+    eviction_soft: HashMap<KubernetesEvictionKey, KubernetesThresholdValue>,
+    eviction_soft_grace_period: HashMap<KubernetesEvictionKey, KubernetesDurationValue>,
+    eviction_max_pod_grace_period: NonNegativeInteger,
     kube_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
     system_reserved: HashMap<KubernetesReservedResourceKey, KubernetesQuantityValue>,
     allowed_unsafe_sysctls: Vec<SingleLineString>,
@@ -242,6 +249,7 @@ struct KubernetesSettings {
     kube_api_burst: i32,
     container_log_max_size: KubernetesQuantityValue,
     container_log_max_files: i32,
+    cpu_cfs_quota_enforced: bool,
     cpu_manager_policy: CpuManagerPolicy,
     cpu_manager_reconcile_period: KubernetesDurationValue,
     cpu_manager_policy_options: Vec<KubernetesCPUManagerPolicyOption>,
@@ -255,6 +263,10 @@ struct KubernetesSettings {
     credential_providers: HashMap<Identifier, CredentialProvider>,
     server_certificate: ValidBase64,
     server_key: ValidBase64,
+    shutdown_grace_period: KubernetesDurationValue,
+    shutdown_grace_period_for_critical_pods: KubernetesDurationValue,
+    memory_manager_reserved_memory: HashMap<Identifier, KubernetesMemoryReservation>,
+    memory_manager_policy: KubernetesMemoryManagerPolicy,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.

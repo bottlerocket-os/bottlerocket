@@ -46,6 +46,7 @@ members = [
     "api/migration/migrations/v1.13.4/add-hostname-override-metadata",
     "api/migration/migrations/v1.14.0/kubernetes-gc-percent-type-change",
     "api/migration/migrations/v1.14.0/kubelet-config-settings",
+    "api/migration/migrations/v1.14.0/kubelet-prefix-config-settings",
     "api/migration/migrations/v1.14.0/k8s-services-mode",
 
     "bottlerocket-release",

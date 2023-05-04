@@ -204,5 +204,6 @@ version = "1.14.0"
 "(1.13.5, 1.14.0)" = [
     "migrate_v1.14.0_kubernetes-gc-percent-type-change.lz4",
     "migrate_v1.14.0_kubelet-config-settings.lz4",
+    "migrate_v1.14.0_kubelet-prefix-config-settings.lz4",
     "migrate_v1.14.0_k8s-services-mode.lz4",
 ]

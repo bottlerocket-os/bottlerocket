@@ -41,6 +41,21 @@ evictionHard:
   {{@key}}: "{{this}}"
   {{/each}}
 {{/if}}
+{{#if settings.kubernetes.eviction-soft}}
+evictionSoft:
+  {{#each settings.kubernetes.eviction-soft}}
+  {{@key}}: "{{this}}"
+  {{/each}}
+{{/if}}
+{{#if settings.kubernetes.eviction-soft-grace-period}}
+evictionSoftGracePeriod:
+  {{#each settings.kubernetes.eviction-soft-grace-period}}
+  {{@key}}: "{{this}}"
+  {{/each}}
+{{/if}}
+{{#if settings.kubernetes.eviction-max-pod-grace-period}}
+evictionMaxPodGracePeriod: {{settings.kubernetes.eviction-max-pod-grace-period}}
+{{/if}}
 {{#if settings.kubernetes.allowed-unsafe-sysctls}}
 allowedUnsafeSysctls: {{settings.kubernetes.allowed-unsafe-sysctls}}
 {{/if}}
@@ -76,6 +91,7 @@ systemReserved:
   {{/each}}
 systemReservedCgroup: "/system"
 {{/if}}
+cpuCFSQuota: {{default true settings.kubernetes.cpu-cfs-quota-enforced}}
 cpuManagerPolicy: {{default "none" settings.kubernetes.cpu-manager-policy}}
 {{#if settings.kubernetes.cpu-manager-reconcile-period}}
 cpuManagerReconcilePeriod: {{settings.kubernetes.cpu-manager-reconcile-period}}
@@ -134,4 +150,33 @@ containerLogMaxSize: {{settings.kubernetes.container-log-max-size}}
 {{/if}}
 {{#if settings.kubernetes.container-log-max-files includeZero=true}}
 containerLogMaxFiles: {{settings.kubernetes.container-log-max-files}}
+{{/if}}
+{{#if settings.kubernetes.shutdown-grace-period}}
+shutdownGracePeriod: {{settings.kubernetes.shutdown-grace-period}}
+{{/if}}
+{{#if settings.kubernetes.shutdown-grace-period-for-critical-pods}}
+shutdownGracePeriodCriticalPods: {{settings.kubernetes.shutdown-grace-period-for-critical-pods}}
+{{/if}}
+{{#if settings.kubernetes.memory-manager-reserved-memory}}
+{{#if (any_enabled settings.kubernetes.memory-manager-reserved-memory)}}
+{{#if settings.kubernetes.memory-manager-policy}}
+memoryManagerPolicy: {{settings.kubernetes.memory-manager-policy}}
+{{/if}}
+reservedMemory:
+{{#each settings.kubernetes.memory-manager-reserved-memory}}
+{{#if this.enabled}}
+  - numaNode: {{@key}}
+    limits:
+{{#if this.memory}}
+      memory: {{this.memory}}
+{{/if}}
+{{#if this.hugepages-1Gi}}
+      hugepages-1Gi: {{this.hugepages-1Gi}}
+{{/if}}
+{{#if this.hugepages-2Mi}}
+      hugepages-2Mi: {{this.hugepages-2Mi}}
+{{/if}}
+{{/if}}
+{{/each}}
+{{/if}}
 {{/if}}

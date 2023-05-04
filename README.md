@@ -417,6 +417,7 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.cluster-domain`: The DNS domain for this cluster, allowing all Kubernetes-run containers to search this domain before the host's search domains. Defaults to `cluster.local`.
 * `settings.kubernetes.container-log-max-files`: The maximum number of container log files that can be present for a container.
 * `settings.kubernetes.container-log-max-size`: The maximum size of container log file before it is rotated.
+* `settings.kubernetes.cpu-cfs-quota-enforced`: Whether CPU CFS quotas are enforced. Defaults to `true`.
 * `settings.kubernetes.cpu-manager-policy`: Specifies the CPU manager policy. Possible values are `static` and `none`. Defaults to `none`. If you want to allow pods with certain resource characteristics to be granted increased CPU affinity and exclusivity on the node, you can set this setting to `static`. You should reboot if you change this setting after startup - try `apiclient reboot`.
 * `settings.kubernetes.cpu-manager-policy-options`: Policy options to apply when `cpu-manager-policy` is set to `static`. Currently `full-pcpus-only` is the only option.
 
@@ -476,47 +477,90 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.event-burst`: The maximum size of a burst of event creations.
 * `settings.kubernetes.event-qps`: The maximum event creations per second.
 * `settings.kubernetes.eviction-hard`: The signals and thresholds that trigger pod eviction.
+* `settings.kubernetes.eviction-max-pod-grace-period`: Maximum grace period, in seconds, to wait for pod termination before soft eviction. Default is `0`.
+* `settings.kubernetes.eviction-soft`: The signals and thresholds that trigger pod eviction with a provided grace period.
+* `settings.kubernetes.eviction-soft-grace-period`: Delay for each signal to wait for pod termination before eviction.
+
   Remember to quote signals (since they all contain ".") and to quote all values.
 
-  Example user data for setting up eviction hard:
+  Example user data for setting up eviction values:
 
   ```toml
   [settings.kubernetes.eviction-hard]
   "memory.available" = "15%"
+
+  [settings.kubernetes.eviction-soft]
+  "memory.available" = "12%"
+
+  [settings.kubernetes.eviction-soft-grace-period]
+  "memory.available" = "30s"
+
+  [settings.kubernetes]
+  "eviction-max-pod-grace-period" = 40
   ```
 
 * `settings.kubernetes.image-gc-high-threshold-percent`: The percent of disk usage after which image garbage collection is always run, expressed as an integer from 0-100 inclusive.
 * `settings.kubernetes.image-gc-low-threshold-percent`: The percent of disk usage before which image garbage collection is never run, expressed as an integer from 0-100 inclusive.
 
-Since v1.14.0 `image-gc-high-threshold-percent` and `image-gc-low-threshold-percent` can be represented as numbers.
-For example:
+  Since v1.14.0 `image-gc-high-threshold-percent` and `image-gc-low-threshold-percent` can be represented as numbers.
+  For example:
 
-```toml
-[settings.kubernetes]
-image-gc-high-threshold-percent = 85
-image-gc-low-threshold-percent = 80
-```
+  ```toml
+  [settings.kubernetes]
+  image-gc-high-threshold-percent = 85
+  image-gc-low-threshold-percent = 80
+  ```
 
-For backward compatibility, both string and numeric representations are accepted since v1.14.0.
-Prior to v1.14.0 these needed to be represented as strings, for example:
+  For backward compatibility, both string and numeric representations are accepted since v1.14.0.
+  Prior to v1.14.0 these needed to be represented as strings, for example:
 
-```toml
-[settings.kubernetes]
-image-gc-high-threshold-percent = "85"
-image-gc-low-threshold-percent = "80"
-```
+  ```toml
+  [settings.kubernetes]
+  image-gc-high-threshold-percent = "85"
+  image-gc-low-threshold-percent = "80"
+  ```
 
-If you downgrade from v1.14.0 to an earlier version, and you have these values set as numbers, they will be converted to strings on downgrade.
+  If you downgrade from v1.14.0 to an earlier version, and you have these values set as numbers, they will be converted to strings on downgrade.
 
 * `settings.kubernetes.kube-api-burst`: The burst to allow while talking with kubernetes.
 * `settings.kubernetes.kube-api-qps`: The QPS to use while talking with kubernetes apiserver.
 * `settings.kubernetes.log-level`: Adjust the logging verbosity of the `kubelet` process.
   The default log level is 2, with higher numbers enabling more verbose logging.
+* `settings.kubernetes.memory-manager-policy`: The memory management policy to use: `None` (default) or `Static`.
+  Note, when using the `Static` policy you should also set `settings.kubernetes.memory-manager-reserved-memory` values.
+* `settings.kubernetes.memory-manager-reserved-memory`: Used to set the total amount of reserved memory for a node.
+  These settings are used to configure memory manager policy when `settings.kubernetes.memory-manager-policy` is set to `Static`.
+
+  `memory-manager-reserved-memory` is set per NUMA node. For example:
+
+  ```toml
+  [settings.kubernetes]
+  "memory-manager-policy" = "Static"
+
+  [settings.kubernetes.memory-manager-reserved-memory.0]
+  # Reserve a single 1GiB huge page along with 674MiB of memory
+  "enabled" = true
+  "memory" = "674Mi"
+  "hugepages-1Gi" = "1Gi"
+
+  [settings.kubernetes.memory-manager-reserved-memory.1]
+  # Reserve 1,074 2MiB huge pages
+  "enabled" = true
+  "hugepages-2Mi" = "2148Mi"
+  ```
+
+  **Warning:** `memory-manager-reserved-memory` settings are an advanced configuration and requires a clear understanding of what you are setting.
+  Misconfiguration of reserved memory settings may cause the Kubernetes `kubelet` process to fail.
+  It can be very difficult to recover from configuration errors.
+  Use the memory reservation information from `kubectl describe node` and make sure you understand the Kubernetes documentation related to the [memory manager](https://kubernetes.io/docs/tasks/administer-cluster/memory-manager/) and how to [reserve compute resources for system daemons](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/).
+
 * `settings.kubernetes.pod-pids-limit`: The maximum number of processes per pod.
 * `settings.kubernetes.provider-id`: This sets the unique ID of the instance that an external provider (i.e. cloudprovider) can use to identify a specific node.
 * `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.
 * `settings.kubernetes.registry-qps`: The registry pull QPS.
 * `settings.kubernetes.server-tls-bootstrap`: Enables or disables server certificate bootstrap. When enabled, the kubelet will request a certificate from the certificates.k8s.io API. This requires an approver to approve the certificate signing requests (CSR). Defaults to `true`.
+* `settings.kubernetes.shutdown-grace-period`: Delay the node should wait for pod termination before shutdown. Default is `0s`.
+* `settings.kubernetes.shutdown-grace-period-for-critical-pods`: The portion of the shutdown delay that should be dedicated to critical pod shutdown. Default is `0s`.
 * `settings.kubernetes.standalone-mode`: Whether to run the kubelet in standalone mode, without connecting to an API server. Defaults to `false`.
 * `settings.kubernetes.system-reserved`: Resources reserved for system components.
 

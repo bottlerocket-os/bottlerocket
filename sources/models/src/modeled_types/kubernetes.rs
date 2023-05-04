@@ -464,17 +464,12 @@ mod test_kubernetes_bootstrap_token {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-/// KubernetesEvictionHardKey represents a string that contains a valid Kubernetes eviction hard key.
+/// KubernetesEvictionKey represents a string that contains a valid Kubernetes eviction key.
 /// https://kubernetes.io/docs/tasks/administer-cluster/out-of-resource/
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct KubernetesEvictionHardKey {
-    inner: String,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Scalar)]
 #[serde(rename_all = "lowercase")]
-enum EvictionSignal {
+pub enum KubernetesEvictionKey {
     #[serde(rename = "memory.available")]
     MemoryAvailable,
     #[serde(rename = "nodefs.available")]
@@ -489,27 +484,13 @@ enum EvictionSignal {
     PidAvailable,
 }
 
-impl TryFrom<&str> for KubernetesEvictionHardKey {
-    type Error = error::Error;
-
-    fn try_from(input: &str) -> Result<Self, Self::Error> {
-        serde_plain::from_str::<EvictionSignal>(input).context(error::InvalidPlainValueSnafu {
-            field: "Eviction Hard key",
-        })?;
-        Ok(KubernetesEvictionHardKey {
-            inner: input.to_string(),
-        })
-    }
-}
-string_impls_for!(KubernetesEvictionHardKey, "KubernetesEvictionHardKey");
-
 #[cfg(test)]
-mod test_kubernetes_eviction_hard_key {
-    use super::KubernetesEvictionHardKey;
+mod test_kubernetes_eviction_key {
+    use super::KubernetesEvictionKey;
     use std::convert::TryFrom;
 
     #[test]
-    fn good_eviction_hard_key() {
+    fn good_eviction_key() {
         for ok in &[
             "memory.available",
             "nodefs.available",
@@ -518,14 +499,14 @@ mod test_kubernetes_eviction_hard_key {
             "imagefs.inodesFree",
             "pid.available",
         ] {
-            KubernetesEvictionHardKey::try_from(*ok).unwrap();
+            KubernetesEvictionKey::try_from(*ok).unwrap();
         }
     }
 
     #[test]
-    fn bad_eviction_hard_key() {
+    fn bad_eviction_key() {
         for err in &["", "storage.available", ".bad", "bad.", &"a".repeat(64)] {
-            KubernetesEvictionHardKey::try_from(*err).unwrap_err();
+            KubernetesEvictionKey::try_from(*err).unwrap_err();
         }
     }
 }
@@ -797,7 +778,9 @@ pub struct CpuManagerPolicy {
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum ValidCpuManagerPolicy {
+    #[serde(alias = "Static")]
     Static,
+    #[serde(alias = "None")]
     None,
 }
 
@@ -821,7 +804,7 @@ mod test_cpu_manager_policy {
 
     #[test]
     fn good_cpu_manager_policy() {
-        for ok in &["static", "none"] {
+        for ok in &["Static", "static", "None", "none"] {
             CpuManagerPolicy::try_from(*ok).unwrap();
         }
     }
@@ -1355,6 +1338,78 @@ mod test_kubernetes_cpu_manager_policy_option {
     fn bad_cpu_manager_policy_option() {
         for err in &["fullPCPUSOnly", "", "align-by-socket"] {
             KubernetesCPUManagerPolicyOption::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KubernetesMemoryReservationKey represents a string that contains a valid Kubernetes memory
+/// resource reservation key.
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Scalar)]
+pub enum KubernetesMemoryReservationKey {
+    #[serde(rename = "memory")]
+    Memory,
+    #[serde(rename = "hugepages-2Mi")]
+    HugePages2Mi,
+    #[serde(rename = "hugepages-1Gi")]
+    HugePages1Gi,
+}
+
+#[cfg(test)]
+mod test_memory_reservation_key {
+    use super::KubernetesMemoryReservationKey;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_memory_reservation_key() {
+        for ok in &["memory", "hugepages-2Mi", "hugepages-1Gi"] {
+            KubernetesMemoryReservationKey::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_memory_reservation_key() {
+        for err in &["", "cpu", "hugepages-1Mi", "HugePages_1Gi", &"a".repeat(64)] {
+            KubernetesMemoryReservationKey::try_from(*err).unwrap_err();
+        }
+    }
+}
+
+/// KubernetesMemoryReservation enables setting kubelet reserved memory values.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct KubernetesMemoryReservation {
+    enabled: bool,
+    #[serde(flatten)]
+    limits: HashMap<KubernetesMemoryReservationKey, KubernetesQuantityValue>,
+}
+
+/// KubernetesMemoryManagerPolicy represents the valid options for the memory manager policy.
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Serialize, Deserialize, Scalar)]
+pub enum KubernetesMemoryManagerPolicy {
+    #[serde(alias = "static")]
+    Static,
+    #[serde(alias = "none")]
+    None,
+}
+
+#[cfg(test)]
+mod test_kubernetes_memory_manager_policy {
+    use super::KubernetesMemoryManagerPolicy;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_policy_key() {
+        for ok in &["Static", "static", "None", "none"] {
+            KubernetesMemoryManagerPolicy::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_policy_key() {
+        for err in &["", "dynamic", &"a".repeat(64)] {
+            KubernetesMemoryManagerPolicy::try_from(*err).unwrap_err();
         }
     }
 }
