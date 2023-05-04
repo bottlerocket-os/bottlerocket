@@ -68,6 +68,7 @@ pub(crate) fn sonobuoy_crd(test_input: TestInput) -> Result<Test> {
                 .to_owned()
                 .map(e2e_repo_config_base64),
         )
+        .sonobuoy_image(test_input.crd_input.config.sonobuoy_image.to_owned())
         .kube_conformance_image(test_input.crd_input.config.conformance_image.to_owned())
         .assume_role(test_input.crd_input.config.agent_role.to_owned())
         .set_secrets(Some(test_input.crd_input.config.secrets.to_owned()))
