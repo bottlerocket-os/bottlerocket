@@ -9,6 +9,7 @@ fn run() -> Result<()> {
         "configuration-files.kubelet-bootstrap-kubeconfig.mode",
         "configuration-files.kubelet-exec-start-conf.mode",
         "configuration-files.credential-provider-config-yaml.mode",
+        "configuration-files.kubernetes-ca-crt.mode",
     ]))
 }
 
