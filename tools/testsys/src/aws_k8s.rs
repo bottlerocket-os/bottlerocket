@@ -1,4 +1,4 @@
-use crate::aws_resources::{ami, ami_name, ec2_crd, get_ami_id};
+use crate::aws_resources::{ami, ami_name, ec2_crd, ec2_karpenter_crd, get_ami_id};
 use crate::crds::{
     BottlerocketInput, ClusterInput, CrdCreator, CrdInput, CreateCrdOutput, MigrationInput,
     TestInput,
@@ -14,6 +14,7 @@ use serde_yaml::Value;
 use snafu::{OptionExt, ResultExt};
 use std::collections::BTreeMap;
 use std::str::FromStr;
+use testsys_config::ResourceAgentType;
 use testsys_model::{Crd, DestructionPolicy};
 
 /// A `CrdCreator` responsible for creating crd related to `aws-k8s` variants.
@@ -148,7 +149,20 @@ impl CrdCreator for AwsK8sCreator {
         bottlerocket_input: BottlerocketInput<'a>,
     ) -> Result<CreateCrdOutput> {
         Ok(CreateCrdOutput::NewCrd(Box::new(Crd::Resource(
-            ec2_crd(bottlerocket_input, ClusterType::Eks, &self.region).await?,
+            match bottlerocket_input
+                .crd_input
+                .config
+                .resource_agent_type
+                .to_owned()
+                .unwrap_or_default()
+            {
+                ResourceAgentType::Ec2 => {
+                    ec2_crd(bottlerocket_input, ClusterType::Eks, &self.region).await?
+                }
+                ResourceAgentType::Karpenter => {
+                    ec2_karpenter_crd(bottlerocket_input, &self.region).await?
+                }
+            },
         ))))
     }
 

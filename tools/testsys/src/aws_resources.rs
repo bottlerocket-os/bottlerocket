@@ -2,7 +2,9 @@ use crate::crds::BottlerocketInput;
 use crate::error::{self, Result};
 use aws_sdk_ec2::model::{Filter, Image};
 use aws_sdk_ec2::Region;
-use bottlerocket_types::agent_config::{ClusterType, CustomUserData, Ec2Config};
+use bottlerocket_types::agent_config::{
+    ClusterType, CustomUserData, Ec2Config, Ec2KarpenterConfig, KarpenterDeviceMapping,
+};
 use maplit::btreemap;
 use serde::Deserialize;
 use snafu::{ensure, OptionExt, ResultExt};
@@ -117,6 +119,17 @@ pub(crate) async fn ec2_crd<'a>(
     cluster_type: ClusterType,
     region: &str,
 ) -> Result<Resource> {
+    if !bottlerocket_input
+        .crd_input
+        .config
+        .block_device_mapping
+        .is_empty()
+    {
+        return Err(error::Error::Invalid {
+            what: "Custom block mappings are not supported for ec2 instance launch".to_string(),
+        });
+    }
+
     let cluster_name = bottlerocket_input
         .cluster_crd_name
         .as_ref()
@@ -212,6 +225,123 @@ pub(crate) async fn ec2_crd<'a>(
     let suffix: String = repeat_with(fastrand::lowercase).take(4).collect();
     ec2_builder
         .build(format!("{}-instances-{}", cluster_name, suffix))
+        .context(error::BuildSnafu {
+            what: "EC2 instance provider CRD",
+        })
+}
+
+/// Create a CRD to launch Bottlerocket instances on an EKS or ECS cluster.
+pub(crate) async fn ec2_karpenter_crd<'a>(
+    bottlerocket_input: BottlerocketInput<'a>,
+    region: &str,
+) -> Result<Resource> {
+    let cluster_name = bottlerocket_input
+        .cluster_crd_name
+        .as_ref()
+        .expect("A cluster provider is required");
+
+    // Create the labels for this EC2 provider.
+    let labels = bottlerocket_input.crd_input.labels(btreemap! {
+        "testsys/type".to_string() => "instances".to_string(),
+        "testsys/cluster".to_string() => cluster_name.to_string(),
+        "testsys/region".to_string() => region.to_string()
+    });
+
+    // Find all resources using the same cluster.
+    let conflicting_resources = bottlerocket_input
+        .crd_input
+        .existing_crds(
+            &labels,
+            &["testsys/cluster", "testsys/type", "testsys/region"],
+        )
+        .await?;
+
+    // If no mappings were provided use a standard mapping as a default
+    let device_mappings = if bottlerocket_input
+        .crd_input
+        .config
+        .block_device_mapping
+        .is_empty()
+    {
+        vec![
+            KarpenterDeviceMapping {
+                name: "/dev/xvda".to_string(),
+                volume_type: "gp3".to_string(),
+                volume_size: 4,
+                delete_on_termination: true,
+            },
+            KarpenterDeviceMapping {
+                name: "/dev/xvdb".to_string(),
+                volume_type: "gp3".to_string(),
+                volume_size: 20,
+                delete_on_termination: true,
+            },
+        ]
+    } else {
+        bottlerocket_input
+            .crd_input
+            .config
+            .block_device_mapping
+            .clone()
+    };
+
+    let mut ec2_builder = Ec2KarpenterConfig::builder();
+    ec2_builder
+        .node_ami(bottlerocket_input.image_id)
+        .instance_types::<Vec<String>>(
+            bottlerocket_input
+                .crd_input
+                .config
+                .instance_type
+                .iter()
+                .cloned()
+                .collect(),
+        )
+        .custom_user_data(
+            bottlerocket_input
+                .crd_input
+                .encoded_userdata()?
+                .map(|encoded_userdata| CustomUserData::Merge { encoded_userdata }),
+        )
+        .cluster_name_template(cluster_name, "clusterName")
+        .region_template(cluster_name, "region")
+        .subnet_ids_template(cluster_name, "privateSubnetIds")
+        .endpoint_template(cluster_name, "endpoint")
+        .cluster_sg_template(cluster_name, "clustersharedSg")
+        .device_mappings(device_mappings)
+        .assume_role(bottlerocket_input.crd_input.config.agent_role.clone())
+        .depends_on(cluster_name)
+        .image(
+            bottlerocket_input
+                .crd_input
+                .images
+                .ec2_karpenter_resource_agent_image
+                .as_ref()
+                .expect("Missing default image for EC2 resource agent"),
+        )
+        .set_image_pull_secret(
+            bottlerocket_input
+                .crd_input
+                .images
+                .testsys_agent_pull_secret
+                .clone(),
+        )
+        .set_labels(Some(labels))
+        .set_conflicts_with(conflicting_resources.into())
+        .set_secrets(Some(bottlerocket_input.crd_input.config.secrets.clone()))
+        .destruction_policy(
+            bottlerocket_input
+                .crd_input
+                .config
+                .dev
+                .bottlerocket_destruction_policy
+                .to_owned()
+                .unwrap_or(DestructionPolicy::OnTestSuccess),
+        );
+
+    let suffix: String = repeat_with(fastrand::lowercase).take(4).collect();
+    ec2_builder
+        .build(format!("{}-karpenter-{}", cluster_name, suffix))
         .context(error::BuildSnafu {
             what: "EC2 instance provider CRD",
         })
