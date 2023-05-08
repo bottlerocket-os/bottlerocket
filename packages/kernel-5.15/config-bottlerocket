@@ -195,3 +195,8 @@ CONFIG_SCSI_ISCSI_ATTRS=m
 # target side
 CONFIG_ISCSI_TARGET=m
 # CONFIG_INFINIBAND_ISERT is not set
+
+# Disable panic on hung and lockup conditions by default
+# CONFIG_BOOTPARAM_SOFTLOCKUP_PANIC is not set
+# CONFIG_BOOTPARAM_HARDLOCKUP_PANIC is not set
+# CONFIG_BOOTPARAM_HUNG_TASK_PANIC is not set
