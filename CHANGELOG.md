@@ -1,3 +1,68 @@
+# v1.14.0 (2023-05-10)
+
+## OS Changes
+
+* Update kernel-5.10 to 5.10.178 and kernel-5.15 to 5.15.108 ([#3077])
+* Update admin and control containers ([#3090])
+* Update third party packages and dependencies ([#2991], [#3082])
+* Enable `SCSI_VIRTIO` driver for better hypervisor support ([#3047])
+* Disable panic on hung task for kernel 5.15 ([#3091])
+* Create symlink to `inventory` path using Storewolf ([#3035])
+
+## Orchestrator Changes
+
+### ECS
+
+* Add support for ECS Exec ([#3075])
+
+### Kubernetes
+
+* Add Kubernetes 1.27 variants ([#3046])
+* Add more Kubernetes settings ([#2930], [#2986])
+  * Soft eviction policy
+  * Graceful shutdown
+  * CPU quota enforcement
+  * Memory manager policy
+  * CPU manager policy
+* Fix Kubernetes 1.26 credential provider apiVersion ([#3070])
+* Add ability to pass environment variables to image credential providers ([#2934])
+
+## Build Changes
+
+* Upgrade to Bottlerocket SDK v0.32.0 ([#3071])
+* Add AMI validation to PubSys ([#3020])
+* Add SSM parameter validation to PubSys ([#2969])
+* Add `validate-ami` and `validate-ssm` Makefile targets ([#3043])
+* Add `check-migrations` Makefile target to check for common migration problems ([#3051])
+
+## Testing Changes
+
+* Update testsys to v0.0.7 ([#3065])
+* Add support for node provisioning with Karpenter ([#3067])
+* Enable using custom Sonobuoy images ([#3068])
+
+[#3077]: https://github.com/bottlerocket-os/bottlerocket/pull/3077
+[#3090]: https://github.com/bottlerocket-os/bottlerocket/pull/3090
+[#2991]: https://github.com/bottlerocket-os/bottlerocket/pull/2991
+[#3082]: https://github.com/bottlerocket-os/bottlerocket/pull/3082
+[#3047]: https://github.com/bottlerocket-os/bottlerocket/pull/3047
+[#3091]: https://github.com/bottlerocket-os/bottlerocket/pull/3091
+[#3071]: https://github.com/bottlerocket-os/bottlerocket/pull/3071
+[#3035]: https://github.com/bottlerocket-os/bottlerocket/pull/3035
+[#3075]: https://github.com/bottlerocket-os/bottlerocket/pull/3075
+[#3046]: https://github.com/bottlerocket-os/bottlerocket/pull/3046
+[#2930]: https://github.com/bottlerocket-os/bottlerocket/pull/2930
+[#2986]: https://github.com/bottlerocket-os/bottlerocket/pull/2986
+[#3070]: https://github.com/bottlerocket-os/bottlerocket/pull/3070
+[#2934]: https://github.com/bottlerocket-os/bottlerocket/pull/2934
+[#3051]: https://github.com/bottlerocket-os/bottlerocket/pull/3051
+[#3020]: https://github.com/bottlerocket-os/bottlerocket/pull/3020
+[#2969]: https://github.com/bottlerocket-os/bottlerocket/pull/2969
+[#3043]: https://github.com/bottlerocket-os/bottlerocket/pull/3043
+[#3065]: https://github.com/bottlerocket-os/bottlerocket/pull/3065
+[#3067]: https://github.com/bottlerocket-os/bottlerocket/pull/3067
+[#3068]: https://github.com/bottlerocket-os/bottlerocket/pull/3068
+
 # v1.13.5 (2023-05-01)
 
 ## OS Changes
