@@ -206,4 +206,6 @@ version = "1.14.0"
     "migrate_v1.14.0_kubelet-config-settings.lz4",
     "migrate_v1.14.0_kubelet-prefix-config-settings.lz4",
     "migrate_v1.14.0_k8s-services-mode.lz4",
+    "migrate_v1.14.0_aws-admin-container-v0-10-1.lz4",
+    "migrate_v1.14.0_public-admin-container-v0-10-1.lz4",
 ]
