@@ -50,6 +50,8 @@ members = [
     "api/migration/migrations/v1.14.0/k8s-services-mode",
     "api/migration/migrations/v1.14.0/aws-admin-container-v0-10-1",
     "api/migration/migrations/v1.14.0/public-admin-container-v0-10-1",
+    "api/migration/migrations/v1.14.0/aws-control-container-v0-7-2",
+    "api/migration/migrations/v1.14.0/public-control-container-v0-7-2",
 
     "bottlerocket-release",
 
