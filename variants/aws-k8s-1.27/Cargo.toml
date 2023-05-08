@@ -1,0 +1,42 @@
+[package]
+# This is the aws-k8s-1.27 variant. "." is not allowed in crate names, but we
+# don't use this crate name anywhere.
+name = "aws-k8s-1_27"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[package.metadata.build-variant.image-features]
+grub-set-private-var = true
+unified-cgroup-hierarchy = true
+
+[package.metadata.build-variant]
+included-packages = [
+    "aws-iam-authenticator",
+    "cni",
+    "cni-plugins",
+    "kernel-5.15",
+    "kubelet-1.27",
+    "release",
+]
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0,115200n8",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
+    "quiet",
+]
+
+[lib]
+path = "lib.rs"
+
+[build-dependencies]
+aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
+cni = { path = "../../packages/cni" }
+cni-plugins = { path = "../../packages/cni-plugins" }
+kernel-5_15 = { path = "../../packages/kernel-5.15" }
+kubernetes-1_27 = { path = "../../packages/kubernetes-1.27" }
+release = { path = "../../packages/release" }
