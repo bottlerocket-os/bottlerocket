@@ -379,6 +379,7 @@ dependencies = [
    "unit-tests",
    "check-fmt",
    "check-lints",
+   "check-migrations",
 ]
 
 [tasks.check-fmt]
@@ -544,6 +545,85 @@ for m in ${GO_MODULES}; do
         golangci-lint run --config "${config_path}"
     cd "${top_path}"
 done'''
+]
+
+[tasks.check-migrations]
+script_runner = "bash"
+script = [
+'''
+# Collect all found problems and report in bulk; patterns become easier to see
+problems=()
+
+# From Release.toml's
+#
+#     version = "1.14.0"
+#                ^^^^^^
+#             extract this
+version=$(grep -Po '(?<=^version = ")[0-9.]+(?=")' Release.toml)
+if [[ -z ${version} ]]; then
+    echo "Cannot determine current Bottlerocket version."
+    exit 1
+fi
+
+migrations_root="sources/api/migration/migrations/v${version}"
+
+# First pass: Check all migrations explicitly listed in Release.toml
+
+# From Release.toml's
+#
+#     "(0.4.0, 0.4.1)" = ["migrate_v0.4.1_add-version-lock-ignore-waves.lz4", "migrate_v0.4.1_pivot-repo-2020-07-07.lz4"]
+#                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                       ^^^^^^^^^^^^^^^^^^^^^
+#                                                  extract this                                     and this
+mapfile -t migrations < <(
+    grep -Po "(?<=\"migrate_v${version}_)[^\"]+(?=.lz4\")" Release.toml
+)
+for name in "${migrations[@]}"; do
+    # actual migration exists
+    if ! [[ -d ${migrations_root}/${name} ]]; then
+        problems+=("Migration '${name}' does not exist")
+        continue
+    fi
+
+    # migration's Cargo.toml
+    pattern="name = \"${name}\""
+    if ! grep -q "${pattern}" "${migrations_root}/${name}/Cargo.toml"; then
+        problems+=("Migration '${name}' is named differently in its Cargo.toml")
+    fi
+
+    # sources/Cargo.toml
+    pattern="${migrations_root#sources/}/${name}"
+    if ! grep -q "${pattern}" sources/Cargo.toml; then
+        problems+=("Migration '${name}' is missing in sources/Cargo.toml")
+    fi
+
+    # sources/Cargo.lock
+    pattern="name = \"${name}\""
+    if ! grep -q "${pattern}" sources/Cargo.lock; then
+        problems+=("Migration '${name}' is missing in sources/Cargo.lock")
+    fi
+done
+
+# Second pass: Find existing migrations that have not been listed in Release.toml
+
+if [[ -d ${migrations_root} ]]; then
+    mapfile -t undeclared_migrations < <(
+        comm -13 \
+            <(printf '%s\n' "${migrations[@]}" | LC=C sort) \
+            <(find "${migrations_root}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | LC=C sort)
+    )
+    for name in "${undeclared_migrations[@]}"; do
+        problems+=("Migration '${name}' is missing a declaration in Release.toml")
+    done
+fi
+
+# Rattle off whatever we found
+
+if [[ ${#problems[@]} -gt 0 ]]; then
+    echo "Found ${#problems[@]} problem(s) with data store migrations:"
+    printf "    - %s\n" "${problems[@]}"
+    exit 1
+fi
+'''
 ]
 
 [tasks.build-tools]
