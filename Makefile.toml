@@ -843,7 +843,7 @@ cargo build \
 ]
 
 [tasks.build-variant]
-dependencies = ["fetch-sdk", "build-tools", "publish-setup"]
+dependencies = ["fetch-sdk", "build-tools", "build-sbkeys", "publish-setup"]
 script = [
 '''
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
