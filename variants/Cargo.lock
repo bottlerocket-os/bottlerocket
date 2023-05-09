@@ -1033,6 +1033,7 @@ dependencies = [
  "policycoreutils",
  "procps",
  "selinux-policy",
+ "shim",
  "systemd",
  "util-linux",
  "wicked",
@@ -1049,6 +1050,10 @@ dependencies = [
 
 [[package]]
 name = "selinux-policy"
+version = "0.1.0"
+
+[[package]]
+name = "shim"
 version = "0.1.0"
 
 [[package]]

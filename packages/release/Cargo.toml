@@ -44,6 +44,7 @@ oci-add-hooks = { path = "../oci-add-hooks" }
 policycoreutils = { path = "../policycoreutils" }
 procps = { path = "../procps" }
 selinux-policy = { path = "../selinux-policy" }
+shim = { path = "../shim" }
 systemd = { path = "../systemd" }
 util-linux = { path = "../util-linux" }
 wicked = { path = "../wicked" }

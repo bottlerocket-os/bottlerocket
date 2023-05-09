@@ -2,7 +2,7 @@
 %global __strip %{_bindir}/true
 
 %global efidir /boot/efi/EFI/BOOT
-%global efi_image boot%{_cross_efi_arch}.efi
+%global efi_image grub%{_cross_efi_arch}.efi
 %global biosdir /boot/grub
 
 # This is specific to the upstream source RPM, and will likely need to be
