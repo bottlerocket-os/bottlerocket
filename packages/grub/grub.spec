@@ -15,7 +15,7 @@ Release: 1%{?dist}
 Summary: Bootloader with support for Linux and more
 License: GPL-3.0-or-later AND Unicode-DFS-2015
 URL: https://www.gnu.org/software/grub/
-Source0: https://al2022-repos-us-west-2-9761ab97.s3.dualstack.us-west-2.amazonaws.com/blobstore/aa41fdf9982b65a4c4dad5df5b49ba143b1710d60f82688221966f3c790c6c63/grub2-2.06-42.amzn2022.0.1.src.rpm
+Source0: https://cdn.amazonlinux.com/al2023/blobstore/74f9ee6e75b8f89fe91ccda86896243179968a8664ba045bece11dc5aff61f4e/grub2-2.06-61.amzn2023.0.6.src.rpm
 Source1: bios.cfg
 Source2: efi.cfg
 Patch0001: 0001-setup-Add-root-device-argument-to-grub-setup.patch
