@@ -1,0 +1,93 @@
+From 076f520ec85198e82ddc0615e596df2a1ce4264b Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Wed, 2 Nov 2022 11:43:32 +0000
+Subject: [PATCH] efi: return virtual size of section found by
+ grub_efi_section_addr
+
+Return the virtual size of a section found by grub_efi_section_addr if
+the caller asked for it. Modify the few existing callers who don't care
+about the section size to fit the extended interface.
+
+This is close to the point where the implementation could do with a
+refactoring, e.g. have a separate grub_efi_find_section that returns the
+entire section table entry, and more focused convenience functions to
+access those. However, grub_efi_find_section itself is already the
+result of a Fedora refactoring, so I'm keeping the changes minimal.
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ grub-core/kern/efi/efi.c  | 8 ++++++--
+ grub-core/kern/efi/init.c | 6 +++---
+ include/grub/efi/efi.h    | 2 +-
+ 3 files changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/grub-core/kern/efi/efi.c b/grub-core/kern/efi/efi.c
+index 4ac2b27..3a4475c 100644
+--- a/grub-core/kern/efi/efi.c
++++ b/grub-core/kern/efi/efi.c
+@@ -310,9 +310,11 @@ grub_efi_get_variable (const char *var, const grub_efi_guid_t *guid,
+ #pragma GCC diagnostic ignored "-Wcast-align"
+ 
+ /* Search the mods section from the PE32/PE32+ image. This code uses
+-   a PE32 header, but should work with PE32+ as well.  */
++   a PE32 header, but should work with PE32+ as well. If vsz is not
++   NULL and the section is found, the virtual size of the section
++   is written to *vsz. */
+ grub_addr_t
+-grub_efi_section_addr (const char *section_name)
++grub_efi_section_addr (const char *section_name, grub_uint32_t *vsz)
+ {
+   grub_efi_loaded_image_t *image;
+   struct grub_pe32_header *header;
+@@ -359,6 +361,8 @@ grub_efi_section_addr (const char *section_name)
+ 
+   grub_dprintf("sections", "returning section info for section %d: \"%s\"\n",
+ 	       i, section->name);
++  if (vsz)
++    *vsz = section->virtual_size;
+   return (grub_addr_t) info;
+ }
+ 
+diff --git a/grub-core/kern/efi/init.c b/grub-core/kern/efi/init.c
+index 0574d8d..533de93 100644
+--- a/grub-core/kern/efi/init.c
++++ b/grub-core/kern/efi/init.c
+@@ -116,11 +116,11 @@ grub_efi_print_gdb_info (void)
+   grub_addr_t text;
+   grub_addr_t data;
+ 
+-  text = grub_efi_section_addr (".text");
++  text = grub_efi_section_addr (".text", NULL);
+   if (!text)
+     return;
+ 
+-  data = grub_efi_section_addr (".data");
++  data = grub_efi_section_addr (".data", NULL);
+   if (data)
+     grub_qdprintf ("gdb",
+ 		  "add-symbol-file /usr/lib/debug/usr/lib/grub/%s-%s/"
+@@ -136,7 +136,7 @@ grub_efi_print_gdb_info (void)
+ void
+ grub_efi_init (void)
+ {
+-  grub_modbase = grub_efi_section_addr ("mods");
++  grub_modbase = grub_efi_section_addr ("mods", NULL);
+   /* First of all, initialize the console so that GRUB can display
+      messages.  */
+   grub_console_init ();
+diff --git a/include/grub/efi/efi.h b/include/grub/efi/efi.h
+index 449e552..5841a2e 100644
+--- a/include/grub/efi/efi.h
++++ b/include/grub/efi/efi.h
+@@ -152,7 +152,7 @@ grub_err_t grub_arch_efi_linux_boot_image(grub_addr_t addr, grub_size_t size,
+ 					  char *args, int nx_enabled);
+ #endif
+ 
+-grub_addr_t grub_efi_section_addr (const char *section);
++grub_addr_t grub_efi_section_addr (const char *section, grub_uint32_t *vsz);
+ 
+ void grub_efi_mm_init (void);
+ void grub_efi_mm_fini (void);
+-- 
+2.39.0
+

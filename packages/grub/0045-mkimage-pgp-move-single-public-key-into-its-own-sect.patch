@@ -1,0 +1,261 @@
+From eaa371d26be8f76f9d7ce7e9c4b5d30684a48f11 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Mon, 24 Oct 2022 15:20:23 +0000
+Subject: [PATCH] mkimage, pgp: move single public key into its own section of
+ EFI image
+
+If mkimage is asked to embed a single public key for signature checking
+into an EFI image, move that key into a new .pubkey section of the PE
+file. Moving the key into its dedicated section allows for easily
+swapping the public key, e.g. using objcopy, without having to rebuild
+the image.
+
+If more than one key is to be embedded, no new section is created and
+all keys are embedded as modules just as before. The PGP signature
+verification will check both of these sources for valid keys.
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ grub-core/commands/pgp.c | 28 ++++++++++++++
+ include/grub/efi/efi.h   |  2 +-
+ util/mkimage.c           | 84 +++++++++++++++++++++++++++-------------
+ 3 files changed, 87 insertions(+), 27 deletions(-)
+
+diff --git a/grub-core/commands/pgp.c b/grub-core/commands/pgp.c
+index b81ac0a..5fa1e8e 100644
+--- a/grub-core/commands/pgp.c
++++ b/grub-core/commands/pgp.c
+@@ -32,6 +32,7 @@
+ #include <grub/kernel.h>
+ #include <grub/extcmd.h>
+ #include <grub/verify.h>
++#include <grub/efi/efi.h>
+ 
+ GRUB_MOD_LICENSE ("GPLv3+");
+ 
+@@ -959,6 +960,33 @@ GRUB_MOD_INIT(pgp)
+     grub_pk_trusted = pk;
+   }
+ 
++#ifdef GRUB_MACHINE_EFI
++  {
++    grub_addr_t pubkey_section;
++    grub_uint32_t pubkey_vsz;
++
++    pubkey_section = grub_efi_section_addr (".pubkey", &pubkey_vsz);
++    if (pubkey_section)
++      {
++	struct grub_file pseudo_file;
++	struct grub_public_key *pk;
++
++	grub_memset (&pseudo_file, 0, sizeof (pseudo_file));
++
++	pseudo_file.fs = &pseudo_fs;
++	pseudo_file.size = pubkey_vsz;
++	pseudo_file.data = (char *) pubkey_section;
++
++	pk = grub_load_public_key (&pseudo_file);
++	if (!pk)
++	  grub_fatal ("error loading key from .pubkey section: %s\n", grub_errmsg);
++
++	pk->next = grub_pk_trusted;
++	grub_pk_trusted = pk;
++      }
++  }
++#endif /* GRUB_MACHINE_EFI */
++
+   if (!val)
+     grub_env_set ("check_signatures", grub_pk_trusted ? "enforce" : "no");
+ 
+diff --git a/include/grub/efi/efi.h b/include/grub/efi/efi.h
+index 5841a2e..d580b6b 100644
+--- a/include/grub/efi/efi.h
++++ b/include/grub/efi/efi.h
+@@ -152,7 +152,7 @@ grub_err_t grub_arch_efi_linux_boot_image(grub_addr_t addr, grub_size_t size,
+ 					  char *args, int nx_enabled);
+ #endif
+ 
+-grub_addr_t grub_efi_section_addr (const char *section, grub_uint32_t *vsz);
++grub_addr_t EXPORT_FUNC(grub_efi_section_addr) (const char *section, grub_uint32_t *vsz);
+ 
+ void grub_efi_mm_init (void);
+ void grub_efi_mm_fini (void);
+diff --git a/util/mkimage.c b/util/mkimage.c
+index 1455c94..01362d1 100644
+--- a/util/mkimage.c
++++ b/util/mkimage.c
+@@ -65,14 +65,14 @@
+ 				    + GRUB_PE32_SIGNATURE_SIZE		\
+ 				    + sizeof (struct grub_pe32_coff_header) \
+ 				    + sizeof (struct grub_pe32_optional_header) \
+-				    + 5 * sizeof (struct grub_pe32_section_table), \
++				    + 6 * sizeof (struct grub_pe32_section_table), \
+ 				    GRUB_PE32_FILE_ALIGNMENT)
+ 
+ #define EFI64_HEADER_SIZE ALIGN_UP (GRUB_PE32_MSDOS_STUB_SIZE		\
+ 				    + GRUB_PE32_SIGNATURE_SIZE		\
+ 				    + sizeof (struct grub_pe32_coff_header) \
+ 				    + sizeof (struct grub_pe64_optional_header) \
+-				    + 5 * sizeof (struct grub_pe32_section_table), \
++				    + 6 * sizeof (struct grub_pe32_section_table), \
+ 				    GRUB_PE32_FILE_ALIGNMENT)
+ 
+ static const struct grub_install_image_target_desc image_targets[] =
+@@ -887,12 +887,13 @@ grub_install_generate_image (const char *dir, const char *prefix,
+   char *kernel_img, *core_img;
+   size_t total_module_size, core_size;
+   size_t memdisk_size = 0, config_size = 0;
+-  size_t prefix_size = 0, dtb_size = 0, sbat_size = 0;
++  size_t prefix_size = 0, dtb_size = 0, pubkey_size = 0, sbat_size = 0;
+   char *kernel_path;
+   size_t offset;
+   struct grub_util_path_list *path_list, *p;
+   size_t decompress_size = 0;
+   struct grub_mkimage_layout layout;
++  int pubkey_section = 0;
+ 
+   if (comp == GRUB_COMPRESSION_AUTO)
+     comp = image_target->default_compression;
+@@ -911,7 +912,10 @@ grub_install_generate_image (const char *dir, const char *prefix,
+   else
+     total_module_size = sizeof (struct grub_module_info32);
+ 
+-  {
++  if (npubkeys == 1 && image_target->id == IMAGE_EFI)
++    pubkey_section = 1;
++
++  if (!pubkey_section) {
+     size_t i;
+     for (i = 0; i < npubkeys; i++)
+       {
+@@ -1048,24 +1052,25 @@ grub_install_generate_image (const char *dir, const char *prefix,
+       offset += mod_size;
+     }
+ 
+-  {
+-    size_t i;
+-    for (i = 0; i < npubkeys; i++)
+-      {
+-	size_t curs;
+-	struct grub_module_header *header;
+-
+-	curs = grub_util_get_image_size (pubkey_paths[i]);
+-
+-	header = (struct grub_module_header *) (kernel_img + offset);
+-	header->type = grub_host_to_target32 (OBJ_TYPE_GPG_PUBKEY);
+-	header->size = grub_host_to_target32 (curs + sizeof (*header));
+-	offset += sizeof (*header);
+-
+-	grub_util_load_image (pubkey_paths[i], kernel_img + offset);
+-	offset += ALIGN_ADDR (curs);
+-      }
+-  }
++  if (!pubkey_section)
++    {
++      size_t i;
++      for (i = 0; i < npubkeys; i++)
++        {
++          size_t curs;
++          struct grub_module_header *header;
++
++          curs = grub_util_get_image_size (pubkey_paths[i]);
++
++          header = (struct grub_module_header *) (kernel_img + offset);
++          header->type = grub_host_to_target32 (OBJ_TYPE_GPG_PUBKEY);
++          header->size = grub_host_to_target32 (curs + sizeof (*header));
++          offset += sizeof (*header);
++
++          grub_util_load_image (pubkey_paths[i], kernel_img + offset);
++          offset += ALIGN_ADDR (curs);
++        }
++    }
+ 
+   {
+     size_t i;
+@@ -1351,7 +1356,7 @@ grub_install_generate_image (const char *dir, const char *prefix,
+       break;
+     case IMAGE_EFI:
+       {
+-	char *pe_img, *pe_sbat, *header;
++	char *pe_img, *pe_pubkey, *pe_sbat, *header;
+ 	struct grub_pe32_section_table *section;
+ 	size_t n_sections = 4;
+ 	size_t scn_size;
+@@ -1369,6 +1374,16 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 
+ 	vma = raw_data = header_size;
+ 
++	if (pubkey_section)
++	  {
++	    pubkey_size = ALIGN_ADDR (grub_util_get_image_size (pubkey_paths[0]));
++	    pubkey_size = ALIGN_UP (pubkey_size, GRUB_PE32_FILE_ALIGNMENT);
++	    if (pubkey_size == 0)
++	      grub_util_error (
++		  _("embedding public key '%s' would result in invalid empty section"),
++		  pubkey_paths[0]);
++	  }
++
+ 	if (sbat_path != NULL)
+ 	  {
+ 	    sbat_size = ALIGN_ADDR (grub_util_get_image_size (sbat_path));
+@@ -1376,7 +1391,8 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 	  }
+ 
+ 	pe_size = ALIGN_UP (header_size + core_size, GRUB_PE32_FILE_ALIGNMENT) +
+-          ALIGN_UP (layout.reloc_size, GRUB_PE32_FILE_ALIGNMENT) + sbat_size;
++          ALIGN_UP (layout.reloc_size, GRUB_PE32_FILE_ALIGNMENT) +
++	  pubkey_size + sbat_size;
+ 	header = pe_img = xcalloc (1, pe_size);
+ 
+ 	memcpy (pe_img + raw_data, core_img, core_size);
+@@ -1391,6 +1407,9 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 					      + GRUB_PE32_SIGNATURE_SIZE);
+ 	c->machine = grub_host_to_target16 (image_target->pe_target);
+ 
++	if (pubkey_section)
++	  n_sections++;
++
+ 	if (sbat_path != NULL)
+ 	  n_sections++;
+ 
+@@ -1458,7 +1477,7 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 
+ 	scn_size = ALIGN_UP (layout.kernel_size - layout.exec_size, GRUB_PE32_FILE_ALIGNMENT);
+ 	/* ALIGN_UP (sbat_size, GRUB_PE32_FILE_ALIGNMENT) is done earlier. */
+-	PE_OHDR (o32, o64, data_size) = grub_host_to_target32 (scn_size + sbat_size +
++	PE_OHDR (o32, o64, data_size) = grub_host_to_target32 (scn_size + pubkey_size + sbat_size +
+ 							       ALIGN_UP (total_module_size,
+ 									 GRUB_PE32_FILE_ALIGNMENT));
+ 
+@@ -1469,7 +1488,7 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 				   GRUB_PE32_SCN_MEM_READ |
+ 				   GRUB_PE32_SCN_MEM_WRITE);
+ 
+-	scn_size = pe_size - layout.reloc_size - sbat_size - raw_data;
++	scn_size = pe_size - layout.reloc_size - pubkey_size - sbat_size - raw_data;
+ 	section = init_pe_section (image_target, pe_img, section, "mods",
+ 				   &vma, scn_size, image_target->section_align,
+ 				   &raw_data, scn_size,
+@@ -1477,6 +1496,19 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 				   GRUB_PE32_SCN_MEM_READ |
+ 				   GRUB_PE32_SCN_MEM_WRITE);
+ 
++	if (pubkey_section)
++	  {
++	    pe_pubkey = pe_img + raw_data;
++	    grub_util_load_image (pubkey_paths[0], pe_pubkey);
++
++	    section = init_pe_section (image_target, pe_img, section, ".pubkey",
++				       &vma, pubkey_size,
++				       image_target->section_align,
++				       &raw_data, pubkey_size,
++				       GRUB_PE32_SCN_CNT_INITIALIZED_DATA |
++				       GRUB_PE32_SCN_MEM_READ);
++	  }
++
+ 	if (sbat_path != NULL)
+ 	  {
+ 	    pe_sbat = pe_img + raw_data;
+-- 
+2.39.0
+

@@ -1,0 +1,98 @@
+From 45468642affc3d641b5d73c5d6e63e1578bf9150 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Fri, 28 Oct 2022 16:09:05 +0000
+Subject: [PATCH] util/mkimage: avoid adding section table entry outside PE EFI
+ header
+
+The number of sections in a PE EFI image can vary depending on the
+options passed to mkimage, but their maximum number must be known at
+compile time. Potentially adding a new section to a PE EFI image
+therefore requires changes in at least two places of the code.
+
+The prior commit fixed a situation where the maximum number of sections
+was not bumped while implementing support for an new section. Catch
+these situations at runtime rather than silently relying on sufficient
+padding being available for the new section table entry or overwriting
+part of the image.
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ util/mkimage.c | 20 +++++++++++++++-----
+ 1 file changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/util/mkimage.c b/util/mkimage.c
+index 2db1045..1455c94 100644
+--- a/util/mkimage.c
++++ b/util/mkimage.c
+@@ -821,6 +821,7 @@ grub_install_get_image_targets_string (void)
+  */
+ static struct grub_pe32_section_table *
+ init_pe_section(const struct grub_install_image_target_desc *image_target,
++		const char *pe_img,
+ 		struct grub_pe32_section_table *section,
+ 		const char * const name,
+ 		grub_uint32_t *vma, grub_uint32_t vsz, grub_uint32_t valign,
+@@ -828,6 +829,15 @@ init_pe_section(const struct grub_install_image_target_desc *image_target,
+ 		grub_uint32_t characteristics)
+ {
+   size_t len = strlen (name);
++  const char *pe_header_end;
++
++  if (image_target->voidp_sizeof == 4)
++    pe_header_end = pe_img + EFI32_HEADER_SIZE;
++  else
++    pe_header_end = pe_img + EFI64_HEADER_SIZE;
++
++  if ((char *) section >= pe_header_end)
++    grub_util_error (_("section table space exhausted trying to add %s"), name);
+ 
+   if (len > sizeof (section->name))
+     grub_util_error (_("section name %s length is bigger than %lu"),
+@@ -1438,7 +1448,7 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 	/* The sections.  */
+ 	PE_OHDR (o32, o64, code_base) = grub_host_to_target32 (vma);
+ 	PE_OHDR (o32, o64, code_size) = grub_host_to_target32 (layout.exec_size);
+-	section = init_pe_section (image_target, section, ".text",
++	section = init_pe_section (image_target, pe_img, section, ".text",
+ 				   &vma, layout.exec_size,
+ 				   image_target->section_align,
+ 				   &raw_data, layout.exec_size,
+@@ -1452,7 +1462,7 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 							       ALIGN_UP (total_module_size,
+ 									 GRUB_PE32_FILE_ALIGNMENT));
+ 
+-	section = init_pe_section (image_target, section, ".data",
++	section = init_pe_section (image_target, pe_img, section, ".data",
+ 				   &vma, scn_size, image_target->section_align,
+ 				   &raw_data, scn_size,
+ 				   GRUB_PE32_SCN_CNT_INITIALIZED_DATA |
+@@ -1460,7 +1470,7 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 				   GRUB_PE32_SCN_MEM_WRITE);
+ 
+ 	scn_size = pe_size - layout.reloc_size - sbat_size - raw_data;
+-	section = init_pe_section (image_target, section, "mods",
++	section = init_pe_section (image_target, pe_img, section, "mods",
+ 				   &vma, scn_size, image_target->section_align,
+ 				   &raw_data, scn_size,
+ 				   GRUB_PE32_SCN_CNT_INITIALIZED_DATA |
+@@ -1472,7 +1482,7 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 	    pe_sbat = pe_img + raw_data;
+ 	    grub_util_load_image (sbat_path, pe_sbat);
+ 
+-	    section = init_pe_section (image_target, section, ".sbat",
++	    section = init_pe_section (image_target, pe_img, section, ".sbat",
+ 				       &vma, sbat_size,
+ 				       image_target->section_align,
+ 				       &raw_data, sbat_size,
+@@ -1484,7 +1494,7 @@ grub_install_generate_image (const char *dir, const char *prefix,
+ 	PE_OHDR (o32, o64, base_relocation_table.rva) = grub_host_to_target32 (vma);
+ 	PE_OHDR (o32, o64, base_relocation_table.size) = grub_host_to_target32 (scn_size);
+ 	memcpy (pe_img + raw_data, layout.reloc_section, scn_size);
+-	init_pe_section (image_target, section, ".reloc",
++	init_pe_section (image_target, pe_img, section, ".reloc",
+ 			 &vma, scn_size, image_target->section_align,
+ 			 &raw_data, scn_size,
+ 			 GRUB_PE32_SCN_CNT_INITIALIZED_DATA |
+-- 
+2.39.0
+
