@@ -14,6 +14,7 @@ OVF_TEMPLATE=""
 
 GRUB_SET_PRIVATE_VAR="no"
 XFS_DATA_PARTITION="no"
+UEFI_SECURE_BOOT="no"
 
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
@@ -29,6 +30,7 @@ for opt in "$@"; do
       --ovf-template=*) OVF_TEMPLATE="${optarg}" ;;
       --with-grub-set-private-var=*) GRUB_SET_PRIVATE_VAR="${optarg}" ;;
       --xfs-data-partition=*) XFS_DATA_PARTITION="${optarg}" ;;
+      --with-uefi-secure-boot=*) UEFI_SECURE_BOOT="${optarg}" ;;
    esac
 done
 

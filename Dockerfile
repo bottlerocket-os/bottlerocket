@@ -67,6 +67,7 @@ ARG VARIANT_FAMILY
 ARG VARIANT_FLAVOR
 ARG REPO
 ARG GRUB_SET_PRIVATE_VAR
+ARG UEFI_SECURE_BOOT
 ARG SYSTEMD_NETWORKD
 ARG UNIFIED_CGROUP_HIERARCHY
 ARG XFS_DATA_PARTITION
@@ -101,6 +102,7 @@ RUN rpmdev-setuptree \
    && echo "%bcond_without $(V=${VARIANT_FAMILY,,}; echo ${V//-/_})_family" >> .bconds \
    && echo "%bcond_without $(V=${VARIANT_FLAVOR:-no}; V=${V,,}; echo ${V//-/_})_flavor" >> .bconds \
    && echo -e -n "${GRUB_SET_PRIVATE_VAR:+%bcond_without grub_set_private_var\n}" >> .bconds \
+   && echo -e -n "${UEFI_SECURE_BOOT:+%bcond_without uefi_secure_boot\n}" >> .bconds \
    && echo -e -n "${SYSTEMD_NETWORKD:+%bcond_without systemd_networkd\n}" >> .bconds \
    && echo -e -n "${UNIFIED_CGROUP_HIERARCHY:+%bcond_without unified_cgroup_hierarchy\n}" >> .bconds \
    && echo -e -n "${XFS_DATA_PARTITION:+%bcond_without xfs_data_partition\n}" >> .bconds \
@@ -200,6 +202,7 @@ ARG DATA_IMAGE_PUBLISH_SIZE_GIB
 ARG KERNEL_PARAMETERS
 ARG GRUB_SET_PRIVATE_VAR
 ARG XFS_DATA_PARTITION
+ARG UEFI_SECURE_BOOT
 ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID} \
     PRETTY_NAME=${PRETTY_NAME} IMAGE_NAME=${IMAGE_NAME} \
     KERNEL_PARAMETERS=${KERNEL_PARAMETERS}
@@ -219,6 +222,7 @@ RUN --mount=target=/host \
       --ovf-template="/host/variants/${VARIANT}/template.ovf" \
       ${XFS_DATA_PARTITION:+--xfs-data-partition=yes} \
       ${GRUB_SET_PRIVATE_VAR:+--with-grub-set-private-var=yes} \
+      ${UEFI_SECURE_BOOT:+--with-uefi-secure-boot=yes} \
     && echo ${NOCACHE}
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=

@@ -221,6 +221,18 @@ default will remain ext4 and xfs is opt-in.
 ```ignore
 [package.metadata.build-variant.image-features]
 xfs-data-partition = true
+```
+
+`uefi-secure-boot` means that the bootloader and kernel are signed. The grub image for the current
+variant will have a public GPG baked in, and will expect the grub config file to have a valid
+detached signature. Published artifacts such as AMIs and OVAs will enforce the signature checks
+when the platform supports it.
+
+```ignore
+[package.metadata.build-variant.image-features]
+uefi-secure-boot = true
+```
+
 */
 
 mod error;
@@ -513,6 +525,7 @@ pub enum ImageFeature {
     SystemdNetworkd,
     UnifiedCgroupHierarchy,
     XfsDataPartition,
+    UefiSecureBoot,
 }
 
 impl TryFrom<String> for ImageFeature {
@@ -523,6 +536,7 @@ impl TryFrom<String> for ImageFeature {
             "systemd-networkd" => Ok(ImageFeature::SystemdNetworkd),
             "unified-cgroup-hierarchy" => Ok(ImageFeature::UnifiedCgroupHierarchy),
             "xfs-data-partition" => Ok(ImageFeature::XfsDataPartition),
+            "uefi-secure-boot" => Ok(ImageFeature::UefiSecureBoot),
             _ => error::ParseImageFeatureSnafu { what: s }.fail()?,
         }
     }
@@ -535,6 +549,7 @@ impl fmt::Display for ImageFeature {
             ImageFeature::SystemdNetworkd => write!(f, "SYSTEMD_NETWORKD"),
             ImageFeature::UnifiedCgroupHierarchy => write!(f, "UNIFIED_CGROUP_HIERARCHY"),
             ImageFeature::XfsDataPartition => write!(f, "XFS_DATA_PARTITION"),
+            ImageFeature::UefiSecureBoot => write!(f, "UEFI_SECURE_BOOT"),
         }
     }
 }
