@@ -177,7 +177,11 @@ sed -e "s,__VERSION__,%{version},g" %{S:3} > sbat.csv
 popd
 
 %install
-MODS="configfile echo ext2 gptprio linux normal part_gpt reboot sleep zstd search"
+MODS=(configfile echo ext2 gptprio linux normal part_gpt reboot sleep zstd search)
+
+# These modules are needed for signature verification, which is currently only
+# done for the EFI build of GRUB.
+VERIFY_MODS=(pgp crypto gcry_sha256 gcry_sha512 gcry_dsa gcry_rsa)
 
 %if "%{_cross_arch}" == "x86_64"
 pushd bios-build
@@ -189,7 +193,7 @@ mkdir -p %{buildroot}%{biosdir}
   -O "i386-pc" \
   -o "%{buildroot}%{biosdir}/core.img" \
   -p "(hd0,gpt2)/boot/grub" \
-  biosdisk serial ${MODS}
+  biosdisk serial ${MODS[@]}
 install -m 0644 ./grub-core/boot.img \
   %{buildroot}%{biosdir}/boot.img
 popd
@@ -198,14 +202,20 @@ popd
 pushd efi-build
 %make_install
 mkdir -p %{buildroot}%{efidir}
+
+# Make sure the `.pubkey` section is large enough to cover a replacement
+# certificate, or `objcopy` may silently retain the existing section.
+truncate -s 4096 empty.pubkey
+
 %{buildroot}%{_cross_bindir}/grub-mkimage \
   -c %{S:2} \
   -d ./grub-core/ \
   -O "%{_cross_grub_efi_format}" \
   -o "%{buildroot}%{efidir}/%{efi_image}" \
   -p "/EFI/BOOT" \
+  --pubkey empty.pubkey \
   --sbat sbat.csv \
-  efi_gop ${MODS}
+  efi_gop ${MODS[@]} ${VERIFY_MODS[@]}
 popd
 
 %files
