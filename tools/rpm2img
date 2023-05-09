@@ -70,6 +70,13 @@ if [ "${OUTPUT_FMT}" == "vmdk" ] ; then
       exit 1
     fi
   fi
+
+  if [ "${UEFI_SECURE_BOOT}" == "yes" ] ; then
+    if ! grep -Fq '{{DB_CERT_DER_HEX}}' "${OVF_TEMPLATE}" ; then
+      echo "Missing CA certificate field in OVF template, which is required for Secure Boot support." >&2
+      exit 1
+    fi
+  fi
 fi
 
 # Store output artifacts in a versioned directory.
@@ -120,6 +127,8 @@ BOOT_MOUNT="$(mktemp -d)"
 DATA_MOUNT="$(mktemp -d)"
 EFI_MOUNT="$(mktemp -d)"
 PRIVATE_MOUNT="$(mktemp -d)"
+
+SBKEYS="${HOME}/sbkeys"
 
 SELINUX_ROOT="/etc/selinux"
 SELINUX_POLICY="fortified"
@@ -254,11 +263,184 @@ fi
 # package has placed the image in /boot/efi/EFI/BOOT.
 mv "${ROOT_MOUNT}/boot/efi"/* "${EFI_MOUNT}"
 
+# Do the setup required for `pesign` and `gpg` signing and
+# verification to "just work" later on, regardless of which
+# type of signing profile we have.
+if [ "${UEFI_SECURE_BOOT}" == "yes" ] ; then
+  declare -a SHIM_SIGN_KEY
+  declare -a CODE_SIGN_KEY
+
+  # For an AWS profile, we expect a config file for the PKCS11
+  # helper. Otherwise, there should be a local key and cert.
+  if [ -s "${HOME}/.config/aws-kms-pkcs11/config.json" ] ; then
+    # Set AWS environment variables from build secrets, if present.
+    for var in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN ; do
+      val="${var,,}"
+      val="${HOME}/.aws/${val//_/-}.env"
+      [ -s "${val}" ] || continue
+      declare -x "${var}=$(cat "${val}")"
+    done
+    # Verify that AWS credentials are functional.
+    aws sts get-caller-identity
+    # Log all PKCS11 helper activity, to simplify debugging.
+    export AWS_KMS_PKCS11_DEBUG=1
+    SB_KEY_SOURCE="aws"
+    SHIM_SIGN_KEY=(-c shim-sign-key -t shim-sign-key)
+    CODE_SIGN_KEY=(-c code-sign-key -t code-sign-key)
+  else
+    # Disable the PKCS11 helper.
+    rm /etc/pkcs11/modules/aws-kms-pkcs11.module
+
+    # Generate the PKCS12 archives for import.
+    openssl pkcs12 \
+      -export \
+      -passout pass: \
+      -inkey "${SBKEYS}/shim-sign.key" \
+      -in "${SBKEYS}/shim-sign.crt" \
+      -certfile "${SBKEYS}/db.crt" \
+      -out "${SBKEYS}/shim-sign.p12"
+
+    openssl pkcs12 \
+      -export \
+      -passout pass: \
+      -inkey "${SBKEYS}/code-sign.key" \
+      -in "${SBKEYS}/code-sign.crt" \
+      -certfile "${SBKEYS}/vendor.crt" \
+      -out "${SBKEYS}/code-sign.p12"
+
+    # Import certificates and private key archive.
+    PEDB="/etc/pki/pesign"
+
+    certutil -d "${PEDB}" -A -n db -i "${SBKEYS}/db.crt" -t ",,C"
+    certutil -d "${PEDB}" -A -n shim-sign-key -i "${SBKEYS}/shim-sign.crt" -t ",,P"
+    pk12util -d "${PEDB}" -i "${SBKEYS}/shim-sign.p12" -W ""
+
+    certutil -d "${PEDB}" -A -n vendor -i "${SBKEYS}/vendor.crt" -t ",,C"
+    certutil -d "${PEDB}" -A -n code-sign-key -i "${SBKEYS}/code-sign.crt" -t ",,P"
+    pk12util -d "${PEDB}" -i "${SBKEYS}/code-sign.p12" -W ""
+
+    certutil -d "${PEDB}" -L
+    SB_KEY_SOURCE="local"
+    SHIM_SIGN_KEY=(-c shim-sign-key)
+    CODE_SIGN_KEY=(-c code-sign-key)
+  fi
+
+  # Convert certificates from PEM format (ASCII) to DER (binary). This could be
+  # done when the certificates are created, but the resulting binary files are
+  # not as nice to store in source control.
+  for cert in PK KEK db vendor ; do
+    openssl x509 \
+      -inform PEM -in "${SBKEYS}/${cert}.crt" \
+      -outform DER -out "${SBKEYS}/${cert}.cer"
+  done
+
+  # For signing the grub config, we need to embed the GPG public key in binary
+  # form, which is similarly awkward to store in source control.
+  gpg --import "${SBKEYS}/config-sign.key"
+  if [ "${SB_KEY_SOURCE}" == "aws" ] ; then
+    gpg --card-status
+  fi
+  gpg --export > "${SBKEYS}/config-sign.pubkey"
+  gpg --list-keys
+fi
+
+# shim expects the following data structure in `.vendor_cert`:
+#
+# struct {
+#   uint32_t vendor_authorized_size;
+#   uint32_t vendor_deauthorized_size;
+#   uint32_t vendor_authorized_offset;
+#   uint32_t vendor_deauthorized_offset;
+# } cert_table;
+#
+cert_table() {
+  local input output size offset uint32_t
+  input="${1:?}"
+  output="${2:?}"
+  size="$(stat -c %s "${input}")"
+  rm -f "${output}"
+  # The cert payload is offset by four 4-byte uint32_t values in the header.
+  offset="$((4 * 4))"
+  for n in "${size}" 0 "${offset}" "$(( size + offset ))" ; do
+    printf -v uint32_t '\\x%02x\\x%02x\\x%02x\\x%02x' \
+      $((n & 255)) $((n >> 8 & 255)) $((n >> 16 & 255)) $((n >> 24 & 255))
+    printf "${uint32_t}" >> "${output}"
+  done
+  cat "${input}" >> "${output}"
+  # Zero-pad the output to the expected section size. Otherwise a subsequent
+  # `objcopy` operation on the same section might fail to replace it, if the
+  # new vendor certificate is larger than this one.
+  truncate -s 4096 "${output}"
+}
+
+# Helper function to log the object layout before and after changes.
+objdumpcopy() {
+  local obj objdump objcopy
+  obj="${1:?}"
+  shift
+  objdump="${ARCH}-bottlerocket-linux-gnu-objdump"
+  objcopy="${ARCH}-bottlerocket-linux-gnu-objcopy"
+  "${objdump}" -h "${obj}"
+  "${objcopy}" "${@}" "${obj}"
+  "${objdump}" -h "${obj}"
+}
+
+pushd "${EFI_MOUNT}/EFI/BOOT" >/dev/null
+shims=(boot*.efi)
+shim="${shims[0]}"
+grubs=(grub*.efi)
+grub="${grubs[0]}"
+mokms=(mm*.efi)
+mokm="${mokms[0]}"
+if [ "${UEFI_SECURE_BOOT}" == "yes" ] ; then
+  # Convert the vendor certificate to the expected format.
+  cert_table "${SBKEYS}/vendor.cer" "${SBKEYS}/vendor.obj"
+
+  # Replace the embedded vendor certificate, then sign shim with the db key.
+  objdumpcopy "${shim}" \
+    --update-section ".vendor_cert=${SBKEYS}/vendor.obj"
+  pesign -i "${shim}" -o "${shim}.signed" -s "${SHIM_SIGN_KEY[@]}"
+  mv "${shim}.signed" "${shim}"
+  pesigcheck -i "${shim}" -n 0 -c "${SBKEYS}/db.cer"
+
+  # Sign the MOK manager as well.
+  pesign -i "${mokm}" -o "${mokm}.signed" -s "${CODE_SIGN_KEY[@]}"
+  mv "${mokm}.signed" "${mokm}"
+  pesigcheck -i "${mokm}" -n 0 -c "${SBKEYS}/vendor.cer"
+
+  # Replace the embedded gpg public key, then sign grub with the vendor key.
+  objdumpcopy "${grub}" \
+    --file-alignment 4096 \
+    --update-section ".pubkey=${SBKEYS}/config-sign.pubkey"
+  pesign -i "${grub}" -o "${grub}.signed" -s "${CODE_SIGN_KEY[@]}"
+  mv "${grub}.signed" "${grub}"
+  pesigcheck -i "${grub}" -n 0 -c "${SBKEYS}/vendor.cer"
+else
+  # Generate a zero-sized certificate in the expected format.
+  cert_table /dev/null "${SBKEYS}/vendor.obj"
+
+  # Replace the embedded vendor certificate with the zero-sized one, which shim
+  # will ignore when Secure Boot is disabled.
+  objdumpcopy "${shim}" \
+    --update-section ".vendor_cert=${SBKEYS}/vendor.obj"
+
+   # Remove the embedded gpg public key to disable GRUB's signature checks.
+   objdumpcopy "${grub}" \
+     --file-alignment 4096 \
+     --remove-section ".pubkey"
+fi
+popd >/dev/null
+
 dd if=/dev/zero of="${EFI_IMAGE}" bs=1M count="${partsize[EFI-A]}"
 mkfs.vfat -I -S 512 "${EFI_IMAGE}" $((partsize[EFI-A] * 1024))
 mmd -i "${EFI_IMAGE}" ::/EFI
 mmd -i "${EFI_IMAGE}" ::/EFI/BOOT
 mcopy -i "${EFI_IMAGE}" "${EFI_MOUNT}/EFI/BOOT"/*.efi ::/EFI/BOOT
+if [ "${UEFI_SECURE_BOOT}" == "yes" ] ; then
+  # Make the signing certificate available on the EFI system partition so it
+  # can be imported through the firmware setup UI on bare metal systems.
+  mcopy -i "${EFI_IMAGE}" "${SBKEYS}"/db.{crt,cer} ::/EFI/BOOT
+fi
 dd if="${EFI_IMAGE}" of="${OS_IMAGE}" conv=notrunc bs=1M seek="${partoff[EFI-A]}"
 
 # Ensure that the grub directory exists.
@@ -266,6 +448,15 @@ mkdir -p "${ROOT_MOUNT}/boot/grub"
 
 # Now that we're done messing with /, move /boot out of it
 mv "${ROOT_MOUNT}/boot"/* "${BOOT_MOUNT}"
+
+if [ "${UEFI_SECURE_BOOT}" == "yes" ] ; then
+  pushd "${BOOT_MOUNT}" >/dev/null
+  vmlinuz="vmlinuz"
+  pesign -i "${vmlinuz}" -o "${vmlinuz}.signed" -s "${CODE_SIGN_KEY[@]}"
+  mv "${vmlinuz}.signed" "${vmlinuz}"
+  pesigcheck -i "${vmlinuz}" -n 0 -c "${SBKEYS}/vendor.cer"
+  popd >/dev/null
+fi
 
 # Set the Bottlerocket variant, version, and build-id
 SYS_ROOT="${ARCH}-bottlerocket-linux-gnu/sys-root"
@@ -352,12 +543,29 @@ else
    INITRD=""
 fi
 
-cat <<EOF > "${BOOT_MOUNT}/grub/grub.cfg"
+# If UEFI_SECURE_BOOT is set, disable interactive edits. Otherwise the intended
+# kernel command line parameters could be changed if the boot fails. Disable
+# signature checking as well, since grub.cfg will have already been verified
+# before we reach this point. bootconfig.data is generated at runtime and can't
+# be signed with a trusted key, so continuing to check signatures would prevent
+# it from being read. If boot fails, trigger an automatic reboot, since nothing
+# can be changed for troubleshooting purposes.
+if [ "${UEFI_SECURE_BOOT}" == "yes" ] ; then
+   echo 'set superusers=""' > "${BOOT_MOUNT}/grub/grub.cfg"
+   echo 'set check_signatures="no"' >> "${BOOT_MOUNT}/grub/grub.cfg"
+   FALLBACK=$'   echo "rebooting in 30 seconds..."\n'
+   FALLBACK+=$'   sleep 30\n'
+   FALLBACK+=$'   reboot\n'
+else
+   FALLBACK=""
+fi
+
+cat <<EOF >> "${BOOT_MOUNT}/grub/grub.cfg"
 set default="0"
 set timeout="0"
 set dm_verity_root="${DM_VERITY_ROOT[@]}"
 
-menuentry "${PRETTY_NAME} ${VERSION_ID}" {
+menuentry "${PRETTY_NAME} ${VERSION_ID}" --unrestricted {
    linux (\$root)/vmlinuz \\
        ${KERNEL_PARAMETERS} \\
        ${BOOTCONFIG} \\
@@ -371,8 +579,15 @@ menuentry "${PRETTY_NAME} ${VERSION_ID}" {
        systemd.log_color=0 \\
        systemd.show_status=true
    ${INITRD}
+   boot
+   ${FALLBACK}
 }
 EOF
+
+if [ "${UEFI_SECURE_BOOT}" == "yes" ] ; then
+  gpg --detach-sign "${BOOT_MOUNT}/grub/grub.cfg"
+  gpg --verify "${BOOT_MOUNT}/grub/grub.cfg.sig"
+fi
 
 # BOTTLEROCKET-BOOT-A
 mkdir -p "${BOOT_MOUNT}/lost+found"
@@ -520,6 +735,21 @@ if [ "${OUTPUT_FMT}" == "vmdk" ] ; then
      -e "s/{{OS_DISK_BYTES}}/${os_disk_bytes}/g" \
      -e "s/{{DATA_DISK_BYTES}}/${data_disk_bytes}/g" \
      > "${ova_dir}/${ovf}"
+
+  # The manifest templates for Secure Boot expect the cert data for
+  # PK, KEK, db, and dbx.
+  if [ "${UEFI_SECURE_BOOT}" == "yes" ] ; then
+    pk_cert_der_hex="$(hexdump -ve '1/1 "%02x"' "${SBKEYS}/PK.cer")"
+    kek_cert_der_hex="$(hexdump -ve '1/1 "%02x"' "${SBKEYS}/KEK.cer")"
+    db_cert_der_hex="$(hexdump -ve '1/1 "%02x"' "${SBKEYS}/db.cer")"
+    dbx_empty_hash_hex="$(sha256sum /dev/null | awk '{ print $1 }')"
+    sed -i \
+      -e "s/{{PK_CERT_DER_HEX}}/${pk_cert_der_hex}/g" \
+      -e "s/{{KEK_CERT_DER_HEX}}/${kek_cert_der_hex}/g" \
+      -e "s/{{DB_CERT_DER_HEX}}/${db_cert_der_hex}/g" \
+      -e "s/{{DBX_EMPTY_HASH_HEX}}/${dbx_empty_hash_hex}/g" \
+      "${ova_dir}/${ovf}"
+  fi
 
   # Make sure we replaced all the '{{...}}' fields with real values.
   if grep -F -e '{{' -e '}}' "${ova_dir}/${ovf}" ; then
