@@ -4,7 +4,7 @@ use aws_sdk_ec2::model::{
     ArchitectureValues, BlockDeviceMapping, EbsBlockDevice, Filter, VolumeType,
 };
 use aws_sdk_ec2::{Client as Ec2Client, Region};
-use buildsys::manifest;
+use buildsys::manifest::{self, ImageFeature};
 use coldsnap::{SnapshotUploader, SnapshotWaiter};
 use log::{debug, info, warn};
 use snafu::{ensure, OptionExt, ResultExt};
@@ -46,6 +46,11 @@ async fn _register_image(
         })?;
 
     let (os_volume_size, data_volume_size) = image_layout.publish_image_sizes_gib();
+
+    let uefi_data =
+        std::fs::read_to_string(&ami_args.uefi_data).context(error::LoadUefiDataSnafu {
+            path: &ami_args.uefi_data,
+        })?;
 
     debug!("Uploading images into EBS snapshots in {}", region);
     let uploader = SnapshotUploader::new(ebs_client);
@@ -117,11 +122,25 @@ async fn _register_image(
         block_device_mappings.push(data_bdm);
     }
 
+    let uefi_secure_boot_enabled = variant_manifest
+        .image_features()
+        .iter()
+        .flatten()
+        .any(|f| **f == ImageFeature::UefiSecureBoot);
+
+    let (boot_mode, uefi_data) = if uefi_secure_boot_enabled {
+        (Some("uefi-preferred".into()), Some(uefi_data))
+    } else {
+        (None, None)
+    };
+
     info!("Making register image call in {}", region);
     let register_response = ec2_client
         .register_image()
         .set_architecture(Some(ami_args.arch.clone()))
         .set_block_device_mappings(Some(block_device_mappings))
+        .set_boot_mode(boot_mode)
+        .set_uefi_data(uefi_data)
         .set_description(ami_args.description.clone())
         .set_ena_support(Some(ENA))
         .set_name(Some(ami_args.name.clone()))
@@ -269,6 +288,12 @@ mod error {
         LoadVariantManifest {
             path: PathBuf,
             source: buildsys::manifest::Error,
+        },
+
+        #[snafu(display("Failed to load UEFI data from {}: {}", path.display(), source))]
+        LoadUefiData {
+            path: PathBuf,
+            source: std::io::Error,
         },
 
         #[snafu(display("Could not find image layout for {}", path.display()))]

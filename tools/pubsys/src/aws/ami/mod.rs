@@ -50,6 +50,10 @@ pub(crate) struct AmiArgs {
     #[arg(short = 'v', long)]
     variant_manifest: PathBuf,
 
+    /// Path to the UEFI data
+    #[arg(short = 'e', long)]
+    uefi_data: PathBuf,
+
     /// The architecture of the machine image
     #[arg(short = 'a', long, value_parser = parse_arch)]
     arch: ArchitectureValues,

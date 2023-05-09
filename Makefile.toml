@@ -1228,6 +1228,7 @@ pubsys \
    "${data_volume_args[@]}" \
    \
    --variant-manifest "${BUILDSYS_ROOT_DIR}/variants/${BUILDSYS_VARIANT}/Cargo.toml" \
+   --uefi-data "${BUILDSYS_SBKEYS_PROFILE_DIR}/efi-vars.aws" \
    --arch "${BUILDSYS_ARCH}" \
    --name "${ami_name}" \
    --description "${PUBLISH_AMI_DESCRIPTION:-${ami_name}}" \
