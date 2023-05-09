@@ -10,6 +10,8 @@ BUILDSYS_STATE_DIR = "${BUILDSYS_BUILD_DIR}/state"
 BUILDSYS_IMAGES_DIR = "${BUILDSYS_BUILD_DIR}/images"
 BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
+BUILDSYS_SBKEYS_DIR = "${BUILDSYS_ROOT_DIR}/sbkeys"
+BUILDSYS_SBKEYS_PROFILE = { script = ['echo "${BUILDSYS_SBKEYS_PROFILE:-local}"'] }
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
 BUILDSYS_VERSION_BUILD = { script = ["git describe --always --dirty --exclude '*' || echo 00000000"] }
 # For now, release config path can't be overridden with -e, because it's used
@@ -156,6 +158,9 @@ BUILDSYS_NAME_FRIENDLY = "${BUILDSYS_NAME_VARIANT}-v${BUILDSYS_VERSION_IMAGE}"
 
 # For variant build artifacts.
 BUILDSYS_VARIANT_DIR = "${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_VERSION_FULL}"
+
+# Depends on ${BUILDSYS_SBKEYS_DIR} and ${BUILDSYS_SBKEYS_PROFILE}.
+BUILDSYS_SBKEYS_PROFILE_DIR = "${BUILDSYS_SBKEYS_DIR}/${BUILDSYS_SBKEYS_PROFILE}"
 
 # Path to repo-specific root role.
 PUBLISH_REPO_ROOT_JSON = "${BUILDSYS_ROOT_DIR}/roles/${PUBLISH_REPO}.root.json"
@@ -677,6 +682,52 @@ cargo install \
   --root tools \
   --force \
   --quiet
+'''
+]
+
+[tasks.build-sbkeys]
+dependencies = ["fetch"]
+script_runner = "bash"
+script = [
+'''
+# Check the profile for all files needed for Secure Boot signing.
+profile="${BUILDSYS_SBKEYS_PROFILE_DIR}"
+
+found=0
+# A local profile has signing keys and certificates, while an AWS profile
+# has a config for the aws-kms-pkcs11 helper. Either type is supported.
+if [ -s "${profile}/shim-sign.key" ] && \
+   [ -s "${profile}/shim-sign.crt" ] && \
+   [ -s "${profile}/code-sign.key" ] && \
+   [ -s "${profile}/code-sign.crt" ] ; then
+   let found+=1
+elif [ -s "${profile}/kms-sign.json" ] ; then
+   let found+=1
+fi
+
+expected=1
+for f in {PK,KEK,db,vendor}.crt config-sign.key efi-vars.{json,aws} ; do
+  let expected+=1
+  [ -s "${profile}/${f}" ] && let found+=1
+done
+
+if [ "${found}" -eq "${expected}" ] ; then
+  exit 0
+fi
+
+if [ "${found}" -gt 0 ] ; then
+  echo "Incomplete Secure Boot signing profile found in ${profile}." >&2
+  echo "Missing $(( expected - found )) files." >&2
+  exit 1
+fi
+
+echo "No Secure Boot signing profile found in ${profile}." >&2
+echo "Generating local keys." >&2
+
+mkdir -p "${BUILDSYS_SBKEYS_PROFILE_DIR}"
+${BUILDSYS_SBKEYS_DIR}/generate-local-sbkeys \
+  --sdk-image "${BUILDSYS_SDK_IMAGE}" \
+  --output-dir "${BUILDSYS_SBKEYS_PROFILE_DIR}"
 '''
 ]
 
