@@ -18,6 +18,7 @@ URL: https://www.gnu.org/software/grub/
 Source0: https://cdn.amazonlinux.com/al2023/blobstore/74f9ee6e75b8f89fe91ccda86896243179968a8664ba045bece11dc5aff61f4e/grub2-2.06-61.amzn2023.0.6.src.rpm
 Source1: bios.cfg
 Source2: efi.cfg
+Source3: sbat.csv.in
 Patch0001: 0001-setup-Add-root-device-argument-to-grub-setup.patch
 Patch0002: 0002-gpt-start-new-GPT-module.patch
 Patch0003: 0003-gpt-rename-misnamed-header-location-fields.patch
@@ -156,6 +157,8 @@ popd
 mkdir efi-build
 pushd efi-build
 
+sed -e "s,__VERSION__,%{version},g" %{S:3} > sbat.csv
+
 %cross_configure \
   CFLAGS="" \
   LDFLAGS="" \
@@ -201,6 +204,7 @@ mkdir -p %{buildroot}%{efidir}
   -O "%{_cross_grub_efi_format}" \
   -o "%{buildroot}%{efidir}/%{efi_image}" \
   -p "/EFI/BOOT" \
+  --sbat sbat.csv \
   efi_gop ${MODS}
 popd
 
