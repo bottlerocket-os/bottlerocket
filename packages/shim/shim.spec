@@ -29,6 +29,11 @@ Source1: https://github.com/rhboot/gnu-efi/archive/refs/heads/shim-%{gnuefiver}.
 rmdir gnu-efi
 mv gnu-efi-shim-%{gnuefiver} gnu-efi
 
+# Make sure the `.vendor_cert` section is large enough to cover a replacement
+# certificate, or `objcopy` may silently retain the existing section.
+# 4096 - 16 (for cert_table structure) = 4080 bytes.
+truncate -s 4080 empty.cer
+
 %global shim_make \
 %make_build\\\
   ARCH="%{_cross_arch}"\\\
@@ -39,6 +44,7 @@ mv gnu-efi-shim-%{gnuefiver} gnu-efi
   DISABLE_REMOVABLE_LOAD_OPTIONS=y\\\
   DESTDIR="%{buildroot}"\\\
   EFIDIR="BOOT"\\\
+  VENDOR_CERT_FILE="empty.cer"\\\
 %{nil}
 
 %build
