@@ -1,0 +1,97 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Envelope xmlns="http://schemas.dmtf.org/ovf/envelope/1" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:vmw="http://www.vmware.com/schema/ovf" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData">
+  <References>
+    <File ovf:id="file1" ovf:href="{{OS_DISK}}"/>
+    <File ovf:id="file2" ovf:href="{{DATA_DISK}}"/>
+  </References>
+  <DiskSection>
+    <Info>List of the virtual disks</Info>
+    <Disk ovf:capacityAllocationUnits="byte" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:diskId="vmdisk1" ovf:capacity="{{OS_DISK_BYTES}}" ovf:fileRef="file1"/>
+    <Disk ovf:capacityAllocationUnits="byte" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" ovf:diskId="vmdisk2" ovf:capacity="{{DATA_DISK_BYTES}}" ovf:fileRef="file2"/>
+  </DiskSection>
+  <NetworkSection>
+    <Info>The list of logical networks</Info>
+    <Network ovf:name="VM Network">
+      <Description>The network</Description>
+    </Network>
+  </NetworkSection>
+  <VirtualSystem ovf:id="image">
+    <Info>A Virtual machine</Info>
+    <OperatingSystemSection ovf:id="100" vmw:osType="other4xLinux64Guest">
+      <Info>The operating system installed</Info>
+      <Description>Other 4.x or later Linux (64-bit)</Description>
+    </OperatingSystemSection>
+    <VirtualHardwareSection>
+      <Info>Virtual hardware requirements</Info>
+      <System>
+        <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
+        <vssd:InstanceID>0</vssd:InstanceID>
+        <vssd:VirtualSystemType>vmx-15</vssd:VirtualSystemType>
+      </System>
+      <Item>
+        <rasd:AllocationUnits>hertz * 10^6</rasd:AllocationUnits>
+        <rasd:Description>Number of Virtual CPUs</rasd:Description>
+        <rasd:ElementName>2 virtual CPU(s)</rasd:ElementName>
+        <rasd:InstanceID>1</rasd:InstanceID>
+        <rasd:ResourceType>3</rasd:ResourceType>
+        <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+      </Item>
+      <Item>
+        <rasd:AllocationUnits>byte * 2^20</rasd:AllocationUnits>
+        <rasd:Description>Memory Size</rasd:Description>
+        <rasd:ElementName>8192MB of memory</rasd:ElementName>
+        <rasd:InstanceID>2</rasd:InstanceID>
+        <rasd:ResourceType>4</rasd:ResourceType>
+        <rasd:VirtualQuantity>8192</rasd:VirtualQuantity>
+      </Item>
+      <Item>
+        <rasd:Address>0</rasd:Address>
+        <rasd:Description>NVMe Controller</rasd:Description>
+        <rasd:ElementName>NVMe Controller 1</rasd:ElementName>
+        <rasd:InstanceID>4</rasd:InstanceID>
+        <rasd:ResourceSubType>vmware.nvme.controller</rasd:ResourceSubType>
+        <rasd:ResourceType>20</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        <rasd:ElementName>Hard Disk 1</rasd:ElementName>
+        <rasd:HostResource>ovf:/disk/vmdisk1</rasd:HostResource>
+        <rasd:InstanceID>6</rasd:InstanceID>
+        <rasd:Parent>4</rasd:Parent>
+        <rasd:ResourceType>17</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AddressOnParent>1</rasd:AddressOnParent>
+        <rasd:ElementName>Hard Disk 2</rasd:ElementName>
+        <rasd:HostResource>ovf:/disk/vmdisk2</rasd:HostResource>
+        <rasd:InstanceID>7</rasd:InstanceID>
+        <rasd:Parent>4</rasd:Parent>
+        <rasd:ResourceType>17</rasd:ResourceType>
+      </Item>
+      <Item>
+        <rasd:AddressOnParent>0</rasd:AddressOnParent>
+        <rasd:AutomaticAllocation>true</rasd:AutomaticAllocation>
+        <rasd:Connection>VM Network</rasd:Connection>
+        <rasd:ElementName>Network adapter 1</rasd:ElementName>
+        <rasd:InstanceID>9</rasd:InstanceID>
+        <rasd:ResourceSubType>VmxNet3</rasd:ResourceSubType>
+        <rasd:ResourceType>10</rasd:ResourceType>
+        <vmw:Config ovf:required="false" vmw:key="connectable.allowGuestControl" vmw:value="true"/>
+        <vmw:Config ovf:required="false" vmw:key="wakeOnLanEnabled" vmw:value="false"/>
+      </Item>
+      <vmw:Config ovf:required="false" vmw:key="bootOptions.efiSecureBootEnabled" vmw:value="true"/>
+      <vmw:Config ovf:required="false" vmw:key="firmware" vmw:value="efi"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="disk.enableUUID" vmw:value="true"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="bios.bootOrder" vmw:value="hdd"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="bios.hddOrder" vmw:value="nvme0:1"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="uefi.secureBoot.PKDefault.value0" vmw:value="{{PK_CERT_DER_HEX}}"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="uefi.secureBoot.PKDefault.append" vmw:value="false"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="uefi.secureBoot.KEKDefault.value0" vmw:value="{{KEK_CERT_DER_HEX}}"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="uefi.secureBoot.KEKDefault.append" vmw:value="false"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="uefi.secureBoot.dbDefault.value0" vmw:value="{{DB_CERT_DER_HEX}}"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="uefi.secureBoot.dbDefault.append" vmw:value="false"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="uefi.secureBoot.dbxDefault.value0" vmw:value="{{DBX_EMPTY_HASH_HEX}}"/>
+      <vmw:ExtraConfig ovf:required="false" vmw:key="uefi.secureBoot.dbxDefault.append" vmw:value="false"/>
+    </VirtualHardwareSection>
+  </VirtualSystem>
+</Envelope>
