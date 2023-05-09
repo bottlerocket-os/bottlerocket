@@ -1,0 +1,347 @@
+#!/usr/bin/env bash
+
+# Helper script for running commands to generate Secure Boot files.
+
+set -euo pipefail
+
+usage() {
+   cat >&2 <<EOF
+usage: ${0##*/} [--sdk-image SDK_IMAGE]
+                [--aws-region AWS_REGION]
+                [--pk-ca PK_CA]
+                [--kek-ca KEK_CA]
+                [--db-ca DB_CA]
+                [--vendor-ca VENDOR_CA]
+                [--shim-sign-key SHIM_SIGN_KEY]
+                [--code-sign-key CODE_SIGN_KEY]
+                [--config-sign-key CONFIG_SIGN_KEY]
+                [--output-dir OUTPUT_DIR]
+
+Generate Secure Boot related files. AWS-aware edition.
+
+Options:
+    --sdk-image         Name of the (optional) SDK image to use.
+    --aws-region        AWS region where the resources live.
+    --pk-ca             PCA ARN for the Secure Boot Platform CA (PK).
+    --kek-ca            PCA ARN for the Secure Boot Key Exchange CA (KEK).
+    --db-ca             PCA ARN for the Secure Boot Database CA (db).
+    --vendor-ca         PCA ARN for the Secure Boot Vendor CA.
+    --shim-sign-key     KMS key ID or ARN for the shim signing key.
+    --code-sign-key     KMS key ID or ARN for the code signing key (grub, vmlinuz).
+    --config-sign-key   KMS key ID or ARN for the config signing key (grub.cfg).
+    --output-dir        Path where the keys will be written.
+    --help              shows this usage text
+EOF
+}
+
+required_arg() {
+   local arg="${1:?}"
+   local value="${2}"
+   if [ -z "${value}" ]; then
+      echo "ERROR: ${arg} is required" >&2
+      exit 2
+   fi
+}
+
+parse_args() {
+  while [ ${#} -gt 0 ] ; do
+    case "${1}" in
+        --help ) usage; exit 0 ;;
+        --sdk-image ) shift; SDK_IMAGE="${1}" ;;
+        --aws-region ) shift; AWS_REGION="${1}" ;;
+        --pk-ca ) shift; PK_CA="${1}" ;;
+        --kek-ca ) shift; KEK_CA="${1}" ;;
+        --db-ca ) shift; DB_CA="${1}" ;;
+        --vendor-ca ) shift; VENDOR_CA="${1}" ;;
+        --shim-sign-key ) shift; SHIM_SIGN_KEY="${1}" ;;
+        --code-sign-key ) shift; CODE_SIGN_KEY="${1}" ;;
+        --config-sign-key ) shift; CONFIG_SIGN_KEY="${1}" ;;
+        --output-dir ) shift; OUTPUT_DIR="${1}" ;;
+        *) ;;
+    esac
+    shift
+  done
+
+  # Required arguments
+  required_arg "--aws-region" "${AWS_REGION:-}"
+  required_arg "--pk-ca" "${PK_CA:-}"
+  required_arg "--kek-ca" "${KEK_CA:-}"
+  required_arg "--db-ca" "${DB_CA:-}"
+  required_arg "--vendor-ca" "${VENDOR_CA:-}"
+  required_arg "--shim-sign-key" "${SHIM_SIGN_KEY:-}"
+  required_arg "--code-sign-key" "${CODE_SIGN_KEY:-}"
+  required_arg "--config-sign-key" "${CONFIG_SIGN_KEY:-}"
+  required_arg "--output-dir" "${OUTPUT_DIR:-}"
+}
+
+parse_args "${@}"
+
+# To avoid needing separate scripts to parse args and launch the SDK container,
+# the logic to generate the profile is found below the separator. Copy that to
+# a temporary file so it can be executed using the desired method.
+PRELUDE_END=$(awk '/=\^\.\.\^=/ { print NR+1; exit 0; }' "${0}")
+SBKEYS_SCRIPT="$(mktemp)"
+AWS_KMS_PKCS11_CONF="$(mktemp)"
+cleanup() {
+  rm -f "${SBKEYS_SCRIPT}" "${AWS_KMS_PKCS11_CONF}"
+}
+trap 'cleanup' EXIT
+tail -n +"${PRELUDE_END}" "${0}" >"${SBKEYS_SCRIPT}"
+chmod +x "${SBKEYS_SCRIPT}"
+
+cat <<EOF > "${AWS_KMS_PKCS11_CONF}"
+{
+  "slots": [
+    {
+      "label": "shim-sign-key",
+      "kms_key_id": "${SHIM_SIGN_KEY}",
+      "aws_region": "${AWS_REGION}"
+    },
+    {
+      "label": "code-sign-key",
+      "kms_key_id": "${CODE_SIGN_KEY}",
+      "aws_region": "${AWS_REGION}"
+    },
+    {
+      "label": "config-sign-key",
+      "kms_key_id": "${CONFIG_SIGN_KEY}",
+      "aws_region": "${AWS_REGION}"
+    }
+  ]
+}
+EOF
+
+# Create the output directory with the current user, rather than letting Docker
+# create it as a root-owned directory.
+mkdir -p "${OUTPUT_DIR}"
+
+if [ -n "${SDK_IMAGE:-}" ] ; then
+  docker run -a stdin -a stdout -a stderr --rm \
+    --user "$(id -u):$(id -g)" \
+    --security-opt label:disable \
+    -v "${OUTPUT_DIR}":/tmp/output \
+    -v "${SBKEYS_SCRIPT}":/tmp/sbkeys \
+    -v "${AWS_KMS_PKCS11_CONF}":/tmp/aws-kms-pkcs11-conf \
+    ${AWS_ACCESS_KEY_ID:+-e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID} \
+    ${AWS_SECRET_ACCESS_KEY:+-e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY} \
+    ${AWS_SESSION_TOKEN:+-e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN} \
+    -e AWS_REGION="${AWS_REGION}" \
+    -e AWS_DEFAULT_REGION="${AWS_REGION}" \
+    -e PK_CA="${PK_CA}" \
+    -e KEK_CA="${KEK_CA}" \
+    -e DB_CA="${DB_CA}" \
+    -e VENDOR_CA="${VENDOR_CA}" \
+    -e SHIM_SIGN_KEY="${SHIM_SIGN_KEY}" \
+    -e CODE_SIGN_KEY="${CODE_SIGN_KEY}" \
+    -e CONFIG_SIGN_KEY="${CONFIG_SIGN_KEY}" \
+    -e AWS_KMS_PKCS11_CONF="/tmp/aws-kms-pkcs11-conf" \
+    -e OUTPUT_DIR="/tmp/output" \
+    -w /tmp \
+    "${SDK_IMAGE}" bash /tmp/sbkeys
+else
+  export PK_CA KEK_CA DB_CA VENDOR_CA
+  export CODE_SIGN_KEY CONFIG_SIGN_KEY SHIM_SIGN_KEY
+  export AWS_REGION AWS_KMS_PKCS11_CONF OUTPUT_DIR
+  bash "${SBKEYS_SCRIPT}"
+fi
+
+exit
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+set -euo pipefail
+
+WORKDIR="$(mktemp -d)"
+cd "${WORKDIR}"
+cleanup() {
+  rm -rf "${WORKDIR}"
+}
+trap 'cleanup' EXIT
+
+export XDG_CONFIG_HOME="${WORKDIR}/.config"
+mkdir -p "${XDG_CONFIG_HOME}/aws-kms-pkcs11"
+cp "${AWS_KMS_PKCS11_CONF}" "${XDG_CONFIG_HOME}/aws-kms-pkcs11/config.json"
+
+export AWS_DEFAULT_OUTPUT="text"
+export AWS_KMS_PKCS11_DEBUG=1
+export PKCS11_MODULE_PATH="/usr/lib64/pkcs11/aws_kms_pkcs11.so"
+
+# Fetch CA certificates.
+getcacert() {
+  local arn ca
+  arn="${1:?}"
+  ca="${2:?}"
+  aws acm-pca get-certificate-authority-certificate \
+    --certificate-authority-arn "${arn}" \
+    --query 'Certificate' > "${ca}.crt"
+}
+
+getcacert "${PK_CA}" "PK"
+getcacert "${KEK_CA}" "KEK"
+getcacert "${DB_CA}" "db"
+getcacert "${VENDOR_CA}" "vendor"
+
+# Add X.509 extension for code signing.
+cat <<'EOF' > codesign.json
+{
+  "Extensions": {
+    "ExtendedKeyUsage": [
+      {
+        "ExtendedKeyUsageType": "CODE_SIGNING"
+      },
+      {
+        "ExtendedKeyUsageObjectIdentifier": "1.3.6.1.4.1.311.10.3.6"
+      }
+    ]
+  }
+}
+EOF
+
+gencert() {
+  local key token cn ca_arn cert_arn
+  key="${1:?}"
+  token="${2:?}"
+  cn="${3:?}"
+  ca_arn="${4:?}"
+
+  openssl req -new \
+    -key "pkcs11:token=${token}" -keyform engine -engine pkcs11 \
+    -subj "/CN=${cn}/" \
+    -out "${key}.csr"
+
+  cert_arn="$(\
+    aws acm-pca issue-certificate \
+      --certificate-authority-arn "${ca_arn}" \
+      --template-arn arn:aws:acm-pca:::template/BlankEndEntityCertificate_APICSRPassthrough/V1 \
+      --csr "fileb://${key}.csr" \
+      --api-passthrough "file://codesign.json" \
+      --signing-algorithm "SHA256WITHRSA" \
+      --validity Value=5,Type="YEARS" \
+      --idempotency-token "${key}" \
+      --query 'CertificateArn')"
+
+    aws acm-pca wait certificate-issued \
+       --certificate-authority-arn "${ca_arn}" \
+       --certificate-arn "${cert_arn}"
+
+    aws acm-pca get-certificate \
+       --certificate-authority-arn "${ca_arn}" \
+       --certificate-arn "${cert_arn}" \
+       --query 'Certificate' \
+       > "${key}.crt"
+}
+
+# Sign shim, GRUB, kernel, and GRUB config signing keys.
+gencert shim-sign "shim-sign-key" "Bottlerocket Shim Signing Key" "${DB_CA}"
+gencert code-sign "code-sign-key" "Bottlerocket Code Signing Key" "${VENDOR_CA}"
+gencert config-sign "config-sign-key" "Bottlerocket Config Signing Key" "${VENDOR_CA}"
+
+# Encode the certs for the PKCS11 helper.
+SHIM_SIGN_CERT="$(openssl x509 -in shim-sign.crt -outform der | openssl base64 -A)"
+CODE_SIGN_CERT="$(openssl x509 -in code-sign.crt -outform der | openssl base64 -A)"
+CONFIG_SIGN_CERT="$(openssl x509 -in config-sign.crt -outform der | openssl base64 -A)"
+
+# Reconfigure the PKCS11 helper for GPG.
+cat <<EOF > "${XDG_CONFIG_HOME}/aws-kms-pkcs11/config.json"
+{
+  "slots": [
+    {
+      "label": "config-sign-key",
+      "kms_key_id": "${CONFIG_SIGN_KEY}",
+      "aws_region": "${AWS_REGION}",
+      "certificate": "${CONFIG_SIGN_CERT}"
+    }
+  ]
+}
+EOF
+
+# Ensure a clean GPG state.
+export GNUPGHOME="${WORKDIR}"
+
+# Configure the GPG agent and smartcard daemon.
+cat <<EOF >> "${GNUPGHOME}/gpg-agent.conf"
+scdaemon-program /usr/bin/gnupg-pkcs11-scd
+EOF
+
+cat <<EOF >> "${GNUPGHOME}/gnupg-pkcs11-scd.conf"
+providers kms
+provider-kms-library /usr/lib64/pkcs11/aws_kms_pkcs11.so
+log-file /dev/null
+EOF
+
+# Have GPG agent discover the key.
+gpg --card-status
+KEYGRIP=$(\
+  find "${GNUPGHOME}"/private-keys-*.d -type f -name '*.key' -printf '%P' \
+  | cut -d '.' -f1 | head -n1)
+
+# Import the config signing key into GPG.
+# 13                 Existing key
+# ${KEYGRIP}         Which key to edit
+# e                  Toggle the encrypt capability off
+# q                  Finished
+# 0                  Key does not expire
+# Bottlerocket ...   Real name
+#                    Email address
+#                    Comment
+gpg --no-tty --expert --full-generate-key --command-fd 0 <<EOF
+13
+${KEYGRIP}
+e
+q
+0
+Bottlerocket Config Signing Key
+
+
+EOF
+
+# Export the GPG key.
+gpg --armor --export > config-sign.key
+
+# Generate EFI vars for use with EC2 or others.
+GUID="$(uuidgen --random)"
+virt-fw-vars \
+  --set-pk "${GUID}" PK.crt \
+  --add-kek "${GUID}" KEK.crt \
+  --add-db "${GUID}" db.crt \
+  --secure-boot \
+  --output-json "efi-vars.json"
+
+virt-fw-vars \
+  --set-json "efi-vars.json" \
+  --output-aws "efi-vars.aws"
+
+# Create the final PKCS11 helper config.
+cat <<EOF > "kms-sign.json"
+{
+  "slots": [
+    {
+      "label": "shim-sign-key",
+      "kms_key_id": "${SHIM_SIGN_KEY}",
+      "aws_region": "${AWS_REGION}",
+      "certificate": "${SHIM_SIGN_CERT}"
+    },
+    {
+      "label": "code-sign-key",
+      "kms_key_id": "${CODE_SIGN_KEY}",
+      "aws_region": "${AWS_REGION}",
+      "certificate": "${CODE_SIGN_CERT}"
+    },
+    {
+      "label": "config-sign-key",
+      "kms_key_id": "${CONFIG_SIGN_KEY}",
+      "aws_region": "${AWS_REGION}",
+      "certificate": "${CONFIG_SIGN_CERT}"
+    }
+  ]
+}
+EOF
+
+# Copy all expected files out.
+cp -t "${OUTPUT_DIR}" \
+  PK.crt \
+  KEK.crt \
+  db.crt \
+  vendor.crt \
+  kms-sign.json \
+  config-sign.key \
+  efi-vars.{aws,json}
