@@ -160,7 +160,11 @@ impl RenderedConfigFile {
         };
 
         let mut binding = OpenOptions::new();
-        let options = binding.write(true).create(true).mode(DEFAULT_FILE_MODE);
+        let options = binding
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(DEFAULT_FILE_MODE);
 
         // See if this file has a config setting for a specific mode
         if let Some(mode) = &self.mode {
