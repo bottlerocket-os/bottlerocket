@@ -1,4 +1,4 @@
-# v1.14.0 (2023-05-10)
+# v1.14.0 (2023-05-11)
 
 ## OS Changes
 
@@ -18,6 +18,7 @@
 ### Kubernetes
 
 * Add Kubernetes 1.27 variants ([#3046])
+  * Switch to using Kubernetes default values for `kube-api-burst` and `kube-api-qps` ([#3094])
 * Add more Kubernetes settings ([#2930], [#2986])
   * Soft eviction policy
   * Graceful shutdown
@@ -51,6 +52,7 @@
 [#3035]: https://github.com/bottlerocket-os/bottlerocket/pull/3035
 [#3075]: https://github.com/bottlerocket-os/bottlerocket/pull/3075
 [#3046]: https://github.com/bottlerocket-os/bottlerocket/pull/3046
+[#3094]: https://github.com/bottlerocket-os/bottlerocket/pull/3094
 [#2930]: https://github.com/bottlerocket-os/bottlerocket/pull/2930
 [#2986]: https://github.com/bottlerocket-os/bottlerocket/pull/2986
 [#3070]: https://github.com/bottlerocket-os/bottlerocket/pull/3070
