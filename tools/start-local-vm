@@ -5,6 +5,7 @@ shopt -s nullglob
 
 arch=${BUILDSYS_ARCH}
 variant=${BUILDSYS_VARIANT}
+product_name=${BUILDSYS_NAME:-bottlerocket}
 host_port_forwards=tcp::2222-:22
 vm_mem=4G
 vm_cpus=4
@@ -41,6 +42,10 @@ Options:
                         BUILDSYS_ARCH environment variable is set)
     --variant           Bottlerocket variant to run (may be omitted if the
                         BUILDSYS_VARIANT environment variable is set)
+    --product-name
+                        product name used for file and directory naming used when
+                        building with the "-e BUILDSYS_NAME" option; may be omitted if the
+                        BUILDSYS_NAME environment variable is set. Otherwise default is bottlerocket if not defined or empty
     --host-port-forwards
                         list of host ports to forward to the VM; HOST_PORT_FWDS
                         must be a valid QEMU port forwarding specifier (default
@@ -92,6 +97,8 @@ parse_args() {
                 shift; arch=$1 ;;
             --variant)
                 shift; variant=$1 ;;
+            --product-name)
+                shift; product_name=$1 ;;
             --host-port-forwards)
                 shift; host_port_forwards=$1 ;;
             --vm-memory)
@@ -141,8 +148,8 @@ extract_image() {
 
 prepare_raw_images() {
     local -r image_dir=build/images/${arch}-${variant}/latest
-    local -r compressed_boot_image=${image_dir}/bottlerocket-${variant}-${arch}.img.lz4
-    local -r compressed_data_image=${image_dir}/bottlerocket-${variant}-${arch}-data.img.lz4
+    local -r compressed_boot_image=${image_dir}/${product_name}-${variant}-${arch}.img.lz4
+    local -r compressed_data_image=${image_dir}/${product_name}-${variant}-${arch}-data.img.lz4
 
     if [[ -e ${compressed_boot_image} ]]; then
         readonly boot_image=${compressed_boot_image%*.lz4}
