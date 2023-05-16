@@ -11,6 +11,15 @@ Tips:
 - Please include any error messages you received, with any required context.
 -->
 
+<!--
+Note:
+
+If you are an AWS customer and experiencing an urgent issue you
+believe is related to AWS, please contact support:
+
+https://aws.amazon.com/contact-us/
+
+-->
 **Image I'm using:**
 
 

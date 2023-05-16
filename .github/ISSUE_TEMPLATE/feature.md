@@ -10,6 +10,15 @@ Tips:
 - Please include details about the environment you're running in.
 -->
 
+<!--
+Note:
+
+If you are an AWS customer and experiencing an urgent issue you
+believe is related to AWS, please contact support:
+
+https://aws.amazon.com/contact-us/
+
+-->
 **What I'd like:**
 
 
