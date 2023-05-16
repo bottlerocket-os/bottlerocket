@@ -31,141 +31,36 @@ env:
   GOPROXY: direct
 
 jobs:
+  list-variants:
+    if: github.repository == 'bottlerocket-os/bottlerocket'
+    runs-on: ubuntu-latest
+    outputs:
+      variants: ${{ steps.get-variants.outputs.variants }}
+      aarch-enemies: ${{ steps.get-variants.outputs.aarch-enemies }}
+    steps:
+      - uses: actions/checkout@v3
+      - id: get-variants
+        name: Determine variants
+        run: |
+          cd variants
+          output="variants=$(ls -d */ | cut -d'/' -f 1 | grep -vE '^(shared|target)$' | jq -R -s -c 'split("\n")[:-1]')"
+          echo $output
+          echo $output >> $GITHUB_OUTPUT
+          output="aarch-enemies=$(ls -d */ | cut -d'/' -f 1 | grep -E '(^(metal|vmware)|\-dev$)' | jq -R -s -c 'split("\n")[:-1] | [ .[] | {"variant": ., "arch": "aarch64"}]')"
+          echo $output
+          echo $output >> $GITHUB_OUTPUT
+
   build:
+    needs: list-variants
     runs-on:
       group: bottlerocket
       labels: bottlerocket_ubuntu-latest_32-core
-    continue-on-error: ${{ matrix.supported }}
+    continue-on-error: true
     strategy:
       matrix:
-        variant:
-          - aws-k8s-1.22
-          - aws-k8s-1.23
-          - aws-k8s-1.24
-          - aws-k8s-1.25
-          - aws-k8s-1.26
-          - aws-k8s-1.27
-          - aws-ecs-1
+        variant: ${{ fromJson(needs.list-variants.outputs.variants) }}
         arch: [x86_64, aarch64]
-        supported: [true]
-        fetch-upstream: ["false"]
-        include:
-          - variant: aws-dev
-            arch: x86_64
-            supported: false
-            fetch-upstream: "false"
-          - variant: vmware-dev
-            arch: x86_64
-            supported: false
-            fetch-upstream: "false"
-          - variant: metal-dev
-            arch: x86_64
-            supported: false
-            fetch-upstream: "false"
-          - variant: metal-k8s-1.22
-            arch: x86_64
-            supported: false
-            fetch-upstream: "false"
-          - variant: metal-k8s-1.23
-            arch: x86_64
-            supported: false
-            fetch-upstream: "false"
-          - variant: metal-k8s-1.24
-            arch: x86_64
-            supported: false
-            fetch-upstream: "false"
-          - variant: metal-k8s-1.25
-            arch: x86_64
-            supported: false
-            fetch-upstream: "false"
-          - variant: metal-k8s-1.26
-            arch: x86_64
-            supported: false
-            fetch-upstream: "false"
-          - variant: metal-k8s-1.27
-            arch: x86_64
-            supported: false
-            fetch-upstream: "false"
-          - variant: vmware-k8s-1.22
-            arch: x86_64
-            supported: true
-            fetch-upstream: "false"
-          - variant: vmware-k8s-1.23
-            arch: x86_64
-            supported: true
-            fetch-upstream: "false"
-          - variant: vmware-k8s-1.24
-            arch: x86_64
-            supported: true
-            fetch-upstream: "false"
-          - variant: vmware-k8s-1.25
-            arch: x86_64
-            supported: true
-            fetch-upstream: "false"
-          - variant: vmware-k8s-1.26
-            arch: x86_64
-            supported: true
-            fetch-upstream: "false"
-          - variant: vmware-k8s-1.27
-            arch: x86_64
-            supported: true
-            fetch-upstream: "false"
-          - variant: aws-k8s-1.22-nvidia
-            arch: x86_64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.22-nvidia
-            arch: aarch64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.23-nvidia
-            arch: x86_64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.23-nvidia
-            arch: aarch64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.24-nvidia
-            arch: x86_64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.24-nvidia
-            arch: aarch64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.25-nvidia
-            arch: x86_64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.25-nvidia
-            arch: aarch64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.26-nvidia
-            arch: x86_64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.26-nvidia
-            arch: aarch64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.27-nvidia
-            arch: x86_64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-k8s-1.27-nvidia
-            arch: aarch64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-ecs-1-nvidia
-            arch: x86_64
-            supported: true
-            fetch-upstream: "true"
-          - variant: aws-ecs-1-nvidia
-            arch: aarch64
-            supported: true
-            fetch-upstream: "true"
+        exclude: ${{ fromJson(needs.list-variants.outputs.aarch-enemies) }}
       fail-fast: false
     steps:
       - name: Preflight step to set up the runner
@@ -222,5 +117,5 @@ jobs:
           cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} \
             -e BUILDSYS_ARCH=${{ matrix.arch }} \
             -e BUILDSYS_JOBS=12 \
-            -e BUILDSYS_UPSTREAM_SOURCE_FALLBACK=${{ matrix.fetch-upstream }} \
-            -e BUILDSYS_UPSTREAM_LICENSE_FETCH=${{ matrix.fetch-upstream }}
+            -e BUILDSYS_UPSTREAM_SOURCE_FALLBACK="${{ contains(matrix.variant, 'nvidia') }}" \
+            -e BUILDSYS_UPSTREAM_LICENSE_FETCH="${{ contains(matrix.variant, 'nvidia') }}"
