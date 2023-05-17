@@ -333,3 +333,20 @@ docker run --rm \
    "${SDK_IMAGE}" \
    bootconfig -l /tmp/bootconfig.data
 ```
+
+### Enable Secure Boot
+
+Starting with metal-k8s-1.28, the Bottlerocket images for bare metal support Secure Boot when used on a platform with UEFI firmware.
+UEFI boot mode must be used, rather than legacy BIOS boot mode, and Secure Boot must be enabled.
+The UEFI firmware may provide a Compatibility Support Module (CSM) option to enable legacy BIOS emulation.
+The CSM option must not be enabled.
+These options can be set in the firmware setup menu, which can be accessed during boot by pressing a certain key (such as F2 or F12).
+
+Many Linux distros ship a copy of the [shim](https://github.com/rhboot/shim) bootloader signed by Microsoft with a key that is trusted by default.
+Although Bottlerocket also uses `shim`, its copy is not signed by Microsoft and will not be trusted without additional configuration.
+After installing Bottlerocket, the appropriate vendor certificate can be found on the EFI System Partition (ESP).
+The firmware setup menu should provide an option to import a new vendor certificate by selecting a file on the ESP.
+Either the PEM format (`db.crt`) or DER format (`db.cer`) certificate can be imported, depending on what the firmware supports.
+
+The firmware setup menu should be password-protected to prevent unauthorized changes to the Secure Boot configuration.
+Please refer to the documentation from your hardware vendor for more information on this procedure.
