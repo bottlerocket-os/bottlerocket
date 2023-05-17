@@ -239,6 +239,7 @@
 (class perf_event (open cpu kernel tracepoint read write))
 (class lockdown (integrity confidentiality))
 (class io_uring (override_creds sqpoll cmd))
+(class user_namespace (create))
 
 ; Match the kernel's class order.
 (classorder (
@@ -264,7 +265,8 @@
   phonet_socket ieee802154_socket caif_socket alg_socket
   nfc_socket vsock_socket kcm_socket qipcrtr_socket smc_socket
   infiniband_pkey infiniband_endport bpf xdp_socket
-  mctp_socket perf_event lockdown anon_inode io_uring))
+  mctp_socket perf_event lockdown anon_inode io_uring
+  user_namespace))
 
 ; Add permissions for SELinux-aware applications.
 ; This includes systemd and dbus-broker.
