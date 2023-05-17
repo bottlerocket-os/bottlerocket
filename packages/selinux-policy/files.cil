@@ -57,6 +57,7 @@
 (classmapping files load load_filesystem)
 (classmapping files load load_fd)
 (classmapping files load load_anon_inode)
+(classmapping files load load_io_uring)
 
 ; Permission group for executing files.
 (classmapping files execute execute_file)
@@ -214,6 +215,7 @@
 (classpermission load_filesystem)
 (classpermission load_fd)
 (classpermission load_anon_inode)
+(classpermission load_io_uring)
 (classpermissionset load_file (
   file (
     ioctl map open read watch watch_mount watch_reads watch_sb)))
@@ -243,6 +245,8 @@
   anon_inode (
     execute ioctl map open read
     watch watch_mount watch_reads watch_sb)))
+(classpermissionset load_io_uring (
+  io_uring (cmd)))
 
 ; Sets of permissions for execute actions on file objects.
 (classpermission execute_file)
