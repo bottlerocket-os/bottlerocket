@@ -1,0 +1,24 @@
+name: "List active variants"
+description: "Dynamically determines current Bottlerocket variants based on repo contents."
+outputs:
+  variants:
+    description: A list of all variants defined in the repo
+    value: ${{ steps.get-variants.outputs.variants }}
+  aarch-enemies:
+    description: Variants that should not run for aarch64
+    value: ${{ steps.get-variants.outputs.aarch-enemies }}
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+    - id: get-variants
+      name: Determine variants
+      shell: bash
+      run: |
+        cd variants
+        output="variants=$(ls -d */ | cut -d'/' -f 1 | grep -vE '^(shared|target)$' | jq -R -s -c 'split("\n")[:-1]')"
+        echo $output
+        echo $output >> $GITHUB_OUTPUT
+        output="aarch-enemies=$(ls -d */ | cut -d'/' -f 1 | grep -E '(^(metal|vmware)|\-dev$)' | jq -R -s -c 'split("\n")[:-1] | [ .[] | {"variant": ., "arch": "aarch64"}]')"
+        echo $output
+        echo $output >> $GITHUB_OUTPUT

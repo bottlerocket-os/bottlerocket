@@ -32,23 +32,18 @@ env:
 
 jobs:
   list-variants:
+    # This needs to be its own job since the build job needs its output before
+    # it can initialize
     if: github.repository == 'bottlerocket-os/bottlerocket'
+    name: "Determine variants"
     runs-on: ubuntu-latest
     outputs:
       variants: ${{ steps.get-variants.outputs.variants }}
       aarch-enemies: ${{ steps.get-variants.outputs.aarch-enemies }}
     steps:
       - uses: actions/checkout@v3
-      - id: get-variants
-        name: Determine variants
-        run: |
-          cd variants
-          output="variants=$(ls -d */ | cut -d'/' -f 1 | grep -vE '^(shared|target)$' | jq -R -s -c 'split("\n")[:-1]')"
-          echo $output
-          echo $output >> $GITHUB_OUTPUT
-          output="aarch-enemies=$(ls -d */ | cut -d'/' -f 1 | grep -E '(^(metal|vmware)|\-dev$)' | jq -R -s -c 'split("\n")[:-1] | [ .[] | {"variant": ., "arch": "aarch64"}]')"
-          echo $output
-          echo $output >> $GITHUB_OUTPUT
+      - uses: ./.github/actions/list-variants
+        id: get-variants
 
   build:
     needs: list-variants
@@ -62,6 +57,7 @@ jobs:
         arch: [x86_64, aarch64]
         exclude: ${{ fromJson(needs.list-variants.outputs.aarch-enemies) }}
       fail-fast: false
+    name: "Build ${{ matrix.variant }}-${{ matrix.arch }}"
     steps:
       - name: Preflight step to set up the runner
         run: |
