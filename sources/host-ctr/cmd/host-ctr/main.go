@@ -25,8 +25,10 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"github.com/containerd/containerd/reference"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/containerd/containerd/runtime/v2/runc/options"
+	"github.com/opencontainers/go-digest"
 	runtimespec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -575,16 +577,85 @@ func cleanUp(containerdSocket string, namespace string, containerID string) erro
 	return nil
 }
 
+// parseImageURISpecialRegions mimics the parsing in ecr.ParseImageURI but constructs the canonical ECR references while
+// skipping certain checks. We only do this for special regions that are not yet supported by the aws-go-sdk.
+// Referenced source: https://github.com/awslabs/amazon-ecr-containerd-resolver/blob/a5058cf091f4fc573813a032db37a9820952f1f9/ecr/ref.go#L70-L71
+func parseImageURISpecialRegions(input string) (string, error) {
+	ecrRefPrefixMapping := map[string]string{
+		"il-central-1": "ecr.aws/arn:aws:ecr:il-central-1:",
+	}
+	// Matching on account, region
+	matches := ecrRegex.FindStringSubmatch(input)
+	if len(matches) < 3 {
+		return "", fmt.Errorf("invalid image URI: %s", input)
+	}
+	account := matches[1]
+	region := matches[2]
+
+	// Get the ECR image reference prefix from the AWS region
+	ecrRefPrefix, exist := ecrRefPrefixMapping[region]
+	if !exist {
+		return "", fmt.Errorf("unhandled special region in ECR image repo URL: %s", input)
+	}
+
+	// Need to include the full repository path and the imageID (e.g. /eks/image-name:tag)
+	tokens := strings.SplitN(input, "/", 2)
+	if len(tokens) != 2 {
+		return "", fmt.Errorf("invalid image URI: %s", input)
+	}
+	fullRepoPath := tokens[len(tokens)-1]
+	// Run simple checks on the provided repository.
+	switch {
+	case
+		// Must not be empty
+		fullRepoPath == "",
+		// Must not have a partial/unsupplied label
+		strings.HasSuffix(fullRepoPath, ":"),
+		// Must not have a partial/unsupplied digest specifier
+		strings.HasSuffix(fullRepoPath, "@"):
+		return "", errors.New("incomplete reference provided")
+	}
+
+	// Parse out image reference's to validate.
+	ref, err := reference.Parse("repository/" + fullRepoPath)
+	if err != nil {
+		return "", err
+	}
+	// If the digest is provided, check that it is valid.
+	if ref.Digest() != "" {
+		err := ref.Digest().Validate()
+		// Digest may not be supported by the client despite it passing against
+		// a rudimentary check. The error is different in the passing case, so
+		// that's considered a passing check for unavailable digesters.
+		//
+		// https://github.com/opencontainers/go-digest/blob/ea51bea511f75cfa3ef6098cc253c5c3609b037a/digest.go#L110-L115
+		if err != nil && err != digest.ErrDigestUnsupported {
+			return "", fmt.Errorf("%v: %w", "invalid image URI", err)
+		}
+	}
+
+	return ecrRefPrefix + account + ":repository/" + fullRepoPath, nil
+}
+
 // fetchECRImage does some additional conversions before resolving the image reference and fetches the image.
 func fetchECRImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, fetchCachedImageIfExist bool) (containerd.Image, error) {
 	ref := source
+
 	ecrRef, err := ecr.ParseImageURI(ref)
 	if err != nil {
-		log.G(ctx).WithError(err).WithField("source", source).Error("failed to parse ECR reference")
-		return nil, err
+		// The parsing might fail if the AWS region is special, parse again with special handling:
+		log.G(ctx).WithError(err).WithField("source", source).Error("failed to parse ECR reference, trying fallback parsing for special regions")
+		var nestedErr error
+		ref, nestedErr = parseImageURISpecialRegions(ref)
+		if nestedErr != nil {
+			log.G(ctx).WithError(nestedErr).WithField("source", source).Error("fallback parsing for \"special\" ECR region failed")
+			// Return both errors
+			return nil, fmt.Errorf("%v - fallback error: %v", err, nestedErr)
+		}
+	} else {
+		ref = ecrRef.Canonical()
 	}
 
-	ref = ecrRef.Canonical()
 	log.G(ctx).
 		WithField("ref", ref).
 		WithField("source", source).

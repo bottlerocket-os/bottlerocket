@@ -160,3 +160,39 @@ func TestBadRegistryHosts(t *testing.T) {
 	_, err := f("docker.io")
 	assert.Error(t, err)
 }
+
+func TestEcrParserSpecialRegion(t *testing.T) {
+	test := struct {
+		name           string
+		ecrImgURI      string
+		expectedString string
+	}{
+
+		"Parse ECR repo URL for special-case region",
+		"111111111111.dkr.ecr.il-central-1.amazonaws.com/bottlerocket/container:1.2.3",
+		"ecr.aws/arn:aws:ecr:il-central-1:111111111111:repository/bottlerocket/container:1.2.3",
+	}
+
+	t.Run(test.name, func(t *testing.T) {
+		result, err := parseImageURISpecialRegions(test.ecrImgURI)
+		assert.NoError(t, err)
+		assert.Equal(t, test.expectedString, result)
+	})
+}
+
+func TestEcrParserUnsupportedSpecialRegions(t *testing.T) {
+	test := struct {
+		name           string
+		ecrImgURI      string
+		expectedString string
+	}{
+		"Unsupported special region",
+		"111111111111.dkr.ecr.outer-space.amazonaws.com/bottlerocket/container:1.2.3",
+		"",
+	}
+
+	t.Run(test.name, func(t *testing.T) {
+		_, err := parseImageURISpecialRegions(test.ecrImgURI)
+		assert.Error(t, err)
+	})
+}
