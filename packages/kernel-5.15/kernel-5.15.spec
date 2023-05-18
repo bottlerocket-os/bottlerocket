@@ -20,6 +20,9 @@ Patch1002: 1002-Revert-kbuild-hide-tools-build-targets-from-external.patch
 # Enable INITRAMFS_FORCE config option for our use case.
 Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 
+# Backport from v5.15.111 upstream, drop when Amazon Linux base is v5.15.111 or later
+Patch5001: 5001-netfilter-nf_tables-deactivate-anonymous-set-from-pr.patch
+
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
