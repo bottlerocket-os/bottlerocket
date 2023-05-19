@@ -615,6 +615,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-partition-setting"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-profile-cred-provider"
 version = "0.1.0"
 dependencies = [
@@ -3563,6 +3570,14 @@ dependencies = [
  "tempfile",
  "tokio",
  "toml",
+]
+
+[[package]]
+name = "shibaken-aws-partition"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
 ]
 
 [[package]]
