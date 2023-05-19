@@ -1,0 +1,2 @@
+[metadata.settings.aws.partition]
+setting-generator = "shibaken fetch-partition"
