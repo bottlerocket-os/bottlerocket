@@ -1,0 +1,222 @@
+#!/usr/bin/env bash
+
+set -eu -o pipefail
+shopt -qs failglob
+
+# check for veritysetup, debugfs, lz4
+IMAGE_PATH=""
+IMAGE=""
+OUT_IMAGE=""
+ROOTFILE=""
+CABUNDLE=""
+declare -a CHANGED_ROOTS
+
+function buildJson() {
+
+  local -n arr=$1
+  JSON_STRING=$( jq -n \
+      --arg path "${arr[Path]}" \
+      --arg nh "${arr[NewHash]}" \
+      --arg oh "${arr[OldHash]}" \
+      '{Path: $path, NewHash: $nh, OldHash: $oh}' )
+
+  CHANGED_ROOTS+=(${JSON_STRING})
+}
+
+for opt in "$@"; do
+   optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
+   case "${opt}" in
+      --image=*) IMAGE_PATH="${optarg}" ;;
+      --image-out=*) OUT_IMAGE="${optarg}" ;;
+      --new-root=*) ROOTFILE="${optarg}" ;;
+      --ca-bundle=*) CABUNDLE="${optarg}" ;;
+   esac
+done
+
+echo -e "here are the vars: ${IMAGE_PATH} ${OUT_IMAGE} ${ROOTFILE} ${CABUNDLE}"
+
+DESTDIR=$(dirname ${IMAGE_PATH})
+WORKDIR="$(mktemp -d)"
+cleanup() {
+   [ -n "${WORKDIR}" ] && rm -rf "${WORKDIR}"
+}
+trap 'cleanup' EXIT
+
+cp ${IMAGE_PATH} ${WORKDIR}
+
+pushd "${WORKDIR}" >/dev/null
+
+IMAGE=$(basename "${IMAGE_PATH}")
+
+if [[ ${IMAGE} == *.lz4 ]] ; then
+echo "Extracting ${IMAGE}"
+  rm -f ${IMAGE%.*}
+  unlz4 ${IMAGE}
+  IMAGE=${IMAGE%.*}
+fi
+
+IMAGE_NAME=${IMAGE%.*}
+# step 2: extract the root filesystem
+echo -e "Starting extract of root for ${IMAGE}"
+ROOT_IMAGE="root.ext4"
+ROOT_START="$(sgdisk --print "${IMAGE}" | awk '/BOTTLEROCKET-ROOT-A/{ print $2 }')"
+echo ${ROOT_START}
+ROOT_END="$(sgdisk --print "${IMAGE}" | awk '/BOTTLEROCKET-ROOT-A/{ print $3 }')"
+echo ${ROOT_END}
+ROOT_SIZE="$(( ROOT_END - ROOT_START + 1))"
+dd if="${IMAGE}" of="${ROOT_IMAGE}" skip="${ROOT_START}" count="${ROOT_SIZE}"
+
+echo "File exists at ${ROOT_IMAGE}"
+
+# step 3: replace the trusted root.json
+# os_t is the right label for SELinux based upon defaults
+if [ -n "${ROOTFILE}" ] ; then
+  declare -A ROOT_ARR
+  JSON_STRING=""
+  ROOT_ARR[Path]='/usr/share/updog/root.json'
+  ROOT_ARR[OldHash]=$(debugfs -f <(echo cat /usr/share/updog/root.json) ${ROOT_IMAGE} 2>/dev/null | tail -n +2 | sha512sum | head -c 128)
+  ROOT_ARR[NewHash]=$(sha512sum ${ROOTFILE} | head -c 128)
+  buildJson ROOT_ARR
+cat <<EOF | debugfs -w -f - "${ROOT_IMAGE}"
+rm /usr/share/updog/root.json
+write ${ROOTFILE} /usr/share/updog/root.json
+ea_set /usr/share/updog/root.json  security.selinux system_u:object_r:os_t:s0
+EOF
+fi
+
+# replace CA Bundle if requested
+if [ -n "${CABUNDLE}" ] ; then
+declare -A CA_ARR
+JSON_STRING=""
+CA_ARR[Path]='/usr/share/factory/etc/pki/tls/certs/ca-bundle.crt'
+CA_ARR[OldHash]=$(debugfs -f <(echo cat /usr/share/factory/etc/pki/tls/certs/ca-bundle.crt) ${ROOT_IMAGE} 2>/dev/null | tail -n +2 | sha512sum | head -c 128)
+CA_ARR[NewHash]=$(sha512sum ${CABUNDLE} | head -c 128)
+buildJson CA_ARR
+cat <<EOF | debugfs -w -f - "${ROOT_IMAGE}"
+rm /usr/share/factory/etc/pki/tls/certs/ca-bundle.crt
+write ${CABUNDLE} /usr/share/factory/etc/pki/tls/certs/ca-bundle.crt
+ea_set /usr/share/factory/etc/pki/tls/certs/ca-bundle.crt security.selinux system_u:object_r:os_t:s0
+EOF
+fi
+
+# Create the full manifest of modifications for writing to trust-roots.json
+echo -e "The full list of json is: ${CHANGED_ROOTS[@]}"
+MODIFIED_JSON="$(jq --raw-output . <<<  "${CHANGED_ROOTS[@]}")"
+
+FULL_MODIFIED_JSON="$(jq --slurp 'sort_by(.Name)' <<< "${MODIFIED_JSON}" | jq '{"ModifiedRootsOfTrust": .}')"
+
+echo "${FULL_MODIFIED_JSON}" > trust-roots.json
+cat <<EOF | debugfs -w -f - "${ROOT_IMAGE}"
+rm /usr/share/bottlerocket/trust-roots.json
+write trust-roots.json /usr/share/bottlerocket/trust-roots.json
+ea_set /usr/share/bottlerocket/trust-roots.json security.selinux system_u:object_r:os_t:s0
+EOF
+
+echo -e "${FULL_MODIFIED_JSON}"
+
+
+echo "Getting root image written back"
+
+OLD_ROOT_SIZE="$(( ${ROOT_SIZE} * 512 ))"
+NEW_ROOT_SIZE="$(stat --format='%s' "${ROOT_IMAGE}")"
+if [ "${NEW_ROOT_SIZE}" -gt "${OLD_ROOT_SIZE}" ] ; then
+  echo "new root image size of ${NEW_ROOT_SIZE} bytes is greater than old size of ${OLD_ROOT_SIZE} bytes" >&2
+  exit 1
+fi
+
+# step 4: write the root filesystem back
+dd if="${ROOT_IMAGE}" of="${IMAGE}" seek="${ROOT_START}" conv=notrunc
+
+echo "Wrote files, recomputing verity"
+# step 5: regenerate the hash image
+HASH_IMAGE="verity.data"
+HASH_START="$(sgdisk --print "${IMAGE}" | awk '/BOTTLEROCKET-HASH-A/{ print $2 }')"
+HASH_END="$(sgdisk --print "${IMAGE}" | awk '/BOTTLEROCKET-HASH-A/{ print $3 }')"
+HASH_SIZE="$(( HASH_END - HASH_START + 1))"
+
+VERITY_VERSION="1"
+VERITY_HASH_ALGORITHM="sha256"
+VERITY_DATA_BLOCK_SIZE="4096"
+VERITY_HASH_BLOCK_SIZE="4096"
+VERITY_OUTPUT="$(veritysetup format \
+  --format "${VERITY_VERSION}" \
+  --hash "${VERITY_HASH_ALGORITHM}" \
+  --data-block-size "${VERITY_DATA_BLOCK_SIZE}" \
+  --hash-block-size "${VERITY_HASH_BLOCK_SIZE}" \
+  "${ROOT_IMAGE}" "${HASH_IMAGE}" | tee /dev/stderr)"
+VERITY_DATA_4K_BLOCKS="$(grep '^Data blocks:' <<<"${VERITY_OUTPUT}" | awk '{ print $NF }')"
+VERITY_DATA_512B_BLOCKS="$((VERITY_DATA_4K_BLOCKS * 8))"
+VERITY_ROOT_HASH="$(grep '^Root hash:' <<<"${VERITY_OUTPUT}" | awk '{ print $NF }')"
+VERITY_SALT="$(grep '^Salt:' <<<"${VERITY_OUTPUT}" | awk '{ print $NF }')"
+
+OLD_HASH_SIZE="$(( HASH_SIZE * 512 ))"
+NEW_HASH_SIZE="$(stat --format='%s' "${HASH_IMAGE}")"
+if [ "${NEW_HASH_SIZE}" -gt "${OLD_HASH_SIZE}" ] ; then
+  echo "new hash image size of ${NEW_HASH_SIZE} bytes is greater than old size of ${OLD_HASH_SIZE} bytes" >&2
+  exit 1
+fi
+
+# step 6: write the hash image back
+dd if="${HASH_IMAGE}" of="${IMAGE}" seek="${HASH_START}" conv=notrunc
+
+# step 7: extract the boot filesystem
+BOOT_IMAGE="boot.ext4"
+BOOT_START="$(sgdisk --print "${IMAGE}" | awk '/BOTTLEROCKET-BOOT-A/{ print $2 }')"
+BOOT_END="$(sgdisk --print "${IMAGE}" | awk '/BOTTLEROCKET-BOOT-A/{ print $3 }')"
+BOOT_SIZE="$(( BOOT_END - BOOT_START + 1))"
+dd if="${IMAGE}" of="${BOOT_IMAGE}" skip="${BOOT_START}" count="${BOOT_SIZE}"
+
+# step 8: modify grub.cfg
+echo 'cat /grub/grub.cfg' | debugfs -f - "${BOOT_IMAGE}" > grub.cfg
+
+DM_MOD_OPTS_PATTERN="[0-9]\+ verity ${VERITY_VERSION}"
+DM_MOD_OPTS="${VERITY_DATA_512B_BLOCKS} verity ${VERITY_VERSION}"
+
+VERITY_OPTS_PATTERN="[0-9]\+ [0-9]\+ [0-9]\+"
+VERITY_OPTS_PATTERN+=" 1 ${VERITY_HASH_ALGORITHM}"
+VERITY_OPTS_PATTERN+=" [0-9a-f]\+ [0-9a-f]\+"
+
+VERITY_OPTS="${VERITY_DATA_BLOCK_SIZE} ${VERITY_HASH_BLOCK_SIZE} ${VERITY_DATA_4K_BLOCKS}"
+VERITY_OPTS+=" 1 ${VERITY_HASH_ALGORITHM}"
+VERITY_OPTS+=" ${VERITY_ROOT_HASH} ${VERITY_SALT}"
+
+sed -i \
+  -e "s,\(.*\) ${DM_MOD_OPTS_PATTERN} \(.*\),\1 ${DM_MOD_OPTS} \2," \
+  -e "s,\(.*\) ${VERITY_OPTS_PATTERN} \(.*\),\1 ${VERITY_OPTS} \2," \
+  grub.cfg
+
+
+cat <<'EOF' | debugfs -w -f - "${BOOT_IMAGE}"
+rm /grub/grub.cfg
+write grub.cfg /grub/grub.cfg
+ea_set /grub/grub.cfg security.selinux system_u:object_r:os_t:s0
+EOF
+
+OLD_BOOT_SIZE="$(( BOOT_SIZE * 512 ))"
+NEW_BOOT_SIZE="$(stat --format='%s' "${BOOT_IMAGE}")"
+if [ "${NEW_BOOT_SIZE}" -gt "${OLD_BOOT_SIZE}" ] ; then
+  echo "new boot image size of ${NEW_BOOT_SIZE} bytes is greater than old size of ${OLD_BOOT_SIZE} bytes" >&2
+  exit 1
+fi
+
+# step 9: write the boot filesystem back
+dd if="${BOOT_IMAGE}" of="${IMAGE}" seek="${BOOT_START}" conv=notrunc
+
+# now that the images have been written byte for byte back, we can resize them before compressing
+resize2fs -M ${ROOT_IMAGE}
+resize2fs -M ${BOOT_IMAGE}
+
+# re compress the images
+lz4 -9f ${IMAGE}
+lz4 -9f ${ROOT_IMAGE}
+lz4 -9f ${BOOT_IMAGE}
+lz4 -9f ${HASH_IMAGE}
+
+# step 10: copy out the altered image wait for now to keep cycles happy
+echo -e "Copying ${IMAGE} back to ${DESTDIR}"
+cp "${IMAGE}.lz4" "${DESTDIR}"
+cp "${ROOT_IMAGE}.lz4" "${DESTDIR}"/${IMAGE_NAME}-root.ext4.lz4
+cp "${BOOT_IMAGE}.lz4" "${DESTDIR}"/${IMAGE_NAME}-boot.ext4.lz4
+cp "${HASH_IMAGE}.lz4" "${DESTDIR}"/${IMAGE_NAME}-root.verity.lz4
+
+popd > /dev/null

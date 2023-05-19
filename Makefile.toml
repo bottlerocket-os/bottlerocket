@@ -184,6 +184,12 @@ BOOT_CONFIG_INPUT = "${BUILDSYS_ROOT_DIR}/bootconfig-input"
 # Boot Configuration initrd
 BOOT_CONFIG = "${BUILDSYS_ROOT_DIR}/bootconfig.data"
 
+# CA Bundle for root of trust update
+CA_BUNDLE = { script = ['echo "${CA_BUNDLE}:${BUILDSYS_ROOT_DIR}/ca-bundle.crt"'] }
+
+# secondary root.json for update
+NEW_ROOT_JSON = { script = ['echo "${NEW_ROOT_JSON}:${PUBLISH_REPO_ROOT_JSON}"'] }
+
 # Determines the kubeconfig that should be used by testsys. If no kubeconfig was provided and the
 # default kubeconfig location does not exist, use the users default kubeconfig.
 CARGO_MAKE_TESTSYS_KUBECONFIG_ARG = {script = [
@@ -1038,6 +1044,151 @@ pubsys \
 ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_OUTPUT_DIR%/*}/latest"
 '''
 ]
+
+# This is a bash setup right now just to enable my testing
+# We should move this into the pubsys repo logic now
+[tasks.import-images]
+dependencies = ["publish-setup", "publish-tools", "tuftool"]
+script = [
+'''
+set -e
+
+export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+
+IMAGE="bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${BUILDSYS_VERSION_BUILD}"
+OUTDIR="${BUILDSYS_OUTPUT_DIR}/${BUILDSYS_VERSION_BUILD}"
+
+bootlz4="${IMAGE}-boot.ext4.lz4"
+imglz4="${IMAGE}.img.lz4"
+rootlz4="${IMAGE}-root.ext4.lz4"
+hashlz4="${IMAGE}-root.verity.lz4"
+
+# TODO - do we care about these? At the moment I don't but probably later I do - we could get the manifest.json and fetch them there
+# kmodtarxz="${IMAGE}-kmod-kit.tar.xz" #  Versioned with v
+# migrationstar="${IMAGE}-migrations.tar" # not in repo
+# datalz4="${IMAGE}-data.img.lz4" # This doesn't seem to exist in the repo
+
+# Here is the list of files actually built, from there, its up to me to figure out what ones need to be solved for *Version without v
+#bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${VERSION}-${HASH}-boot.ext4.lz4
+#bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${VERSION}-${HASH}-data.img.lz4
+#bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${VERSION}-${HASH}.img.lz4
+#bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${VERSION}-kmod-kit.tar.xz
+#bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${VERSION}-${HASH}-migrations.tar
+#bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${VERSION}-${HASH}-root.ext4.lz4
+#bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${VERSION}-${HASH}-root.verity.lz4
+
+if [ -s "${bootlz4}" ] || [ -s "${imglz4}" ] || [ -s "${rootlz4}" ] || [ -s "${hashlz4}" ]; then
+   echo "Image files already exist for the current version/commit - ${IMAGE} - please run 'cargo make clean' to remove them" >&2
+   exit 1
+fi
+
+# Build path
+tuftool download \
+    "${OUTDIR}" \
+    --target-name "${bootlz4}" \
+    --target-name "${imglz4}" \
+    --target-name "${rootlz4}" \
+    --target-name "${hashlz4}" \
+    --root ./root.json \
+    --metadata-url "https://updates.bottlerocket.aws/2020-07-07/${BUILDSYS_VARIANT}/${BUILDSYS_ARCH}/" \
+    --targets-url "https://updates.bottlerocket.aws/targets/"
+
+
+# Recreate symlinks so it looks like it was built from that hash
+# variant-arch
+# variant-arch-version
+# variant-arch-version(with-v)
+VERSION=$(echo "${BUILDSYS_VERSION_BUILD}"| cut -f1 -d"-")
+ln -s "${OUTDIR}/${bootlz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-boot.ext4.lz"
+ln -s "${OUTDIR}/${bootlz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${VERSION}-boot.ext4.lz"
+ln -s "${OUTDIR}/${bootlz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${VERSION}-boot.ext4.lz"
+
+ln -s "${OUTDIR}/${imglz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}.img.lz4"
+ln -s "${OUTDIR}/${imglz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${VERSION}.img.lz4"
+ln -s "${OUTDIR}/${imglz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${VERSION}.img.lz4"
+
+ln -s "${OUTDIR}/${rootlz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-root.ext4.lz4"
+ln -s "${OUTDIR}/${rootlz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${VERSION}-root.ext4.lz4"
+ln -s "${OUTDIR}/${rootlz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${VERSION}-root.ext4.lz4"
+
+ln -s "${OUTDIR}/${hashlz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-root.verity.lz4"
+ln -s "${OUTDIR}/${hashlz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${VERSION}-root.verity.lz4"
+ln -s "${OUTDIR}/${hashlz4}" "${OUTDIR}/bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-v${VERSION}-root.verity.lz4"
+
+ln -snf "${OUTDIR##*/}" "${BUILDSYS_OUTPUT_DIR}/latest"
+'''
+]
+
+
+[tasks.modify-image]
+dependencies = ["publish-setup", "publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+IMAGE="bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${BUILDSYS_VERSION_BUILD}.img.lz4"
+
+
+run_modify_image="
+/tmp/tools/modify-image --image=/tmp/build/${BUILDSYS_VERSION_BUILD}/${IMAGE} --new-root=/tmp/root.json --ca-bundle=/tmp/ca-bundle.crt
+"
+
+echo ${run_modify_image}
+
+test_run="/tmp/tools/modify-image"
+
+set -x
+
+docker run --rm -it \
+  --user "$(id -u):$(id -g)" \
+  --security-opt label:disable \
+  -e CARGO_HOME="/tmp/.cargo" \
+  -v "${CARGO_HOME}":/tmp/.cargo \
+  -v "${BUILDSYS_ROOT_DIR}/tools":/tmp/tools \
+  -v "${BUILDSYS_OUTPUT_DIR}":/tmp/build \
+  -v "${CA_BUNDLE}":/tmp/ca-bundle.crt \
+  -v "${NEW_ROOT_JSON}":/tmp/root.json \
+  "${BUILDSYS_SDK_IMAGE}" \
+  bash -c "${run_modify_image}"
+'''
+]
+
+[tasks.modify-image-shell]
+dependencies = ["publish-setup", "publish-tools"]
+script_runner = "bash"
+script = [
+'''
+set -e
+
+IMAGE="bottlerocket-${BUILDSYS_VARIANT}-${BUILDSYS_ARCH}-${BUILDSYS_VERSION_BUILD}.img.lz4"
+
+
+run_modify_image="
+/tmp/tools/modify-image --image=/tmp/build/${BUILDSYS_VERSION_BUILD}/${IMAGE} --new-root=/tmp/root.json --ca-bundle=/tmp/ca-bundle.crt
+"
+
+echo ${run_modify_image}
+
+test_run="/tmp/tools/modify-image"
+
+set -x
+
+docker run --rm -it \
+  --user "$(id -u):$(id -g)" \
+  --security-opt label:disable \
+  -e CARGO_HOME="/tmp/.cargo" \
+  -v "${CARGO_HOME}":/tmp/.cargo \
+  -v "${BUILDSYS_ROOT_DIR}/tools":/tmp/tools \
+  -v "${BUILDSYS_OUTPUT_DIR}":/tmp/build \
+  -v "${CA_BUNDLE}":/tmp/ca-bundle.crt \
+  -v "${NEW_ROOT_JSON}":/tmp/root.json \
+  "${BUILDSYS_SDK_IMAGE}" \
+  bash
+'''
+]
+
+
 
 [tasks.validate-repo]
 dependencies = ["publish-setup-without-key", "publish-tools"]
