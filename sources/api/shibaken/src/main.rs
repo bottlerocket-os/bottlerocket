@@ -8,6 +8,7 @@ shibaken is used to fetch data from the instance metadata service (IMDS) in AWS.
 shibaken can:
 * Fetch and populate the admin container's user-data with authorized ssh keys from the IMDS.
 * Perform boolean queries about the AWS partition in which the host is located.
+* Fetch and populate the 'aws.partition' setting.
 * Wait in a warm pool until the instance is marked as InService before starting the orchestrator.
 
 (The name "shibaken" comes from the fact that Shiba are small, but agile, hunting dogs.)
@@ -46,6 +47,9 @@ enum Commands {
     /// Accepts multiple partitions, returning `true` if the host is in any of the given partitions.
     IsPartition(partition::IsPartition),
 
+    /// Fetch and return the partition from IMDS meta-data.
+    FetchPartition(partition::FetchPartition),
+
     /// Poll lifecycle state and wait until instance to be marked as InService
     WarmPoolWait(warmpool::autoscaling_warm_pool::WarmPoolWait),
 }
@@ -70,6 +74,7 @@ async fn run() -> Result<()> {
             generate_admin_userdata.run().await
         }
         Commands::IsPartition(is_partition) => is_partition.run().await,
+        Commands::FetchPartition(fetch_partition) => fetch_partition.run().await,
         Commands::WarmPoolWait(warm_pool_wait) => warm_pool_wait
             .run()
             .await
