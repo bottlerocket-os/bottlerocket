@@ -116,6 +116,12 @@ impl ImdsClient {
         self.fetch_string(&partition_target).await
     }
 
+    /// Returns the domain that the instance is a part of.
+    pub async fn fetch_domain(&mut self) -> Result<Option<String>> {
+        let domain_target = "meta-data/services/domain";
+        self.fetch_string(&domain_target).await
+    }
+
     /// Returns the list of network interface mac addresses.
     pub async fn fetch_mac_addresses(&mut self) -> Result<Option<Vec<String>>> {
         let macs_target = "meta-data/network/interfaces/macs";
