@@ -38,6 +38,8 @@ mod interface_id;
 mod lease;
 mod net_config;
 #[cfg(net_backend = "systemd-networkd")]
+mod networkd;
+#[cfg(net_backend = "systemd-networkd")]
 mod networkd_status;
 mod vlan_id;
 mod wicked;
