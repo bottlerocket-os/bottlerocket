@@ -411,6 +411,7 @@ struct AwsSettings {
     credentials: ValidBase64,
     profile: SingleLineString,
     partition: SingleLineString,
+    domain: SingleLineString,
 }
 
 // Metrics settings
