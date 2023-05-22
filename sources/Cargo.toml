@@ -54,6 +54,8 @@ members = [
     "api/migration/migrations/v1.14.0/public-control-container-v0-7-2",
     "api/migration/migrations/v1.14.1/aws-partition-setting",
     "api/migration/migrations/v1.14.1/shibaken-aws-partition",
+    "api/migration/migrations/v1.14.1/aws-domain-setting",
+    "api/migration/migrations/v1.14.1/shibaken-aws-domain",
 
     "bottlerocket-release",
 

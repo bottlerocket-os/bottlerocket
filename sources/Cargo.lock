@@ -575,6 +575,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-domain-setting"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-endpoint"
 version = "0.54.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3570,6 +3577,14 @@ dependencies = [
  "tempfile",
  "tokio",
  "toml",
+]
+
+[[package]]
+name = "shibaken-aws-domain"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
 ]
 
 [[package]]

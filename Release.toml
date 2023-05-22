@@ -214,5 +214,7 @@ version = "1.15.0"
 "(1.14.0, 1.14.1)" = [
     "migrate_v1.14.1_aws-partition-setting.lz4",
     "migrate_v1.14.1_shibaken-aws-partition.lz4",
+    "migrate_v1.14.1_aws-domain-setting.lz4",
+    "migrate_v1.14.1_shibaken-aws-domain.lz4",
 ]
 "(1.14.1, 1.15.0)" = []
