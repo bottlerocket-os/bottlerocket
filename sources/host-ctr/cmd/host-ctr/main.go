@@ -575,16 +575,84 @@ func cleanUp(containerdSocket string, namespace string, containerID string) erro
 	return nil
 }
 
-// fetchECRImage does some additional conversions before resolving the image reference and fetches the image.
-func fetchECRImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, fetchCachedImageIfExist bool) (containerd.Image, error) {
-	ref := source
-	ecrRef, err := ecr.ParseImageURI(ref)
-	if err != nil {
-		log.G(ctx).WithError(err).WithField("source", source).Error("failed to parse ECR reference")
-		return nil, err
+// parseImageURISpecialRegions mimics the parsing in ecr.ParseImageURI but
+// constructs the canonical ECR references while skipping certain checks.
+// We only do this for special regions that are not yet supported by the aws-go-sdk.
+// Referenced source: https://github.com/awslabs/amazon-ecr-containerd-resolver/blob/a5058cf091f4fc573813a032db37a9820952f1f9/ecr/ref.go#L70-L71
+func parseImageURISpecialRegions(input string) (ecr.ECRSpec, error) {
+	ecrRefPrefixMapping := map[string]string{
+		"il-central-1": "ecr.aws/arn:aws:ecr:il-central-1:",
+	}
+	// Matching on account, region
+	matches := ecrRegex.FindStringSubmatch(input)
+	if len(matches) < 3 {
+		return ecr.ECRSpec{}, fmt.Errorf("invalid image URI: %s", input)
+	}
+	account := matches[1]
+	region := matches[2]
+
+	// Need to include the full repository path and the imageID (e.g. /eks/image-name:tag)
+	tokens := strings.SplitN(input, "/", 2)
+	if len(tokens) != 2 {
+		return ecr.ECRSpec{}, fmt.Errorf("invalid image URI: %s", input)
+	}
+	fullRepoPath := tokens[len(tokens)-1]
+	// Run simple checks on the provided repository.
+	switch {
+	case
+		// Must not be empty
+		fullRepoPath == "",
+		// Must not have a partial/unsupplied label
+		strings.HasSuffix(fullRepoPath, ":"),
+		// Must not have a partial/unsupplied digest specifier
+		strings.HasSuffix(fullRepoPath, "@"):
+		return ecr.ECRSpec{}, errors.New("incomplete reference provided")
 	}
 
-	ref = ecrRef.Canonical()
+	// Get the ECR image reference prefix from the AWS region
+	ecrRefPrefix, ok := ecrRefPrefixMapping[region]
+	if !ok {
+		return ecr.ECRSpec{}, fmt.Errorf("%s: %s", "invalid region in internal mapping", region)
+	}
+
+	return ecr.ParseRef(fmt.Sprintf("%s%s:repository/%s", ecrRefPrefix, account, fullRepoPath))
+}
+
+// fetchECRRef attempts to resolve the ECR reference from an input source string
+// by first using the aws-sdk-go's ParseImageURI function. This will fail for
+// special regions that are not yet supported. If it fails for any reason,
+// attempt to parse again using parseImageURISpecialRegions in this package.
+// This uses a special region reference to build the ECR image references.
+// If both fail, an error is returned.
+func fetchECRRef(ctx context.Context, input string) (ecr.ECRSpec, error) {
+	var spec ecr.ECRSpec
+	spec, err := ecr.ParseImageURI(input)
+	if err == nil {
+		return spec, nil
+	}
+	log.G(ctx).WithError(err).WithField("source", input).Warn("failed to parse ECR reference")
+
+	// The parsing might fail if the AWS region is special, parse again with special handling:
+	spec, err = parseImageURISpecialRegions(input)
+	if err == nil {
+		return spec, nil
+	}
+
+	// Return the error for the parseImageURISpecialRegions from this package
+	// if a valid ECR ref has not yet been returned
+	log.G(ctx).WithError(err).WithField("source", input).Error("failed to parse special ECR reference")
+	return ecr.ECRSpec{}, errors.Wrap(err, "could not parse ECR reference for special regions")
+
+}
+
+// fetchECRImage does some additional conversions before resolving the image reference and fetches the image.
+func fetchECRImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, fetchCachedImageIfExist bool) (containerd.Image, error) {
+	ecrRef, err := fetchECRRef(ctx, source)
+	if err != nil {
+		return nil, err
+	}
+	ref := ecrRef.Canonical()
+
 	log.G(ctx).
 		WithField("ref", ref).
 		WithField("source", source).
