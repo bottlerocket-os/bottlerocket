@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"testing"
 
 	"github.com/containerd/containerd/remotes/docker"
@@ -159,4 +160,65 @@ func TestBadRegistryHosts(t *testing.T) {
 	}, nil)
 	_, err := f("docker.io")
 	assert.Error(t, err)
+}
+
+func TestFetchECRRef(t *testing.T) {
+	tests := []struct {
+		name        string
+		ecrImgURI   string
+		expectedErr bool
+		expectedRef string
+	}{
+		{
+			"Parse typical region for normal use-cases",
+			"111111111111.dkr.ecr.us-west-2.amazonaws.com/bottlerocket/container:1.2.3",
+			false,
+			"ecr.aws/arn:aws:ecr:us-west-2:111111111111:repository/bottlerocket/container:1.2.3",
+		},
+		{
+			"Parse special region",
+			"111111111111.dkr.ecr.il-central-1.amazonaws.com/bottlerocket/container:1.2.3",
+			false,
+			"ecr.aws/arn:aws:ecr:il-central-1:111111111111:repository/bottlerocket/container:1.2.3",
+		},
+		{
+			"Parse China regions",
+			"111111111111.dkr.ecr.cn-north-1.amazonaws.com/bottlerocket/container:1.2.3",
+			false,
+			"ecr.aws/arn:aws-cn:ecr:cn-north-1:111111111111:repository/bottlerocket/container:1.2.3",
+		},
+		{
+			"Parse gov regions",
+			"111111111111.dkr.ecr.us-gov-west-1.amazonaws.com/bottlerocket/container:1.2.3",
+			false,
+			"ecr.aws/arn:aws-us-gov:ecr:us-gov-west-1:111111111111:repository/bottlerocket/container:1.2.3",
+		},
+		{
+			"Fail for invalid region",
+			"111111111111.dkr.ecr.outer-space.amazonaws.com/bottlerocket/container:1.2.3",
+			true,
+			"",
+		},
+		{
+			"Empty string fails",
+			"",
+			true,
+			"",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := fetchECRRef(context.TODO(), tc.ecrImgURI)
+			if tc.expectedErr {
+				// handle error cases
+				if err == nil {
+					t.Fail()
+				}
+			} else {
+				// handle happy paths
+				assert.Equal(t, tc.expectedRef, result.Canonical())
+			}
+		})
+	}
 }
