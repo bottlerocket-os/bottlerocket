@@ -19,6 +19,8 @@ Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
 Patch1002: 1002-Revert-kbuild-hide-tools-build-targets-from-external.patch
 # Enable INITRAMFS_FORCE config option for our use case.
 Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
+# Increase default of sysctl net.unix.max_dgram_qlen to 512.
+Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
 
 # Backport from v5.15.111 upstream, drop when Amazon Linux base is v5.15.111 or later
 Patch5001: 5001-netfilter-nf_tables-deactivate-anonymous-set-from-pr.patch

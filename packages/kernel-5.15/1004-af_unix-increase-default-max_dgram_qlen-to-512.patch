@@ -1,0 +1,47 @@
+From e36140bfb2795377360bb92c343b10c717567c62 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Tue, 23 May 2023 17:16:44 +0000
+Subject: [PATCH] af_unix: increase default max_dgram_qlen to 512
+
+The net.unix.max_dgram_qlen sysctl has been defined with a default value of
+10 since before the current Git history started in 2005. Systems have more
+resources these days, and while the default values for other sysctls like
+net.core.somaxconn have been adapted, max_dgram_qlen never was.
+
+Increase the default value for max_dgram_qlen to 512. A large number of
+hosts effectively already run with this or a larger value, since systemd
+has been making sure it is set to at least 512 since 2015.
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ Documentation/networking/ip-sysctl.rst | 2 +-
+ net/unix/af_unix.c                     | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Documentation/networking/ip-sysctl.rst b/Documentation/networking/ip-sysctl.rst
+index 7890b395e..54a0be396 100644
+--- a/Documentation/networking/ip-sysctl.rst
++++ b/Documentation/networking/ip-sysctl.rst
+@@ -2885,5 +2885,5 @@ plpmtud_probe_interval - INTEGER
+ max_dgram_qlen - INTEGER
+ 	The maximum length of dgram socket receive queue
+ 
+-	Default: 10
++	Default: 512
+ 
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index a96026dbd..267ee6d29 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -3343,7 +3343,7 @@ static int __net_init unix_net_init(struct net *net)
+ {
+ 	int error = -ENOMEM;
+ 
+-	net->unx.sysctl_max_dgram_qlen = 10;
++	net->unx.sysctl_max_dgram_qlen = 512;
+ 	if (unix_sysctl_register(net))
+ 		goto out;
+ 
+-- 
+2.39.2
+
