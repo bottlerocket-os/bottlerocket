@@ -211,8 +211,7 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
     // write the newly promoted parameters to `ssm_parameter_output` along with the original
     // parameters
     if let Some(ssm_parameter_output) = &promote_args.ssm_parameter_output {
-        append_rendered_parameters(ssm_parameter_output, &set_parameters, source_target_map)
-            .await?;
+        append_rendered_parameters(ssm_parameter_output, &set_parameters).await?;
     }
 
     // SSM set   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -236,7 +235,6 @@ pub(crate) async fn run(args: &Args, promote_args: &PromoteArgs) -> Result<()> {
 async fn append_rendered_parameters(
     ssm_parameters_output: &PathBuf,
     set_parameters: &HashMap<SsmKey, String>,
-    source_target_map: HashMap<&String, &String>,
 ) -> Result<()> {
     // If the file doesn't exist, assume that there are no existing parameters
     let parsed_parameters = parse_parameters(&ssm_parameters_output.to_owned())
@@ -251,10 +249,15 @@ async fn append_rendered_parameters(
         })
         .context(error::ParseExistingSsmParametersSnafu {
             path: ssm_parameters_output,
-        })?;
+        })?
+        // SsmKey contains region information, so we can lose the top-level region.
+        .into_values()
+        .fold(HashMap::new(), |mut acc, params| {
+            acc.extend(params);
+            acc
+        });
 
-    let combined_parameters: HashMap<Region, HashMap<SsmKey, String>> =
-        combine_parameters(parsed_parameters, set_parameters, source_target_map);
+    let combined_parameters = merge_parameters(parsed_parameters, set_parameters);
 
     write_rendered_parameters(
         ssm_parameters_output,
@@ -270,37 +273,28 @@ async fn append_rendered_parameters(
 /// Return a HashMap of Region mapped to a HashMap of SsmKey, String pairs, representing the newly
 /// promoted parameters as well as the original parameters. In case of a parameter collision,
 /// the parameter takes the promoted value.
-fn combine_parameters(
-    source_parameters: HashMap<Region, HashMap<SsmKey, String>>,
+fn merge_parameters(
+    source_parameters: HashMap<SsmKey, String>,
     set_parameters: &HashMap<SsmKey, String>,
-    source_target_map: HashMap<&String, &String>,
 ) -> HashMap<Region, HashMap<SsmKey, String>> {
-    let mut combined_parameters: HashMap<Region, HashMap<SsmKey, String>> = HashMap::new();
+    let mut combined_parameters = HashMap::new();
+
+    // Flatten parameters into tuples to simplify processing elements.
+    fn flatten(parameter: (SsmKey, String)) -> (Region, SsmKey, String) {
+        let (key, value) = parameter;
+        (key.region.clone(), key, value)
+    }
 
     source_parameters
-        .iter()
-        .flat_map(|(region, parameters)| {
-            parameters
-                .iter()
-                .map(move |(ssm_key, ssm_value)| (region, ssm_key, ssm_value))
-        })
+        .into_iter()
+        .map(flatten)
+        // Process the `set_parameters` second so that they overwrite existing values.
+        .chain(set_parameters.clone().into_iter().map(flatten))
         .for_each(|(region, ssm_key, ssm_value)| {
-            let add_parameters = vec![
-                (ssm_key.clone(), ssm_value.clone()),
-                (
-                    SsmKey::new(region.clone(), source_target_map[&ssm_key.name].to_string()),
-                    set_parameters[&SsmKey::new(
-                        region.clone(),
-                        source_target_map[&ssm_key.name].to_string(),
-                    )]
-                        .clone(),
-                ),
-            ];
-
             combined_parameters
-                .entry(region.clone())
+                .entry(region)
                 .or_insert(HashMap::new())
-                .extend(add_parameters);
+                .insert(ssm_key, ssm_value);
         });
 
     combined_parameters
@@ -388,31 +382,30 @@ type Result<T> = std::result::Result<T, error::Error>;
 mod test {
     use std::collections::HashMap;
 
-    use crate::aws::{promote_ssm::combine_parameters, ssm::SsmKey};
+    use crate::aws::{promote_ssm::merge_parameters, ssm::SsmKey};
     use aws_sdk_ssm::Region;
 
     #[test]
     fn combined_parameters() {
         let existing_parameters = HashMap::from([
             (
-                Region::new("us-west-2"),
-                HashMap::from([
-                    (
-                        SsmKey::new(Region::new("us-west-2"), "test1-parameter-name".to_string()),
-                        "test1-parameter-value".to_string(),
-                    ),
-                    (
-                        SsmKey::new(Region::new("us-west-2"), "test2-parameter-name".to_string()),
-                        "test2-parameter-value".to_string(),
-                    ),
-                ]),
+                SsmKey::new(Region::new("us-west-2"), "test1-parameter-name".to_string()),
+                "test1-parameter-value".to_string(),
             ),
             (
-                Region::new("us-east-1"),
-                HashMap::from([(
-                    SsmKey::new(Region::new("us-east-1"), "test3-parameter-name".to_string()),
-                    "test3-parameter-value".to_string(),
-                )]),
+                SsmKey::new(Region::new("us-west-2"), "test2-parameter-name".to_string()),
+                "test2-parameter-value".to_string(),
+            ),
+            (
+                SsmKey::new(Region::new("us-east-1"), "test3-parameter-name".to_string()),
+                "test3-parameter-value".to_string(),
+            ),
+            (
+                SsmKey::new(
+                    Region::new("us-east-1"),
+                    "test4-unpromoted-parameter-name".to_string(),
+                ),
+                "test4-unpromoted-parameter-value".to_string(),
             ),
         ]);
         let set_parameters = HashMap::from([
@@ -438,18 +431,7 @@ mod test {
                 "test3-parameter-value".to_string(),
             ),
         ]);
-        let test1_parameter_name = "test1-parameter-name".to_string();
-        let test2_parameter_name = "test2-parameter-name".to_string();
-        let test3_parameter_name = "test3-parameter-name".to_string();
-        let test1_parameter_name_promoted = "test1-parameter-name-promoted".to_string();
-        let test2_parameter_name_promoted = "test2-parameter-name-promoted".to_string();
-        let test3_parameter_name_promoted = "test3-parameter-name-promoted".to_string();
-        let source_target_map = HashMap::from([
-            (&test1_parameter_name, &test1_parameter_name_promoted),
-            (&test2_parameter_name, &test2_parameter_name_promoted),
-            (&test3_parameter_name, &test3_parameter_name_promoted),
-        ]);
-        let map = combine_parameters(existing_parameters, &set_parameters, source_target_map);
+        let map = merge_parameters(existing_parameters, &set_parameters);
         let expected_map = HashMap::from([
             (
                 Region::new("us-west-2"),
@@ -492,6 +474,13 @@ mod test {
                         ),
                         "test3-parameter-value".to_string(),
                     ),
+                    (
+                        SsmKey::new(
+                            Region::new("us-east-1"),
+                            "test4-unpromoted-parameter-name".to_string(),
+                        ),
+                        "test4-unpromoted-parameter-value".to_string(),
+                    ),
                 ]),
             ),
         ]);
@@ -502,24 +491,16 @@ mod test {
     fn combined_parameters_overwrite() {
         let existing_parameters = HashMap::from([
             (
-                Region::new("us-west-2"),
-                HashMap::from([
-                    (
-                        SsmKey::new(Region::new("us-west-2"), "test1-parameter-name".to_string()),
-                        "test1-parameter-value".to_string(),
-                    ),
-                    (
-                        SsmKey::new(Region::new("us-west-2"), "test2-parameter-name".to_string()),
-                        "test2-parameter-value".to_string(),
-                    ),
-                ]),
+                SsmKey::new(Region::new("us-west-2"), "test1-parameter-name".to_string()),
+                "test1-parameter-value".to_string(),
             ),
             (
-                Region::new("us-east-1"),
-                HashMap::from([(
-                    SsmKey::new(Region::new("us-east-1"), "test3-parameter-name".to_string()),
-                    "test3-parameter-value".to_string(),
-                )]),
+                SsmKey::new(Region::new("us-west-2"), "test2-parameter-name".to_string()),
+                "test2-parameter-value".to_string(),
+            ),
+            (
+                SsmKey::new(Region::new("us-east-1"), "test3-parameter-name".to_string()),
+                "test3-parameter-value".to_string(),
             ),
         ]);
         let set_parameters = HashMap::from([
@@ -539,18 +520,7 @@ mod test {
                 "test3-parameter-value".to_string(),
             ),
         ]);
-        let test1_parameter_name = "test1-parameter-name".to_string();
-        let test2_parameter_name = "test2-parameter-name".to_string();
-        let test3_parameter_name = "test3-parameter-name".to_string();
-        let test1_parameter_name_promoted = "test1-parameter-name".to_string();
-        let test2_parameter_name_promoted = "test2-parameter-name".to_string();
-        let test3_parameter_name_promoted = "test3-parameter-name-promoted".to_string();
-        let source_target_map = HashMap::from([
-            (&test1_parameter_name, &test1_parameter_name_promoted),
-            (&test2_parameter_name, &test2_parameter_name_promoted),
-            (&test3_parameter_name, &test3_parameter_name_promoted),
-        ]);
-        let map = combine_parameters(existing_parameters, &set_parameters, source_target_map);
+        let map = merge_parameters(existing_parameters, &set_parameters);
         let expected_map = HashMap::from([
             (
                 Region::new("us-west-2"),

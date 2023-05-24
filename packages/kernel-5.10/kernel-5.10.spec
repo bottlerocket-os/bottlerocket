@@ -17,6 +17,8 @@ Source103: config-bottlerocket-vmware
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
 # Enable INITRAMFS_FORCE config option for our use case.
 Patch1002: 1002-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
+# Increase default of sysctl net.unix.max_dgram_qlen to 512.
+Patch1003: 1003-af_unix-increase-default-max_dgram_qlen-to-512.patch
 
 # Add zstd support for compressed kernel modules
 Patch2000: 2000-kbuild-move-module-strip-compression-code-into-scrip.patch
