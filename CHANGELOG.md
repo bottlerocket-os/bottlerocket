@@ -1,4 +1,37 @@
-# v1.14.0 (2023-05-10)
+# v1.14.1 (2023-05-31)
+
+## OS Changes
+
+* Apply patches to 5.10 and 5.15 kernels to address CVE-2023-32233 ([#3128])
+* Add fallback container image source parsing for regions not yet supported by the `aws-go-sdk` in `host-ctr` ([#3138])
+* Increase default `max_dgram_qlen` sysctl value to `512` for both 5.10 and 5.15 kernels ([#3139])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Kubernetes package updates
+  * Update Kubernetes v1.22.17 to include latest EKS-D patches ([#3108])
+  * Update Kubernetes v1.23.17 to include latest EKS-D patches ([#3119])
+  * Update to Kubernetes v1.24.14 ([#3119])
+  * Update to Kubernetes v1.25.9 ([#3119])
+  * Update to Kubernetes v1.26.4 ([#3119])
+  * Update Kubernetes v1.27.1 to include latest EKS-D patches ([#3119])
+* Change `nvidia-k8s-device-plugin` service dependency on `kubelet` ([#3141])
+
+## Build Changes
+
+* Fix `pubsys` bug preventing multiple SSM parameter promotions in `promote-ssm` Makefile target ([#3137])
+
+[#3108]: https://github.com/bottlerocket-os/bottlerocket/pull/3108
+[#3119]: https://github.com/bottlerocket-os/bottlerocket/pull/3119
+[#3128]: https://github.com/bottlerocket-os/bottlerocket/pull/3128
+[#3137]: https://github.com/bottlerocket-os/bottlerocket/pull/3137
+[#3138]: https://github.com/bottlerocket-os/bottlerocket/pull/3138
+[#3139]: https://github.com/bottlerocket-os/bottlerocket/pull/3139
+[#3141]: https://github.com/bottlerocket-os/bottlerocket/pull/3141
+
+# v1.14.0 (2023-05-11)
 
 ## OS Changes
 
