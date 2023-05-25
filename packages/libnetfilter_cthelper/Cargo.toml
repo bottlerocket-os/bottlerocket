@@ -3,10 +3,10 @@ name = "libnetfilter_cthelper"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 [package.metadata.build-package]
 releases-url = "https://netfilter.org/projects/libnetfilter_cthelper/files"

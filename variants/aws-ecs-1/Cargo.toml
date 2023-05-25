@@ -3,7 +3,7 @@ name = "aws-ecs-1"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [package.metadata.build-variant]
 kernel-parameters = [
@@ -27,7 +27,7 @@ included-packages = [
 ]
 
 [lib]
-path = "lib.rs"
+path = "/dev/null"
 
 [build-dependencies]
 # core

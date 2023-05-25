@@ -3,10 +3,10 @@ name = "pigz"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 [[package.metadata.build-package.external-files]]
 url = "https://zlib.net/pigz/pigz-2.7.tar.gz"

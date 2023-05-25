@@ -3,10 +3,10 @@ name = "grub"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 [[package.metadata.build-package.external-files]]
 url = "https://al2022-repos-us-west-2-9761ab97.s3.dualstack.us-west-2.amazonaws.com/blobstore/aa41fdf9982b65a4c4dad5df5b49ba143b1710d60f82688221966f3c790c6c63/grub2-2.06-42.amzn2022.0.1.src.rpm"

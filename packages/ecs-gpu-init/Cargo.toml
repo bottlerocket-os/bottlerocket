@@ -3,13 +3,13 @@ name = "ecs-gpu-init"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [package.metadata.build-package]
 source-groups = [ "ecs-gpu-init" ]
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 # RPM BuildRequires
 [build-dependencies]

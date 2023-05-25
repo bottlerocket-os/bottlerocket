@@ -3,10 +3,10 @@ name = "release"
 version = "0.0.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 # RPM BuildRequires
 [build-dependencies]

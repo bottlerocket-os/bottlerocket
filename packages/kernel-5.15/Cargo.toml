@@ -3,14 +3,14 @@ name = "kernel-5_15"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [package.metadata.build-package]
 variant-sensitive = "platform"
 package-name = "kernel-5.15"
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 [[package.metadata.build-package.external-files]]
 # Use latest-srpm-url.sh to get this.

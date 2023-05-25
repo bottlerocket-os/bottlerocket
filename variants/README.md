@@ -335,17 +335,15 @@ This listing shows the directory structure of our sample variant.
 
 ```
 variants/my-variant
-├── Cargo.toml
-├── build.rs
-└── lib.rs
+└── Cargo.toml
 ```
 
 Each variant has a `Cargo.toml` file that lists the packages to install.
 
-It also includes a `build.rs` [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html) which tells Cargo to invoke our [buildsys](../tools/buildsys/) tool.
+It also refers to a `build.rs` [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html) which tells Cargo to invoke our [buildsys](../tools/buildsys/) tool.
 Artifacts for the variant are built as a side effect of Cargo running the script.
 
-It has an empty `lib.rs` for the actual crate, since Cargo expects some Rust code to build.
+It points to `/dev/null` for the actual crate, since Cargo expects some Rust code to build, and is happy with an empty file.
 
 ### Cargo.toml
 
@@ -357,7 +355,7 @@ name = "my-variant"
 version = "0.1.0"
 edition = "2018"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [package.metadata.build-variant]
 included-packages = [
@@ -371,7 +369,7 @@ data-image-size-gib = 20
 partition-plan = "unified"
 
 [lib]
-path = "lib.rs"
+path = "/dev/null"
 
 [build-dependencies]
 "my-agent" = { path = "../../packages/my-agent" }
@@ -398,7 +396,7 @@ Be sure to include `publish = false` for all packages, as these are not standard
 
 ### build.rs
 
-We use the same build script for all variants.
+We reuse the same build script for all variants.
 
 ```rust
 use std::process::{exit, Command};
@@ -414,14 +412,6 @@ fn main() -> Result<(), std::io::Error> {
 
 If you need a build script with different behavior, the recommended approach is to modify the `buildsys` tool.
 The `package.metadata` table can be extended with declarative elements that enable the new feature.
-
-### lib.rs
-
-We use the same Rust code for all variants.
-
-```rust
-// not used
-```
 
 ### Next Steps
 

@@ -3,10 +3,10 @@ name = "amazon-ssm-agent"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/aws/amazon-ssm-agent/archive/3.2.815.0/amazon-ssm-agent-3.2.815.0.tar.gz"
