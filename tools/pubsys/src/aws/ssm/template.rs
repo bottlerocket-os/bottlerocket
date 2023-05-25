@@ -3,7 +3,7 @@
 
 use super::{BuildContext, SsmKey, SsmParameters};
 use crate::aws::ami::Image;
-use aws_sdk_ssm::Region;
+use aws_sdk_ssm::config::Region;
 use log::trace;
 use serde::{Deserialize, Serialize};
 use snafu::{ensure, ResultExt};
@@ -275,7 +275,7 @@ mod test {
 
     use super::{RenderedParameter, RenderedParametersMap};
     use crate::aws::{ami::Image, ssm::SsmKey};
-    use aws_sdk_ssm::Region;
+    use aws_sdk_ssm::config::Region;
 
     // These tests assert that the RenderedParametersMap can be created correctly.
     #[test]

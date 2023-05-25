@@ -1,5 +1,5 @@
-use aws_sdk_ec2::model::ArchitectureValues;
-use aws_sdk_ec2::Region;
+use aws_sdk_ec2::config::Region;
+use aws_sdk_ec2::types::ArchitectureValues;
 
 #[macro_use]
 pub(crate) mod client;

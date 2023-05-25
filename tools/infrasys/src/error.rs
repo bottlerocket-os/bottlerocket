@@ -1,4 +1,4 @@
-use aws_sdk_s3::types::SdkError;
+use aws_sdk_s3::error::SdkError;
 use snafu::Snafu;
 use std::io;
 use std::path::PathBuf;
@@ -15,7 +15,7 @@ pub enum Error {
     CreateStack {
         stack_name: String,
         region: String,
-        source: SdkError<aws_sdk_cloudformation::error::CreateStackError>,
+        source: SdkError<aws_sdk_cloudformation::operation::create_stack::CreateStackError>,
     },
 
     #[snafu(display(
@@ -53,7 +53,7 @@ pub enum Error {
     DescribeStack {
         stack_name: String,
         region: String,
-        source: SdkError<aws_sdk_cloudformation::error::DescribeStacksError>,
+        source: SdkError<aws_sdk_cloudformation::operation::describe_stacks::DescribeStacksError>,
     },
 
     #[snafu(display("Missing environment variable '{}'", var))]
@@ -143,7 +143,7 @@ pub enum Error {
     #[snafu(display("Failed to push object to bucket '{}': {}", bucket_name, source))]
     PutObject {
         bucket_name: String,
-        source: SdkError<aws_sdk_s3::error::PutObjectError>,
+        source: SdkError<aws_sdk_s3::operation::put_object::PutObjectError>,
     },
 
     #[snafu(display(
@@ -153,7 +153,7 @@ pub enum Error {
     ))]
     PutPolicy {
         bucket_name: String,
-        source: SdkError<aws_sdk_s3::error::PutBucketPolicyError>,
+        source: SdkError<aws_sdk_s3::operation::put_bucket_policy::PutBucketPolicyError>,
     },
 
     #[snafu(display("Failed to create async runtime: {}", source))]

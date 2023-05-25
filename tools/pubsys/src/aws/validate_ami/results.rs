@@ -2,7 +2,7 @@
 
 use super::ami::ImageDef;
 use super::Result;
-use aws_sdk_ec2::Region;
+use aws_sdk_ec2::config::Region;
 use serde::{Deserialize, Serialize};
 use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use std::collections::{HashMap, HashSet};
@@ -198,7 +198,7 @@ impl AmiValidationResults {
 mod test {
     use super::{AmiValidationResult, AmiValidationResultStatus, AmiValidationResults};
     use crate::aws::validate_ami::ami::ImageDef;
-    use aws_sdk_ssm::Region;
+    use aws_sdk_ssm::config::Region;
     use std::collections::{HashMap, HashSet};
 
     // These tests assert that the `get_results_for_status` function returns the correct values.

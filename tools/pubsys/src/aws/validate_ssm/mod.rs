@@ -8,7 +8,7 @@ use super::ssm::ssm::get_parameters_by_prefix;
 use super::ssm::{SsmKey, SsmParameters};
 use crate::aws::client::build_client_config;
 use crate::Args;
-use aws_sdk_ssm::{Client as SsmClient, Region};
+use aws_sdk_ssm::{config::Region, Client as SsmClient};
 use log::{error, info, trace};
 use pubsys_config::InfraConfig;
 use snafu::ResultExt;
@@ -314,7 +314,7 @@ mod test {
         ssm::{SsmKey, SsmParameters},
         validate_ssm::{results::SsmValidationResult, validate_parameters_in_region},
     };
-    use aws_sdk_ssm::Region;
+    use aws_sdk_ssm::config::Region;
     use std::collections::{HashMap, HashSet};
 
     // These tests assert that the parameters can be validated correctly.

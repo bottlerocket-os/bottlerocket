@@ -1,11 +1,12 @@
 //! The ssm module owns the getting and setting of parameters in SSM.
 
 use super::{SsmKey, SsmParameters};
-use aws_sdk_ssm::error::{GetParametersError, PutParameterError};
-use aws_sdk_ssm::model::ParameterType;
-use aws_sdk_ssm::output::{GetParametersOutput, PutParameterOutput};
-use aws_sdk_ssm::types::SdkError;
-use aws_sdk_ssm::{Client as SsmClient, Region};
+use aws_sdk_ssm::error::{ProvideErrorMetadata, SdkError};
+use aws_sdk_ssm::operation::{
+    get_parameters::{GetParametersError, GetParametersOutput},
+    put_parameter::{PutParameterError, PutParameterOutput},
+};
+use aws_sdk_ssm::{config::Region, types::ParameterType, Client as SsmClient};
 use futures::future::{join, ready};
 use futures::stream::{self, FuturesUnordered, StreamExt};
 use log::{debug, error, info, trace, warn};
@@ -407,8 +408,10 @@ pub(crate) async fn validate_parameters(
 }
 
 pub(crate) mod error {
-    use aws_sdk_ssm::error::{GetParametersByPathError, GetParametersError};
-    use aws_sdk_ssm::types::SdkError;
+    use aws_sdk_ssm::error::SdkError;
+    use aws_sdk_ssm::operation::{
+        get_parameters::GetParametersError, get_parameters_by_path::GetParametersByPathError,
+    };
     use snafu::Snafu;
     use std::error::Error as _;
     use std::time::Duration;

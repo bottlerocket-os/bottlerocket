@@ -1,6 +1,5 @@
 use crate::aws::client::build_client_config;
-use aws_sdk_ec2::model::ImageState;
-use aws_sdk_ec2::{Client as Ec2Client, Region};
+use aws_sdk_ec2::{config::Region, types::ImageState, Client as Ec2Client};
 use log::info;
 use pubsys_config::AwsConfig as PubsysAwsConfig;
 use snafu::{ensure, ResultExt};
@@ -102,8 +101,8 @@ pub(crate) async fn wait_for_ami(
 }
 
 mod error {
-    use aws_sdk_ec2::error::DescribeImagesError;
-    use aws_sdk_ec2::types::SdkError;
+    use aws_sdk_ec2::error::SdkError;
+    use aws_sdk_ec2::operation::describe_images::DescribeImagesError;
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
