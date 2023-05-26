@@ -1,0 +1,36 @@
+From 5aa6eff182204b312007ac44dcfffdf4dc6b7428 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Fri, 26 May 2023 16:21:11 +0200
+Subject: [PATCH] dhcp6: reduce maximum initial solicitation delay to 100 ms
+
+While RFC 3315 requires the initial solicitation delay to be randomly
+chosen between 0 and 1000 ms to prevent a thundering herd of synchronized
+clients during mass reboots, not all clients (e.g. systemd-networkd) follow
+this. Reduce the maximum delay to 100 ms which, together with natural
+jitter during boot, still seems plenty and cuts down the time to lease.
+
+Note that the more recent RFC 8415 softened its stance a bit. The
+initial solicitation delay "SHOULD" be followed, i.e. is recommended but
+not required.
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ src/dhcp6/protocol.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/dhcp6/protocol.h b/src/dhcp6/protocol.h
+index cd917ba..5f40902 100644
+--- a/src/dhcp6/protocol.h
++++ b/src/dhcp6/protocol.h
+@@ -119,7 +119,7 @@ enum NI_DHCP6_MSG_TYPE {
+  *      Parameter		  Value    Description
+  * ---------------------------------------------------------------------------
+  */
+-#define	NI_DHCP6_SOL_MAX_DELAY	   1000	/* Max delay of first Solicit  */
++#define	NI_DHCP6_SOL_MAX_DELAY	    100	/* Max delay of first Solicit  */
+ #define NI_DHCP6_SOL_TIMEOUT	   1000	/* Initial Solicit timeout     */
+ #define NI_DHCP6_SOL_MAX_RT	3600000	/* Max Solicit timeout value   */
+ #define NI_DHCP6_REQ_TIMEOUT	   1000	/* Initial Request timeout     */
+-- 
+2.40.1
+
