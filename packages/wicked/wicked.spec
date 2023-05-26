@@ -48,6 +48,7 @@ Patch1004: 1004-adjust-safeguard-for-dhcp6-defer-timeout.patch
 Patch1005: 1005-client-validate-ethernet-namespace-node.patch
 Patch1006: 1006-server-discover-hardware-address-of-unconfigured-int.patch
 Patch1007: 1007-dhpc6-don-t-cancel-transmission-if-random-delay-happ.patch
+Patch1008: 1008-dhcp6-reduce-maximum-initial-solicitation-delay-to-1.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libdbus-devel
