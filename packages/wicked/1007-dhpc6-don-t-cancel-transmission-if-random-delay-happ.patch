@@ -1,0 +1,35 @@
+From 1a913cf6bae1e170229c1ddb49d0c2a099eb8789 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Fri, 26 May 2023 13:27:28 +0200
+Subject: [PATCH] dhpc6: don't cancel transmission if random delay happens to
+ be 0 ms
+
+If the randomized transmission delay in ni_dhcp6_device_transmit_arm_delay
+happens to be 0 ms including jitter then ni_dhcp6_fsm_set_timeout_msec will
+interpret that as the request to cancel the timer and no message will be
+sent. In the case of a Solicitation message, no lease will ever be
+acquired. Fix this by signaling the intent to transmit immediately to the
+caller if the delay happens to be 0 ms.
+
+Reported-by: Zac Mrowicki <mrowicki@amazon.com>
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ src/dhcp6/device.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/dhcp6/device.c b/src/dhcp6/device.c
+index f36b16c..e5ee99e 100644
+--- a/src/dhcp6/device.c
++++ b/src/dhcp6/device.c
+@@ -790,6 +790,8 @@ ni_dhcp6_device_transmit_arm_delay(ni_dhcp6_device_t *dev)
+ 	jitter.min = 0;
+ 	jitter.max = dev->retrans.delay;
+ 	delay = ni_timeout_randomize(0, &jitter);
++	if (delay == 0)
++		return FALSE;
+ 
+ 	ni_debug_dhcp("%s: setting initial transmit delay of 0 .. %u.%03us",
+ 			dev->ifname, NI_TIMEOUT_SEC(delay), NI_TIMEOUT_MSEC(delay));
+-- 
+2.40.1
+
