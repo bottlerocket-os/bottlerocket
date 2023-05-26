@@ -279,20 +279,14 @@ fn merge_parameters(
 ) -> HashMap<Region, HashMap<SsmKey, String>> {
     let mut combined_parameters = HashMap::new();
 
-    // Flatten parameters into tuples to simplify processing elements.
-    fn flatten(parameter: (SsmKey, String)) -> (Region, SsmKey, String) {
-        let (key, value) = parameter;
-        (key.region.clone(), key, value)
-    }
-
     source_parameters
         .into_iter()
-        .map(flatten)
         // Process the `set_parameters` second so that they overwrite existing values.
-        .chain(set_parameters.clone().into_iter().map(flatten))
-        .for_each(|(region, ssm_key, ssm_value)| {
+        .chain(set_parameters.clone().into_iter())
+        .for_each(|(ssm_key, ssm_value)| {
             combined_parameters
-                .entry(region)
+                // The `entry()` API demands that we clone
+                .entry(ssm_key.region.clone())
                 .or_insert(HashMap::new())
                 .insert(ssm_key, ssm_value);
         });
