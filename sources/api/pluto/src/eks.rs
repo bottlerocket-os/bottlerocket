@@ -1,5 +1,5 @@
 use crate::proxy;
-use aws_sdk_eks::model::KubernetesNetworkConfigResponse;
+use aws_sdk_eks::types::KubernetesNetworkConfigResponse;
 use aws_types::region::Region;
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::time::Duration;
@@ -13,7 +13,9 @@ pub(crate) type ClusterNetworkConfig = KubernetesNetworkConfigResponse;
 pub(super) enum Error {
     #[snafu(display("Error describing cluster: {}", source))]
     DescribeCluster {
-        source: aws_sdk_eks::types::SdkError<aws_sdk_eks::error::DescribeClusterError>,
+        source: aws_sdk_eks::error::SdkError<
+            aws_sdk_eks::operation::describe_cluster::DescribeClusterError,
+        >,
     },
 
     #[snafu(display("Timed-out waiting for EKS Describe Cluster API response: {}", source))]

@@ -16,7 +16,9 @@ pub(super) enum Error {
     ))]
     DescribeInstances {
         instance_id: String,
-        source: aws_sdk_eks::types::SdkError<aws_sdk_ec2::error::DescribeInstancesError>,
+        source: aws_sdk_eks::error::SdkError<
+            aws_sdk_ec2::operation::describe_instances::DescribeInstancesError,
+        >,
     },
 
     #[snafu(display("Timed-out waiting for EC2 DescribeInstances API response: {}", source))]
