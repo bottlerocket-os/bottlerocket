@@ -5,7 +5,7 @@ name = "aws-k8s-1_24-nvidia"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 # Don't rebuild crate just because of changes to README.
 exclude = ["README.md"]
 
@@ -36,7 +36,7 @@ kernel-parameters = [
 ]
 
 [lib]
-path = "lib.rs"
+path = "/dev/null"
 
 [build-dependencies]
 aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }

@@ -3,10 +3,10 @@ name = "oci-add-hooks"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/awslabs/oci-add-hooks/archive/ef29fe312d2e1858d5eb28ab0abe0cbee298a165/oci-add-hooks-ef29fe3.tar.gz"

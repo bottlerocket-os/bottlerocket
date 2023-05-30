@@ -3,10 +3,10 @@ name = "libpcap"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 [package.metadata.build-package]
 releases-url = "http://www.tcpdump.org/release"

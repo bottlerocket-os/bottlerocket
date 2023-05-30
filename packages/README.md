@@ -52,17 +52,15 @@ This listing shows the directory structure of our sample package.
 ```
 packages/libwoof/
 ├── Cargo.toml
-├── build.rs
-├── pkg.rs
 ├── libwoof.spec
 ```
 
 Each package has a `Cargo.toml` file that lists its build dependencies, runtime dependencies, and metadata such as external files and the expected hashes.
 
-It also includes a `build.rs` [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html) which tells Cargo to invoke our [buildsys](../tools/buildsys/) tool.
+It also refers to a `build.rs` [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html) which tells Cargo to invoke our [buildsys](../tools/buildsys/) tool.
 The RPM packages we want are built as a side effect of Cargo running the script.
 
-It has an empty `pkg.rs` for the actual crate, since Cargo expects some Rust code to build.
+It points to `/dev/null` for the actual crate, since Cargo expects some Rust code to build, and is happy with an empty file.
 
 Finally, it includes a `spec` file that defines the RPM.
 
@@ -76,10 +74,10 @@ name = "libwoof"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [lib]
-path = "pkg.rs"
+path = "/dev/null"
 
 [[package.metadata.build-package.external-files]]
 url = "http://downloads.sourceforge.net/libwoof/libwoof-1.0.0.tar.xz"
@@ -137,7 +135,7 @@ We want those libraries to be built first, and for this one to be rebuilt when t
 
 ### build.rs
 
-We use the same build script for all packages.
+We reuse the same build script for all packages.
 
 ```rust
 use std::process::{exit, Command};
@@ -153,14 +151,6 @@ fn main() -> Result<(), std::io::Error> {
 
 If you need a build script with different behavior, the recommended approach is to modify the `buildsys` tool.
 The `package.metadata` table can be extended with declarative elements that enable the new feature.
-
-### pkg.rs
-
-We use the same Rust code for all packages.
-
-```rust
-// not used
-```
 
 ### spec
 
