@@ -38,6 +38,7 @@ Source99: constants.xml
 %endif
 
 # upstream fixes
+Patch0001: 0001-dhcp6-refresh-ipv6-flags-on-staring-in-auto-mode.patch
 
 # local hacks
 Patch1001: 1001-avoid-gcrypt-dependency.patch
