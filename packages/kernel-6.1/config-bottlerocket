@@ -1,6 +1,11 @@
 # Because Bottlerocket does not have an initramfs, modules required to mount
 # the root filesystem must be set to y.
 
+# disable filesystem encryption support as it may lock users into certain
+# filesystems inadvertantly. For now EBS volume encryption or dm-crypt seems
+# to be the more universal choice.
+# CONFIG_FS_ENCRYPTION is not set
+
 # The root filesystem is ext4
 CONFIG_EXT4_FS=y
 
