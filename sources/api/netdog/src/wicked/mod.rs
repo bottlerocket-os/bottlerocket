@@ -78,6 +78,9 @@ pub(crate) struct WickedInterface {
     #[serde(rename = "ipv6:static")]
     pub(crate) ipv6_static: Option<WickedStaticAddress>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "ipv6")]
+    pub(crate) ipv6: Option<WickedIpv6>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "vlan")]
     pub(crate) vlan_tag: Option<WickedVlanTag>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -162,6 +165,27 @@ struct LinkDetection {
     require_link: (),
 }
 
+#[derive(Debug, Serialize, PartialEq)]
+pub(crate) struct WickedIpv6 {
+    #[serde(rename = "$unflatten=accept-ra")]
+    accept_ra: WickedIpv6AcceptRA,
+}
+
+// There are technically a few options here, but currently we only use "router"
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub(crate) enum WickedIpv6AcceptRA {
+    #[serde(rename = "$primitive=router")]
+    Router,
+}
+
+impl Default for WickedIpv6 {
+    fn default() -> Self {
+        WickedIpv6 {
+            accept_ra: WickedIpv6AcceptRA::Router,
+        }
+    }
+}
+
 impl WickedInterface {
     pub(crate) fn new<I>(id: I) -> Self
     where
@@ -175,10 +199,17 @@ impl WickedInterface {
             ipv6_dhcp: None,
             ipv4_static: None,
             ipv6_static: None,
+            ipv6: None,
             vlan_tag: None,
             bond: None,
             link: None,
         }
+    }
+
+    /// Add config to accept IPv6 router advertisements
+    // TODO: expose a network config option for this
+    pub(crate) fn accept_ra(&mut self) {
+        self.ipv6 = Some(WickedIpv6::default())
     }
 
     /// Serialize the interface's configuration file
@@ -330,15 +361,34 @@ mod tests {
         for ok_str in ok {
             let net_config = NetConfigV1::from_str(ok_str).unwrap();
 
-            let wicked_interfaces = net_config.as_wicked_interfaces();
-            for interface in wicked_interfaces {
+            let mut wicked_interfaces = net_config.as_wicked_interfaces();
+            for interface in &mut wicked_interfaces {
                 let generated = quick_xml::se::to_string(&interface).unwrap();
-
                 let mut path = wicked_config().join(interface.name.to_string());
                 path.set_extension("xml");
-                let expected = fs::read_to_string(path).unwrap();
+                let expected = fs::read_to_string(&path).unwrap();
 
-                assert_eq!(expected.trim(), generated)
+                assert_eq!(
+                    expected.trim(),
+                    generated,
+                    "Generated output does not match file: {}",
+                    path.display()
+                );
+
+                // Add IPv6 `accept-ra` config to the interface, regenerate it, and ensure the
+                // generated config contains the added IPv6 option
+                interface.accept_ra();
+                let generated = quick_xml::se::to_string(&interface).unwrap();
+                let mut path = wicked_config().join(format!("{}-ra", interface.name.to_string()));
+                path.set_extension("xml");
+                let expected = fs::read_to_string(&path).unwrap();
+
+                assert_eq!(
+                    expected.trim(),
+                    generated,
+                    "Generated output does not match file: {}",
+                    path.display()
+                )
             }
         }
     }
