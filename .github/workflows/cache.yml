@@ -13,6 +13,10 @@ on:
       - '!tools/pubsys/**.example'
       - '!tools/pubsys/**.template'
       - 'tools/Cargo.lock'
+env:
+  # Enables cargo's sparse indexing protocol which significantly boosts indexing performance
+  # TODO: Remove this once this becomes the default in cargo.
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 jobs:
   cache:
     if: github.repository == 'bottlerocket-os/bottlerocket'

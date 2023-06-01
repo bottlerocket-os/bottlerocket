@@ -451,7 +451,7 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %endif
 
 %cross_scan_attribution --clarify %{_builddir}/sources/clarify.toml \
-    cargo --offline --locked %{_builddir}/sources/Cargo.toml
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse cargo --offline --locked %{_builddir}/sources/Cargo.toml
 
 %files
 %{_cross_attribution_vendor_dir}

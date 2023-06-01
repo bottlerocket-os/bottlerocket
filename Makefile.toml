@@ -96,6 +96,9 @@ BUILDSYS_UPSTREAM_LICENSE_FETCH= "false"
 BUILDSYS_JOBS = "8"
 
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
+# Enables cargo's sparse indexing protocol which significantly boosts indexing performance
+# TODO: Remove this once this becomes the default in cargo.
+CARGO_REGISTRIES_CRATES_IO_PROTOCOL = "sparse"
 GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
 GO_MODULES = "ecs-gpu-init host-ctr"
 DOCKER_BUILDKIT = "1"
@@ -831,6 +834,7 @@ docker run --rm \
   --user "$(id -u):$(id -g)" \
   --security-opt label:disable \
   -e CARGO_HOME="/tmp/.cargo" \
+  -e CARGO_REGISTRIES_CRATES_IO_PROTOCOL="${CARGO_REGISTRIES_CRATES_IO_PROTOCOL}" \
   -v "${CARGO_HOME}":/tmp/.cargo \
   -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
   -v "${BUILDSYS_ROOT_DIR}/tools":/tmp/tools \
