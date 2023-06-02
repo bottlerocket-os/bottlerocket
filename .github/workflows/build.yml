@@ -24,23 +24,18 @@ concurrency:
 
 jobs:
   list-variants:
+    # This needs to be its own job since the build job needs its output before
+    # it can initialize
     if: github.repository == 'bottlerocket-os/bottlerocket'
+    name: "Determine variants"
     runs-on: ubuntu-latest
     outputs:
       variants: ${{ steps.get-variants.outputs.variants }}
       aarch-enemies: ${{ steps.get-variants.outputs.aarch-enemies }}
     steps:
       - uses: actions/checkout@v3
-      - id: get-variants
-        name: Determine variants
-        run: |
-          cd variants
-          output="variants=$(ls -d */ | cut -d'/' -f 1 | grep -vE '^(shared|target)$' | jq -R -s -c 'split("\n")[:-1]')"
-          echo $output
-          echo $output >> $GITHUB_OUTPUT
-          output="aarch-enemies=$(ls -d */ | cut -d'/' -f 1 | grep -E '(^(metal|vmware)|\-dev$)' | jq -R -s -c 'split("\n")[:-1] | [ .[] | {"variant": ., "arch": "aarch64"}]')"
-          echo $output
-          echo $output >> $GITHUB_OUTPUT
+      - uses: ./.github/actions/list-variants
+        id: get-variants
 
   build:
     needs: list-variants
@@ -54,43 +49,11 @@ jobs:
         arch: [x86_64, aarch64]
         exclude: ${{ fromJson(needs.list-variants.outputs.aarch-enemies) }}
       fail-fast: false
+    name: "Build ${{ matrix.variant }}-${{ matrix.arch }}"
     steps:
-      - name: Preflight step to set up the runner
-        run: |
-          echo "OS_ARCH=`uname -m`" >> $GITHUB_ENV
-          sudo apt -y install build-essential openssl libssl-dev pkg-config liblz4-tool
       - uses: actions/checkout@v3
-      # Cache `cargo-make`, `cargo-cache`, `cargo-sweep`
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo
-          key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}
-      # Cache first-party rust code crate dependencies
-      - uses: actions/cache@v3
-        with:
-          path: |
-            .cargo
-          key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('sources/Cargo.lock') }}-${{ hashFiles('.github/workflows/build.yml') }}
-          restore-keys: |
-            ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('sources/Cargo.lock') }}
-      # Cache 'tools/' dependencies and build artifacts
-      - uses: actions/cache@v3
-        with:
-          path: |
-            tools/bin
-            tools/.crates.toml
-            tools/.crates2.json
-            tools/target
-          key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}-${{ hashFiles('.github/workflows/build.yml') }}
-          restore-keys: |
-            ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}
-      - run: rustup component add rustfmt
-      - run: cargo install --version 0.36.0 cargo-make
-      - run: cargo install --version 0.6.2 cargo-sweep
-      - run: |
-          cargo sweep -i -r tools/
-          cargo sweep -t 7 -r tools/
+      - name: Preflight step to set up the runner
+        uses: ./.github/actions/setup-node
       - if: contains(matrix.variant, 'nvidia')
         run: |
           cat <<-EOF > Licenses.toml
@@ -100,6 +63,7 @@ jobs:
             { path = "NVIDIA", license-url = "https://www.nvidia.com/en-us/drivers/nvidia-license/" }
           ]
           EOF
+      - run: rustup component add rustfmt
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} unit-tests
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-fmt
       # Avoid running Go lint check via `cargo make check-lints` since there's a separate golangci-lint workflow

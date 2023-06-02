@@ -21,36 +21,11 @@ jobs:
       labels: bottlerocket_ubuntu-latest_16-core
     continue-on-error: true
     steps:
-      - run: |
-          echo "OS_ARCH=`uname -m`" >> $GITHUB_ENV
       - uses: actions/checkout@v3
-      # Cache `cargo-make`, `cargo-cache`, `cargo-sweep`
-      - uses: actions/cache@v3
+      - name: Preflight step to set up the runner
+        uses: ./.github/actions/setup-node
         with:
-          path: |
-            ~/.cargo
-          key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}
-      # Cache first-party code dependencies
-      - uses: actions/cache@v3
-        with:
-          path: |
-            .cargo
-          key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('sources/Cargo.lock') }}
-      # Cache 'tools/' dependencies and build artifacts
-      - uses: actions/cache@v3
-        with:
-          path: |
-            tools/bin
-            tools/.crates.toml
-            tools/.crates2.json
-            tools/target
-          key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}
-      - run: cargo install --locked --version 0.36.0 cargo-make
-      - run: cargo install --locked --version 0.8.3 --no-default-features --features ci-autoclean cargo-cache
-      - run: cargo install --locked --version 0.6.2 cargo-sweep
-      - run: |
-          cargo sweep -i -r tools/
-          cargo sweep -t 7 -r tools/
+          perform-cache-cleanup: true
       - run: cargo make publish-setup-tools
       - run: cargo make publish-tools
       - run: cargo make build-tools

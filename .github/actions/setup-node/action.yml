@@ -1,0 +1,47 @@
+name: "Node setup"
+description: "Performs setup for caching and other common needs."
+inputs:
+  perform-cache-cleanup:
+    description: "Whether to perform cache cleanup"
+    required: false
+    default: false
+    type: boolean
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        echo "OS_ARCH=`uname -m`" >> $GITHUB_ENV
+        sudo apt -y install build-essential openssl libssl-dev pkg-config liblz4-tool
+      shell: bash
+    - uses: actions/cache@v3
+      # Cache `cargo-make`, `cargo-cache`, `cargo-sweep`
+      with:
+        path: |
+          ~/.cargo
+        key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}
+    - uses: actions/cache@v3
+      # Cache first-party code dependencies
+      with:
+        path: |
+          .cargo
+        key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('sources/Cargo.lock') }}
+    - uses: actions/cache@v3
+      # Cache 'tools/' dependencies and build artifacts
+      with:
+        path: |
+          tools/bin
+          tools/.crates.toml
+          tools/.crates2.json
+          tools/target
+        key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}
+    - run: cargo install --locked --version 0.36.0 cargo-make
+      shell: bash
+    - run: cargo install --locked --version 0.6.2 cargo-sweep
+      shell: bash
+    - if: ${{ inputs.perform-cache-cleanup }}
+      run: cargo install --locked --version 0.8.3 --no-default-features --features ci-autoclean cargo-cache
+      shell: bash
+    - run: |
+        cargo sweep -i -r tools/
+        cargo sweep -t 7 -r tools/
+      shell: bash
