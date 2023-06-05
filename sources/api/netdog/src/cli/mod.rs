@@ -155,13 +155,10 @@ where
     // Note: The dash (-) preceding the "net..." variable assignment below is important; it
     // ensures failure to set the variable for any reason will be logged, but not cause the sysctl
     // service to fail
-    // Accept router advertisement (RA) packets even if IPv6 forwarding is enabled on interface
-    let ipv6_accept_ra = format!("-net.ipv6.conf.{}.accept_ra = 2", interface);
     // Enable loose mode for reverse path filter
     let ipv4_rp_filter = format!("-net.ipv4.conf.{}.rp_filter = 2", interface);
 
     let mut output = String::new();
-    writeln!(output, "{}", ipv6_accept_ra).context(error::SysctlConfBuildSnafu)?;
     writeln!(output, "{}", ipv4_rp_filter).context(error::SysctlConfBuildSnafu)?;
 
     fs::write(path, output).context(error::SysctlConfWriteSnafu { path })?;
@@ -176,7 +173,7 @@ mod tests {
     fn default_sysctls() {
         let interface = "eno1";
         let fake_file = tempfile::NamedTempFile::new().unwrap();
-        let expected = "-net.ipv6.conf.eno1.accept_ra = 2\n-net.ipv4.conf.eno1.rp_filter = 2\n";
+        let expected = "-net.ipv4.conf.eno1.rp_filter = 2\n";
         write_interface_sysctl(interface, &fake_file).unwrap();
         assert_eq!(std::fs::read_to_string(&fake_file).unwrap(), expected);
     }
