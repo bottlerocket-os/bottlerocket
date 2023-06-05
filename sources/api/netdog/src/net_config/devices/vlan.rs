@@ -36,10 +36,10 @@ impl<'de> Deserialize<'de> for NetVlanV1 {
             )));
         }
 
-        // Validate its a valid vlan id - 0-4095
-        if this.id > 4095 {
+        // Validate its a valid vlan id - 0-4094
+        if this.id > 4094 {
             return Err(D::Error::custom(
-                "invalid vlan ID specified, must be between 0-4095",
+                "invalid vlan ID specified, must be between 0-4094",
             ));
         }
 
