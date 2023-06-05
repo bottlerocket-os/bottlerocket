@@ -109,6 +109,12 @@ impl Serialize for MacAddress {
     }
 }
 
+impl Display for MacAddress {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.inner)
+    }
+}
+
 /// InterfaceName can only be created from a string that contains a valid network interface name.
 /// Validation is handled in the `TryFrom` implementation below.
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Deserialize)]
@@ -187,6 +193,12 @@ impl Serialize for InterfaceName {
         S: Serializer,
     {
         serializer.serialize_str(&self.inner)
+    }
+}
+
+impl Display for InterfaceName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.inner)
     }
 }
 
