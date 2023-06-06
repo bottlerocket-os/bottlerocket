@@ -17,6 +17,7 @@ pub(crate) struct GenerateNetConfigArgs {}
 
 /// Generate configuration for network interfaces.
 pub(crate) fn run() -> Result<()> {
+    let mut from_cmd_line = false;
     let maybe_net_config = if Path::exists(Path::new(OVERRIDE_NET_CONFIG_FILE)) {
         net_config::from_path(OVERRIDE_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
             path: OVERRIDE_NET_CONFIG_FILE,
@@ -26,6 +27,7 @@ pub(crate) fn run() -> Result<()> {
             path: DEFAULT_NET_CONFIG_FILE,
         })?
     } else {
+        from_cmd_line = true;
         net_config::from_command_line(KERNEL_CMDLINE).context(error::NetConfigParseSnafu {
             path: KERNEL_CMDLINE,
         })?
@@ -48,8 +50,16 @@ pub(crate) fn run() -> Result<()> {
     remove_old_primary_interface()?;
     write_primary_interface(&primary_interface)?;
 
-    let wicked_interfaces = net_config.as_wicked_interfaces();
-    for interface in wicked_interfaces {
+    let mut wicked_interfaces = net_config.as_wicked_interfaces();
+    for interface in &mut wicked_interfaces {
+        // The kernel command line is too limited to fully specify an interface's configuration;
+        // fix some defaults to match legacy behavior.
+        // Note: we only allow 1 interface to be listed via kernel command line, so this will only
+        // be added to a single interface
+        if from_cmd_line {
+            interface.accept_ra();
+        }
+
         interface
             .write_config_file()
             .context(error::InterfaceConfigWriteSnafu)?;
