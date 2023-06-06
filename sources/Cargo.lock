@@ -285,6 +285,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "android-tzdata"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e999941b234f3131b00bc13c22d06e8c5ff726d1b6318ac7eb276997bbb4fef0"
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1167,12 +1173,12 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.24"
+version = "0.4.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e3c5919066adf22df73762e50cffcde3a758f2a848b113b586d1f86728b673b"
+checksum = "ec837a71355b28f6556dbd569b37b3f363091c0bd4b2e735674521b4c5fd9bc5"
 dependencies = [
+ "android-tzdata",
  "iana-time-zone",
- "num-integer",
  "num-traits",
  "serde",
  "winapi",
@@ -2283,12 +2289,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.17"
+version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
-dependencies = [
- "cfg-if",
-]
+checksum = "518ef76f2f87365916b142844c16d8fefd85039bc5699050210a7778ee1cd1de"
 
 [[package]]
 name = "logdog"
@@ -2681,7 +2684,7 @@ dependencies = [
 [[package]]
 name = "olpc-cjson"
 version = "0.1.3"
-source = "git+https://github.com/jpculp/tough?branch=update-rust-deps#dbf1daa84968ac981295a4381092d7a0e8a82e0e"
+source = "git+https://github.com/jpculp/tough?branch=update-rust-deps#90a5d280aa5689b8aeeeee655e972119a3c7a55b"
 dependencies = [
  "serde",
  "serde_json",
@@ -4025,7 +4028,7 @@ dependencies = [
 [[package]]
 name = "tough"
 version = "0.13.0"
-source = "git+https://github.com/jpculp/tough?branch=update-rust-deps#dbf1daa84968ac981295a4381092d7a0e8a82e0e"
+source = "git+https://github.com/jpculp/tough?branch=update-rust-deps#90a5d280aa5689b8aeeeee655e972119a3c7a55b"
 dependencies = [
  "chrono",
  "dyn-clone",
@@ -4557,9 +4560,9 @@ dependencies = [
 
 [[package]]
 name = "xml-rs"
-version = "0.8.13"
+version = "0.8.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d8f380ae16a37b30e6a2cf67040608071384b1450c189e61bea3ff57cde922d"
+checksum = "52839dc911083a8ef63efa4d039d1f58b5e409f923e44c80828f206f66e5541c"
 
 [[package]]
 name = "xmlparser"
