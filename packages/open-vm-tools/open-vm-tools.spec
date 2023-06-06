@@ -12,6 +12,7 @@ Source2: tools.conf
 Source3: open-vm-tools-tmpfiles.conf
 Patch0001: 0001-no_cflags_werror.patch
 Patch0002: 0002-dont-force-cppflags.patch
+Patch0003: 0003-Update-shutdown-code-to-work-for-Bottlerocket.patch
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libglib-devel
 BuildRequires: %{_cross_os}libtirpc-devel
