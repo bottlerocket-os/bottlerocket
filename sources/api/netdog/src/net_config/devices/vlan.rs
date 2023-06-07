@@ -3,12 +3,11 @@ use super::{Dhcp4ConfigV1, Dhcp6ConfigV1, Result, Validate};
 use crate::addressing::{RouteV1, StaticConfigV1};
 use crate::interface_id::InterfaceName;
 use crate::net_config::devices::generate_addressing_validation;
-use serde::de::Error;
-use serde::{Deserialize, Deserializer};
+use crate::vlan_id::VlanId;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-#[serde(remote = "Self")]
 pub(crate) struct NetVlanV1 {
     pub(crate) primary: Option<bool>,
     pub(crate) dhcp4: Option<Dhcp4ConfigV1>,
@@ -17,34 +16,19 @@ pub(crate) struct NetVlanV1 {
     pub(crate) static6: Option<StaticConfigV1>,
     #[serde(rename = "route")]
     pub(crate) routes: Option<Vec<RouteV1>>,
-    kind: String,
+    #[serde(rename = "kind")]
+    _kind: VlanKind,
     pub(crate) device: InterfaceName,
-    pub(crate) id: u16,
+    pub(crate) id: VlanId,
 }
 
-impl<'de> Deserialize<'de> for NetVlanV1 {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let this = Self::deserialize(deserializer)?;
-
-        if this.kind.to_lowercase().as_str() != "vlan" {
-            return Err(D::Error::custom(format!(
-                "kind of '{}' does not match 'vlan'",
-                this.kind.as_str()
-            )));
-        }
-
-        // Validate its a valid vlan id - 0-4094
-        if this.id > 4094 {
-            return Err(D::Error::custom(
-                "invalid vlan ID specified, must be between 0-4094",
-            ));
-        }
-
-        Ok(this)
-    }
+// Single variant enum only used to direct deserialization.  If the kind is not "VLAN", "Vlan", or
+// "vlan" deserialization will fail.
+#[derive(Debug, Deserialize)]
+enum VlanKind {
+    #[serde(alias = "VLAN")]
+    #[serde(alias = "vlan")]
+    Vlan,
 }
 
 impl Validate for NetVlanV1 {
