@@ -200,3 +200,6 @@ CONFIG_SCSI_ISCSI_ATTRS=m
 # target side
 CONFIG_ISCSI_TARGET=m
 # CONFIG_INFINIBAND_ISERT is not set
+
+# Disable DAMON subsystem. We currently do not have a good use-case for DAMON.
+# CONFIG_DAMON is not set
