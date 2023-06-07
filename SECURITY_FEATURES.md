@@ -10,7 +10,6 @@ They are listed in priority order.
 3. Protect containers from other containers.
 
 We will add and enhance security features over time based on these goals.
-Please see our [security roadmap](https://github.com/orgs/bottlerocket-os/projects/1?card_filter_query=label%3Asecurity) for more details.
 
 ## Overview
 
@@ -69,14 +68,14 @@ The root filesystem is marked as read-only and cannot be directly modified by us
 This protects against some container escape vulnerabilities such as [CVE-2019-5736](https://www.openwall.com/lists/oss-security/2019/02/11/2).
 
 The kernel is configured to restart if corruption is detected.
-That allows the system to fail closed if the underlying block device is unexpectedly modified.
+That allows the system to fail close to when the underlying block device is unexpectedly modified.
 
 Although this provides a powerful layer of protection, it is **incomplete**.
 An attacker with full access to the block device could alter both the verity metadata and the contents of the root filesystem.
 
 ### Stateless tmpfs for /etc
 
-Bottlerocket uses [tmpfs](https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt), a memory-backed filesystem, for /etc.
+Bottlerocket uses [tmpfs](https://www.kernel.org/doc/Documentation/filesystems/tmpfs.txt), a memory-backed filesystem, for `/etc`.
 
 Direct modification of system configuration files such as `/etc/resolv.conf` or `/etc/containerd/config.toml` is not supported.
 This makes OS updates more reliable, as it is not necessary to account for local edits that might have changed the behavior of system services.
