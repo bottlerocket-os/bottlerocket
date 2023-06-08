@@ -65,7 +65,7 @@ We use (?m) for multi-line mode so we can match the message on a line of its own
 the output ourselves; we match the regexes against the whole of stdout.
 */
 lazy_static! {
-    static ref UNEXPECTED_EOF_ERROR: Regex = Regex::new("(?m)^unexpected EOF$").unwrap();
+    static ref UNEXPECTED_EOF_ERROR: Regex = Regex::new("(?m)unexpected EOF$").unwrap();
 }
 
 /*
