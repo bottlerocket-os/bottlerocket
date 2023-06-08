@@ -68,6 +68,19 @@ lazy_static! {
     static ref UNEXPECTED_EOF_ERROR: Regex = Regex::new("(?m)^unexpected EOF$").unwrap();
 }
 
+/*
+Sometimes new RPMs are not fully written to the host directory before another build starts, which
+exposes `createrepo_c` to partially-written RPMs that cannot be added to the repo metadata. Retry
+these errors by restarting the build since the alternatives are to ignore the `createrepo_c` exit
+code (masking other problems) or aggressively `sync()` the host directory (hurting performance).
+*/
+lazy_static! {
+    static ref CREATEREPO_C_READ_HEADER_ERROR: Regex = Regex::new(&regex::escape(
+        r#"C_CREATEREPOLIB: Warning: read_header: rpmReadPackageFile() error"#
+    ))
+    .unwrap();
+}
+
 static DOCKER_BUILD_MAX_ATTEMPTS: NonZeroU16 = nonzero!(10u16);
 
 pub(crate) struct PackageBuilder;
@@ -300,6 +313,7 @@ fn build(
                 &*DOCKER_BUILD_FRONTEND_ERROR,
                 &*DOCKER_BUILD_DEAD_RECORD_ERROR,
                 &*UNEXPECTED_EOF_ERROR,
+                &*CREATEREPO_C_READ_HEADER_ERROR,
             ],
         },
     )?;
