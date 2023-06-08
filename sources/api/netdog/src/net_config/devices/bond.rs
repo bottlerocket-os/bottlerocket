@@ -5,13 +5,11 @@ use crate::bonding::{
 };
 use crate::interface_id::InterfaceName;
 use crate::net_config::devices::generate_addressing_validation;
-use serde::de::Error;
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use snafu::ensure;
 
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-#[serde(remote = "Self")]
 pub(crate) struct NetBondV1 {
     pub(crate) primary: Option<bool>,
     pub(crate) dhcp4: Option<Dhcp4ConfigV1>,
@@ -20,7 +18,8 @@ pub(crate) struct NetBondV1 {
     pub(crate) static6: Option<StaticConfigV1>,
     #[serde(rename = "route")]
     pub(crate) routes: Option<Vec<RouteV1>>,
-    kind: String,
+    #[serde(rename = "kind")]
+    _kind: BondKind,
     pub(crate) mode: BondModeV1,
     #[serde(rename = "min-links")]
     pub(crate) min_links: Option<usize>,
@@ -29,21 +28,12 @@ pub(crate) struct NetBondV1 {
     pub(crate) interfaces: Vec<InterfaceName>,
 }
 
-impl<'de> Deserialize<'de> for NetBondV1 {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let this = Self::deserialize(deserializer)?;
-        if this.kind.to_lowercase().as_str() != "bond" {
-            return Err(D::Error::custom(format!(
-                "kind of '{}' does not match 'bond'",
-                this.kind.as_str()
-            )));
-        }
-
-        Ok(this)
-    }
+// Single variant enum only used to direct deserialization.  If the kind is not "Bond" or "bond",
+// deserialization will fail.
+#[derive(Debug, Deserialize)]
+enum BondKind {
+    #[serde(alias = "bond")]
+    Bond,
 }
 
 generate_addressing_validation!(&NetBondV1);

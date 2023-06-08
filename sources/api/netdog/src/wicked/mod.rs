@@ -289,7 +289,7 @@ where
         let config = device_tup.1;
         let mut wicked_interface = wicked_from!(name, config);
 
-        wicked_interface.vlan_tag = Some(WickedVlanTag::new(config.device.clone(), config.id));
+        wicked_interface.vlan_tag = Some(WickedVlanTag::new(config.device.clone(), *config.id));
 
         wicked_interface
     }

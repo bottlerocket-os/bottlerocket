@@ -2,13 +2,13 @@ version = {{version}}
 
 # Basic vlan dhcp
 [vlan2]
-kind = "vlan"
+kind = "VLAN"
 device = "eno1"
 id = 2
 dhcp4 = true
 
 [vlan3]
-kind = "vlan"
+kind = "Vlan"
 device = "eno2"
 id = 3
 dhcp6 = true
