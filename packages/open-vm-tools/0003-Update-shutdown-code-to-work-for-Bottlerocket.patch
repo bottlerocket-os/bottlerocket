@@ -1,0 +1,76 @@
+From f3ae441a5ff9d27a3dd8223d55a7367ae519a0c8 Mon Sep 17 00:00:00 2001
+From: Matthew Yeazel <yeazelm@amazon.com>
+Date: Wed, 7 Jun 2023 13:34:49 -0700
+Subject: [PATCH] Update shutdown code to work for Bottlerocket
+
+Bottlerocket doesn't have /bin/sh which makes the call system() fail
+with an unexpected error code. This results in the guest shutdown and
+reboot calls via vmtoolsd returning as if the request was successful but
+the call actually failed completely. This commit replaces the current
+call to system() with g_spawn_sync() which should be a drop in
+replacement for system().
+
+Signed-off-by: Matthew Yeazel <yeazelm@amazon.com>
+---
+ lib/system/Makefile.am   |  3 +++
+ lib/system/systemLinux.c | 14 +++++++++++++-
+ 2 files changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/lib/system/Makefile.am b/lib/system/Makefile.am
+index 52b1a1dd..d2613c43 100644
+--- a/lib/system/Makefile.am
++++ b/lib/system/Makefile.am
+@@ -17,5 +17,8 @@
+ 
+ noinst_LTLIBRARIES = libSystem.la
+ 
++libSystem_la_CPPFLAGS =
++libSystem_la_CPPFLAGS += @GLIB2_CPPFLAGS@
++
+ libSystem_la_SOURCES =
+ libSystem_la_SOURCES += systemLinux.c
+diff --git a/lib/system/systemLinux.c b/lib/system/systemLinux.c
+index a688ab25..d24e2c4c 100644
+--- a/lib/system/systemLinux.c
++++ b/lib/system/systemLinux.c
+@@ -54,6 +54,7 @@
+ #include <sys/ioctl.h>
+ #include <net/if.h>
+ #include <sys/ioctl.h>
++#include <glib.h>
+ 
+ #if defined sun || defined __APPLE__
+ #   include <utmpx.h>
+@@ -305,6 +306,8 @@ void
+ System_Shutdown(Bool reboot)  // IN: "reboot or shutdown" flag
+ {
+    char *cmd;
++   int exit_status = 0;
++   Bool success;
+ 
+    if (reboot) {
+ #if defined(sun)
+@@ -325,10 +328,19 @@ System_Shutdown(Bool reboot)  // IN: "reboot or shutdown" flag
+       cmd = "/sbin/shutdown -h now";
+ #endif
+    }
+-   if (system(cmd) == -1) {
++
++   success = g_spawn_command_line_sync(cmd,
++                           NULL,
++                           NULL,
++                           &exit_status,
++                           NULL);
++   if (!success) {
+       fprintf(stderr, "Unable to execute %s command: \"%s\"\n",
+               reboot ? "reboot" : "shutdown", cmd);
+    }
++   if ((success) && exit_status != 0) {
++      fprintf(stderr, "Command %s failed with exit %d\n", cmd, exit_status);
++   }
+ }
+ 
+ 
+-- 
+2.37.1 (Apple Git-137.1)
+
