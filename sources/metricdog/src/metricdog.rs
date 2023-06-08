@@ -1,11 +1,13 @@
 use crate::config::Config;
 use crate::error::{self, Result};
+use crate::host_check::HostCheck;
 use crate::service_check::ServiceCheck;
 use bottlerocket_release::BottlerocketRelease;
-use log::debug;
+use log::{debug, error};
 use reqwest::blocking::Client;
+use serde::Serialize;
 use snafu::ResultExt;
-use std::collections::HashMap;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::time::Duration;
 use url::Url;
@@ -23,11 +25,50 @@ pub(crate) struct Metricdog {
     config: Config,
     /// Information about the Bottlerocket release, e.g. from `os-release`
     os_release: BottlerocketRelease,
-    /// A trait object that checks if a service (listed in `config`) is healthy. This can be passed-
+    /// A trait object that checks attributes of a service (listed in `config`). This can be passed-
     /// in, but defaults to an object that uses `systemctl` to check services.
-    healthcheck: Box<dyn ServiceCheck>,
+    service_check: Box<dyn ServiceCheck>,
+    /// The trait checks aspects of the host such as whether it's the first boot or how long it took
+    /// for the host to become ready.
+    host_check: Box<dyn HostCheck>,
     /// The metrics_url, having been parsed during construction of the `Metricdog` object.
     metrics_url: Url,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub(crate) struct BootMetrics {
+    is_first_boot: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    preconfigured_time_ms: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    configured_time_ms: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    network_ready_time_ms: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    filesystem_ready_time_ms: Option<String>,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub(crate) struct HealthCheck {
+    is_healthy: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    failed_services: Option<String>,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(untagged)]
+pub(crate) enum Event {
+    BootSuccess(BootMetrics),
+    HealthPing(HealthCheck),
+}
+
+impl Display for Event {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Event::BootSuccess(_) => write!(f, "boot_success"),
+            Event::HealthPing(_) => write!(f, "health_ping"),
+        }
+    }
 }
 
 impl Metricdog {
@@ -36,7 +77,8 @@ impl Metricdog {
     pub(crate) fn from_parts(
         config: Config,
         os_release: BottlerocketRelease,
-        healthcheck: Box<dyn ServiceCheck>,
+        service_check: Box<dyn ServiceCheck>,
+        host_check: Box<dyn HostCheck>,
     ) -> Result<Self> {
         let metrics_url = Url::from_str(&config.metrics_url).context(error::UrlParseSnafu {
             url: &config.metrics_url,
@@ -44,7 +86,8 @@ impl Metricdog {
         Ok(Self {
             config,
             os_release,
-            healthcheck,
+            service_check,
+            host_check,
             metrics_url,
         })
     }
@@ -59,28 +102,24 @@ impl Metricdog {
     ///
     /// * `sender`:          This is the name of the application sending the metrics e.g.
     ///                      `metricdog` or `updog`.
-    /// * `event`:           The name of the type of metrics event that is being sent. For example
-    ///                      `boot_success` or `health_ping`.
-    /// * `values`:          The key-value pairs that you want to send. These will be sorted by key
-    ///                      before sending to ensure consistency of key-value ordering.
+    /// * `event`:           The metrics event that is being sent. For example `BootSuccess` or
+    ///                      `HealthPing`.
     /// * `timeout_seconds`: The timeout setting for the HTTP client. Defaults to
     ///                      `DEFAULT_TIMEOUT_SECONDS` when `None` is passed.
-    pub(crate) fn send<S1, S2>(
+    pub(crate) fn send<S1>(
         &self,
         sender: S1,
-        event: S2,
-        values: Option<&HashMap<String, String>>,
+        event: Event,
         timeout_seconds: Option<u64>,
     ) -> Result<()>
     where
         S1: AsRef<str>,
-        S2: AsRef<str>,
     {
         let mut url = self.metrics_url.clone();
         {
             let mut q = url.query_pairs_mut();
             q.append_pair("sender", sender.as_ref());
-            q.append_pair("event", event.as_ref());
+            q.append_pair("event", &event.to_string());
             q.append_pair("version", &self.os_release.version_id.to_string());
             q.append_pair("variant", &self.os_release.variant_id);
             q.append_pair("arch", &self.os_release.arch);
@@ -88,13 +127,16 @@ impl Metricdog {
             q.append_pair("seed", &self.config.seed.to_string());
             q.append_pair("version_lock", &self.config.version_lock);
             q.append_pair("ignore_waves", &self.config.ignore_waves.to_string());
-            if let Some(map) = values {
-                let mut keys: Vec<&String> = map.keys().collect();
-                // sorted for consistency
-                keys.sort();
-                for key in keys {
-                    if let Some(val) = map.get(key) {
-                        q.append_pair(key, val);
+
+            let values = serde_json::value::to_value(event).unwrap_or_default();
+            if let serde_json::Value::Object(obj) = values {
+                for (key, val) in obj {
+                    if let Some(val) = val.as_str() {
+                        q.append_pair(&key, val);
+                        continue;
+                    }
+                    if let Some(val) = val.as_bool() {
+                        q.append_pair(&key, &val.to_string());
                     }
                 }
             }
@@ -105,8 +147,32 @@ impl Metricdog {
 
     /// Sends a notification to the metrics url that boot succeeded.
     pub(crate) fn send_boot_success(&self) -> Result<()> {
-        // timeout of 3 seconds to prevent blocking the completion of mark-boot-success
-        self.send("metricdog", "boot_success", None, Some(3))?;
+        let event = Event::BootSuccess(BootMetrics {
+            is_first_boot: self.host_check.is_first_boot()?,
+            preconfigured_time_ms: self
+                .host_check
+                .preconfigured_time_ms()
+                .map_err(|e| error!("Unable to get preconfigured time: '{}'", e))
+                .ok(),
+            configured_time_ms: self
+                .host_check
+                .configured_time_ms()
+                .map_err(|e| error!("Unable to get configured time: '{}'", e))
+                .ok(),
+            network_ready_time_ms: self
+                .host_check
+                .network_ready_time_ms()
+                .map_err(|e| error!("Unable to get network ready time: '{}'", e))
+                .ok(),
+            filesystem_ready_time_ms: self
+                .host_check
+                .filesystem_ready_time_ms()
+                .map_err(|e| error!("Unable to get filesystem ready time: '{}'", e))
+                .ok(),
+        });
+
+        // Timeout of 3 seconds to prevent blocking the completion of mark-boot-success
+        self.send("metricdog", event, Some(3))?;
         Ok(())
     }
 
@@ -118,7 +184,7 @@ impl Metricdog {
         let mut is_healthy = true;
         let mut failed_services = Vec::new();
         for service in &self.config.service_checks {
-            let service_status = self.healthcheck.check(service)?;
+            let service_status = self.service_check.check(service)?;
             if !service_status.is_healthy {
                 is_healthy = false;
                 match service_status.exit_code {
@@ -129,12 +195,14 @@ impl Metricdog {
                 }
             }
         }
-        let mut values = HashMap::new();
-        values.insert(String::from("is_healthy"), format!("{}", is_healthy));
-        // consistent ordering of failed services could be helpful when viewing raw records.
+        // Consistent ordering of failed services could be helpful when viewing raw records.
         failed_services.sort();
-        values.insert(String::from("failed_services"), failed_services.join(","));
-        self.send("metricdog", "health_ping", Some(&values), None)?;
+
+        let event = Event::HealthPing(HealthCheck {
+            is_healthy,
+            failed_services: Some(failed_services.join(",")),
+        });
+        self.send("metricdog", event, None)?;
         Ok(())
     }
 

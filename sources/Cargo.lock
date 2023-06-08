@@ -2441,6 +2441,7 @@ dependencies = [
  "log",
  "reqwest",
  "serde",
+ "serde_json",
  "simplelog",
  "snafu",
  "tempfile",

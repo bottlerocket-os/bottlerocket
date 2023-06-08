@@ -1,5 +1,6 @@
 use crate::args::{Arguments, Command, SendBootSuccess, SendHealthPing};
 use crate::error::Result;
+use crate::host_check::HostCheck;
 use crate::main_inner;
 use crate::service_check::{ServiceCheck, ServiceHealth};
 use httptest::responders::status_code;
@@ -30,6 +31,28 @@ impl ServiceCheck for MockCheck {
                 exit_code: None,
             })
         }
+    }
+}
+
+impl HostCheck for MockCheck {
+    fn is_first_boot(&self) -> Result<bool> {
+        Ok(true)
+    }
+
+    fn preconfigured_time_ms(&self) -> Result<String> {
+        Ok("".to_string())
+    }
+
+    fn configured_time_ms(&self) -> Result<String> {
+        Ok("".to_string())
+    }
+
+    fn network_ready_time_ms(&self) -> Result<String> {
+        Ok("".to_string())
+    }
+
+    fn filesystem_ready_time_ms(&self) -> Result<String> {
+        Ok("".to_string())
     }
 }
 
@@ -96,7 +119,7 @@ fn send_boot_success() {
         os_release: Some(os_release_path(&tempdir)),
         command: Command::SendBootSuccess(SendBootSuccess {}),
     };
-    main_inner(args, Box::new(MockCheck {})).unwrap();
+    main_inner(args, Box::new(MockCheck {}), Box::new(MockCheck {})).unwrap();
 }
 
 #[test]
@@ -117,7 +140,7 @@ fn opt_out() {
         os_release: Some(os_release_path(&tempdir)),
         command: Command::SendBootSuccess(SendBootSuccess {}),
     };
-    main_inner(args, Box::new(MockCheck {})).unwrap();
+    main_inner(args, Box::new(MockCheck {}), Box::new(MockCheck {})).unwrap();
 }
 
 #[test]
@@ -131,7 +154,7 @@ fn send_boot_success_no_server() {
         os_release: Some(os_release_path(&tempdir)),
         command: Command::SendBootSuccess(SendBootSuccess {}),
     };
-    main_inner(args, Box::new(MockCheck {})).unwrap();
+    main_inner(args, Box::new(MockCheck {}), Box::new(MockCheck {})).unwrap();
 }
 
 #[test]
@@ -150,7 +173,7 @@ fn send_boot_success_404() {
         os_release: Some(os_release_path(&tempdir)),
         command: Command::SendBootSuccess(SendBootSuccess {}),
     };
-    main_inner(args, Box::new(MockCheck {})).unwrap();
+    main_inner(args, Box::new(MockCheck {}), Box::new(MockCheck {})).unwrap();
 }
 
 #[test]
@@ -171,5 +194,5 @@ fn send_health_ping() {
         os_release: Some(os_release_path(&tempdir)),
         command: Command::SendHealthPing(SendHealthPing {}),
     };
-    main_inner(args, Box::new(MockCheck {})).unwrap();
+    main_inner(args, Box::new(MockCheck {}), Box::new(MockCheck {})).unwrap();
 }

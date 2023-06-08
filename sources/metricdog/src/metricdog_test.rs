@@ -1,5 +1,6 @@
 use crate::config::Config;
 use crate::error::Result;
+use crate::host_check::HostCheck;
 use crate::metricdog::Metricdog;
 use crate::service_check::{ServiceCheck, ServiceHealth};
 use bottlerocket_release::BottlerocketRelease;
@@ -44,6 +45,28 @@ impl ServiceCheck for MockCheck {
     }
 }
 
+impl HostCheck for MockCheck {
+    fn is_first_boot(&self) -> Result<bool> {
+        Ok(true)
+    }
+
+    fn preconfigured_time_ms(&self) -> Result<String> {
+        Ok("123".to_string())
+    }
+
+    fn configured_time_ms(&self) -> Result<String> {
+        Ok("456".to_string())
+    }
+
+    fn network_ready_time_ms(&self) -> Result<String> {
+        Ok("789".to_string())
+    }
+
+    fn filesystem_ready_time_ms(&self) -> Result<String> {
+        Ok("321".to_string())
+    }
+}
+
 #[test]
 fn send_healthy_ping() {
     let server = Server::run();
@@ -76,6 +99,7 @@ fn send_healthy_ping() {
             ignore_waves: false,
         },
         os_release(),
+        Box::new(MockCheck {}),
         Box::new(MockCheck {}),
     )
     .unwrap();
@@ -120,6 +144,7 @@ fn send_unhealthy_ping() {
         },
         os_release(),
         Box::new(MockCheck {}),
+        Box::new(MockCheck {}),
     )
     .unwrap();
     metricdog.send_health_ping().unwrap();
@@ -137,6 +162,11 @@ fn send_boot_success() {
         request::query(url_decoded(contains(("arch", std::env::consts::ARCH)))),
         request::query(url_decoded(contains(("region", "us-east-1")))),
         request::query(url_decoded(contains(("seed", "2041")))),
+        request::query(url_decoded(contains(("is_first_boot", "true")))),
+        request::query(url_decoded(contains(("preconfigured_time_ms", "123")))),
+        request::query(url_decoded(contains(("configured_time_ms", "456")))),
+        request::query(url_decoded(contains(("network_ready_time_ms", "789")))),
+        request::query(url_decoded(contains(("filesystem_ready_time_ms", "321")))),
     ];
     server.expect(Expectation::matching(matcher).respond_with(status_code(200)));
     let metrics_url = server.url_str("/metrics");
@@ -155,6 +185,7 @@ fn send_boot_success() {
             ignore_waves: false,
         },
         os_release(),
+        Box::new(MockCheck {}),
         Box::new(MockCheck {}),
     )
     .unwrap();

@@ -17,6 +17,18 @@ pub(crate) enum Error {
         source: std::io::Error,
     },
 
+    #[snafu(display(
+        "Failed to get 'ActiveEnterTimestampMonotonic' property for '{}' unit",
+        unit
+    ))]
+    ActiveEnterTimestamp { unit: String },
+
+    #[snafu(display("Failed to parse '{}' as u64: {}", input, source))]
+    ParseToU64 {
+        input: String,
+        source: std::num::ParseIntError,
+    },
+
     #[snafu(display("Failed to parse config file {}: {}", path.display(), source))]
     ConfigParse {
         path: PathBuf,
