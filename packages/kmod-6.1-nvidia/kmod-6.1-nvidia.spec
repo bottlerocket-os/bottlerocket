@@ -5,6 +5,13 @@
 %global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
 %global license_file %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml path nvidia -p ./licenses)
 
+# With the split of the firmware binary from firmware/gsp.bin to firmware/gsp_ad10x.bin
+# and firmware/gsp_tu10x.bin the file format changed from executable to relocatable.
+# The __spec_install_post macro will by default try to strip all binary files.
+# Unfortunately the strip used is not compatible with the new file format.
+# Redefine strip, so that these firmware binaries do not derail the build.
+%global __strip /usr/bin/true
+
 Name: %{_cross_os}kmod-6.1-nvidia
 Version: 1.0.0
 Release: 1%{?dist}
@@ -166,7 +173,8 @@ done
 
 # Include the firmware file for GSP support
 install -d %{buildroot}%{tesla_525_firmwaredir}
-install -p -m 0644 firmware/gsp.bin %{buildroot}%{tesla_525_firmwaredir}
+install -p -m 0644 firmware/gsp_ad10x.bin %{buildroot}%{tesla_525_firmwaredir}
+install -p -m 0644 firmware/gsp_tu10x.bin %{buildroot}%{tesla_525_firmwaredir}
 
 popd
 
@@ -291,7 +299,8 @@ popd
 %{tesla_525_libdir}/libnvidia-ngx.so.1
 
 # Firmware
-%{tesla_525_firmwaredir}/gsp.bin
+%{tesla_525_firmwaredir}/gsp_ad10x.bin
+%{tesla_525_firmwaredir}/gsp_tu10x.bin
 
 # Neither nvidia-peermem nor nvidia-drm are included in driver container images, we exclude them
 # for now, and we will add them if requested
