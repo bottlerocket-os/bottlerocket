@@ -1,0 +1,18 @@
+[Unit]
+Description=CNI Plugin Directory (/opt/aws/amazon-cloudwatch-agent/bin)
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+Wants=prepare-opt.service prepare-var.service
+After=prepare-opt.service prepare-var.service
+RequiresMountsFor=/opt /var
+
+[Mount]
+What=overlay
+Where=/opt/aws/amazon-cloudwatch-agent/bin
+Type=overlay
+# "noexec" omitted because containerd needs to execute CNI plugins
+Options=nosuid,nodev,noatime,lowerdir=/usr/libexec/aws/amazon-cloudwatch-agent/bin,upperdir=/var/lib/amazon-cloudwatch-agent/.overlay/upper,workdir=/var/lib/amazon-cloudwatch-agent/.overlay/work,context=system_u:object_r:os_t:s0
+
+[Install]
+WantedBy=preconfigured.target

@@ -38,6 +38,7 @@ Source1010: mnt.mount
 Source1012: opt-cni-bin.mount
 Source1013: local.mount
 Source1014: root-.aws.mount
+Source1017: opt-aws-amazon-cloudwatch-agent-bin.mount
 
 # CD-ROM mount & associated udev rules
 Source1015: media-cdrom.mount
@@ -155,6 +156,10 @@ LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/.overlay
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1020} > ${LOWERPATH}.mount
 install -p -m 0644 ${LOWERPATH}.mount %{buildroot}%{_cross_unitdir}
 
+BINDIRPATH=$(systemd-escape --path opt/aws/amazon-cloudwatch-agent/bin/)
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1017} > ${BINDIRPATH}.mount
+install -p -m 0644 ${BINDIRPATH}.mount %{buildroot}%{_cross_unitdir}
+
 # Mounting on usr/src/kernels requires using the real path: %{_cross_usrsrc}/kernels
 KERNELPATH=$(systemd-escape --path %{_cross_usrsrc}/kernels)
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1021} > ${KERNELPATH}.mount
@@ -184,6 +189,7 @@ install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
 
 ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
+ls -ltr %{buildroot}%{_cross_unitdir}
 
 %files
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
@@ -228,6 +234,7 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_unitdir}/repart-data-preferred.service
 %{_cross_unitdir}/repart-data-fallback.service
 %{_cross_unitdir}/prepare-local-fs.service
+%{_cross_unitdir}/*-bin.mount
 %dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 %{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 %dir %{_cross_templatedir}

@@ -21,11 +21,13 @@ name = "aws-dev"
 version = "0.1.0"
 dependencies = [
  "chrony",
+ "cloudwatch-agent",
  "docker-cli",
  "docker-engine",
  "docker-init",
  "docker-proxy",
  "iputils",
+ "journald-cloudwatch-logs",
  "kernel-5_15",
  "login",
  "release",
@@ -244,6 +246,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "cloudwatch-agent"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "cni"
 version = "0.1.0"
 dependencies = [
@@ -446,6 +455,14 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "libcap",
+]
+
+[[package]]
+name = "journald-cloudwatch-logs"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "systemd",
 ]
 
 [[package]]

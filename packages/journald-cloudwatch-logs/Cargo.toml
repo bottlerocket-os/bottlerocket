@@ -1,0 +1,21 @@
+[package]
+name = "journald-cloudwatch-logs"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[lib]
+path = "pkg.rs"
+
+[package.metadata.build-package]
+releases-url = "https://github.com/bdwyertech/journald-cloudwatch-logs/releases"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/bdwyertech/journald-cloudwatch-logs/archive/v0.2.11/journald-cloudwatch-logs-0.2.11.tar.gz"
+sha512 = "adb138e3710dc427ad6c4baa7a92b2b90213a037af942b658f326758f2c6096f839d3b924d74340be715f66e9bbfb508422dc25d3a7aa1dc4c3d728080dea1b3"
+
+[build-dependencies]
+systemd = { path = "../systemd" }
+glibc = { path = "../glibc" }
+

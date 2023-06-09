@@ -11,6 +11,8 @@ Type=oneshot
 # Create the directories for a read-write overlayfs for CNI plugins.
 ExecStart=/usr/bin/rm -rf /opt/cni
 ExecStart=/usr/bin/mkdir -p /opt/cni/bin
+ExecStart=/usr/bin/rm -rf /opt/aws/amazon-cloudwatch-agent/bin
+ExecStart=/usr/bin/mkdir /opt/aws/amazon-cloudwatch-agent/bin
 
 RemainAfterExit=true
 StandardError=journal+console

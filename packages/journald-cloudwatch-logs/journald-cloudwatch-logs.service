@@ -1,0 +1,12 @@
+[Unit]
+Description=journald-cloudwatch-logs
+After=network-online.target preconfigured.target
+Wants=network-online.target preconfigured.target
+
+[Service]
+ExecStart=/usr/bin/journald-cloudwatch-logs /etc/journald-cloudwatch-logs.conf
+Restart=always
+RestartSec=2s
+
+[Install]
+WantedBy=configured.target

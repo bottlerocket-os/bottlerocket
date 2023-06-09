@@ -1,0 +1,31 @@
+[clarify."github.com/digitalocean/godo"]
+expression = "MIT AND BSD-3-Clause"
+license-files = [
+    { path = "LICENSE.txt", hash = 0x2db625a8 },
+]
+
+[clarify."github.com/gosnmp/gosnmp"]
+expression = "MIT AND BSD-3-Clause"
+license-files = [
+    { path = "LICENSE", hash = 0xd54ef864 },
+]
+
+[clarify."github.com/miekg/dns"]
+expression = "BSD-3-Clause"
+license-files = [
+    { path = "COPYRIGHT", hash = 0xe41dd36c },
+    { path = "LICENSE", hash = 0xfc8f12ff },
+]
+
+[clarify."github.com/shirou/gopsutil"]
+expression = "BSD-3-Clause"
+license-files = [
+    { path = "LICENSE", hash = 0x96b23d92 },
+    { path = "v3/LICENSE", hash = 0x98263ce3 },
+]
+
+[clarify."sigs.k8s.io/yaml"]
+expression = "MIT AND BSD-3-Clause"
+license-files = [
+    { path = "LICENSE", hash = 0xcdf3ae00 },
+]

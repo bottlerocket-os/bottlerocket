@@ -36,6 +36,8 @@ included-packages = [
     "strace",
     "tcpdump",
     "chrony-tools",
+    "journald-cloudwatch-logs",
+    "cloudwatch-agent",
 ]
 
 [lib]
@@ -56,3 +58,5 @@ iputils = { path = "../../packages/iputils" }
 strace = { path = "../../packages/strace" }
 tcpdump = { path = "../../packages/tcpdump" }
 chrony = { path = "../../packages/chrony" }
+journald-cloudwatch-logs = { path = "../../packages/journald-cloudwatch-logs"}
+cloudwatch-agent = { path = "../../packages/cloudwatch-agent"}
