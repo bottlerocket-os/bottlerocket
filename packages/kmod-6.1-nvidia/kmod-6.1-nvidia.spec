@@ -228,6 +228,7 @@ popd
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
 
 # Utility libs
+%{tesla_525_libdir}/libnvidia-api.so.1
 %{tesla_525_libdir}/libnvidia-ml.so.%{tesla_525}
 %{tesla_525_libdir}/libnvidia-ml.so.1
 %{tesla_525_libdir}/libnvidia-cfg.so.%{tesla_525}
@@ -238,6 +239,8 @@ popd
 # Compute libs
 %{tesla_525_libdir}/libcuda.so.%{tesla_525}
 %{tesla_525_libdir}/libcuda.so.1
+%{tesla_525_libdir}/libcudadebugger.so.%{tesla_525}
+%{tesla_525_libdir}/libcudadebugger.so.1
 %{tesla_525_libdir}/libnvidia-opencl.so.%{tesla_525}
 %{tesla_525_libdir}/libnvidia-opencl.so.1
 %{tesla_525_libdir}/libnvidia-ptxjitcompiler.so.%{tesla_525}
@@ -326,5 +329,5 @@ popd
 %exclude %{tesla_525_libdir}/libnvidia-egl-wayland.so.1
 %exclude %{tesla_525_libdir}/libnvidia-egl-gbm.so.1
 %exclude %{tesla_525_libdir}/libnvidia-egl-gbm.so.1.1.0
-%exclude %{tesla_525_libdir}/libnvidia-egl-wayland.so.1.1.9
+%exclude %{tesla_525_libdir}/libnvidia-egl-wayland.so.1.1.10
 %exclude %{tesla_525_libdir}/libnvidia-wayland-client.so.%{tesla_525}
