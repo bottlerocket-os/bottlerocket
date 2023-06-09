@@ -40,10 +40,11 @@ Compare kernel configurations before and after a series of commits.
 
 Example invocation:
 
-    This compares the config changes for kernels 5.10 and 5.15 before and
-    after the most recent commit has been applied:
+    This compares the config changes for kernels 5.10 (through metal-k8s-1.23)
+    and 5.15 (through metal-k8s-1.26) before and after the most recent commit
+    has been applied:
 
-        $0 -b HEAD^ -a HEAD -k 5.10 -k 5.15 -o configs
+        $0 -b HEAD^ -a HEAD -v metal-k8s-1.23 -v metal-k8s-1.26 -o configs
 
 Notes:
 
