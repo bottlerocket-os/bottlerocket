@@ -485,7 +485,7 @@ pub(crate) trait CrdCreator: Sync {
                         &mut self
                             .additional_fields(&test_type.to_string())
                             .into_iter()
-                            // Add the image id incase it is needed for cluster creation
+                            // Add the image id in case it is needed for cluster creation
                             .chain(Some(("image-id".to_string(), image_id.clone())).into_iter())
                             .collect::<BTreeMap<String, String>>(),
                     )?,
