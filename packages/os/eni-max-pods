@@ -44,6 +44,7 @@ a1.large 29
 a1.medium 8
 a1.metal 234
 a1.xlarge 58
+bmn-sf1.metal 737
 c1.medium 12
 c1.xlarge 58
 c3.2xlarge 58
@@ -164,6 +165,7 @@ c6in.32xlarge 345
 c6in.4xlarge 234
 c6in.8xlarge 234
 c6in.large 29
+c6in.metal 345
 c6in.xlarge 58
 c7g.12xlarge 234
 c7g.16xlarge 737
@@ -174,7 +176,6 @@ c7g.large 29
 c7g.medium 8
 c7g.metal 737
 c7g.xlarge 58
-cc2.8xlarge 234
 cr1.8xlarge 234
 d2.2xlarge 58
 d2.4xlarge 234
@@ -252,6 +253,12 @@ i3en.6xlarge 234
 i3en.large 29
 i3en.metal 737
 i3en.xlarge 58
+i4g.16xlarge 737
+i4g.2xlarge 58
+i4g.4xlarge 234
+i4g.8xlarge 234
+i4g.large 29
+i4g.xlarge 58
 i4i.16xlarge 737
 i4i.2xlarge 58
 i4i.32xlarge 737
@@ -270,6 +277,10 @@ inf1.24xlarge 321
 inf1.2xlarge 38
 inf1.6xlarge 234
 inf1.xlarge 38
+inf2.24xlarge 737
+inf2.48xlarge 737
+inf2.8xlarge 234
+inf2.xlarge 58
 is4gen.2xlarge 58
 is4gen.4xlarge 234
 is4gen.8xlarge 234
@@ -409,6 +420,7 @@ m6idn.32xlarge 345
 m6idn.4xlarge 234
 m6idn.8xlarge 234
 m6idn.large 29
+m6idn.metal 345
 m6idn.xlarge 58
 m6in.12xlarge 234
 m6in.16xlarge 737
@@ -418,6 +430,7 @@ m6in.32xlarge 345
 m6in.4xlarge 234
 m6in.8xlarge 234
 m6in.large 29
+m6in.metal 345
 m6in.xlarge 58
 m7g.12xlarge 234
 m7g.16xlarge 737
@@ -568,6 +581,7 @@ r6idn.32xlarge 345
 r6idn.4xlarge 234
 r6idn.8xlarge 234
 r6idn.large 29
+r6idn.metal 345
 r6idn.xlarge 58
 r6in.12xlarge 234
 r6in.16xlarge 737
@@ -577,6 +591,7 @@ r6in.32xlarge 345
 r6in.4xlarge 234
 r6in.8xlarge 234
 r6in.large 29
+r6in.metal 345
 r6in.xlarge 58
 r7g.12xlarge 234
 r7g.16xlarge 737
@@ -618,6 +633,7 @@ t4g.small 11
 t4g.xlarge 58
 trn1.2xlarge 58
 trn1.32xlarge 247
+trn1n.32xlarge 247
 u-12tb1.112xlarge 737
 u-12tb1.metal 147
 u-18tb1.112xlarge 737
