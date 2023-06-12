@@ -44,9 +44,9 @@ const GO_MOD_DOCKER_SCRIPT_NAME: &str = "docker-go-script.sh";
 //
 // This script exists as an in memory template string literal and is populated
 // into a temporary file in the package directory itself to enable buildsys to
-// be as portable as possible and have no dependecy on runtime paths. Since
+// be as portable as possible and have no dependency on runtime paths. Since
 // buildsys is executed from the context of many different package directories,
-// managing a temporary file via this Rust module prevents having to aquire the
+// managing a temporary file via this Rust module prevents having to acquire the
 // path of some static script file on the host system.
 const GO_MOD_SCRIPT_TMPL: &str = r###"#!/bin/bash
 

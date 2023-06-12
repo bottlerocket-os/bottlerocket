@@ -346,7 +346,7 @@ mod tests {
         let release_path = "tests/data/release.toml";
         let example_manifest = "tests/data/example.json";
 
-        // Write example data to temp manifest so we dont' overwrite the file
+        // Write example data to temp manifest so we don't overwrite the file
         // when we call MigrationsArgs.set() below
         let temp_manifest = NamedTempFile::new().context(error::TmpFileCreateSnafu)?;
         let example_data = fs::read_to_string(example_manifest).unwrap();

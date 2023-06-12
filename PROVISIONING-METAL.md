@@ -100,7 +100,7 @@ Please keep in mind that when using static addresses, DNS information must be su
 * `static6` (map): IPv6 static address settings.
   * `addresses` (list of quoted IPv6 address including prefix): The desired IPv6 IP addresses, including prefix i.e. `["2001:dead:beef::2/64"]`.  The first IP in the list will be used as the primary IP which `kubelet` will use when joining the cluster.  If IPv4 and IPv6 static addresses exist, the first IPv4 address is used.
 
-* `route` (map): Static route; multiple routes can be added. (cannot be used in conjuction with DHCP)
+* `route` (map): Static route; multiple routes can be added. (cannot be used in conjunction with DHCP)
   * `to` (`"default"` or IP address with prefix, required): Destination address.
   * `from` (IP address): Source IP address.
   * `via` (IP address): Gateway IP address.  If no gateway is provided, a scope of `link` is assumed.
@@ -144,7 +144,8 @@ Vlan tagging is configured as a new virtual network device stacked on another de
 
 * Vlan configuration (map):
   * `kind = "vlan"`: This setting is required to specify a vlan device.
-  * `device` (string for device name, not MAC address): Defines the device the vlan should be configured on. If VLAN tagging is required, this device should recieve all IP address configuration instead of the underlying device.
+  * `device` (string for device name, not MAC address): Defines the device the vlan should be configured on.
+    If VLAN tagging is required, this device should receive all IP address configuration instead of the underlying device.
   * `id` (integer): Number between 0 and 4096 specifying the vlan tag on the device
 
 Example `net.toml` version `3` with comments:

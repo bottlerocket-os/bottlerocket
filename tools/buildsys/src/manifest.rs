@@ -54,7 +54,7 @@ omitted since the single top-level directory will authomatically be used.
 
 `bundle-output-path` is an optional argument that provides the desired path of
 the output archive. By default, this will use the name of the existing archive,
-but pre-pended with "bundled-". For example, if "my-unique-archive-name.tar.gz"
+but prepended with "bundled-". For example, if "my-unique-archive-name.tar.gz"
 is entered as the value for `bundle-output-path`, then the output directory
 will be named `my-unique-archive-name.tar.gz`. Or, by default, given the name
 of some upstream archive is "my-package.tar.gz", the output archive would be

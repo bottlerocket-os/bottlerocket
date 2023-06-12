@@ -900,7 +900,7 @@ enable-unprivileged-ports = true
    ```
 
 The following allows for custom DNS settings, which are used to generate the `/etc/resolv.conf`.
-If either DNS setting is not populated, the system will use the DHCP lease of the primary interface to gather these setings.
+If either DNS setting is not populated, the system will use the DHCP lease of the primary interface to gather these settings.
 See the `resolv.conf` [man page](https://man7.org/linux/man-pages/man5/resolv.conf.5.html) for more detail.
 
 * `settings.dns.name-servers`: An array of IP address strings that represent the desired name server(s).
