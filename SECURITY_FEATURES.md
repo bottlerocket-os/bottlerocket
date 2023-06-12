@@ -68,7 +68,8 @@ The root filesystem is marked as read-only and cannot be directly modified by us
 This protects against some container escape vulnerabilities such as [CVE-2019-5736](https://www.openwall.com/lists/oss-security/2019/02/11/2).
 
 The kernel is configured to restart if corruption is detected.
-That allows the system to fail close to when the underlying block device is unexpectedly modified.
+That allows the system to fail closed if the underlying block device is unexpectedly modified and the node is in an unknown state.
+The uncontrolled reboot will disrupt running containers, which can trigger alarms and prompt administrators to investigate.
 
 Although this provides a powerful layer of protection, it is **incomplete**.
 An attacker with full access to the block device could alter both the verity metadata and the contents of the root filesystem.
