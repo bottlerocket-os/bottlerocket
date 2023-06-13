@@ -1,0 +1,45 @@
+version: 2
+updates:
+
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "area/dependencies"
+
+  # We maintain updates for most dependencies. This disables updates other than
+  # security ones.
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    labels:
+      - "area/dependencies"
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    labels:
+      - "area/dependencies"
+    open-pull-requests-limit: 0
+
+  # Enable updates for the `tools` dependencies
+  - package-ecosystem: "cargo"
+    directory: "/tools"
+    ignore:
+      # For AWS SDK for Rust, we'll update when we bump tough/coldsnap
+      - dependency-name: "aws-config"
+      - dependency-name: "aws-endpoint"
+      - dependency-name: "aws-http"
+      - dependency-name: "aws-hyper"
+      - dependency-name: "aws-sig*"
+      - dependency-name: "aws-sdk*"
+      - dependency-name: "aws-smithy*"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "area/dependencies"
