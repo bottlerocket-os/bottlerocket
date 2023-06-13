@@ -1,0 +1,26 @@
+[package]
+name = "xfsprogs"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[lib]
+path = "/dev/null"
+
+[package.metadata.build-package]
+releases-url = "https://mirrors.edge.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/"
+
+[[package.metadata.build-package.external-files]]
+url = "http://kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-6.3.0.tar.xz"
+sha512 = "dbb3e77d0d9cf184a0e647b8231350401a7549a23a0bfd9121cf2a1b48e85f71d98329dff440fc6e984bcecfdcc2a72f0f27c4989560f3c55359f21f3fb434bb"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libinih = { path = "../libinih" }
+liburcu = { path = "../liburcu" }
+util-linux = { path = "../util-linux" }
+
+# RPM Requires
+[dependencies]
+# none - will likely change

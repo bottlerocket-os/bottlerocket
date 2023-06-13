@@ -799,6 +799,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "liburcu"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "libxcrypt"
 version = "0.1.0"
 dependencies = [
@@ -1029,6 +1036,7 @@ dependencies = [
  "systemd",
  "util-linux",
  "wicked",
+ "xfsprogs",
 ]
 
 [[package]]
@@ -1171,4 +1179,14 @@ dependencies = [
  "libiw",
  "libnl",
  "systemd",
+]
+
+[[package]]
+name = "xfsprogs"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libinih",
+ "liburcu",
+ "util-linux",
 ]
