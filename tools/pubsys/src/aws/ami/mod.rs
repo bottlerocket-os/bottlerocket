@@ -33,6 +33,8 @@ use std::path::PathBuf;
 use structopt::{clap, StructOpt};
 use wait::wait_for_ami;
 
+const WARN_SEPARATOR: &str = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+
 /// Builds Bottlerocket AMIs using latest build artifacts
 #[derive(Debug, StructOpt)]
 #[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
@@ -146,8 +148,8 @@ async fn _run(args: &Args, ami_args: &AmiArgs) -> Result<HashMap<String, Image>>
 
     let (ids_of_image, already_registered) = if let Some(found_id) = maybe_id {
         warn!(
-            "Found '{}' already registered in {}: {}",
-            ami_args.name, base_region, found_id
+            "\n{}\n\nFound '{}' already registered in {}: {}\n\n{0}",
+            WARN_SEPARATOR, ami_args.name, base_region, found_id
         );
         let snapshot_ids = get_snapshots(&found_id, &base_region, &base_ec2_client)
             .await
