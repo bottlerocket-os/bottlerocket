@@ -28,7 +28,7 @@ kernel-parameters = [
 included-packages = [
 # core
     "release",
-    "kernel-5.15",
+    "kernel-6.1",
     "open-vm-tools",
 # docker
     "docker-cli",
@@ -49,7 +49,7 @@ path = "/dev/null"
 [build-dependencies]
 # core
 release = { path = "../../packages/release" }
-kernel-5_15 = { path = "../../packages/kernel-5.15" }
+kernel-6_1 = { path = "../../packages/kernel-6.1" }
 open-vm-tools = { path = "../../packages/open-vm-tools" }
 # docker
 docker-cli = { path = "../../packages/docker-cli" }

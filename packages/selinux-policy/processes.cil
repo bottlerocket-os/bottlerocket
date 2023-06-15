@@ -8,6 +8,8 @@
     setfscreate setkeycreate setsockcreate)))
 (classmapping processes transform (
   process2 (nnp_transition nosuid_transition)))
+(classmapping processes transform (
+  io_uring (override_creds)))
 
 (classmapping processes describe (
   process (
@@ -26,3 +28,5 @@
     setfscreate setkeycreate setsockcreate
     getsched getsession getpgid getcap getattr getrlimit
     execheap execmem execstack))))
+(classmapping processes interact (
+  io_uring (sqpoll)))

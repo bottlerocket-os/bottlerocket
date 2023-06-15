@@ -23,3 +23,4 @@
 (classmapping systems use (perf_event (all)))
 (classmapping systems use (
   system (not (halt reboot status start stop enable disable reload))))
+(classmapping systems use (user_namespace (all)))

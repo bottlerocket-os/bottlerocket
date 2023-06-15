@@ -1,0 +1,21 @@
+[package]
+name = "kernel-6_1"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[package.metadata.build-package]
+variant-sensitive = "platform"
+package-name = "kernel-6.1"
+
+[lib]
+path = "/dev/null"
+
+[[package.metadata.build-package.external-files]]
+# Use latest-srpm-url.sh to get this.
+url = "https://cdn.amazonlinux.com/al2023/blobstore/7da4ac2135147d0ab97afaa82b81cb7408dc5a2fa8f8dd3e785a908585977bd3/kernel-6.1.19-30.43.amzn2023.src.rpm"
+sha512 = "6f2458e5707c7635c86e08de666e1beaab6b6ce133a5cdf084c72c80802d54f4d352784ce97d4832bf9e8e7a74f491a551829806df391604138489ecb9d0ac17"
+
+[build-dependencies]
+microcode = { path = "../microcode" }
