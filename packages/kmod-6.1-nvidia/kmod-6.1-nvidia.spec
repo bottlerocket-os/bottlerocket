@@ -23,7 +23,7 @@ Source200: nvidia-tmpfiles.conf.in
 Source202: nvidia-dependencies-modules-load.conf
 
 # NVIDIA tesla conf files from 300 to 399
-Source300: nvidia-tesla-tmpfiles.conf.in
+Source300: nvidia-tesla-tmpfiles.conf
 Source301: nvidia-tesla-build-config.toml.in
 Source302: nvidia-tesla-path.env.in
 Source303: nvidia-ld.so.conf.in
@@ -102,22 +102,20 @@ install -d %{buildroot}%{tesla_525_libdir}
 install -d %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
 install -d %{buildroot}%{_cross_factorydir}/nvidia/tesla
 
-sed -e 's|__NVIDIA_VERSION__|%{tesla_525}|' %{S:300} > nvidia-tesla-%{tesla_525}.conf
-install -m 0644 nvidia-tesla-%{tesla_525}.conf %{buildroot}%{_cross_tmpfilesdir}/
+install -m 0644 %{S:300} %{buildroot}%{_cross_tmpfilesdir}/nvidia-tesla.conf
 sed -e 's|__NVIDIA_MODULES__|%{_cross_datadir}/nvidia/tesla/module-objects.d/|' %{S:301} > \
-  nvidia-tesla-%{tesla_525}.toml
-install -m 0644 nvidia-tesla-%{tesla_525}.toml %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/drivers
+  nvidia-tesla.toml
+install -m 0644 nvidia-tesla.toml %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/drivers
 # Install nvidia-path environment file, will be used as a drop-in for containerd.service since
 # libnvidia-container locates and mounts helper binaries into the containers from either
 # `PATH` or `NVIDIA_PATH`
 sed -e 's|__NVIDIA_BINDIR__|%{_cross_libexecdir}/nvidia/tesla/bin|' %{S:302} > nvidia-path.env
 install -m 0644 nvidia-path.env %{buildroot}%{_cross_factorydir}/nvidia/tesla
-# We need to add `_cross_libdir/tesla_525` to the paths loaded by the ldconfig service
+# We need to add `_cross_libdir` to the paths loaded by the ldconfig service
 # because libnvidia-container uses the `ldcache` file created by the service, to locate and mount the
 # libraries into the containers
-sed -e 's|__LIBDIR__|%{_cross_libdir}|' %{S:303} | sed -e 's|__NVIDIA_VERSION__|%{tesla_525}|' \
-  > nvidia-tesla-%{tesla_525}.conf
-install -m 0644 nvidia-tesla-%{tesla_525}.conf %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/
+sed -e 's|__LIBDIR__|%{_cross_libdir}|' %{S:303} > nvidia-tesla.conf
+install -m 0644 nvidia-tesla.conf %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/
 
 # driver
 install kernel/nvidia.mod.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
