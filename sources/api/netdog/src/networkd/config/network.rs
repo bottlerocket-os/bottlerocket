@@ -43,6 +43,8 @@ struct NetworkSection {
     configure_wo_carrier: Option<bool>,
     #[systemd(entry = "DHCP")]
     dhcp: Option<DhcpBool>,
+    #[systemd(entry = "IPv6AcceptRA")]
+    ipv6_accept_ra: Option<bool>,
     #[systemd(entry = "LinkLocalAddressing")]
     link_local_addressing: Option<DhcpBool>,
     #[systemd(entry = "PrimarySlave")]
