@@ -1,7 +1,4 @@
 %global tesla_525 525.105.17
-%global tesla_525_libdir %{_cross_libdir}/nvidia/tesla
-%global tesla_525_bindir %{_cross_libexecdir}/nvidia/tesla/bin
-%global tesla_525_firmwaredir %{_cross_libdir}/firmware/nvidia/%{tesla_525}
 %global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
 %global license_file %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml path nvidia -p ./licenses)
 
@@ -105,7 +102,7 @@ install -p -m 0644 %{S:202} %{buildroot}%{_cross_libdir}/modules-load.d/nvidia-d
 pushd NVIDIA-Linux-%{_cross_arch}-%{tesla_525}
 # We install bins and libs in a versioned directory to prevent collisions with future drivers versions
 install -d %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
-install -d %{buildroot}%{tesla_525_libdir}
+install -d %{buildroot}%{_cross_libdir}/nvidia/tesla
 install -d %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
 install -d %{buildroot}%{_cross_factorydir}/nvidia/tesla
 
@@ -157,7 +154,7 @@ install -m 755 nvidia-ngx-updater %{buildroot}%{_cross_libexecdir}/nvidia/tesla/
 
 # We install all the libraries, and filter them out in the 'files' section, so we can catch
 # when new libraries are added
-install -m 755 *.so* %{buildroot}/%{tesla_525_libdir}/
+install -m 755 *.so* %{buildroot}/%{_cross_libdir}/nvidia/tesla/
 
 # This library has the same SONAME as libEGL.so.1.1.0, this will cause collisions while
 # the symlinks are created. For now, we only symlink libEGL.so.1.1.0.
@@ -168,13 +165,13 @@ for lib in $(find . -maxdepth 1 -type f -name 'lib*.so.*' -printf '%%P\n'); do
   soname="$(%{_cross_target}-readelf -d "${lib}" | awk '/SONAME/{print $5}' | tr -d '[]')"
   [ -n "${soname}" ] || continue
   [ "${lib}" == "${soname}" ] && continue
-  ln -s "${lib}" %{buildroot}/%{tesla_525_libdir}/"${soname}"
+  ln -s "${lib}" %{buildroot}/%{_cross_libdir}/nvidia/tesla/"${soname}"
 done
 
 # Include the firmware file for GSP support
-install -d %{buildroot}%{tesla_525_firmwaredir}
-install -p -m 0644 firmware/gsp_ad10x.bin %{buildroot}%{tesla_525_firmwaredir}
-install -p -m 0644 firmware/gsp_tu10x.bin %{buildroot}%{tesla_525_firmwaredir}
+install -d %{buildroot}%{_cross_libdir}/firmware/nvidia/%{tesla_525}
+install -p -m 0644 firmware/gsp_ad10x.bin %{buildroot}%{_cross_libdir}/firmware/nvidia/%{tesla_525}
+install -p -m 0644 firmware/gsp_tu10x.bin %{buildroot}%{_cross_libdir}/firmware/nvidia/%{tesla_525}
 
 popd
 
@@ -193,8 +190,8 @@ popd
 %license %{license_file}
 %dir %{_cross_datadir}/nvidia/tesla
 %dir %{_cross_libexecdir}/nvidia/tesla/bin
-%dir %{tesla_525_libdir}
-%dir %{tesla_525_firmwaredir}
+%dir %{_cross_libdir}/nvidia/tesla
+%dir %{_cross_libdir}/firmware/nvidia/%{tesla_525}
 %dir %{_cross_datadir}/nvidia/tesla/module-objects.d
 %dir %{_cross_factorydir}/nvidia/tesla
 
@@ -228,82 +225,82 @@ popd
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
 
 # Utility libs
-%{tesla_525_libdir}/libnvidia-api.so.1
-%{tesla_525_libdir}/libnvidia-ml.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-ml.so.1
-%{tesla_525_libdir}/libnvidia-cfg.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-cfg.so.1
-%{tesla_525_libdir}/libnvidia-nvvm.so.4
-%{tesla_525_libdir}/libnvidia-nvvm.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-api.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-ml.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-ml.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-cfg.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-cfg.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-nvvm.so.4
+%{_cross_libdir}/nvidia/tesla/libnvidia-nvvm.so.%{tesla_525}
 
 # Compute libs
-%{tesla_525_libdir}/libcuda.so.%{tesla_525}
-%{tesla_525_libdir}/libcuda.so.1
-%{tesla_525_libdir}/libcudadebugger.so.%{tesla_525}
-%{tesla_525_libdir}/libcudadebugger.so.1
-%{tesla_525_libdir}/libnvidia-opencl.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-opencl.so.1
-%{tesla_525_libdir}/libnvidia-ptxjitcompiler.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-ptxjitcompiler.so.1
-%{tesla_525_libdir}/libnvidia-allocator.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-allocator.so.1
-%{tesla_525_libdir}/libOpenCL.so.1.0.0
-%{tesla_525_libdir}/libOpenCL.so.1
+%{_cross_libdir}/nvidia/tesla/libcuda.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libcuda.so.1
+%{_cross_libdir}/nvidia/tesla/libcudadebugger.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libcudadebugger.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-opencl.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-opencl.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-ptxjitcompiler.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-ptxjitcompiler.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-allocator.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-allocator.so.1
+%{_cross_libdir}/nvidia/tesla/libOpenCL.so.1.0.0
+%{_cross_libdir}/nvidia/tesla/libOpenCL.so.1
 %if "%{_cross_arch}" == "x86_64"
-%{tesla_525_libdir}/libnvidia-compiler.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-compiler.so.%{tesla_525}
 %endif
 
 # Video libs
-%{tesla_525_libdir}/libvdpau_nvidia.so.%{tesla_525}
-%{tesla_525_libdir}/libvdpau_nvidia.so.1
-%{tesla_525_libdir}/libnvidia-encode.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-encode.so.1
-%{tesla_525_libdir}/libnvidia-opticalflow.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-opticalflow.so.1
-%{tesla_525_libdir}/libnvcuvid.so.%{tesla_525}
-%{tesla_525_libdir}/libnvcuvid.so.1
+%{_cross_libdir}/nvidia/tesla/libvdpau_nvidia.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libvdpau_nvidia.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-encode.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-encode.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-opticalflow.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-opticalflow.so.1
+%{_cross_libdir}/nvidia/tesla/libnvcuvid.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvcuvid.so.1
 
 # Graphics libs
-%{tesla_525_libdir}/libnvidia-eglcore.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-glcore.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-tls.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-glsi.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-rtcore.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-fbc.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-fbc.so.1
-%{tesla_525_libdir}/libnvoptix.so.%{tesla_525}
-%{tesla_525_libdir}/libnvoptix.so.1
-%{tesla_525_libdir}/libnvidia-vulkan-producer.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-eglcore.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-glcore.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-tls.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-glsi.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-rtcore.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-fbc.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-fbc.so.1
+%{_cross_libdir}/nvidia/tesla/libnvoptix.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvoptix.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-vulkan-producer.so.%{tesla_525}
 
 # Graphics GLVND libs
-%{tesla_525_libdir}/libnvidia-glvkspirv.so.%{tesla_525}
-%{tesla_525_libdir}/libGLX_nvidia.so.%{tesla_525}
-%{tesla_525_libdir}/libGLX_nvidia.so.0
-%{tesla_525_libdir}/libEGL_nvidia.so.%{tesla_525}
-%{tesla_525_libdir}/libEGL_nvidia.so.0
-%{tesla_525_libdir}/libGLESv2_nvidia.so.%{tesla_525}
-%{tesla_525_libdir}/libGLESv2_nvidia.so.2
-%{tesla_525_libdir}/libGLESv1_CM_nvidia.so.%{tesla_525}
-%{tesla_525_libdir}/libGLESv1_CM_nvidia.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-glvkspirv.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libGLX_nvidia.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libGLX_nvidia.so.0
+%{_cross_libdir}/nvidia/tesla/libEGL_nvidia.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libEGL_nvidia.so.0
+%{_cross_libdir}/nvidia/tesla/libGLESv2_nvidia.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libGLESv2_nvidia.so.2
+%{_cross_libdir}/nvidia/tesla/libGLESv1_CM_nvidia.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libGLESv1_CM_nvidia.so.1
 
 # Graphics compat
-%{tesla_525_libdir}/libEGL.so.1.1.0
-%{tesla_525_libdir}/libEGL.so.1
-%{tesla_525_libdir}/libEGL.so.%{tesla_525}
-%{tesla_525_libdir}/libGL.so.1.7.0
-%{tesla_525_libdir}/libGL.so.1
-%{tesla_525_libdir}/libGLESv1_CM.so.1.2.0
-%{tesla_525_libdir}/libGLESv1_CM.so.1
-%{tesla_525_libdir}/libGLESv2.so.2.1.0
-%{tesla_525_libdir}/libGLESv2.so.2
+%{_cross_libdir}/nvidia/tesla/libEGL.so.1.1.0
+%{_cross_libdir}/nvidia/tesla/libEGL.so.1
+%{_cross_libdir}/nvidia/tesla/libEGL.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libGL.so.1.7.0
+%{_cross_libdir}/nvidia/tesla/libGL.so.1
+%{_cross_libdir}/nvidia/tesla/libGLESv1_CM.so.1.2.0
+%{_cross_libdir}/nvidia/tesla/libGLESv1_CM.so.1
+%{_cross_libdir}/nvidia/tesla/libGLESv2.so.2.1.0
+%{_cross_libdir}/nvidia/tesla/libGLESv2.so.2
 
 # NGX
-%{tesla_525_libdir}/libnvidia-ngx.so.%{tesla_525}
-%{tesla_525_libdir}/libnvidia-ngx.so.1
+%{_cross_libdir}/nvidia/tesla/libnvidia-ngx.so.%{tesla_525}
+%{_cross_libdir}/nvidia/tesla/libnvidia-ngx.so.1
 
 # Firmware
-%{tesla_525_firmwaredir}/gsp_ad10x.bin
-%{tesla_525_firmwaredir}/gsp_tu10x.bin
+%{_cross_libdir}/firmware/nvidia/%{tesla_525}/gsp_ad10x.bin
+%{_cross_libdir}/firmware/nvidia/%{tesla_525}/gsp_tu10x.bin
 
 # Neither nvidia-peermem nor nvidia-drm are included in driver container images, we exclude them
 # for now, and we will add them if requested
@@ -319,15 +316,15 @@ popd
 
 # None of these libraries are required by libnvidia-container, so they
 # won't be used by a containerized workload
-%exclude %{tesla_525_libdir}/libGLX.so.0
-%exclude %{tesla_525_libdir}/libGLdispatch.so.0
-%exclude %{tesla_525_libdir}/libOpenGL.so.0
-%exclude %{tesla_525_libdir}/libglxserver_nvidia.so.%{tesla_525}
-%exclude %{tesla_525_libdir}/libnvidia-gtk2.so.%{tesla_525}
-%exclude %{tesla_525_libdir}/libnvidia-gtk3.so.%{tesla_525}
-%exclude %{tesla_525_libdir}/nvidia_drv.so
-%exclude %{tesla_525_libdir}/libnvidia-egl-wayland.so.1
-%exclude %{tesla_525_libdir}/libnvidia-egl-gbm.so.1
-%exclude %{tesla_525_libdir}/libnvidia-egl-gbm.so.1.1.0
-%exclude %{tesla_525_libdir}/libnvidia-egl-wayland.so.1.1.10
-%exclude %{tesla_525_libdir}/libnvidia-wayland-client.so.%{tesla_525}
+%exclude %{_cross_libdir}/nvidia/tesla/libGLX.so.0
+%exclude %{_cross_libdir}/nvidia/tesla/libGLdispatch.so.0
+%exclude %{_cross_libdir}/nvidia/tesla/libOpenGL.so.0
+%exclude %{_cross_libdir}/nvidia/tesla/libglxserver_nvidia.so.%{tesla_525}
+%exclude %{_cross_libdir}/nvidia/tesla/libnvidia-gtk2.so.%{tesla_525}
+%exclude %{_cross_libdir}/nvidia/tesla/libnvidia-gtk3.so.%{tesla_525}
+%exclude %{_cross_libdir}/nvidia/tesla/nvidia_drv.so
+%exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-wayland.so.1
+%exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-gbm.so.1
+%exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-gbm.so.1.1.0
+%exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-wayland.so.1.1.10
+%exclude %{_cross_libdir}/nvidia/tesla/libnvidia-wayland-client.so.%{tesla_525}
