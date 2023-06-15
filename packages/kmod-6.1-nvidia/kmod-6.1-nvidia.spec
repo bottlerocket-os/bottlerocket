@@ -1,6 +1,6 @@
 %global tesla_525 525.105.17
-%global tesla_525_libdir %{_cross_libdir}/nvidia/tesla/%{tesla_525}
-%global tesla_525_bindir %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}
+%global tesla_525_libdir %{_cross_libdir}/nvidia/tesla
+%global tesla_525_bindir %{_cross_libexecdir}/nvidia/tesla/bin
 %global tesla_525_firmwaredir %{_cross_libdir}/firmware/nvidia/%{tesla_525}
 %global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
 %global license_file %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml path nvidia -p ./licenses)
@@ -97,21 +97,21 @@ install -p -m 0644 %{S:202} %{buildroot}%{_cross_libdir}/modules-load.d/nvidia-d
 # Begin NVIDIA tesla 525
 pushd NVIDIA-Linux-%{_cross_arch}-%{tesla_525}
 # We install bins and libs in a versioned directory to prevent collisions with future drivers versions
-install -d %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}
+install -d %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
 install -d %{buildroot}%{tesla_525_libdir}
-install -d %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
-install -d %{buildroot}%{_cross_factorydir}/nvidia/tesla/%{tesla_525}
+install -d %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
+install -d %{buildroot}%{_cross_factorydir}/nvidia/tesla
 
 sed -e 's|__NVIDIA_VERSION__|%{tesla_525}|' %{S:300} > nvidia-tesla-%{tesla_525}.conf
 install -m 0644 nvidia-tesla-%{tesla_525}.conf %{buildroot}%{_cross_tmpfilesdir}/
-sed -e 's|__NVIDIA_MODULES__|%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/|' %{S:301} > \
+sed -e 's|__NVIDIA_MODULES__|%{_cross_datadir}/nvidia/tesla/module-objects.d/|' %{S:301} > \
   nvidia-tesla-%{tesla_525}.toml
 install -m 0644 nvidia-tesla-%{tesla_525}.toml %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/drivers
 # Install nvidia-path environment file, will be used as a drop-in for containerd.service since
 # libnvidia-container locates and mounts helper binaries into the containers from either
 # `PATH` or `NVIDIA_PATH`
-sed -e 's|__NVIDIA_BINDIR__|%{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}|' %{S:302} > nvidia-path.env
-install -m 0644 nvidia-path.env %{buildroot}%{_cross_factorydir}/nvidia/tesla/%{tesla_525}
+sed -e 's|__NVIDIA_BINDIR__|%{_cross_libexecdir}/nvidia/tesla/bin|' %{S:302} > nvidia-path.env
+install -m 0644 nvidia-path.env %{buildroot}%{_cross_factorydir}/nvidia/tesla
 # We need to add `_cross_libdir/tesla_525` to the paths loaded by the ldconfig service
 # because libnvidia-container uses the `ldcache` file created by the service, to locate and mount the
 # libraries into the containers
@@ -120,34 +120,34 @@ sed -e 's|__LIBDIR__|%{_cross_libdir}|' %{S:303} | sed -e 's|__NVIDIA_VERSION__|
 install -m 0644 nvidia-tesla-%{tesla_525}.conf %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/
 
 # driver
-install kernel/nvidia.mod.o %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
-install kernel/nvidia/nv-interface.o %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
-install kernel/nvidia/nv-kernel.o_binary %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nv-kernel.o
+install kernel/nvidia.mod.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
+install kernel/nvidia/nv-interface.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
+install kernel/nvidia/nv-kernel.o_binary %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d/nv-kernel.o
 
 # uvm
-install kernel/nvidia-uvm.mod.o %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
-install kernel/nvidia-uvm.o %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
+install kernel/nvidia-uvm.mod.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
+install kernel/nvidia-uvm.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
 
 # modeset
-install kernel/nvidia-modeset.mod.o %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
-install kernel/nvidia-modeset/nv-modeset-interface.o %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
-install kernel/nvidia-modeset/nv-modeset-kernel.o %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
+install kernel/nvidia-modeset.mod.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
+install kernel/nvidia-modeset/nv-modeset-interface.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
+install kernel/nvidia-modeset/nv-modeset-kernel.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
 
 # peermem
-install kernel/nvidia-peermem.mod.o %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
-install kernel/nvidia-peermem/nvidia-peermem.o %{buildroot}%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
+install kernel/nvidia-peermem.mod.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
+install kernel/nvidia-peermem/nvidia-peermem.o %{buildroot}%{_cross_datadir}/nvidia/tesla/module-objects.d
 
 # drm
-install kernel/nvidia-drm.mod.o %{buildroot}/%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
-install kernel/nvidia-drm.o %{buildroot}/%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
+install kernel/nvidia-drm.mod.o %{buildroot}/%{_cross_datadir}/nvidia/tesla/module-objects.d
+install kernel/nvidia-drm.o %{buildroot}/%{_cross_datadir}/nvidia/tesla/module-objects.d
 
 # Binaries
-install -m 755 nvidia-smi %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}
-install -m 755 nvidia-debugdump %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}
-install -m 755 nvidia-cuda-mps-control %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}
-install -m 755 nvidia-cuda-mps-server %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}
+install -m 755 nvidia-smi %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
+install -m 755 nvidia-debugdump %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
+install -m 755 nvidia-cuda-mps-control %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
+install -m 755 nvidia-cuda-mps-server %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
 %if "%{_cross_arch}" == "x86_64"
-install -m 755 nvidia-ngx-updater %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}
+install -m 755 nvidia-ngx-updater %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
 %endif
 
 # We install all the libraries, and filter them out in the 'files' section, so we can catch
@@ -185,38 +185,38 @@ popd
 
 %files tesla-525
 %license %{license_file}
-%dir %{_cross_datadir}/nvidia/tesla/%{tesla_525}
-%dir %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}
+%dir %{_cross_datadir}/nvidia/tesla
+%dir %{_cross_libexecdir}/nvidia/tesla/bin
 %dir %{tesla_525_libdir}
 %dir %{tesla_525_firmwaredir}
-%dir %{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d
-%dir %{_cross_factorydir}/nvidia/tesla/%{tesla_525}
+%dir %{_cross_datadir}/nvidia/tesla/module-objects.d
+%dir %{_cross_factorydir}/nvidia/tesla
 
 # Binaries
-%{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}/nvidia-debugdump
-%{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}/nvidia-smi
+%{_cross_libexecdir}/nvidia/tesla/bin/nvidia-debugdump
+%{_cross_libexecdir}/nvidia/tesla/bin/nvidia-smi
 
 # Configuration files
-%{_cross_factorydir}%{_cross_sysconfdir}/drivers/nvidia-tesla-%{tesla_525}.toml
-%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/nvidia-tesla-%{tesla_525}.conf
-%{_cross_factorydir}/nvidia/tesla/%{tesla_525}/nvidia-path.env
+%{_cross_factorydir}%{_cross_sysconfdir}/drivers/nvidia-tesla.toml
+%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/nvidia-tesla.conf
+%{_cross_factorydir}/nvidia/tesla/nvidia-path.env
 
 # driver
-%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nvidia.mod.o
-%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nv-interface.o
-%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nv-kernel.o
+%{_cross_datadir}/nvidia/tesla/module-objects.d/nvidia.mod.o
+%{_cross_datadir}/nvidia/tesla/module-objects.d/nv-interface.o
+%{_cross_datadir}/nvidia/tesla/module-objects.d/nv-kernel.o
 
 # uvm
-%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nvidia-uvm.mod.o
-%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nvidia-uvm.o
+%{_cross_datadir}/nvidia/tesla/module-objects.d/nvidia-uvm.mod.o
+%{_cross_datadir}/nvidia/tesla/module-objects.d/nvidia-uvm.o
 
 # modeset
-%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nv-modeset-interface.o
-%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nv-modeset-kernel.o
-%{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nvidia-modeset.mod.o
+%{_cross_datadir}/nvidia/tesla/module-objects.d/nv-modeset-interface.o
+%{_cross_datadir}/nvidia/tesla/module-objects.d/nv-modeset-kernel.o
+%{_cross_datadir}/nvidia/tesla/module-objects.d/nvidia-modeset.mod.o
 
 # tmpfiles
-%{_cross_tmpfilesdir}/nvidia-tesla-%{tesla_525}.conf
+%{_cross_tmpfilesdir}/nvidia-tesla.conf
 
 # We only install the libraries required by all the DRIVER_CAPABILITIES, described here:
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#driver-capabilities
@@ -297,14 +297,14 @@ popd
 
 # Neither nvidia-peermem nor nvidia-drm are included in driver container images, we exclude them
 # for now, and we will add them if requested
-%exclude %{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nvidia-peermem.mod.o
-%exclude %{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nvidia-peermem.o
-%exclude %{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nvidia-drm.mod.o
-%exclude %{_cross_datadir}/nvidia/tesla/%{tesla_525}/module-objects.d/nvidia-drm.o
-%exclude %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}/nvidia-cuda-mps-control
-%exclude %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}/nvidia-cuda-mps-server
+%exclude %{_cross_datadir}/nvidia/tesla/module-objects.d/nvidia-peermem.mod.o
+%exclude %{_cross_datadir}/nvidia/tesla/module-objects.d/nvidia-peermem.o
+%exclude %{_cross_datadir}/nvidia/tesla/module-objects.d/nvidia-drm.mod.o
+%exclude %{_cross_datadir}/nvidia/tesla/module-objects.d/nvidia-drm.o
+%exclude %{_cross_libexecdir}/nvidia/tesla/bin/nvidia-cuda-mps-control
+%exclude %{_cross_libexecdir}/nvidia/tesla/bin/nvidia-cuda-mps-server
 %if "%{_cross_arch}" == "x86_64"
-%exclude %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_525}/nvidia-ngx-updater
+%exclude %{_cross_libexecdir}/nvidia/tesla/bin/nvidia-ngx-updater
 %endif
 
 # None of these libraries are required by libnvidia-container, so they
