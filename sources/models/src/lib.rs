@@ -206,7 +206,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
 
-use crate::de::{deserialize_mirrors, deserialize_node_taints};
+use crate::de::{deserialize_limit, deserialize_mirrors, deserialize_node_taints};
 use crate::modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, CredentialProvider,
     DNSDomain, ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
@@ -530,9 +530,29 @@ struct OciDefaults {
 
 ///// The hard and soft limit values for an OCI defaults resource limit.
 #[model(add_option = false)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize, Eq, Ord, PartialOrd, PartialEq)]
 struct OciDefaultsResourceLimit {
-    hard_limit: u32,
-    soft_limit: u32,
+    #[serde(deserialize_with = "deserialize_limit")]
+    hard_limit: i64,
+    #[serde(deserialize_with = "deserialize_limit")]
+    soft_limit: i64,
+}
+
+impl OciDefaultsResourceLimit {
+    pub fn get_hard_limit(self) -> u64 {
+        Self::get_limit(self.hard_limit)
+    }
+
+    pub fn get_soft_limit(self) -> u64 {
+        Self::get_limit(self.soft_limit)
+    }
+
+    fn get_limit(limit: i64) -> u64 {
+        match limit {
+            -1 => u64::MAX,
+            _ => limit as u64,
+        }
+    }
 }
 
 #[model(add_option = false)]

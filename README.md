@@ -756,12 +756,189 @@ Each of the `resource-limits` settings below contain two numeric fields: `hard-l
 Please see the [`getrlimit` linux manpage](https://man7.org/linux/man-pages/man7/capabilities.7.html) for meanings of `hard-limit` and `soft-limit`.
 
 The full list of resource limits that can be configured in Bottlerocket are:
+<table>
+<tr>
+  <th>Resource limit</th>
+  <th>Setting</th>
+  <th>Default value</th>
+  <th>Unit</th>
+</tr>
+<tr>
+  <td rowspan="2"> <code>RLIMIT_AS</code> </td>
+  <td><code>settings.oci-defaults.resource-limits.max-address-space.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">bytes</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-address-space.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_CORE</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-core-file-size.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">bytes</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-core-file-size.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_CPU</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-cpu-time.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">seconds</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-cpu-time.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_DATA</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-data-size.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">bytes</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-data-size.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_LOCKS</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-file-locks.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">locks</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-file-locks.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_FSIZE</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-file-size.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">bytes</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-file-size.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_MEMLOCK</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-locked-memory.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">bytes</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-locked-memory.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_MSGQUEUE</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-msgqueue-size.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">bytes</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-msgqueue-size.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_NICE</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-nice-priority.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">-</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-nice-priority.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_NOFILE</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-open-files.soft-limit</code></td>
+  <td>65536</td>
+  <td rowspan="2">files</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-open-files.hard-limit</code></td>
+  <td>1048576</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_SIGPENDING</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-pending-signals.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">signals</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-pending-signals.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_NPROC</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-processes.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">processes</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-processes.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_RTPRIO</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-realtime-priority.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">-</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-realtime-priority.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_RTTIME</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-realtime-timeout.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">microseconds</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-realtime-timeout.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_RSS</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-resident-set.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">bytes</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-resident-set.hard-limit</code></td>
+  <td>-</td>
+</tr>
+<tr>
+  <td rowspan="2"><code>RLIMIT_STACK</code></td>
+  <td><code>settings.oci-defaults.resource-limits.max-stack-size.soft-limit</code></td>
+  <td>-</td>
+  <td rowspan="2">bytes</td>
+</tr>
+<tr>
+  <td><code>settings.oci-defaults.resource-limits.max-stack-size.hard-limit</code></td>
+  <td>-</td>
+</tr>
+</table>
 
-resource limit | setting | default value
------ | ----- | -----
-`RLIMIT_NOFILE` | `settings.oci-defaults.resource-limits.max-open-files.hard-limit` | 1048576
-`RLIMIT_NOFILE` | `settings.oci-defaults.resource-limits.max-open-files.soft-limit` | 65536
-
+Limits can be any integer between 0 to `int64::MAX`. Either `-1` or `"unlimited"` can be used to remove the limit.
+* Specifying the maximum value (`i64::MAX`) for a limit:
+  ```toml
+  [settings.oci-defaults.resource-limits.<rlimit>>]
+  soft-limit = 65536
+  hard-limit = 9223372036854775807
+  ```
+* Removing a limit:
+  ```toml
+  [settings.oci-defaults.resource-limits.<rlimit>>]
+  soft-limit = 65536
+  hard-limit = "unlimited"
+  ```
+  
 #### Container image registry settings
 
 The following setting is optional and allows you to configure image registry mirrors and pull-through caches for your containers.
