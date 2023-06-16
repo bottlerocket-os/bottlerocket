@@ -84,8 +84,8 @@ skip-tree = [
     { name = "windows-sys", version = "=0.42.0" },
 
     # TestSys uses a newer version of base64 and serde_yaml
-    { name = "testsys-model", version = "=0.0.7" },
-    { name = "bottlerocket-types", version = "=0.0.7" },
+    { name = "testsys-model", version = "=0.0.8" },
+    { name = "bottlerocket-types", version = "=0.0.8" },
 ]
 
 [sources]

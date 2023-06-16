@@ -7,14 +7,14 @@ edition = "2021"
 publish = false
 
 [dependencies]
-bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.7", tag = "v0.0.7"}
+bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.8", tag = "v0.0.8"}
 bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
 handlebars = "4"
 home = "0.5"
 lazy_static = "1"
 log = "0.4"
 maplit="1"
-testsys-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.7", tag = "v0.0.7"}
+testsys-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.8", tag = "v0.0.8"}
 serde = { version = "1", features = ["derive"]  }
 serde_plain = "1"
 serde_yaml = "0.8"
