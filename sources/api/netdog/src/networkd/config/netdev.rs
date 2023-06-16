@@ -1,7 +1,12 @@
+use super::{CONFIG_FILE_PREFIX, NETWORKD_CONFIG_DIR};
 use crate::interface_id::InterfaceName;
+use crate::networkd::{error, Result};
 use crate::vlan_id::VlanId;
+use snafu::{OptionExt, ResultExt};
 use std::fmt::Display;
+use std::fs;
 use std::net::IpAddr;
+use std::path::{Path, PathBuf};
 use systemd_derive::{SystemdUnit, SystemdUnitSection};
 
 #[derive(Debug, Default, SystemdUnit)]
@@ -109,5 +114,34 @@ impl Display for ArpAllTargets {
             ArpAllTargets::All => write!(f, "all"),
             ArpAllTargets::Any => write!(f, "any"),
         }
+    }
+}
+
+impl NetDevConfig {
+    const FILE_EXT: &str = "netdev";
+
+    /// Write the config to the proper directory with the proper prefix and file extention
+    pub(crate) fn write_config_file(&self) -> Result<()> {
+        let cfg_path = self.config_path()?;
+
+        fs::write(&cfg_path, self.to_string()).context(error::NetworkDConfigWriteSnafu {
+            what: "netdev_config",
+            path: cfg_path,
+        })
+    }
+
+    /// Build the proper prefixed path for the config file
+    fn config_path(&self) -> Result<PathBuf> {
+        let device_name = &self.netdev.as_ref().and_then(|n| n.name.clone()).context(
+            error::ConfigMissingNameSnafu {
+                what: "netdev config".to_string(),
+            },
+        )?;
+
+        let filename = format!("{}{}", CONFIG_FILE_PREFIX, device_name);
+        let mut path = Path::new(NETWORKD_CONFIG_DIR).join(filename);
+        path.set_extension(Self::FILE_EXT);
+
+        Ok(path)
     }
 }

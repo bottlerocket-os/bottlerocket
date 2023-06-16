@@ -1,7 +1,12 @@
+use super::{CONFIG_FILE_PREFIX, NETWORKD_CONFIG_DIR};
 use crate::interface_id::{InterfaceName, MacAddress};
+use crate::networkd::{error, Result};
 use ipnet::IpNet;
+use snafu::{OptionExt, ResultExt};
 use std::fmt::Display;
+use std::fs;
 use std::net::IpAddr;
+use std::path::{Path, PathBuf};
 use systemd_derive::{SystemdUnit, SystemdUnitSection};
 
 #[derive(Debug, Default, SystemdUnit)]
@@ -121,5 +126,47 @@ impl Display for DhcpBool {
             DhcpBool::No => write!(f, "no"),
             DhcpBool::Yes => write!(f, "yes"),
         }
+    }
+}
+impl NetworkConfig {
+    const FILE_EXT: &str = "network";
+
+    /// Write the config to the proper directory with the proper prefix and file extention
+    pub(crate) fn write_config_file(&self) -> Result<()> {
+        let cfg_path = self.config_path()?;
+
+        fs::write(&cfg_path, self.to_string()).context(error::NetworkDConfigWriteSnafu {
+            what: "network config",
+            path: cfg_path,
+        })
+    }
+    /// Build the proper prefixed path for the config file
+    fn config_path(&self) -> Result<PathBuf> {
+        let match_section = self
+            .r#match
+            .as_ref()
+            .context(error::ConfigMissingNameSnafu {
+                what: "network config".to_string(),
+            })?;
+
+        // Choose the device name for the filename if it exists, otherwise use the MAC
+        let device_name = match (
+            &match_section.name,
+            match_section.permanent_mac_address.first(),
+        ) {
+            (Some(name), _) => name.to_string(),
+            (None, Some(mac)) => mac.to_string().replace(':', ""),
+            (None, None) => {
+                return error::ConfigMissingNameSnafu {
+                    what: "network_config".to_string(),
+                }
+                .fail();
+            }
+        };
+
+        let filename = format!("{}{}", CONFIG_FILE_PREFIX, device_name);
+        let mut cfg_path = Path::new(NETWORKD_CONFIG_DIR).join(filename);
+        cfg_path.set_extension(Self::FILE_EXT);
+        Ok(cfg_path)
     }
 }
