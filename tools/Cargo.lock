@@ -687,8 +687,8 @@ dependencies = [
 
 [[package]]
 name = "bottlerocket-types"
-version = "0.0.7"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.7#241f73d798db903a4736b460f70338f8859b291f"
+version = "0.0.8"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.8#cea049d4e94d5824beb25ffc23893c358d187ef9"
 dependencies = [
  "builder-derive",
  "configuration-derive",
@@ -720,8 +720,8 @@ dependencies = [
 
 [[package]]
 name = "builder-derive"
-version = "0.0.7"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.7#241f73d798db903a4736b460f70338f8859b291f"
+version = "0.0.8"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.8#cea049d4e94d5824beb25ffc23893c358d187ef9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -916,8 +916,8 @@ dependencies = [
 
 [[package]]
 name = "configuration-derive"
-version = "0.0.7"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.7#241f73d798db903a4736b460f70338f8859b291f"
+version = "0.0.8"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.8#cea049d4e94d5824beb25ffc23893c358d187ef9"
 dependencies = [
  "quote",
  "syn 1.0.109",
@@ -3254,8 +3254,8 @@ dependencies = [
 
 [[package]]
 name = "testsys-model"
-version = "0.0.7"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.7#241f73d798db903a4736b460f70338f8859b291f"
+version = "0.0.8"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-test-system?tag=v0.0.8#cea049d4e94d5824beb25ffc23893c358d187ef9"
 dependencies = [
  "async-recursion",
  "async-trait",
