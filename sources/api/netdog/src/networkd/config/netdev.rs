@@ -100,12 +100,14 @@ impl Display for ArpValidate {
 #[derive(Debug)]
 enum ArpAllTargets {
     All,
+    Any,
 }
 
 impl Display for ArpAllTargets {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ArpAllTargets::All => write!(f, "all"),
+            ArpAllTargets::Any => write!(f, "any"),
         }
     }
 }
