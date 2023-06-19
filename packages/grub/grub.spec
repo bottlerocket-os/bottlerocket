@@ -2,6 +2,7 @@
 %global __strip %{_bindir}/true
 
 %global efidir /boot/efi/EFI/BOOT
+%global efi_image boot%{_cross_efi_arch}.efi
 %global biosdir /boot/grub
 
 # This is specific to the upstream source RPM, and will likely need to be
@@ -194,7 +195,7 @@ mkdir -p %{buildroot}%{efidir}
   -c %{S:2} \
   -d ./grub-core/ \
   -O "%{_cross_grub_efi_format}" \
-  -o "%{buildroot}%{efidir}/%{_cross_grub_efi_image}" \
+  -o "%{buildroot}%{efidir}/%{efi_image}" \
   -p "/EFI/BOOT" \
   efi_gop ${MODS}
 popd
@@ -208,7 +209,7 @@ popd
 %{biosdir}/core.img
 %endif
 %dir %{efidir}
-%{efidir}/%{_cross_grub_efi_image}
+%{efidir}/%{efi_image}
 %{_cross_sbindir}/grub-bios-setup
 %exclude %{_cross_bashdir}
 %exclude %{_cross_infodir}
