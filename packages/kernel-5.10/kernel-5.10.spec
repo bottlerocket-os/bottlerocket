@@ -24,9 +24,6 @@ Patch1003: 1003-af_unix-increase-default-max_dgram_qlen-to-512.patch
 Patch2000: 2000-kbuild-move-module-strip-compression-code-into-scrip.patch
 Patch2001: 2001-kbuild-add-support-for-zstd-compressed-modules.patch
 
-# Backport from v5.10.180 upstream, drop when Amazon Linux base is v5.10.180 or later
-Patch5001: 5001-netfilter-nf_tables-deactivate-anonymous-set-from-pr.patch
-
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
