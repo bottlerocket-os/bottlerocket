@@ -86,17 +86,15 @@ RUN --mount=target=/host \
   && ( [ -d /host/licenses ] \
   && cp -r /host/licenses ./rpmbuild/BUILD/ \
   || mkdir ./rpmbuild/BUILD/licenses )
-COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${PACKAGE}/ .
+COPY ./packages/${PACKAGE}/ .
 RUN rpmdev-setuptree \
-   && cat ${ARCH} shared rust cargo > .rpmmacros \
-   && echo "%_cross_variant ${VARIANT}" >> .rpmmacros \
+   && echo "%_cross_variant ${VARIANT}" > .rpmmacros \
    && echo "%_cross_variant_platform ${VARIANT_PLATFORM}" >> .rpmmacros \
    && echo "%_cross_variant_runtime ${VARIANT_RUNTIME}" >> .rpmmacros \
    && echo "%_cross_variant_family ${VARIANT_FAMILY}" >> .rpmmacros \
    && echo "%_cross_variant_flavor ${VARIANT_FAMILY:-none}" >> .rpmmacros \
    && echo "%_cross_repo_root_json %{_builddir}/root.json" >> .rpmmacros \
    && echo "%_topdir /home/builder/rpmbuild" >> .rpmmacros \
-   && rm ${ARCH} shared rust cargo \
    && echo "%bcond_without $(V=${VARIANT_PLATFORM,,}; echo ${V//-/_})_platform" > .bconds \
    && echo "%bcond_without $(V=${VARIANT_RUNTIME,,}; echo ${V//-/_})_runtime" >> .bconds \
    && echo "%bcond_without $(V=${VARIANT_FAMILY,,}; echo ${V//-/_})_family" >> .bconds \
