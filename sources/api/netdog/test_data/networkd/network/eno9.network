@@ -1,0 +1,9 @@
+[Match]
+Name=eno9
+[Link]
+RequiredForOnline=false
+[Network]
+DHCP=ipv4
+[DHCPv4]
+UseDNS=true
+UseDomains=true

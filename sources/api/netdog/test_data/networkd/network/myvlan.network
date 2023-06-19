@@ -1,0 +1,10 @@
+[Match]
+Name=myvlan
+[Link]
+RequiredForOnline=true
+[Network]
+ConfigureWithoutCarrier=true
+DHCP=ipv4
+[DHCPv4]
+UseDNS=true
+UseDomains=true

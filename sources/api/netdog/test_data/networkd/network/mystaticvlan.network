@@ -1,0 +1,5 @@
+[Match]
+Name=mystaticvlan
+[Network]
+Address=192.168.1.100/24
+ConfigureWithoutCarrier=true

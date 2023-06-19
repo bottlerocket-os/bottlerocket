@@ -1,0 +1,7 @@
+[Match]
+Name=eno16
+[Network]
+Address=2001:dead:beef::2/64
+[Route]
+Destination=::/0
+Gateway=2001:beef:beef::1
