@@ -657,6 +657,13 @@ Valid time units include `s`, `m`, and `h`, e.g. `1h`, `1m1s`.
 * `settings.ecs.reserved-memory`: The amount of memory, in MiB, reserved for critical system processes.
 * `settings.ecs.task-cleanup-wait`: Time to wait before the task's containers are removed after they are stopped.
 Valid time units are `s`, `m`, and `h`, e.g. `1h`, `1m1s`.
+* `settings.ecs.image-cleanup-wait`: Time to wait between image cleanup cycles.
+Valid time units are `s`, `m`, and `h`, e.g. `1h`, `1m1s`.
+* `settings.ecs.image-cleanup-delete-per-cycle`: Number of images to delete in a single image cleanup cycle.
+* `settings.ecs.image-cleanup-enabled`: Enable automatic images clean up after the tasks have been removed.
+Defaults to `false`
+* `settings.ecs.image-cleanup-age`: Time since the image was pulled to be considered for clean up.
+Valid time units are `s`, `m`, and `h`, e.g. `1h`, `1m1s`.
 
   **Note**: `metadata-service-rps` and `metadata-service-burst` directly map to the values set by the `ECS_TASK_METADATA_RPS_LIMIT` environment variable.
 

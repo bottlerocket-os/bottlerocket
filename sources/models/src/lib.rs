@@ -294,6 +294,10 @@ struct ECSSettings {
     metadata_service_rps: i64,
     metadata_service_burst: i64,
     reserved_memory: u16,
+    image_cleanup_wait: ECSDurationValue,
+    image_cleanup_delete_per_cycle: i64,
+    image_cleanup_enabled: bool,
+    image_cleanup_age: ECSDurationValue,
 }
 
 #[model]
