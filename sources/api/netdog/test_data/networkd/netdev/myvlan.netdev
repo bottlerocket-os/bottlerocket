@@ -1,0 +1,5 @@
+[NetDev]
+Name=myvlan
+Kind=vlan
+[VLAN]
+Id=42

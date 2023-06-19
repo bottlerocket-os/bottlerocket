@@ -1,0 +1,9 @@
+[NetDev]
+Name=bond2
+Kind=bond
+[Bond]
+Mode=active-backup
+MinLinks=2
+MIIMonitorSec=100
+UpDelaySec=1000
+DownDelaySec=1000
