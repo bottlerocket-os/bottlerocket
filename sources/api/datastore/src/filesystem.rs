@@ -57,7 +57,7 @@ impl FilesystemDataStore {
         // Encode key segments so they're filesystem-safe
         let encoded: Vec<_> = key.segments().iter().map(encode_path_component).collect();
         // Join segments with filesystem separator to get path underneath data store
-        let path_suffix = encoded.join(&path::MAIN_SEPARATOR.to_string());
+        let path_suffix = encoded.join(path::MAIN_SEPARATOR_STR);
 
         // Make path from base + prefix
         // FIXME: canonicalize requires that the full path exists.  We know our Key is checked
