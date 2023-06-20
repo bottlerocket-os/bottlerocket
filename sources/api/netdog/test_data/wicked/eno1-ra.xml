@@ -1,0 +1,1 @@
+<interface><name>eno1</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv4:dhcp><enabled>true</enabled></ipv4:dhcp><ipv6><accept-ra>router</accept-ra></ipv6></interface>
