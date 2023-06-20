@@ -101,8 +101,17 @@ CONFIG_SERIO_I8042=m
 CONFIG_KEYBOARD_ATKBD=m
 CONFIG_MOUSE_PS2=m
 
-# Add support for IPMI drivers
+# Add support for the basic IPMI handler. While Bottlerocket does not ship with
+# any specific IPMI interfaces, the basic IPMI handler interface is used by the
+# nvidia drivers, which makes this necessary.
 CONFIG_IPMI_HANDLER=m
+# Disable more specialized IPMI drivers that are not relevant for our use-cases
+# CONFIG_IPMI_DEVICE_INTERFACE is not set
+# CONFIG_IPMI_PANIC_EVENT is not set
+# CONFIG_IPMI_POWEROFF is not set
+# CONFIG_IPMI_SI is not set
+# CONFIG_IPMI_WATCHDOG is not set
+# CONFIG_ACPI_IPMI is not set
 
 # Add support for bootconfig
 CONFIG_BOOT_CONFIG=y
