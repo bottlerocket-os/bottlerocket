@@ -32,6 +32,7 @@ reasonable default is available.
 */
 
 mod api;
+mod aws;
 mod ec2;
 mod eks;
 mod proxy;

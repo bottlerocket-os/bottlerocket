@@ -1,6 +1,6 @@
-use crate::proxy;
+use crate::aws::sdk_config;
+use crate::{aws, proxy};
 use aws_sdk_eks::model::KubernetesNetworkConfigResponse;
-use aws_types::region::Region;
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::time::Duration;
 
@@ -19,11 +19,14 @@ pub(super) enum Error {
     #[snafu(display("Timed-out waiting for EKS Describe Cluster API response: {}", source))]
     DescribeClusterTimeout { source: tokio::time::error::Elapsed },
 
-    #[snafu(display("Missing field '{}' EKS response", field))]
+    #[snafu(display("Missing field '{}' in EKS response", field))]
     Missing { field: &'static str },
 
     #[snafu(context(false), display("{}", source))]
     Proxy { source: proxy::Error },
+
+    #[snafu(context(false), display("{}", source))]
+    SdkConfig { source: aws::Error },
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -37,10 +40,7 @@ pub(super) async fn get_cluster_network_config(
     // Respect proxy environment variables when making AWS EKS API requests
     let (https_proxy, no_proxy) = proxy::fetch_proxy_env();
 
-    let config = aws_config::from_env()
-        .region(Region::new(region.to_owned()))
-        .load()
-        .await;
+    let config = sdk_config(region).await?;
 
     let client = if let Some(https_proxy) = https_proxy {
         let http_client = proxy::setup_http_client(https_proxy, no_proxy)?;
