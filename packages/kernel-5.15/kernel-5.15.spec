@@ -22,9 +22,6 @@ Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 # Increase default of sysctl net.unix.max_dgram_qlen to 512.
 Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
 
-# Backport from v5.15.111 upstream, drop when Amazon Linux base is v5.15.111 or later
-Patch5001: 5001-netfilter-nf_tables-deactivate-anonymous-set-from-pr.patch
-
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
