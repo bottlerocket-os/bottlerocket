@@ -156,3 +156,6 @@ CONFIG_EXT4_USE_FOR_EXT2=y
 # Work with the previously used in-tree version of SMARTPQI instead of AL backport
 # CONFIG_AMAZON_SCSI_SMARTPQI is not set
 CONFIG_SCSI_SMARTPQI=m
+
+# Disable edac driver for intel 10nm memory controllers
+# CONFIG_EDAC_I10NM is not set
