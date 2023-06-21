@@ -26,6 +26,7 @@ Source7: host-ctr-toml
 Source8: oci-default-hooks-json
 Source9: cfsignal-toml
 Source10: warm-pool-wait-toml
+Source11: bottlerocket-cis-checks-metadata-json
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -64,6 +65,7 @@ Source302: supplemental-storage.rules
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}apiclient
 Requires: %{_cross_os}apiserver
+Requires: %{_cross_os}bloodhound
 Requires: %{_cross_os}bootstrap-containers
 Requires: %{_cross_os}bork
 Requires: %{_cross_os}corndog
@@ -78,13 +80,13 @@ Requires: %{_cross_os}netdog
 Requires: %{_cross_os}prairiedog
 Requires: %{_cross_os}schnauzer
 Requires: %{_cross_os}settings-committer
+Requires: %{_cross_os}shimpei
 Requires: %{_cross_os}signpost
 Requires: %{_cross_os}storewolf
 Requires: %{_cross_os}sundog
 Requires: %{_cross_os}thar-be-settings
 Requires: %{_cross_os}thar-be-updates
 Requires: %{_cross_os}updog
-Requires: %{_cross_os}shimpei
 
 %if %{with aws_k8s_family}
 Requires: %{_cross_os}pluto
@@ -280,6 +282,11 @@ Summary: Manages bootstrap-containers
 %description -n %{_cross_os}bootstrap-containers
 %{summary}.
 
+%package -n %{_cross_os}bloodhound
+Summary: Compliance check framework
+%description -n %{_cross_os}bloodhound
+%{summary}.
+
 %prep
 %setup -T -c
 %cargo_prep
@@ -338,6 +345,7 @@ echo "** Output from non-static builds:"
     -p prairiedog \
     -p certdog \
     -p shimpei \
+    -p bloodhound \
     %{?with_ecs_runtime: -p ecs-settings-applier} \
     %{?with_aws_platform: -p shibaken -p cfsignal} \
     %{?with_aws_k8s_family: -p pluto} \
@@ -363,7 +371,7 @@ for p in \
   migrator prairiedog certdog \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
-  shimpei \
+  shimpei bloodhound bottlerocket-checks \
   %{?with_ecs_runtime: ecs-settings-applier} \
   %{?with_aws_platform: shibaken cfsignal} \
   %{?with_aws_k8s_family: pluto} \
@@ -372,6 +380,19 @@ for p in \
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
+
+# Add the bloodhound checker symlinks
+mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket
+for p in \
+  br01020100 br01060000 br03040103 br03040203 \
+  br01010101 br01030100 br01040100 br01040200 br01040300 br01040400 \
+  br01050100 br01050200 br02010101 br03010100 br03020100 br03020200 \
+  br03020300 br03020400 br03020500 br03020600 br03020700 br03030100 \
+  br03040101 br03040102 br03040201 br03040202 br04010101 br04010200 \
+; do
+  ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-checks %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
+done
+install -m 0644 %{S:11} %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/metadata.json
 
 for p in apiclient ; do
   install -p -m 0755 ${HOME}/.cache/.static/%{__cargo_target_static}/release/${p} %{buildroot}%{_cross_bindir}
@@ -604,5 +625,10 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %{_cross_bindir}/bootstrap-containers
 %{_cross_unitdir}/bootstrap-containers@.service
 %{_cross_tmpfilesdir}/bootstrap-containers.conf
+
+%files -n %{_cross_os}bloodhound
+%{_cross_bindir}/bloodhound
+%{_cross_bindir}/bottlerocket-checks
+%{_cross_libexecdir}/cis-checks/bottlerocket
 
 %changelog
