@@ -1,3 +1,4 @@
+%global debug_package %{nil}
 %global _cross_first_party 1
 
 Name: %{_cross_os}filesystem
@@ -6,7 +7,6 @@ Release: 1%{?dist}
 Summary: The basic directory layout
 License: Apache-2.0 OR MIT
 URL: https://github.com/bottlerocket-os/bottlerocket
-BuildArch: noarch
 
 %description
 %{summary}.
