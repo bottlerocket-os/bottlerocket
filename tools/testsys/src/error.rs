@@ -1,7 +1,9 @@
 use aws_sdk_ec2::error::DescribeImagesError;
 use aws_sdk_ec2::types::SdkError;
 use snafu::Snafu;
+use std::io;
 use std::path::PathBuf;
+use testsys_model::ResourceError;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -73,6 +75,12 @@ pub enum Error {
     #[snafu(context(false), display("{}", source))]
     PubsysConfig { source: pubsys_config::Error },
 
+    #[snafu(display("Resource '{}' failed to be created: {}", resource_name, error))]
+    ResourceCreation {
+        resource_name: String,
+        error: ResourceError,
+    },
+
     #[snafu(display("Unable to create secret name for '{}': {}", secret_name, source))]
     SecretName {
         secret_name: String,
@@ -96,6 +104,14 @@ pub enum Error {
         source: testsys_model::test_manager::Error,
     },
 
+    #[snafu(display("Test '{}' failed to run: {}", test_name, error))]
+    TestRun { test_name: String, error: String },
+
+    #[snafu(display("{}", source))]
+    TestsysClient {
+        source: testsys_model::clients::Error,
+    },
+
     #[snafu(context(false), display("{}", source))]
     TestsysConfig { source: testsys_config::Error },
 
@@ -117,5 +133,18 @@ pub enum Error {
     #[snafu(display("Error reading config: {}", source))]
     VmwareConfig {
         source: pubsys_config::vmware::Error,
+    },
+
+    #[snafu(display("Timed out waiting for '{}': {}", what, source))]
+    WaitTimeout {
+        what: String,
+        source: tokio::time::error::Elapsed,
+    },
+
+    #[snafu(display("Unable to write {} to '{}': {}", what, path.display(), source))]
+    Write {
+        what: String,
+        path: PathBuf,
+        source: io::Error,
     },
 }

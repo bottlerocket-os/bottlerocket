@@ -30,5 +30,6 @@ snafu = "0.7"
 term_size = "0.3"
 testsys-config = { path = "../testsys-config/", version = "0.1" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "fs"] }
+tokio-retry = "0.3"
 unescape = "0.1"
 url = "2"

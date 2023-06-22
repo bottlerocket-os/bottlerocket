@@ -5,6 +5,7 @@ use crate::error;
 use crate::error::Result;
 use crate::metal_k8s::MetalK8sCreator;
 use crate::vmware_k8s::VmwareK8sCreator;
+use crate::wait::wait_for_crds;
 use bottlerocket_variant::Variant;
 use clap::Parser;
 use log::{debug, info};
@@ -16,9 +17,10 @@ use pubsys_config::InfraConfig;
 use serde::{Deserialize, Serialize};
 use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use snafu::{OptionExt, ResultExt};
-use std::fs::read_to_string;
+use std::fs::{self, read_to_string};
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::time::Duration;
 use testsys_config::{GenericVariantConfig, ResourceAgentType, TestConfig};
 use testsys_model::test_manager::TestManager;
 use testsys_model::SecretName;
@@ -114,6 +116,18 @@ pub(crate) struct Run {
     /// The template file that should be used for custom testing.
     #[arg(long = "template-file", short = 'f')]
     custom_crd_template: Option<PathBuf>,
+
+    /// Wait for the test to finish before exiting
+    #[clap(long, short = 'w', env = "TESTSYS_WAIT")]
+    pub wait: bool,
+
+    /// Error if test execution takes longer than `wait_timeout_secs`.
+    #[clap(long, env = "TESTSYS_WAIT_TIMEOUT", default_value = "10800")]
+    pub wait_timeout_secs: u64,
+
+    /// The location to write the test results instead of stdout.
+    #[clap(long, env = "TESTSYS_OUTPUT_PATH", requires = "wait")]
+    output_path: Option<PathBuf>,
 }
 
 /// This is a CLI parsable version of `testsys_config::GenericVariantConfig`.
@@ -435,9 +449,48 @@ impl Run {
         };
 
         debug!("Adding crds to testsys cluster");
-        for crd in crds {
-            let crd = client.create_object(crd).await?;
+        for crd in &crds {
+            let crd = client.create_object(crd.clone()).await?;
             info!("Successfully added '{}'", crd.name().unwrap());
+        }
+
+        if self.wait {
+            info!(
+                "Waiting for test completion. Timing out after {} seconds.",
+                self.wait_timeout_secs
+            );
+            let results = tokio::time::timeout(
+                Duration::from_secs(self.wait_timeout_secs),
+                wait_for_crds(&client, &crds),
+            )
+            .await
+            .context(error::WaitTimeoutSnafu {
+                what: "test execution",
+            })??;
+
+            debug!("Testing completed writing results");
+            if let Some(output) = self.output_path {
+                fs::write(
+                    &output,
+                    serde_json::to_string_pretty(&results).context(error::SerdeJsonSnafu {
+                        what: "Unable to deserialize test results",
+                    })?,
+                )
+                .context(error::WriteSnafu {
+                    what: "JSON formatted test results",
+                    path: output,
+                })?;
+            } else {
+                for (test, res) in results {
+                    println!("{test}");
+                    for result in res {
+                        println!(
+                            "{}: {} Pass {} Fail",
+                            result.outcome, result.num_passed, result.num_failed
+                        );
+                    }
+                }
+            }
         }
 
         Ok(())
