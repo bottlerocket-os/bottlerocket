@@ -5,6 +5,7 @@ mod s3;
 mod shared;
 
 use aws_sdk_cloudformation::Region;
+use clap::Parser;
 use error::Result;
 use log::{error, info};
 use pubsys_config::{InfraConfig, RepoConfig, S3Config, SigningKeyConfig};
@@ -16,35 +17,32 @@ use std::collections::HashMap;
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::{fs, process};
-use structopt::{clap, StructOpt};
 use tokio::runtime::Runtime;
 use url::Url;
 
 //   =^..^=   =^..^=   =^..^=  SUB-COMMAND STRUCTS  =^..^=   =^..^=   =^..^=
 
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 struct Args {
-    #[structopt(global = true, long, default_value = "INFO")]
+    #[arg(global = true, long, default_value = "INFO")]
     log_level: LevelFilter,
 
-    // Path to Infra.toml  (NOTE: must be specified before subcommand)
-    #[structopt(long, parse(from_os_str))]
+    // Path to Infra.toml (NOTE: must be specified before subcommand)
+    #[arg(long)]
     infra_config_path: PathBuf,
 
-    #[structopt(subcommand)]
+    #[command(subcommand)]
     subcommand: SubCommand,
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 struct CreateInfraArgs {
     /// Path to the root.json file.
-    #[structopt(long)]
+    #[arg(long)]
     root_role_path: PathBuf,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 enum SubCommand {
     /// Creates infrastructure specified in the Infra.toml file.
     CreateInfra(CreateInfraArgs),
@@ -61,7 +59,7 @@ fn main() {
 
 fn run() -> Result<()> {
     // Parse and store the args passed to the program
-    let args = Args::from_args();
+    let args = Args::parse();
 
     match args.log_level {
         // Set log level for AWS SDK to error to reduce verbosity.

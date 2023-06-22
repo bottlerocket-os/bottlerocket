@@ -8,7 +8,7 @@ publish = false
 
 [dependencies]
 async-trait = "0.1"
-clap = "3"
+clap = { version = "4", features = ["derive"] }
 hex = "0.4"
 log = "0.4"
 pubsys-config = { path = "../pubsys-config/", version = "0.1" }
@@ -22,7 +22,6 @@ sha2 = "0.10"
 shell-words = "1"
 simplelog = "0.12"
 snafu = "0.7"
-structopt = { version = "0.3", default-features = false }
 tokio = { version = "1", default-features = false, features = ["macros", "rt-multi-thread"] }
 toml = "0.5"
 url = "2"

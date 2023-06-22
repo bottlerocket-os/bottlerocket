@@ -86,6 +86,9 @@ skip-tree = [
     # TestSys uses a newer version of base64 and serde_yaml
     { name = "testsys-model", version = "=0.0.8" },
     { name = "bottlerocket-types", version = "=0.0.8" },
+
+    # generate-readme uses an old version of clap and other dependencies
+    { name = "generate-readme", version = "0.1.0" }
 ]
 
 [sources]

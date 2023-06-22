@@ -1,13 +1,13 @@
 use aws_sdk_cloudformation::model::{Output, Parameter};
 use aws_sdk_cloudformation::Client as CloudFormationClient;
+use clap::Parser;
 use log::info;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::{env, thread, time};
-use structopt::StructOpt;
 
 use super::{error, Result};
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub enum KeyRole {
     Root,
     Publication,
