@@ -1,5 +1,5 @@
-///! The 'exec' module holds types used to communicate between client and server for
-///! 'apiclient exec'.
+//! The 'exec' module holds types used to communicate between client and server for
+//! 'apiclient exec'.
 use libc::winsize as WinSize;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;

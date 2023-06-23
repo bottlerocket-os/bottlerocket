@@ -86,17 +86,15 @@ RUN --mount=target=/host \
   && ( [ -d /host/licenses ] \
   && cp -r /host/licenses ./rpmbuild/BUILD/ \
   || mkdir ./rpmbuild/BUILD/licenses )
-COPY ./macros/${ARCH} ./macros/shared ./macros/rust ./macros/cargo ./packages/${PACKAGE}/ .
+COPY ./packages/${PACKAGE}/ .
 RUN rpmdev-setuptree \
-   && cat ${ARCH} shared rust cargo > .rpmmacros \
-   && echo "%_cross_variant ${VARIANT}" >> .rpmmacros \
+   && echo "%_cross_variant ${VARIANT}" > .rpmmacros \
    && echo "%_cross_variant_platform ${VARIANT_PLATFORM}" >> .rpmmacros \
    && echo "%_cross_variant_runtime ${VARIANT_RUNTIME}" >> .rpmmacros \
    && echo "%_cross_variant_family ${VARIANT_FAMILY}" >> .rpmmacros \
    && echo "%_cross_variant_flavor ${VARIANT_FAMILY:-none}" >> .rpmmacros \
    && echo "%_cross_repo_root_json %{_builddir}/root.json" >> .rpmmacros \
    && echo "%_topdir /home/builder/rpmbuild" >> .rpmmacros \
-   && rm ${ARCH} shared rust cargo \
    && echo "%bcond_without $(V=${VARIANT_PLATFORM,,}; echo ${V//-/_})_platform" > .bconds \
    && echo "%bcond_without $(V=${VARIANT_RUNTIME,,}; echo ${V//-/_})_runtime" >> .bconds \
    && echo "%bcond_without $(V=${VARIANT_FAMILY,,}; echo ${V//-/_})_family" >> .bconds \
@@ -123,6 +121,7 @@ RUN --mount=target=/host \
         --repofrompath repo,./rpmbuild/RPMS \
         --enablerepo 'repo' \
         --nogpgcheck \
+	--forcearch "${ARCH}" \
         builddep rpmbuild/SPECS/${PACKAGE}.spec
 
 # We use the "nocache" writable space to generate code where necessary, like the variant-
@@ -135,6 +134,7 @@ RUN --mount=source=.cargo,target=/home/builder/.cargo \
     --mount=source=sources,target=/home/builder/rpmbuild/BUILD/sources \
     rpmbuild -ba --clean \
       --undefine _auto_set_build_flags \
+      --define "_target_cpu ${ARCH}" \
       rpmbuild/SPECS/${PACKAGE}.spec
 
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
@@ -173,7 +173,8 @@ RUN --mount=target=/host \
         --nogpgcheck \
         --downloadonly \
         --downloaddir . \
-        install $(printf "bottlerocket-${ARCH}-%s\n" ${PACKAGES}) \
+	--forcearch "${ARCH}" \
+        install $(printf "bottlerocket-%s\n" ${PACKAGES}) \
     && mv *.rpm /local/rpms \
     && createrepo_c /local/rpms \
     && echo ${NOCACHE}
@@ -231,7 +232,7 @@ USER root
 RUN --mount=target=/host \
     mkdir -p /local/migrations \
     && find /host/build/rpms/ -maxdepth 1 -type f \
-        -name "bottlerocket-${ARCH}-migrations-*.rpm" \
+        -name "bottlerocket-migrations-*.rpm" \
         -not -iname '*debuginfo*' \
         -exec cp '{}' '/local/migrations/' ';' \
     && /host/tools/rpm2migrations \
@@ -258,7 +259,7 @@ RUN --mount=target=/host \
     mkdir -p /local/archives \
     && KERNEL="$(printf "%s\n" ${PACKAGES} | awk '/^kernel-/{print $1}')" \
     && find /host/build/rpms/ -maxdepth 1 -type f \
-        -name "bottlerocket-${ARCH}-${KERNEL}-archive-*.rpm" \
+        -name "bottlerocket-${KERNEL}-archive-*.rpm" \
         -exec cp '{}' '/local/archives/' ';' \
     && /host/tools/rpm2kmodkit \
         --archive-dir=/local/archives \

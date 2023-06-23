@@ -199,7 +199,7 @@ if [ "${PARTITION_PLAN}" == "split" ] ; then
 fi
 
 INSTALL_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-rpm -iv --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
+rpm -iv --ignorearch --root "${ROOT_MOUNT}" "${PACKAGE_DIR}"/*.rpm
 
 # inventory installed packages
 INVENTORY_QUERY="\{\"Name\":\"%{NAME}\"\
@@ -217,13 +217,8 @@ mapfile -t installed_rpms <<< "$(rpm -qa --root "${ROOT_MOUNT}" \
 
 # wrap installed_rpms mapfile into json
 INVENTORY_DATA="$(jq --raw-output . <<<  "${installed_rpms[@]}")"
-# replace the package architecture with the target architecture (for cross-compiled builds)
-if [[ "${BUILDER_ARCH}" != "${ARCH}" ]]; then
-  INVENTORY_DATA="$(jq --arg BUILDER_ARCH "${BUILDER_ARCH}" --arg TARGET_ARCH "${ARCH}" \
-                  '(.Architecture) |= sub($BUILDER_ARCH; $TARGET_ARCH)' <<< "${INVENTORY_DATA}")"
-fi
-# remove the 'bottlerocket-<arch>-' prefix from package names
-INVENTORY_DATA="$(jq --arg PKG_PREFIX "bottlerocket-${ARCH}-" \
+# remove the 'bottlerocket-' prefix from package names
+INVENTORY_DATA="$(jq --arg PKG_PREFIX "bottlerocket-" \
                 '(.Name) |= sub($PKG_PREFIX; "")' <<< "${INVENTORY_DATA}")"
 # sort by package name and add 'Content' as top-level
 INVENTORY_DATA="$(jq --slurp 'sort_by(.Name)' <<< "${INVENTORY_DATA}" | jq '{"Content": .}')"
