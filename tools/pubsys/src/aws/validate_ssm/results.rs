@@ -9,7 +9,7 @@ use std::fmt::{self, Display};
 use tabled::{Table, Tabled};
 
 /// Represent the possible status of an SSM validation
-#[derive(Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Eq, Hash, PartialEq, Serialize, Deserialize, Clone)]
 pub enum SsmValidationResultStatus {
     /// The expected value was equal to the actual value
     Correct,

@@ -3,6 +3,7 @@
 
 use crate::repo::{error as repo_error, repo_urls};
 use crate::Args;
+use clap::Parser;
 use log::{info, trace};
 use pubsys_config::InfraConfig;
 use snafu::{OptionExt, ResultExt};
@@ -11,30 +12,28 @@ use std::fs::File;
 use std::io;
 use std::path::PathBuf;
 use std::sync::mpsc;
-use structopt::{clap, StructOpt};
 use tough::{Repository, RepositoryLoader, TargetName};
 use url::Url;
 
 /// Validates a set of TUF repositories
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub(crate) struct ValidateRepoArgs {
-    #[structopt(long)]
+    #[arg(long)]
     /// Use this named repo infrastructure from Infra.toml
     repo: String,
 
-    #[structopt(long)]
+    #[arg(long)]
     /// The architecture of the repo being validated
     arch: String,
-    #[structopt(long)]
+    #[arg(long)]
     /// The variant of the repo being validated
     variant: String,
 
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to root.json for this repo
     root_role_path: PathBuf,
 
-    #[structopt(long)]
+    #[arg(long)]
     /// Specifies whether to validate all listed targets by attempting to download them
     validate_targets: bool,
 }

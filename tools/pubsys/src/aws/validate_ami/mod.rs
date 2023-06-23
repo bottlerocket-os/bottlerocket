@@ -10,34 +10,33 @@ use crate::aws::client::build_client_config;
 use crate::aws::validate_ami::ami::describe_images;
 use crate::Args;
 use aws_sdk_ec2::{Client as AmiClient, Region};
+use clap::Parser;
 use log::{error, info, trace};
 use pubsys_config::InfraConfig;
 use snafu::ResultExt;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::PathBuf;
-use structopt::{clap, StructOpt};
 
 /// Validates EC2 images by calling `describe-images` on all images in the file given by
 /// `expected-amis-path` and ensuring that the returned `public`, `ena-support`,
 /// `sriov-net-support`, and `launch-permissions` fields have the expected values.
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub(crate) struct ValidateAmiArgs {
     /// File holding the expected amis
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     expected_amis_path: PathBuf,
 
     /// Optional path where the validation results should be written
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     write_results_path: Option<PathBuf>,
 
-    #[structopt(long, requires = "write-results-path")]
+    #[arg(long, requires = "write_results_path")]
     /// Optional filter to only write validation results with these statuses to the above path
     /// The available statuses are: `Correct`, `Incorrect`, `Missing`.
     write_results_filter: Option<Vec<AmiValidationResultStatus>>,
 
-    #[structopt(long)]
+    #[arg(long)]
     /// If this argument is given, print the validation results summary as a JSON object instead
     /// of a plaintext table
     json: bool,

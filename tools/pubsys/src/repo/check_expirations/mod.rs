@@ -4,6 +4,7 @@
 use crate::repo::{error as repo_error, repo_urls};
 use crate::Args;
 use chrono::{DateTime, Utc};
+use clap::Parser;
 use log::{error, info, trace, warn};
 use parse_datetime::parse_datetime;
 use pubsys_config::InfraConfig;
@@ -11,30 +12,28 @@ use snafu::{OptionExt, ResultExt};
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
-use structopt::{clap, StructOpt};
 use tough::{ExpirationEnforcement, Repository, RepositoryLoader};
 use url::Url;
 
 /// Checks for metadata expirations for a set of TUF repositories
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub(crate) struct CheckExpirationsArgs {
-    #[structopt(long)]
+    #[arg(long)]
     /// Use this named repo infrastructure from Infra.toml
     repo: String,
 
-    #[structopt(long)]
+    #[arg(long)]
     /// The architecture of the repo being checked for expirations
     arch: String,
-    #[structopt(long)]
+    #[arg(long)]
     /// The variant of the repo being checked for expirations
     variant: String,
 
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to root.json for this repo
     root_role_path: PathBuf,
 
-    #[structopt(long, parse(try_from_str = parse_datetime))]
+    #[arg(long, value_parser = parse_datetime)]
     /// Finds metadata files expiring between now and a specified time; RFC3339 date or "in X hours/days/weeks"
     expiration_limit: DateTime<Utc>,
 }

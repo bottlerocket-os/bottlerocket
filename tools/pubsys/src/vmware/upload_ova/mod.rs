@@ -2,6 +2,7 @@
 //! the config necessary to upload an OVA bundle to VMware datacenters.
 use crate::vmware::govc::Govc;
 use crate::Args;
+use clap::Parser;
 use log::{debug, info, trace};
 use pubsys_config::vmware::{
     Datacenter, DatacenterBuilder, DatacenterCreds, DatacenterCredsBuilder, DatacenterCredsConfig,
@@ -12,34 +13,32 @@ use serde::Serialize;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fs;
 use std::path::PathBuf;
-use structopt::{clap, StructOpt};
 use tempfile::NamedTempFile;
 use tinytemplate::TinyTemplate;
 
 const SPEC_TEMPLATE_NAME: &str = "spec_template";
 
 /// Uploads a Bottlerocket OVA to VMware datacenters
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub(crate) struct UploadArgs {
     /// Path to the OVA image
-    #[structopt(short = "o", long, parse(from_os_str))]
+    #[arg(short = 'o', long)]
     ova: PathBuf,
 
     /// Path to the import spec
-    #[structopt(short = "s", long, parse(from_os_str))]
+    #[arg(short = 's', long)]
     spec: PathBuf,
 
     /// The desired VM name
-    #[structopt(short = "n", long)]
+    #[arg(short = 'n', long)]
     name: String,
 
     /// Make the uploaded OVA a VM template
-    #[structopt(long)]
+    #[arg(long)]
     mark_as_template: bool,
 
     /// Datacenters to which you want to upload the OVA
-    #[structopt(long, use_delimiter = true)]
+    #[arg(long, value_delimiter = ',')]
     datacenters: Vec<String>,
 }
 

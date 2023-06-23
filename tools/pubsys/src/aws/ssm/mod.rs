@@ -15,6 +15,7 @@ use crate::Args;
 use aws_config::SdkConfig;
 use aws_sdk_ec2::{model::ArchitectureValues, Client as Ec2Client};
 use aws_sdk_ssm::{Client as SsmClient, Region};
+use clap::Parser;
 use futures::stream::{StreamExt, TryStreamExt};
 use governor::{prelude::*, Quota, RateLimiter};
 use log::{error, info, trace};
@@ -28,47 +29,45 @@ use std::{
     collections::{HashMap, HashSet},
     fs::File,
 };
-use structopt::{clap, StructOpt};
 
 /// Sets SSM parameters based on current build information
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub(crate) struct SsmArgs {
     // This is JSON output from `pubsys ami` like `{"us-west-2": "ami-123"}`
     /// Path to the JSON file containing regional AMI IDs to modify
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     ami_input: PathBuf,
 
     /// The architecture of the machine image
-    #[structopt(long, parse(try_from_str = parse_arch))]
+    #[arg(long, value_parser = parse_arch)]
     arch: ArchitectureValues,
 
     /// The variant name for the current build
-    #[structopt(long)]
+    #[arg(long)]
     variant: String,
 
     /// The version of the current build
-    #[structopt(long)]
+    #[arg(long)]
     version: String,
 
     /// Regions where you want parameters published
-    #[structopt(long, use_delimiter = true)]
+    #[arg(long, value_delimiter = ',')]
     regions: Vec<String>,
 
     /// File holding the parameter templates
-    #[structopt(long)]
+    #[arg(long)]
     template_path: PathBuf,
 
     /// Allows overwrite of existing parameters
-    #[structopt(long)]
+    #[arg(long)]
     allow_clobber: bool,
 
     /// Allows publishing non-public images to the `/aws/` namespace
-    #[structopt(long)]
+    #[arg(long)]
     allow_private_images: bool,
 
     /// If set, writes the generated SSM parameters to this path
-    #[structopt(long)]
+    #[arg(long)]
     ssm_parameter_output: Option<PathBuf>,
 }
 

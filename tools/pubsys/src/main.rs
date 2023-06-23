@@ -26,17 +26,17 @@ mod aws;
 mod repo;
 mod vmware;
 
+use clap::Parser;
 use semver::Version;
 use simplelog::{CombinedLogger, Config as LogConfig, ConfigBuilder, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::path::PathBuf;
 use std::process;
-use structopt::{clap, StructOpt};
 use tokio::runtime::Runtime;
 
 fn run() -> Result<()> {
     // Parse and store the args passed to the program
-    let args = Args::from_args();
+    let args = Args::parse();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
     // To reduce verbosity of messages related to the AWS SDK for Rust we need
@@ -72,18 +72,18 @@ fn run() -> Result<()> {
     }
 
     match args.subcommand {
-        SubCommand::Repo(ref repo_args) => repo::run(&args, repo_args).context(error::RepoSnafu),
-        SubCommand::ValidateRepo(ref validate_repo_args) => {
+        SubCommands::Repo(ref repo_args) => repo::run(&args, repo_args).context(error::RepoSnafu),
+        SubCommands::ValidateRepo(ref validate_repo_args) => {
             repo::validate_repo::run(&args, validate_repo_args).context(error::ValidateRepoSnafu)
         }
-        SubCommand::CheckRepoExpirations(ref check_expirations_args) => {
+        SubCommands::CheckRepoExpirations(ref check_expirations_args) => {
             repo::check_expirations::run(&args, check_expirations_args)
                 .context(error::CheckExpirationsSnafu)
         }
-        SubCommand::RefreshRepo(ref refresh_repo_args) => {
+        SubCommands::RefreshRepo(ref refresh_repo_args) => {
             repo::refresh_repo::run(&args, refresh_repo_args).context(error::RefreshRepoSnafu)
         }
-        SubCommand::Ami(ref ami_args) => {
+        SubCommands::Ami(ref ami_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
                 aws::ami::run(&args, ami_args)
@@ -91,7 +91,7 @@ fn run() -> Result<()> {
                     .context(error::AmiSnafu)
             })
         }
-        SubCommand::PublishAmi(ref publish_args) => {
+        SubCommands::PublishAmi(ref publish_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
                 aws::publish_ami::run(&args, publish_args)
@@ -99,7 +99,7 @@ fn run() -> Result<()> {
                     .context(error::PublishAmiSnafu)
             })
         }
-        SubCommand::Ssm(ref ssm_args) => {
+        SubCommands::Ssm(ref ssm_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
                 aws::ssm::run(&args, ssm_args)
@@ -107,7 +107,7 @@ fn run() -> Result<()> {
                     .context(error::SsmSnafu)
             })
         }
-        SubCommand::PromoteSsm(ref promote_args) => {
+        SubCommands::PromoteSsm(ref promote_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
                 aws::promote_ssm::run(&args, promote_args)
@@ -115,7 +115,7 @@ fn run() -> Result<()> {
                     .context(error::PromoteSsmSnafu)
             })
         }
-        SubCommand::ValidateSsm(ref validate_ssm_args) => {
+        SubCommands::ValidateSsm(ref validate_ssm_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
                 aws::validate_ssm::run(&args, validate_ssm_args)
@@ -123,7 +123,7 @@ fn run() -> Result<()> {
                     .context(error::ValidateSsmSnafu)
             })
         }
-        SubCommand::ValidateAmi(ref validate_ami_args) => {
+        SubCommands::ValidateAmi(ref validate_ami_args) => {
             let rt = Runtime::new().context(error::RuntimeSnafu)?;
             rt.block_on(async {
                 aws::validate_ami::run(&args, validate_ami_args)
@@ -131,7 +131,7 @@ fn run() -> Result<()> {
                     .context(error::ValidateAmiSnafu)
             })
         }
-        SubCommand::UploadOva(ref upload_args) => {
+        SubCommands::UploadOva(ref upload_args) => {
             vmware::upload_ova::run(&args, upload_args).context(error::UploadOvaSnafu)
         }
     }
@@ -145,30 +145,29 @@ fn main() {
 }
 
 /// Automates publishing of Bottlerocket updates
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub struct Args {
-    #[structopt(global = true, long, default_value = "INFO")]
+    #[arg(global = true, long, default_value = "INFO")]
     /// How much detail to log; from least to most: ERROR, WARN, INFO, DEBUG, TRACE
     log_level: LevelFilter,
 
-    #[structopt(long, parse(from_os_str))]
-    /// Path to Infra.toml  (NOTE: must be specified before subcommand)
+    #[arg(long)]
+    /// Path to Infra.toml (NOTE: must be specified before subcommand)
     infra_config_path: PathBuf,
 
-    #[structopt(subcommand)]
-    subcommand: SubCommand,
+    #[command(subcommand)]
+    subcommand: SubCommands,
 }
 
-#[derive(Debug, StructOpt)]
-enum SubCommand {
+#[derive(Debug, Parser)]
+enum SubCommands {
     Repo(repo::RepoArgs),
     ValidateRepo(repo::validate_repo::ValidateRepoArgs),
     CheckRepoExpirations(repo::check_expirations::CheckExpirationsArgs),
     RefreshRepo(repo::refresh_repo::RefreshRepoArgs),
 
     Ami(aws::ami::AmiArgs),
-    PublishAmi(aws::publish_ami::PublishArgs),
+    PublishAmi(aws::publish_ami::Who),
     ValidateAmi(aws::validate_ami::ValidateAmiArgs),
 
     Ssm(aws::ssm::SsmArgs),
