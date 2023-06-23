@@ -198,6 +198,12 @@ jobs:
           key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}-${{ hashFiles('.github/workflows/build.yml') }}
           restore-keys: |
             ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('tools/Cargo.lock') }}
+      - name: Setup pinned rust version
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.69.0
+          override: true
+          components: rustfmt, clippy
       - run: rustup component add rustfmt
       - run: cargo install --version 0.36.0 cargo-make
       - run: cargo install --version 0.6.2 cargo-sweep
