@@ -17,9 +17,14 @@ use std::env;
 use std::path::Path;
 use std::process;
 use std::str::{self, FromStr};
+use std::time::Duration;
+use tokio::process::Command as AsyncCommand;
 
 use datastore::serialization::to_pairs_with_prefix;
 use datastore::{self, deserialization, Key, KeyType};
+
+// Limit settings generator execution to at most 6 minutes to prevent boot from hanging for too long.
+const SETTINGS_GENERATOR_TIMEOUT: Duration = Duration::from_secs(360);
 
 /// Potential errors during Sundog execution
 mod error {
@@ -36,6 +41,16 @@ mod error {
         CommandFailure {
             program: String,
             source: std::io::Error,
+        },
+
+        #[snafu(display(
+            "Timed-out waiting for settings generator '{}' to finish: {}",
+            generator,
+            source
+        ))]
+        CommandTimeout {
+            generator: String,
+            source: tokio::time::error::Elapsed,
         },
 
         #[snafu(display("Generator command is invalid (empty, etc.) - '{}'", command))]
@@ -339,13 +354,20 @@ where
             command: generator.as_str(),
         })?;
 
-        let result = process::Command::new(command)
-            .envs(&proxy_envs)
-            .args(command_strings)
-            .output()
-            .context(error::CommandFailureSnafu {
-                program: generator.as_str(),
-            })?;
+        let result = tokio::time::timeout(
+            SETTINGS_GENERATOR_TIMEOUT,
+            AsyncCommand::new(command)
+                .envs(&proxy_envs)
+                .args(command_strings)
+                .output(),
+        )
+        .await
+        .context(error::CommandTimeoutSnafu {
+            generator: generator.as_str(),
+        })?
+        .context(error::CommandFailureSnafu {
+            program: generator.as_str(),
+        })?;
 
         // Match on the generator's exit code. This code lays the foundation
         // for handling alternative exit codes from generators.
