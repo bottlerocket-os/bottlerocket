@@ -74,9 +74,6 @@ skip = [
 ]
 
 skip-tree = [
-    # structopt pulls in an older version of clap
-    { name = "structopt", version = "0.3.26" },
-
     # windows-sys is not a direct dependency. mio and schannel
     # are using different versions of windows-sys. we skip the
     # dependency tree because windows-sys has many sub-crates

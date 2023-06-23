@@ -4,6 +4,7 @@ the repos you use to update them.  Specifically, it can create a new key and rol
 existing role.
 */
 
+use clap::Parser;
 use log::{debug, info, trace, warn};
 use pubsys_config::InfraConfig;
 use sha2::{Digest, Sha512};
@@ -14,33 +15,33 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use std::process::{self, Command};
-use structopt::StructOpt;
 use tempfile::NamedTempFile;
 use url::Url;
 
 /// Helps you get started with credentials to make Bottlerocket images and repos.
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct Args {
-    #[structopt(global = true, long, default_value = "INFO")]
+    #[arg(global = true, long, default_value = "INFO")]
     /// How much detail to log; from least to most: ERROR, WARN, INFO, DEBUG, TRACE
     log_level: LevelFilter,
 
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to Infra.toml
     infra_config_path: PathBuf,
 
-    #[structopt(long)]
+    #[arg(long)]
     /// Use this named repo infrastructure from Infra.toml
     repo: String,
 
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to root.json
     root_role_path: PathBuf,
-    #[structopt(long, parse(from_os_str))]
+
+    #[arg(long)]
     /// If we have to generate a local key, store it here
     default_key_path: PathBuf,
 
-    #[structopt(long)]
+    #[arg(long)]
     /// Allow setup to continue if we have a root role but no key for it
     allow_missing_key: bool,
 }
@@ -71,7 +72,7 @@ macro_rules! tuftool {
 /// Main entry point for tuftool setup.
 fn run() -> Result<()> {
     // Parse and store the args passed to the program
-    let args = Args::from_args();
+    let args = Args::parse();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
     SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
