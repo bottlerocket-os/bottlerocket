@@ -4315,6 +4315,7 @@ dependencies = [
 name = "updog"
 version = "0.1.0"
 dependencies = [
+ "argh",
  "bottlerocket-release",
  "chrono",
  "log",
@@ -4330,7 +4331,6 @@ dependencies = [
  "signpost",
  "simplelog",
  "snafu",
- "structopt",
  "tempfile",
  "toml",
  "tough",
