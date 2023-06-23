@@ -77,10 +77,9 @@ use log::error;
 use simplelog::{Config as LogConfig, SimpleLogger};
 use snafu::ResultExt;
 use std::process;
-use structopt::StructOpt;
 
 fn main() -> ! {
-    let args = Arguments::from_args();
+    let args: Arguments = argh::from_env();
     SimpleLogger::init(args.log_level, LogConfig::default()).expect("unable to configure logger");
     process::exit(match main_inner(args, Box::new(SystemdCheck {})) {
         Ok(()) => 0,
@@ -117,14 +116,14 @@ pub(crate) fn main_inner(arguments: Arguments, service_check: Box<dyn ServiceChe
 
     // execute the specified command
     match arguments.command {
-        Command::SendBootSuccess => {
+        Command::SendBootSuccess(_) => {
             if let Err(err) = metricdog.send_boot_success() {
                 // we don't want to fail the boot if there is a failure to send this message, so
                 // we log the error and return Ok(())
                 error!("Error while reporting boot success: {}", err);
             }
         }
-        Command::SendHealthPing => {
+        Command::SendHealthPing(_) => {
             metricdog.send_health_ping()?;
         }
     }

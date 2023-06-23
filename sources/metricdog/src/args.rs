@@ -1,27 +1,40 @@
+use argh::FromArgs;
 use log::LevelFilter;
 use std::path::PathBuf;
-use structopt::StructOpt;
+
+fn default_logging() -> LevelFilter {
+    LevelFilter::Info
+}
 
 /// Command line arguments for the metricdog program.
-#[derive(StructOpt)]
+#[derive(FromArgs)]
 pub(crate) struct Arguments {
-    /// Path to the TOML config file [default: /etc/metricdog]
-    #[structopt(short = "c", long = "config")]
-    pub(crate) config: Option<PathBuf>,
-    /// Logging verbosity [trace|debug|info|warn|error]
-    #[structopt(short = "l", long = "log-level", default_value = "info")]
-    pub(crate) log_level: LevelFilter,
-    /// Path to the os-release file [default: /etc/os-release]
-    #[structopt(short = "o", long = "os-release")]
-    pub(crate) os_release: Option<PathBuf>,
-    #[structopt(subcommand)]
-    pub(crate) command: Command,
+    /// path to the TOML config file [default: /etc/metricdog]
+    #[argh(option, short = 'c', long = "config")]
+    pub config: Option<PathBuf>,
+    /// logging verbosity [trace|debug|info|warn|error]
+    #[argh(option, short = 'l', long = "log-level", default = "default_logging()")]
+    pub log_level: LevelFilter,
+    /// path to the os-release file [default: /etc/os-release]
+    #[argh(option, short = 'o', long = "os-release")]
+    pub os_release: Option<PathBuf>,
+    #[argh(subcommand)]
+    pub command: Command,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(FromArgs)]
+#[argh(subcommand)]
 pub(crate) enum Command {
-    /// report a successful boot.
-    SendBootSuccess,
-    /// check services and report their health.
-    SendHealthPing,
+    SendBootSuccess(SendBootSuccess),
+    SendHealthPing(SendHealthPing),
 }
+
+#[derive(FromArgs)]
+#[argh(subcommand, name = "send-boot-success")]
+/// report a successful boot
+pub(crate) struct SendBootSuccess {}
+
+#[derive(FromArgs)]
+#[argh(subcommand, name = "send-health-ping")]
+/// check services and report their health
+pub(crate) struct SendHealthPing {}

@@ -1,4 +1,4 @@
-use crate::args::{Arguments, Command};
+use crate::args::{Arguments, Command, SendBootSuccess, SendHealthPing};
 use crate::error::Result;
 use crate::main_inner;
 use crate::service_check::{ServiceCheck, ServiceHealth};
@@ -94,7 +94,7 @@ fn send_boot_success() {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,
         os_release: Some(os_release_path(&tempdir)),
-        command: Command::SendBootSuccess,
+        command: Command::SendBootSuccess(SendBootSuccess {}),
     };
     main_inner(args, Box::new(MockCheck {})).unwrap();
 }
@@ -115,7 +115,7 @@ fn opt_out() {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,
         os_release: Some(os_release_path(&tempdir)),
-        command: Command::SendBootSuccess,
+        command: Command::SendBootSuccess(SendBootSuccess {}),
     };
     main_inner(args, Box::new(MockCheck {})).unwrap();
 }
@@ -129,7 +129,7 @@ fn send_boot_success_no_server() {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,
         os_release: Some(os_release_path(&tempdir)),
-        command: Command::SendBootSuccess,
+        command: Command::SendBootSuccess(SendBootSuccess {}),
     };
     main_inner(args, Box::new(MockCheck {})).unwrap();
 }
@@ -148,7 +148,7 @@ fn send_boot_success_404() {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,
         os_release: Some(os_release_path(&tempdir)),
-        command: Command::SendBootSuccess,
+        command: Command::SendBootSuccess(SendBootSuccess {}),
     };
     main_inner(args, Box::new(MockCheck {})).unwrap();
 }
@@ -169,7 +169,7 @@ fn send_health_ping() {
         config: Some(config_path(&tempdir)),
         log_level: LevelFilter::Off,
         os_release: Some(os_release_path(&tempdir)),
-        command: Command::SendHealthPing,
+        command: Command::SendHealthPing(SendHealthPing {}),
     };
     main_inner(args, Box::new(MockCheck {})).unwrap();
 }
