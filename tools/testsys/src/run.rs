@@ -30,89 +30,89 @@ pub(crate) struct Run {
     test_flavor: TestType,
 
     /// The architecture to test. Either x86_64 or aarch64.
-    #[clap(long, env = "BUILDSYS_ARCH")]
+    #[arg(long, env = "BUILDSYS_ARCH")]
     arch: String,
 
     /// The variant to test
-    #[clap(long, env = "BUILDSYS_VARIANT")]
+    #[arg(long, env = "BUILDSYS_VARIANT")]
     variant: String,
 
     /// The path to `Infra.toml`
-    #[clap(long, env = "PUBLISH_INFRA_CONFIG_PATH", parse(from_os_str))]
+    #[arg(long, env = "PUBLISH_INFRA_CONFIG_PATH")]
     infra_config_path: PathBuf,
 
     /// The path to `Test.toml`
-    #[clap(long, env = "TESTSYS_TEST_CONFIG_PATH", parse(from_os_str))]
+    #[arg(long, env = "TESTSYS_TEST_CONFIG_PATH")]
     test_config_path: PathBuf,
 
     /// The path to the `tests` directory
-    #[clap(long, env = "TESTSYS_TESTS_DIR", parse(from_os_str))]
+    #[arg(long, env = "TESTSYS_TESTS_DIR")]
     tests_directory: PathBuf,
 
     /// The path to the EKS-A management cluster kubeconfig for vSphere or metal K8s cluster creation
-    #[clap(long, env = "TESTSYS_MGMT_CLUSTER_KUBECONFIG", parse(from_os_str))]
+    #[arg(long, env = "TESTSYS_MGMT_CLUSTER_KUBECONFIG")]
     mgmt_cluster_kubeconfig: Option<PathBuf>,
 
     /// Use this named repo infrastructure from Infra.toml for upgrade/downgrade testing.
-    #[clap(long, env = "PUBLISH_REPO")]
+    #[arg(long, env = "PUBLISH_REPO")]
     repo: Option<String>,
 
     /// The name of the vSphere data center in `Infra.toml` that should be used for testing
     /// If no data center is provided, the first one in `vmware.datacenters` will be used
-    #[clap(long, env = "TESTSYS_DATACENTER")]
+    #[arg(long, env = "TESTSYS_DATACENTER")]
     datacenter: Option<String>,
 
     /// The name of the VMware OVA that should be used for testing
-    #[clap(long, env = "BUILDSYS_OVA")]
+    #[arg(long, env = "BUILDSYS_OVA")]
     ova_name: Option<String>,
 
     /// The name of the image that should be used for Bare Metal testing
-    #[clap(long, env = "BUILDSYS_NAME_FULL")]
+    #[arg(long, env = "BUILDSYS_NAME_FULL")]
     image_name: Option<String>,
 
     /// The path to `amis.json`
-    #[clap(long, env = "AMI_INPUT")]
+    #[arg(long, env = "AMI_INPUT")]
     ami_input: Option<String>,
 
     /// Override for the region the tests should be run in. If none is provided the first region in
     /// Infra.toml will be used. This is the region that the aws client is created with for testing
     /// and resource agents.
-    #[clap(long, env = "TESTSYS_TARGET_REGION")]
+    #[arg(long, env = "TESTSYS_TARGET_REGION")]
     target_region: Option<String>,
 
-    #[clap(long, env = "BUILDSYS_VERSION_BUILD")]
+    #[arg(long, env = "BUILDSYS_VERSION_BUILD")]
     build_id: Option<String>,
 
-    #[clap(flatten)]
+    #[command(flatten)]
     agent_images: TestsysImages,
 
-    #[clap(flatten)]
+    #[command(flatten)]
     config: CliConfig,
 
     // Migrations
     /// Override the starting image used for migrations. The image will be pulled from available
     /// amis in the users account if no override is provided.
-    #[clap(long, env = "TESTSYS_STARTING_IMAGE_ID")]
+    #[arg(long, env = "TESTSYS_STARTING_IMAGE_ID")]
     starting_image_id: Option<String>,
 
     /// The starting version for migrations. This is required for all migrations tests.
     /// This is the version that will be created and migrated to `migration-target-version`.
-    #[clap(long, env = "TESTSYS_STARTING_VERSION")]
+    #[arg(long, env = "TESTSYS_STARTING_VERSION")]
     migration_starting_version: Option<String>,
 
     /// The commit id of the starting version for migrations. This is required for all migrations
     /// tests unless `starting-image-id` is provided. This is the version that will be created and
     /// migrated to `migration-target-version`.
-    #[clap(long, env = "TESTSYS_STARTING_COMMIT")]
+    #[arg(long, env = "TESTSYS_STARTING_COMMIT")]
     migration_starting_commit: Option<String>,
 
     /// The target version for migrations. This is required for all migration tests. This is the
     /// version that will be migrated to.
-    #[clap(long, env = "BUILDSYS_VERSION_IMAGE")]
+    #[arg(long, env = "BUILDSYS_VERSION_IMAGE")]
     migration_target_version: Option<String>,
 
     /// The template file that should be used for custom testing.
-    #[clap(long = "template-file", short = 'f', parse(from_os_str))]
+    #[arg(long = "template-file", short = 'f')]
     custom_crd_template: Option<PathBuf>,
 }
 
@@ -121,63 +121,63 @@ pub(crate) struct Run {
 struct CliConfig {
     /// The repo containing images necessary for conformance testing. It may be omitted to use the
     /// default conformance image registry.
-    #[clap(long, env = "TESTSYS_CONFORMANCE_REGISTRY")]
+    #[arg(long, env = "TESTSYS_CONFORMANCE_REGISTRY")]
     conformance_registry: Option<String>,
 
     /// The name of the cluster for resource agents (EKS resource agent, ECS resource agent). Note:
     /// This is not the name of the `testsys cluster` this is the name of the cluster that tests
     /// should be run on. If no cluster name is provided, the bottlerocket cluster
     /// naming convention `{{arch}}-{{variant}}` will be used.
-    #[clap(long, env = "TESTSYS_TARGET_CLUSTER_NAME")]
+    #[arg(long, env = "TESTSYS_TARGET_CLUSTER_NAME")]
     target_cluster_name: Option<String>,
 
     /// The sonobuoy image that should be used for conformance testing. It may be omitted to use the default
     /// sonobuoy image.
-    #[clap(long, env = "TESTSYS_SONOBUOY_IMAGE")]
+    #[arg(long, env = "TESTSYS_SONOBUOY_IMAGE")]
     sonobuoy_image: Option<String>,
 
     /// The image that should be used for conformance testing. It may be omitted to use the default
     /// testing image.
-    #[clap(long, env = "TESTSYS_CONFORMANCE_IMAGE")]
+    #[arg(long, env = "TESTSYS_CONFORMANCE_IMAGE")]
     conformance_image: Option<String>,
 
     /// The role that should be assumed by the agents
-    #[clap(long, env = "TESTSYS_ASSUME_ROLE")]
+    #[arg(long, env = "TESTSYS_ASSUME_ROLE")]
     assume_role: Option<String>,
 
     /// Specify the instance type that should be used. This is only applicable for aws-* variants.
     /// It can be omitted for non-aws variants and can be omitted to use default instance types.
-    #[clap(long, env = "TESTSYS_INSTANCE_TYPE")]
+    #[arg(long, env = "TESTSYS_INSTANCE_TYPE")]
     instance_type: Option<String>,
 
     /// Add secrets to the testsys agents (`--secret awsCredentials=my-secret`)
-    #[clap(long, short, parse(try_from_str = parse_key_val), number_of_values = 1)]
+    #[arg(long, short, value_parser = parse_key_val, number_of_values = 1)]
     secret: Vec<(String, SecretName)>,
 
     /// The endpoint IP to reserve for the vSphere control plane VMs when creating a K8s cluster
-    #[clap(long, env = "TESTSYS_CONTROL_PLANE_ENDPOINT")]
+    #[arg(long, env = "TESTSYS_CONTROL_PLANE_ENDPOINT")]
     pub control_plane_endpoint: Option<String>,
 
     /// Specify the path to the userdata that should be added for Bottlerocket launch
-    #[clap(long, env = "TESTSYS_USERDATA")]
+    #[arg(long, env = "TESTSYS_USERDATA")]
     pub userdata: Option<String>,
 
     /// Specify the method that should be used to launch instances
-    #[clap(long, env = "TESTSYS_RESOURCE_AGENT")]
+    #[arg(long, env = "TESTSYS_RESOURCE_AGENT")]
     pub resource_agent_type: Option<ResourceAgentType>,
 
     /// A set of workloads that should be run for a workload test (--workload my-workload=<WORKLOAD-IMAGE>)
-    #[clap(long = "workload", parse(try_from_str = parse_workloads), number_of_values = 1)]
+    #[arg(long = "workload", value_parser = parse_workloads, number_of_values = 1)]
     pub workloads: Vec<(String, String)>,
 
     /// The directory containing Bottlerocket images. For metal, this is the directory containing
     /// gzipped images.
-    #[clap(long)]
+    #[arg(long)]
     pub os_image_dir: Option<String>,
 
     /// The hardware that should be used for provisioning Bottlerocket. For metal, this is the
     /// hardware csv that is passed to EKS Anywhere.
-    #[clap(long)]
+    #[arg(long)]
     pub hardware_csv: Option<String>,
 }
 
@@ -505,95 +505,95 @@ derive_display_from_serialize!(KnownTestType);
 #[derive(Debug, Parser)]
 pub(crate) struct TestsysImages {
     /// EKS resource agent URI. If not provided the latest released resource agent will be used.
-    #[clap(
+    #[arg(
         long = "eks-resource-agent-image",
         env = "TESTSYS_EKS_RESOURCE_AGENT_IMAGE"
     )]
     pub(crate) eks_resource: Option<String>,
 
     /// ECS resource agent URI. If not provided the latest released resource agent will be used.
-    #[clap(
+    #[arg(
         long = "ecs-resource-agent-image",
         env = "TESTSYS_ECS_RESOURCE_AGENT_IMAGE"
     )]
     pub(crate) ecs_resource: Option<String>,
 
     /// vSphere cluster resource agent URI. If not provided the latest released resource agent will be used.
-    #[clap(
+    #[arg(
         long = "vsphere-k8s-cluster-resource-agent-image",
         env = "TESTSYS_VSPHERE_K8S_CLUSTER_RESOURCE_AGENT_IMAGE"
     )]
     pub(crate) vsphere_k8s_cluster_resource: Option<String>,
 
     /// Bare Metal cluster resource agent URI. If not provided the latest released resource agent will be used.
-    #[clap(
+    #[arg(
         long = "metal-k8s-cluster-resource-agent-image",
         env = "TESTSYS_METAL_K8S_CLUSTER_RESOURCE_AGENT_IMAGE"
     )]
     pub(crate) metal_k8s_cluster_resource: Option<String>,
 
     /// EC2 resource agent URI. If not provided the latest released resource agent will be used.
-    #[clap(
+    #[arg(
         long = "ec2-resource-agent-image",
         env = "TESTSYS_EC2_RESOURCE_AGENT_IMAGE"
     )]
     pub(crate) ec2_resource: Option<String>,
 
     /// EC2 Karpenter resource agent URI. If not provided the latest released resource agent will be used.
-    #[clap(
+    #[arg(
         long = "ec2-resource-agent-image",
         env = "TESTSYS_EC2_KARPENTER_RESOURCE_AGENT_IMAGE"
     )]
     pub(crate) ec2_karpenter_resource: Option<String>,
 
     /// vSphere VM resource agent URI. If not provided the latest released resource agent will be used.
-    #[clap(
+    #[arg(
         long = "vsphere-vm-resource-agent-image",
         env = "TESTSYS_VSPHERE_VM_RESOURCE_AGENT_IMAGE"
     )]
     pub(crate) vsphere_vm_resource: Option<String>,
 
     /// Sonobuoy test agent URI. If not provided the latest released test agent will be used.
-    #[clap(
+    #[arg(
         long = "sonobuoy-test-agent-image",
         env = "TESTSYS_SONOBUOY_TEST_AGENT_IMAGE"
     )]
     pub(crate) sonobuoy_test: Option<String>,
 
     /// ECS test agent URI. If not provided the latest released test agent will be used.
-    #[clap(long = "ecs-test-agent-image", env = "TESTSYS_ECS_TEST_AGENT_IMAGE")]
+    #[arg(long = "ecs-test-agent-image", env = "TESTSYS_ECS_TEST_AGENT_IMAGE")]
     pub(crate) ecs_test: Option<String>,
 
     /// Migration test agent URI. If not provided the latest released test agent will be used.
-    #[clap(
+    #[arg(
         long = "migration-test-agent-image",
         env = "TESTSYS_MIGRATION_TEST_AGENT_IMAGE"
     )]
     pub(crate) migration_test: Option<String>,
 
     /// K8s workload agent URI. If not provided the latest released test agent will be used.
-    #[clap(
+    #[arg(
         long = "k8s-workload-agent-image",
         env = "TESTSYS_K8S_WORKLOAD_AGENT_IMAGE"
     )]
     pub(crate) k8s_workload: Option<String>,
 
     /// ECS workload agent URI. If not provided the latest released test agent will be used.
-    #[clap(
+    #[arg(
         long = "ecs-workload-agent-image",
         env = "TESTSYS_ECS_WORKLOAD_AGENT_IMAGE"
     )]
     pub(crate) ecs_workload: Option<String>,
 
     /// TestSys controller URI. If not provided the latest released controller will be used.
-    #[clap(long = "controller-image", env = "TESTSYS_CONTROLLER_IMAGE")]
+    #[arg(long = "controller-image", env = "TESTSYS_CONTROLLER_IMAGE")]
     pub(crate) controller_uri: Option<String>,
 
     /// Images pull secret. This is the name of a Kubernetes secret that will be used to
     /// pull the container image from a private registry. For example, if you created a pull secret
     /// with `kubectl create secret docker-registry regcred` then you would pass
     /// `--images-pull-secret regcred`.
-    #[clap(long = "images-pull-secret", env = "TESTSYS_IMAGES_PULL_SECRET")]
+    #[arg(long = "images-pull-secret", env = "TESTSYS_IMAGES_PULL_SECRET")]
     pub(crate) secret: Option<String>,
 }
 

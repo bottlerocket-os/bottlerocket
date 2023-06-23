@@ -36,16 +36,16 @@ mod vmware_k8s;
 #[derive(Parser, Debug)]
 #[clap(about, long_about = None)]
 struct TestsysArgs {
-    #[structopt(global = true, long, default_value = "INFO")]
+    #[arg(global = true, long, default_value = "INFO")]
     /// How much detail to log; from least to most: ERROR, WARN, INFO, DEBUG, TRACE
     log_level: LevelFilter,
 
     /// Path to the kubeconfig file for the testsys cluster. Can also be passed with the KUBECONFIG
     /// environment variable.
-    #[clap(long)]
+    #[arg(long)]
     kubeconfig: Option<PathBuf>,
 
-    #[clap(subcommand)]
+    #[command(subcommand)]
     command: Command,
 }
 
