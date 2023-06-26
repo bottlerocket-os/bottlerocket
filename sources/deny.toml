@@ -56,6 +56,11 @@ license-files = [
 multiple-versions = "deny"
 wildcards = "deny"
 
+deny = [
+    { name = "structopt" },
+    { name = "clap", wrappers = [ "cargo-readme" ] },
+]
+
 skip = [
 ]
 
