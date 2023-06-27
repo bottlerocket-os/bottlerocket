@@ -74,6 +74,14 @@ struct ECSConfig {
 
     #[serde(rename = "ReservedMemory", skip_serializing_if = "Option::is_none")]
     reserved_memory: Option<u16>,
+
+    #[serde(
+        rename = "NumImagesToDeletePerCycle",
+        skip_serializing_if = "Option::is_none"
+    )]
+    image_cleanup_delete_per_cycle: Option<i64>,
+
+    image_cleanup_disabled: bool,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -141,6 +149,8 @@ async fn run() -> Result<()> {
         reserved_memory: ecs.reserved_memory,
         metadata_service_rps: ecs.metadata_service_rps,
         metadata_service_burst: ecs.metadata_service_burst,
+        image_cleanup_delete_per_cycle: ecs.image_cleanup_delete_per_cycle,
+        image_cleanup_disabled: !ecs.image_cleanup_enabled.unwrap_or(true),
         ..Default::default()
     };
     if let Some(os) = settings.os {
