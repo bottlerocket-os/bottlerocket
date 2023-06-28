@@ -157,3 +157,24 @@ impl Checker for K8S04010900Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04011000Checker {}
+
+impl Checker for K8S04011000Checker {
+    fn execute(&self) -> CheckerResult {
+        ensure_file_owner_and_group_root(KUBELET_CONF_FILE)
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "If the kubelet config.yaml configuration file is being used validate file ownership is set to root:root"
+                .to_string(),
+            id: "4.1.10".to_string(),
+            level: 1,
+            name: "k8s04011000".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
