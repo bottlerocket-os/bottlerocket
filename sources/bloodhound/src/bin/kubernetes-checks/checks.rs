@@ -562,3 +562,54 @@ impl Checker for K8S04021000Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04021100Checker {}
+
+impl Checker for K8S04021100Checker {
+    fn execute(&self) -> CheckerResult {
+        #[derive(Deserialize)]
+        struct FeatureGates {
+            #[serde(rename = "RotateKubeletServerCertificate")]
+            rotate_kubelet_server_certificate: bool,
+        }
+
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            #[serde(rename = "featureGates")]
+            feature_gates: FeatureGates,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                if !config.feature_gates.rotate_kubelet_server_certificate {
+                    result.error = "Kubelet RotateKubeletServerCertificate is disabled".to_string();
+                    result.status = CheckStatus::FAIL;
+                } else {
+                    result.status = CheckStatus::PASS;
+                }
+            } else {
+                // Feature gate has been defaulted to enabled since k8s 1.12, so if it is not found that is fine
+                result.status = CheckStatus::PASS;
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Verify that the RotateKubeletServerCertificate argument is set to true"
+                .to_string(),
+            id: "4.2.11".to_string(),
+            level: 1,
+            name: "k8s04021100".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
