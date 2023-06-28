@@ -26,8 +26,11 @@ Source7: host-ctr-toml
 Source8: oci-default-hooks-json
 Source9: cfsignal-toml
 Source10: warm-pool-wait-toml
-Source11: bottlerocket-cis-checks-metadata-json
+Source11: cis-checks-bottlerocket-metadata-json
 Source12: 00-resolved.conf
+%if %{with k8s_runtime}
+Source13: cis-checks-k8s-metadata-json
+%endif
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -383,6 +386,9 @@ for p in \
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
+%if %{with k8s_runtime}
+install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/kubernetes-checks %{buildroot}%{_cross_bindir}
+%endif
 
 # Add the bloodhound checker symlinks
 mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket
@@ -396,6 +402,17 @@ for p in \
   ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-checks %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
 done
 install -m 0644 %{S:11} %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/metadata.json
+
+# Only add the k8s checks if it is a k8s variant
+%if %{with k8s_runtime}
+mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes
+for p in \
+  k8s04010300 k8s04010400 k8s04020700 k8s04020800 \
+; do
+  ln -rs %{buildroot}%{_cross_bindir}/kubernetes-checks %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/${p}
+done
+install -m 0644 %{S:13} %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/metadata.json
+%endif
 
 for p in apiclient ; do
   install -p -m 0755 ${HOME}/.cache/.static/%{__cargo_target_static}/release/${p} %{buildroot}%{_cross_bindir}
@@ -645,5 +662,9 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %{_cross_bindir}/bloodhound
 %{_cross_bindir}/bottlerocket-checks
 %{_cross_libexecdir}/cis-checks/bottlerocket
+%if %{with k8s_runtime}
+%{_cross_bindir}/kubernetes-checks
+%{_cross_libexecdir}/cis-checks/kubernetes
+%endif
 
 %changelog
