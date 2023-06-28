@@ -36,6 +36,7 @@ fn main() {
         "k8s04011000" => Box::new(K8S04011000Checker {}),
         "k8s04020100" => Box::new(K8S04020100Checker {}),
         "k8s04020200" => Box::new(K8S04020200Checker {}),
+        "k8s04020300" => Box::new(K8S04020300Checker {}),
         "k8s04020700" => Box::new(ManualChecker {
             name: cmd_name.to_string(),
             title: "Ensure that the --hostname-override argument is not set (not valid for Bottlerocket)".to_string(),

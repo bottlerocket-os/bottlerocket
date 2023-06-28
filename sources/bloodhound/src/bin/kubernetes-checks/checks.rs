@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::{fs::File, path::Path};
 
 use bloodhound::{
     check_file_not_mode, ensure_file_owner_and_group_root,
@@ -277,6 +277,61 @@ impl Checker for K8S04020200Checker {
             id: "4.2.2".to_string(),
             level: 1,
             name: "k8s04020200".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04020300Checker {}
+
+impl Checker for K8S04020300Checker {
+    fn execute(&self) -> CheckerResult {
+        #[derive(Deserialize)]
+        struct X509 {
+            #[serde(rename = "clientCAFile")]
+            client_ca_file: String,
+        }
+
+        #[derive(Deserialize)]
+        struct Authentication {
+            x509: X509,
+        }
+
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            authentication: Authentication,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                if !config.authentication.x509.client_ca_file.is_empty()
+                    && Path::new(&config.authentication.x509.client_ca_file).exists()
+                {
+                    result.status = CheckStatus::PASS;
+                } else {
+                    result.error = "CA file not set to expected path".to_string();
+                    result.status = CheckStatus::FAIL;
+                }
+            } else {
+                result.error = "unable to parse kubelet config".to_string()
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the --client-ca-file argument is set as appropriate".to_string(),
+            id: "4.2.3".to_string(),
+            level: 1,
+            name: "k8s04020300".to_string(),
             mode: Mode::Automatic,
         }
     }
