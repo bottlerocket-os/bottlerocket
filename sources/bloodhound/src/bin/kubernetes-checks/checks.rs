@@ -2,11 +2,12 @@ use bloodhound::{
     check_file_not_mode, ensure_file_owner_and_group_root,
     results::{Checker, CheckerMetadata, CheckerResult, Mode},
 };
-use libc::{S_IWGRP, S_IWOTH, S_IXGRP, S_IXOTH, S_IXUSR};
+use libc::{S_IRWXG, S_IRWXO, S_IWGRP, S_IWOTH, S_IXGRP, S_IXOTH, S_IXUSR};
 
 // Bottlerocket doesn't use the standard path for most of these files ¯\_(ツ)_/¯
 const KUBELET_SERVICE_FILE: &str = "/etc/systemd/system/kubelet.service.d/exec-start.conf";
 const KUBELET_KUBECONFIG_FILE: &str = "/etc/kubernetes/kubelet/kubeconfig";
+const KUBELET_CLIENT_CA_FILE: &str = "/etc/kubernetes/pki/ca.crt";
 
 // =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
 
@@ -86,6 +87,27 @@ impl Checker for K8S04010600Checker {
             id: "4.1.6".to_string(),
             level: 1,
             name: "k8s04010600".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04010700Checker {}
+
+impl Checker for K8S04010700Checker {
+    fn execute(&self) -> CheckerResult {
+        let no_x_xwr_xwr = S_IXUSR | S_IRWXG | S_IRWXO;
+        check_file_not_mode(KUBELET_CLIENT_CA_FILE, no_x_xwr_xwr)
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the certificate authorities file permissions are set to 600 or more restrictive".to_string(),
+            id: "4.1.7".to_string(),
+            level: 1,
+            name: "k8s04010700".to_string(),
             mode: Mode::Automatic,
         }
     }
