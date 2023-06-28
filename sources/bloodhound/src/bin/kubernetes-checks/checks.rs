@@ -1,4 +1,4 @@
-use std::{fs::File, path::Path};
+use std::{collections::HashSet, fs::File, path::Path};
 
 use bloodhound::{
     check_file_not_mode, ensure_file_owner_and_group_root,
@@ -609,6 +609,68 @@ impl Checker for K8S04021100Checker {
             id: "4.2.11".to_string(),
             level: 1,
             name: "k8s04021100".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04021200Checker {}
+
+impl Checker for K8S04021200Checker {
+    fn execute(&self) -> CheckerResult {
+        let allowed_suites: HashSet<&str> = vec![
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+            "TLS_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_RSA_WITH_AES_128_GCM_SHA256",
+        ]
+        .into_iter()
+        .collect();
+
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            #[serde(rename = "tlsCipherSuites")]
+            tls_cipher_suites: Vec<String>,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                let configured_suites: HashSet<&str> = config
+                    .tls_cipher_suites
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect();
+                if !configured_suites.is_subset(&allowed_suites) {
+                    result.error = "Found disallowed cipher suites".to_string();
+                    result.status = CheckStatus::FAIL;
+                } else {
+                    result.status = CheckStatus::PASS;
+                }
+            } else {
+                result.error = "unable to parse kubelet config".to_string()
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the Kubelet only makes use of Strong Cryptographic Ciphers"
+                .to_string(),
+            id: "4.2.12".to_string(),
+            level: 1,
+            name: "k8s04021200".to_string(),
             mode: Mode::Automatic,
         }
     }
