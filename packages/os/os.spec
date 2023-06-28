@@ -408,7 +408,7 @@ install -m 0644 %{S:11} %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket
 mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes
 for p in \
   k8s04010300 k8s04010400 k8s04020700 k8s04020800 \
-  k8s04010100 k8s04010200 k8s04010500 \
+  k8s04010100 k8s04010200 k8s04010500 k8s04010600 \
 ; do
   ln -rs %{buildroot}%{_cross_bindir}/kubernetes-checks %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/${p}
 done

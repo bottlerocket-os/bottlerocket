@@ -69,3 +69,24 @@ impl Checker for K8S04010500Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04010600Checker {}
+
+impl Checker for K8S04010600Checker {
+    fn execute(&self) -> CheckerResult {
+        ensure_file_owner_and_group_root(KUBELET_KUBECONFIG_FILE)
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the --kubeconfig kubelet.conf file ownership is set to root:root"
+                .to_string(),
+            id: "4.1.6".to_string(),
+            level: 1,
+            name: "k8s04010600".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
