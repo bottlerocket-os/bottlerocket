@@ -336,3 +336,46 @@ impl Checker for K8S04020300Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04020400Checker {}
+
+impl Checker for K8S04020400Checker {
+    fn execute(&self) -> CheckerResult {
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            #[serde(rename = "readOnlyPort")]
+            read_only_port: i32,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                if config.read_only_port != 0 {
+                    result.error = "Kubelet readOnlyPort not set to 0".to_string();
+                    result.status = CheckStatus::FAIL;
+                } else {
+                    result.status = CheckStatus::PASS;
+                }
+            } else {
+                result.error = "unable to parse kubelet config".to_string()
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Verify that the --read-only-port argument is set to 0".to_string(),
+            id: "4.2.4".to_string(),
+            level: 1,
+            name: "k8s04020400".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
