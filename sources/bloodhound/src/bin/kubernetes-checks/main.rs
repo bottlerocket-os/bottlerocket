@@ -1,4 +1,7 @@
+mod checks;
+
 use bloodhound::results::*;
+use checks::*;
 use std::env;
 use std::path::Path;
 
@@ -11,6 +14,7 @@ fn main() {
         .unwrap_or_default();
 
     let checker: Box<dyn Checker> = match cmd_name {
+        "k8s04010100" => Box::new(K8S04010100Checker {}),
         "k8s04010300" => Box::new(ManualChecker {
             name: cmd_name.to_string(),
             title: "If proxy kubeconfig file exists ensure permissions are set to 644 or more restrictive".to_string(),

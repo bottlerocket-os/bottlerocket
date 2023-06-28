@@ -11,6 +11,7 @@ exclude = ["README.md"]
 [dependencies]
 argh = "0.1"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
+libc = { version = "0.2" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 walkdir = "2"
