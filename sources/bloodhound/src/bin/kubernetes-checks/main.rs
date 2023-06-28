@@ -52,6 +52,7 @@ fn main() {
             id: "4.2.8".to_string(),
             level: 2,
         }),
+        "k8s04020900" => Box::new(K8S04020900Checker {}),
         &_ => {
             eprintln!("Command {} is not supported.", cmd_name);
             return;

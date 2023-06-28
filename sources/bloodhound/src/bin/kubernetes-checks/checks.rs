@@ -2,7 +2,7 @@ use std::{fs::File, path::Path};
 
 use bloodhound::{
     check_file_not_mode, ensure_file_owner_and_group_root,
-    results::{Checker, CheckerMetadata, CheckerResult, Mode, CheckStatus},
+    results::{CheckStatus, Checker, CheckerMetadata, CheckerResult, Mode},
 };
 use libc::{S_IRWXG, S_IRWXO, S_IWGRP, S_IWOTH, S_IXGRP, S_IXOTH, S_IXUSR};
 use serde::Deserialize;
@@ -138,7 +138,6 @@ impl Checker for K8S04010800Checker {
         }
     }
 }
-
 
 // =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
 
@@ -465,6 +464,55 @@ impl Checker for K8S04020600Checker {
             id: "4.2.6".to_string(),
             level: 1,
             name: "k8s04020600".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04020900Checker {}
+
+impl Checker for K8S04020900Checker {
+    fn execute(&self) -> CheckerResult {
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            #[serde(rename = "tlsCertFile")]
+            tls_cert_file: String,
+            #[serde(rename = "tlsPrivateKeyFile")]
+            tls_private_key_file: String,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                if (!config.tls_cert_file.is_empty() && Path::new(&config.tls_cert_file).exists())
+                    && (!config.tls_private_key_file.is_empty()
+                        && Path::new(&config.tls_private_key_file).exists())
+                {
+                    result.status = CheckStatus::PASS;
+                } else {
+                    result.error = "TLS files not set to expected path".to_string();
+                    result.status = CheckStatus::FAIL;
+                }
+            } else {
+                // If certs not provided then `serverTLSBootstrap` will be used. Deserialization expected to fail in this case.
+                result.status = CheckStatus::PASS;
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the --tls-cert-file and --tls-private-key-file arguments are set as appropriate".to_string(),
+            id: "4.2.9".to_string(),
+            level: 1,
+            name: "k8s04020900".to_string(),
             mode: Mode::Automatic,
         }
     }
