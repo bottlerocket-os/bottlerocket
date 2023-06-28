@@ -424,3 +424,48 @@ impl Checker for K8S04020500Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04020600Checker {}
+
+impl Checker for K8S04020600Checker {
+    fn execute(&self) -> CheckerResult {
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            #[serde(rename = "makeIPTablesUtilChains")]
+            make_iptables_util_chains: bool,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                if !config.make_iptables_util_chains {
+                    result.error = "Kubelet makeIPTablesUtilChains is disabled".to_string();
+                    result.status = CheckStatus::FAIL;
+                } else {
+                    result.status = CheckStatus::PASS;
+                }
+            } else {
+                // Normally this value should not be present in the config file, so deserialization is expected to fail.
+                result.status = CheckStatus::PASS;
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the --make-iptables-util-chains argument is set to true"
+                .to_string(),
+            id: "4.2.6".to_string(),
+            level: 1,
+            name: "k8s04020600".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
