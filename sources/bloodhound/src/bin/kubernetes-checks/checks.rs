@@ -233,3 +233,51 @@ impl Checker for K8S04020100Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04020200Checker {}
+
+impl Checker for K8S04020200Checker {
+    fn execute(&self) -> CheckerResult {
+        #[derive(Deserialize)]
+        struct Authorization {
+            mode: String,
+        }
+
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            authorization: Authorization,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                if config.authorization.mode == "AlwaysAllow" {
+                    result.error = "AlwaysAllow authorization is configured".to_string();
+                    result.status = CheckStatus::FAIL;
+                } else {
+                    result.status = CheckStatus::PASS;
+                }
+            } else {
+                result.error = "unable to parse kubelet config".to_string()
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the --authorization-mode argument is not set to AlwaysAllow"
+                .to_string(),
+            id: "4.2.2".to_string(),
+            level: 1,
+            name: "k8s04020200".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
