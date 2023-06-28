@@ -409,7 +409,7 @@ mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes
 for p in \
   k8s04010300 k8s04010400 k8s04020700 k8s04020800 \
   k8s04010100 k8s04010200 k8s04010500 k8s04010600 k8s04010700 \
-  k8s04010800 k8s04010900 k8s04011000 \
+  k8s04010800 k8s04010900 k8s04011000 k8s04020100 \
 ; do
   ln -rs %{buildroot}%{_cross_bindir}/kubernetes-checks %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/${p}
 done

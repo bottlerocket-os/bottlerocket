@@ -1,8 +1,11 @@
+use std::fs::File;
+
 use bloodhound::{
     check_file_not_mode, ensure_file_owner_and_group_root,
-    results::{Checker, CheckerMetadata, CheckerResult, Mode},
+    results::{Checker, CheckerMetadata, CheckerResult, Mode, CheckStatus},
 };
 use libc::{S_IRWXG, S_IRWXO, S_IWGRP, S_IWOTH, S_IXGRP, S_IXOTH, S_IXUSR};
+use serde::Deserialize;
 
 // Bottlerocket doesn't use the standard path for most of these files ¯\_(ツ)_/¯
 const KUBELET_SERVICE_FILE: &str = "/etc/systemd/system/kubelet.service.d/exec-start.conf";
@@ -174,6 +177,58 @@ impl Checker for K8S04011000Checker {
             id: "4.1.10".to_string(),
             level: 1,
             name: "k8s04011000".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04020100Checker {}
+
+impl Checker for K8S04020100Checker {
+    fn execute(&self) -> CheckerResult {
+        #[derive(Deserialize)]
+        struct Anonymous {
+            enabled: bool,
+        }
+
+        #[derive(Deserialize)]
+        struct Authentication {
+            anonymous: Anonymous,
+        }
+
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            authentication: Authentication,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                if config.authentication.anonymous.enabled {
+                    result.error = "anonymous authentication is configured".to_string();
+                    result.status = CheckStatus::FAIL;
+                } else {
+                    result.status = CheckStatus::PASS;
+                }
+            } else {
+                result.error = "unable to parse kubelet config".to_string()
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the --anonymous-auth argument is set to false".to_string(),
+            id: "4.2.1".to_string(),
+            level: 1,
+            name: "k8s04020100".to_string(),
             mode: Mode::Automatic,
         }
     }
