@@ -379,3 +379,48 @@ impl Checker for K8S04020400Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04020500Checker {}
+
+impl Checker for K8S04020500Checker {
+    fn execute(&self) -> CheckerResult {
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            #[serde(rename = "streamingConnectionIdleTimeout")]
+            streaming_connection_idle_timeout: i32,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                if config.streaming_connection_idle_timeout == 0 {
+                    result.error = "Kubelet streamingConnectionIdleTimeout is set to 0".to_string();
+                    result.status = CheckStatus::FAIL;
+                } else {
+                    result.status = CheckStatus::PASS;
+                }
+            } else {
+                // Normally this value should not be present in the config file, so deserialization is expected to fail.
+                result.status = CheckStatus::PASS;
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the --streaming-connection-idle-timeout argument is not set to 0"
+                .to_string(),
+            id: "4.2.5".to_string(),
+            level: 1,
+            name: "k8s04020500".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
