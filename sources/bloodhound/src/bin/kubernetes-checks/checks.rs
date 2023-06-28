@@ -517,3 +517,48 @@ impl Checker for K8S04020900Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04021000Checker {}
+
+impl Checker for K8S04021000Checker {
+    fn execute(&self) -> CheckerResult {
+        #[derive(Deserialize)]
+        struct KubeletConfig {
+            #[serde(rename = "rotateCertificates")]
+            rotate_certificates: bool,
+        }
+
+        let mut result = CheckerResult::default();
+
+        if let Ok(kubelet_file) = File::open(KUBELET_CONF_FILE) {
+            if let Ok(config) = serde_yaml::from_reader::<_, KubeletConfig>(kubelet_file) {
+                if !config.rotate_certificates {
+                    result.error = "Kubelet rotateCertificates is disabled".to_string();
+                    result.status = CheckStatus::FAIL;
+                } else {
+                    result.status = CheckStatus::PASS;
+                }
+            } else {
+                // Default value is `false`, so it is a failure if this is not in the config file.
+                result.error = "Kubelet rotateCertificates is disabled".to_string();
+                result.status = CheckStatus::FAIL;
+            }
+        } else {
+            result.error = format!("unable to read '{}'", KUBELET_CONF_FILE);
+        }
+
+        result
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the --rotate-certificates argument is not set to false".to_string(),
+            id: "4.2.10".to_string(),
+            level: 1,
+            name: "k8s04021000".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}

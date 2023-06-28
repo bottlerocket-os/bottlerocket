@@ -53,6 +53,7 @@ fn main() {
             level: 2,
         }),
         "k8s04020900" => Box::new(K8S04020900Checker {}),
+        "k8s04021000" => Box::new(K8S04021000Checker {}),
         &_ => {
             eprintln!("Command {} is not supported.", cmd_name);
             return;
