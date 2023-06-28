@@ -1,7 +1,9 @@
 use results::{CheckStatus, CheckerResult};
+use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
+use std::os::linux::fs::MetadataExt;
 use std::os::unix::fs::PermissionsExt;
-use std::{ffi::OsStr, fs::File, process::Command};
+use std::{ffi::OsStr, process::Command};
 
 pub mod args;
 pub mod output;
@@ -152,6 +154,24 @@ pub fn check_file_not_mode(file_path: &str, mode: u32) -> CheckerResult {
         }
     } else {
         result.error = format!("unable to inspect '{}'", file_path);
+    }
+
+    result
+}
+
+/// Verifies the file at the given path is owned by root:root, returning a `Results` based on the results.
+pub fn ensure_file_owner_and_group_root(file_path: &str) -> CheckerResult {
+    let mut result = CheckerResult::default();
+
+    if let Ok(metadata) = fs::metadata(file_path) {
+        if metadata.st_uid() != 0 || metadata.st_gid() != 0 {
+            result.error = "File owner is not root:root".to_string();
+            result.status = CheckStatus::FAIL;
+        } else {
+            result.status = CheckStatus::PASS;
+        }
+    } else {
+        result.error = "unable to get file metadata".to_string();
     }
 
     result

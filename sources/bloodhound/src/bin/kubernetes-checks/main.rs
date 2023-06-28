@@ -15,6 +15,7 @@ fn main() {
 
     let checker: Box<dyn Checker> = match cmd_name {
         "k8s04010100" => Box::new(K8S04010100Checker {}),
+        "k8s04010200" => Box::new(K8S04010200Checker {}),
         "k8s04010300" => Box::new(ManualChecker {
             name: cmd_name.to_string(),
             title: "If proxy kubeconfig file exists ensure permissions are set to 644 or more restrictive".to_string(),

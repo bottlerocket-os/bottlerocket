@@ -1,5 +1,5 @@
 use bloodhound::{
-    check_file_not_mode,
+    check_file_not_mode, ensure_file_owner_and_group_root,
     results::{Checker, CheckerMetadata, CheckerResult, Mode},
 };
 use libc::{S_IWGRP, S_IWOTH, S_IXGRP, S_IXOTH, S_IXUSR};
@@ -23,6 +23,26 @@ impl Checker for K8S04010100Checker {
             id: "4.1.1".to_string(),
             level: 1,
             name: "k8s04010100".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04010200Checker {}
+
+impl Checker for K8S04010200Checker {
+    fn execute(&self) -> CheckerResult {
+        ensure_file_owner_and_group_root(KUBELET_SERVICE_FILE)
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the kubelet service file ownership is set to root:root".to_string(),
+            id: "4.1.2".to_string(),
+            level: 1,
+            name: "k8s04010200".to_string(),
             mode: Mode::Automatic,
         }
     }
