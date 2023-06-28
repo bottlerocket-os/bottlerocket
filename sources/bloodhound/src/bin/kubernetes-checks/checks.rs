@@ -8,6 +8,7 @@ use libc::{S_IRWXG, S_IRWXO, S_IWGRP, S_IWOTH, S_IXGRP, S_IXOTH, S_IXUSR};
 const KUBELET_SERVICE_FILE: &str = "/etc/systemd/system/kubelet.service.d/exec-start.conf";
 const KUBELET_KUBECONFIG_FILE: &str = "/etc/kubernetes/kubelet/kubeconfig";
 const KUBELET_CLIENT_CA_FILE: &str = "/etc/kubernetes/pki/ca.crt";
+const KUBELET_CONF_FILE: &str = "/etc/kubernetes/kubelet/config";
 
 // =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
 
@@ -130,6 +131,28 @@ impl Checker for K8S04010800Checker {
             id: "4.1.8".to_string(),
             level: 1,
             name: "k8s04010800".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04010900Checker {}
+
+impl Checker for K8S04010900Checker {
+    fn execute(&self) -> CheckerResult {
+        let no_x_xwr_xwr = S_IXUSR | S_IRWXG | S_IRWXO;
+        check_file_not_mode(KUBELET_CONF_FILE, no_x_xwr_xwr)
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "If the kubelet config.yaml configuration file is being used validate permissions set to 600 or more restrictive".to_string(),
+            id: "4.1.9".to_string(),
+            level: 1,
+            name: "k8s04010900".to_string(),
             mode: Mode::Automatic,
         }
     }
