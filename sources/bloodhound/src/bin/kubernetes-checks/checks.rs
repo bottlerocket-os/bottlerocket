@@ -6,6 +6,7 @@ use libc::{S_IWGRP, S_IWOTH, S_IXGRP, S_IXOTH, S_IXUSR};
 
 // Bottlerocket doesn't use the standard path for most of these files ¯\_(ツ)_/¯
 const KUBELET_SERVICE_FILE: &str = "/etc/systemd/system/kubelet.service.d/exec-start.conf";
+const KUBELET_KUBECONFIG_FILE: &str = "/etc/kubernetes/kubelet/kubeconfig";
 
 // =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
 
@@ -43,6 +44,27 @@ impl Checker for K8S04010200Checker {
             id: "4.1.2".to_string(),
             level: 1,
             name: "k8s04010200".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04010500Checker {}
+
+impl Checker for K8S04010500Checker {
+    fn execute(&self) -> CheckerResult {
+        let no_x_xw_xw = S_IXUSR | S_IXGRP | S_IWGRP | S_IXOTH | S_IWOTH;
+        check_file_not_mode(KUBELET_KUBECONFIG_FILE, no_x_xw_xw)
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title: "Ensure that the --kubeconfig kubelet.conf file permissions are set to 644 or more restrictive".to_string(),
+            id: "4.1.5".to_string(),
+            level: 1,
+            name: "k8s04010500".to_string(),
             mode: Mode::Automatic,
         }
     }
