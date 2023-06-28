@@ -112,3 +112,25 @@ impl Checker for K8S04010700Checker {
         }
     }
 }
+
+// =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<= =>o.o<=
+
+pub struct K8S04010800Checker {}
+
+impl Checker for K8S04010800Checker {
+    fn execute(&self) -> CheckerResult {
+        ensure_file_owner_and_group_root(KUBELET_CLIENT_CA_FILE)
+    }
+
+    fn metadata(&self) -> CheckerMetadata {
+        CheckerMetadata {
+            title:
+                "Ensure that the client certificate authorities file ownership is set to root:root"
+                    .to_string(),
+            id: "4.1.8".to_string(),
+            level: 1,
+            name: "k8s04010800".to_string(),
+            mode: Mode::Automatic,
+        }
+    }
+}
