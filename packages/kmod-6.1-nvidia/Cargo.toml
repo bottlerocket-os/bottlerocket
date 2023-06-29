@@ -13,12 +13,13 @@ package-name = "kmod-6.1-nvidia"
 releases-url = "https://docs.nvidia.com/datacenter/tesla/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://us.download.nvidia.com/tesla/525.105.17/NVIDIA-Linux-x86_64-525.105.17.run"
-sha512 = "1a44a8d92d8434d356dcd6087c8a3277136e0819ffa5e4b6895854811cf63e44ad3dc08e0d248f149f8dc2280ab0993be6ee7fdf3c676fb9a85ff3dce83fd69a"
+url = "https://us.download.nvidia.com/tesla/535.54.03/NVIDIA-Linux-x86_64-535.54.03.run"
+sha512 = "45b72b34272d3df14b56136bb61537d00145d55734b72d58390af4694d96f03b2b49433beb4a5bede4d978442b707b08e05f2f31b2fcfd9453091e7f0b945cff"
 
 [[package.metadata.build-package.external-files]]
-url = "https://us.download.nvidia.com/tesla/525.105.17/NVIDIA-Linux-aarch64-525.105.17.run"
-sha512 = "75192acf8448a206a956b94b01b5e1e05cd21c7f172557bd6a2d1f1d92877583734c7e0998cedc3b54a8bdc5c7e869531ddea4161639daf40cbd0bf035252759"
+url = "https://us.download.nvidia.com/tesla/535.54.03/NVIDIA-Linux-aarch64-535.54.03.run"
+sha512 = "57b06a6fa16838176866c364a8722c546084529ad91c57e979aca7750692127cab1485b5a44aee398c5494782ed987e82f66061aa39e802bc6eefa2b40a33bc3"
+
 [build-dependencies]
 glibc = { path = "../glibc" }
 kernel-6_1 = { path = "../kernel-6.1" }
