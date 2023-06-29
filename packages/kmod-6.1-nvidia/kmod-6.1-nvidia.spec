@@ -250,7 +250,8 @@ popd
 %{_cross_libdir}/nvidia/tesla/libOpenCL.so.1.0.0
 %{_cross_libdir}/nvidia/tesla/libOpenCL.so.1
 %if "%{_cross_arch}" == "x86_64"
-%{_cross_libdir}/nvidia/tesla/libnvidia-compiler.so.%{tesla_ver}
+%{_cross_libdir}/nvidia/tesla/libnvidia-pkcs11.so.%{tesla_ver}
+%{_cross_libdir}/nvidia/tesla/libnvidia-pkcs11-openssl3.so.%{tesla_ver}
 %endif
 
 # Video libs
@@ -329,5 +330,5 @@ popd
 %exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-wayland.so.1
 %exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-gbm.so.1
 %exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-gbm.so.1.1.0
-%exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-wayland.so.1.1.10
+%exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-wayland.so.1.1.11
 %exclude %{_cross_libdir}/nvidia/tesla/libnvidia-wayland-client.so.%{tesla_ver}
