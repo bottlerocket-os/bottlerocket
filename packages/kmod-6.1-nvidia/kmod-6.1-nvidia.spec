@@ -5,7 +5,7 @@
 %global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
 %global license_file %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml path nvidia -p ./licenses)
 
-# With the split of the firmware binary from firmware/gsp.bin to firmware/gsp_ad10x.bin
+# With the split of the firmware binary from firmware/gsp.bin to firmware/gsp_ga10x.bin
 # and firmware/gsp_tu10x.bin the file format changed from executable to relocatable.
 # The __spec_install_post macro will by default try to strip all binary files.
 # Unfortunately the strip used is not compatible with the new file format.
@@ -173,7 +173,7 @@ done
 
 # Include the firmware file for GSP support
 install -d %{buildroot}%{_cross_libdir}/firmware/nvidia/%{tesla_ver}
-install -p -m 0644 firmware/gsp_ad10x.bin %{buildroot}%{_cross_libdir}/firmware/nvidia/%{tesla_ver}
+install -p -m 0644 firmware/gsp_ga10x.bin %{buildroot}%{_cross_libdir}/firmware/nvidia/%{tesla_ver}
 install -p -m 0644 firmware/gsp_tu10x.bin %{buildroot}%{_cross_libdir}/firmware/nvidia/%{tesla_ver}
 
 popd
@@ -302,7 +302,7 @@ popd
 %{_cross_libdir}/nvidia/tesla/libnvidia-ngx.so.1
 
 # Firmware
-%{_cross_libdir}/firmware/nvidia/%{tesla_ver}/gsp_ad10x.bin
+%{_cross_libdir}/firmware/nvidia/%{tesla_ver}/gsp_ga10x.bin
 %{_cross_libdir}/firmware/nvidia/%{tesla_ver}/gsp_tu10x.bin
 
 # Neither nvidia-peermem nor nvidia-drm are included in driver container images, we exclude them
