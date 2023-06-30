@@ -317,8 +317,7 @@ impl<'a> CrdInput<'a> {
         fields.insert("namespace".to_string(), NAMESPACE.to_string());
         fields.append(additional_fields);
 
-        let mut handlebars = Handlebars::new();
-        handlebars.set_strict_mode(true);
+        let handlebars = Handlebars::new();
         let rendered_config = handlebars.render_template(&config, &fields)?;
 
         Ok(Some(rendered_config))
