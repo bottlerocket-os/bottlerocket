@@ -200,3 +200,6 @@ CONFIG_ISCSI_TARGET=m
 # CONFIG_BOOTPARAM_SOFTLOCKUP_PANIC is not set
 # CONFIG_BOOTPARAM_HARDLOCKUP_PANIC is not set
 # CONFIG_BOOTPARAM_HUNG_TASK_PANIC is not set
+
+# Disable edac driver for intel 10nm memory controllers
+# CONFIG_EDAC_I10NM is not set
