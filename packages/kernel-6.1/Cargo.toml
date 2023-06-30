@@ -14,8 +14,8 @@ path = "/dev/null"
 
 [[package.metadata.build-package.external-files]]
 # Use latest-srpm-url.sh to get this.
-url = "https://cdn.amazonlinux.com/al2023/blobstore/7da4ac2135147d0ab97afaa82b81cb7408dc5a2fa8f8dd3e785a908585977bd3/kernel-6.1.19-30.43.amzn2023.src.rpm"
-sha512 = "6f2458e5707c7635c86e08de666e1beaab6b6ce133a5cdf084c72c80802d54f4d352784ce97d4832bf9e8e7a74f491a551829806df391604138489ecb9d0ac17"
+url = "https://cdn.amazonlinux.com/al2023/blobstore/fc78f9cacdcb6227481fd326c05429914f6b085d7abad49c0b1fd896ec02dd4b/kernel-6.1.29-50.88.amzn2023.src.rpm"
+sha512 = "0d3a40a5811d36c0ac8a731686a816ae47f66f10ce8ca945f4e727f6c188c9d0a54c504667c25a86b7c80437c9fddafa3973205ad73ed7330b8957b526eff5ed"
 
 [build-dependencies]
 microcode = { path = "../microcode" }
