@@ -1,4 +1,4 @@
-version = "1.14.1"
+version = "1.14.2"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -212,3 +212,4 @@ version = "1.14.1"
     "migrate_v1.14.0_public-control-container-v0-7-2.lz4",
 ]
 "(1.14.0, 1.14.1)" = []
+"(1.14.1, 1.14.2)" = []

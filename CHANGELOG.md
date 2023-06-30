@@ -1,3 +1,41 @@
+# v1.14.2 (2023-07-07)
+
+## OS Changes
+
+* Improve the reliability of acquiring a DHCPv6 lease ([#3211], [#3212])
+* Update kernel-5.10 to 5.10.184 and kernel-5.15 to 5.15.117 ([#3238])
+* Update eni-max-pods with new instance types ([#3193])
+* Make `pluto` outbound API requests more resilient to intermittent network errors ([#3214])
+
+## Orchestrator Changes
+
+### ECS
+
+* Add image cleanup settings to control task image cleanup frequency ([#3231])
+
+### Kubernetes
+
+* Update to Kubernetes v1.24.15 ([#3234])
+* Update to Kubernetes v1.25.11 ([#3235])
+* Update to Kubernetes v1.26.6 ([#3236])
+* Update to Kubernetes v1.27.3 ([#3237])
+
+## Build Changes
+
+* Updated Bottlerocket SDK version to v0.33.0 ([#3213])
+
+[#3211]: https://github.com/bottlerocket-os/bottlerocket/pull/3211
+[#3212]: https://github.com/bottlerocket-os/bottlerocket/pull/3212
+[#3213]: https://github.com/bottlerocket-os/bottlerocket/pull/3213
+[#3214]: https://github.com/bottlerocket-os/bottlerocket/pull/3214
+[#3231]: https://github.com/bottlerocket-os/bottlerocket/pull/3231
+[#3234]: https://github.com/bottlerocket-os/bottlerocket/pull/3234
+[#3235]: https://github.com/bottlerocket-os/bottlerocket/pull/3235
+[#3236]: https://github.com/bottlerocket-os/bottlerocket/pull/3236
+[#3237]: https://github.com/bottlerocket-os/bottlerocket/pull/3237
+[#3238]: https://github.com/bottlerocket-os/bottlerocket/pull/3238
+[#3193]: https://github.com/bottlerocket-os/bottlerocket/pull/3193
+
 # v1.14.1 (2023-05-31)
 
 ## OS Changes
