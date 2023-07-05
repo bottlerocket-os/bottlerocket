@@ -212,4 +212,6 @@ version = "1.14.2"
     "migrate_v1.14.0_public-control-container-v0-7-2.lz4",
 ]
 "(1.14.0, 1.14.1)" = []
-"(1.14.1, 1.14.2)" = []
+"(1.14.1, 1.14.2)" = [
+    "migrate_v1.14.2_ecs-images-cleanup.lz4",
+]
