@@ -51,6 +51,11 @@ jobs:
       fail-fast: false
     name: "Build ${{ matrix.variant }}-${{ matrix.arch }}"
     steps:
+      - name: Random delay
+        run: |
+          delay=$((1 + $RANDOM % 32))
+          echo "Waiting ${delay} seconds before execution"
+          sleep $delay
       - uses: actions/checkout@v3
       - name: Preflight step to set up the runner
         uses: ./.github/actions/setup-node
