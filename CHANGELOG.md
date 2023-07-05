@@ -1,4 +1,4 @@
-# v1.14.2 (2023-07-07)
+# v1.14.2 (2023-07-06)
 
 ## OS Changes
 
@@ -6,6 +6,7 @@
 * Update kernel-5.10 to 5.10.184 and kernel-5.15 to 5.15.117 ([#3238])
 * Update eni-max-pods with new instance types ([#3193])
 * Make `pluto` outbound API requests more resilient to intermittent network errors ([#3214])
+* Update runc to 1.1.6 ([#3249])
 
 ## Orchestrator Changes
 
@@ -35,6 +36,7 @@
 [#3237]: https://github.com/bottlerocket-os/bottlerocket/pull/3237
 [#3238]: https://github.com/bottlerocket-os/bottlerocket/pull/3238
 [#3193]: https://github.com/bottlerocket-os/bottlerocket/pull/3193
+[#3249]: https://github.com/bottlerocket-os/bottlerocket/pull/3249
 
 # v1.14.1 (2023-05-31)
 
