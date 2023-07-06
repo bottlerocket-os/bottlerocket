@@ -6,6 +6,7 @@ use crate::repo::{
 };
 use crate::Args;
 use chrono::{DateTime, Utc};
+use clap::Parser;
 use lazy_static::lazy_static;
 use log::{info, trace};
 use pubsys_config::{InfraConfig, RepoExpirationPolicy};
@@ -13,7 +14,6 @@ use snafu::{ensure, OptionExt, ResultExt};
 use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
-use structopt::{clap, StructOpt};
 use tough::editor::RepositoryEditor;
 use tough::key_source::{KeySource, LocalKeySource};
 use tough::{ExpirationEnforcement, RepositoryLoader};
@@ -24,37 +24,36 @@ lazy_static! {
 }
 
 /// Refreshes and re-sign TUF repositories' non-root metadata files with new expiration dates
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub(crate) struct RefreshRepoArgs {
-    #[structopt(long)]
+    #[arg(long)]
     /// Use this named repo infrastructure from Infra.toml
     repo: String,
 
-    #[structopt(long)]
+    #[arg(long)]
     /// The architecture of the repo being refreshed and re-signed
     arch: String,
-    #[structopt(long)]
+    #[arg(long)]
     /// The variant of the repo being refreshed and re-signed
     variant: String,
 
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to root.json for this repo
     root_role_path: PathBuf,
 
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// If we generated a local key, we'll find it here; used if Infra.toml has no key defined
     default_key_path: PathBuf,
 
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to file that defines when repo non-root metadata should expire
     repo_expiration_policy_path: PathBuf,
 
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Where to store the refresh/re-signed repository (just the metadata files)
     outdir: PathBuf,
 
-    #[structopt(long)]
+    #[arg(long)]
     /// If this flag is set, repositories will succeed in loading and be refreshed even if they have
     /// expired metadata files.
     unsafe_refresh: bool,

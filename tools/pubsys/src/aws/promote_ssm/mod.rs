@@ -9,44 +9,43 @@ use crate::aws::{parse_arch, region_from_string};
 use crate::Args;
 use aws_sdk_ec2::model::ArchitectureValues;
 use aws_sdk_ssm::{Client as SsmClient, Region};
+use clap::Parser;
 use log::{info, trace};
 use pubsys_config::InfraConfig;
 use snafu::{ensure, ResultExt};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use structopt::{clap, StructOpt};
 
 /// Copies sets of SSM parameters
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub(crate) struct PromoteArgs {
     /// The architecture of the machine image
-    #[structopt(long, parse(try_from_str = parse_arch))]
+    #[arg(long, value_parser = parse_arch)]
     arch: ArchitectureValues,
 
     /// The variant name for the current build
-    #[structopt(long)]
+    #[arg(long)]
     variant: String,
 
     /// Version number (or string) to copy from
-    #[structopt(long)]
+    #[arg(long)]
     source: String,
 
     /// Version number (or string) to copy to
-    #[structopt(long)]
+    #[arg(long)]
     target: String,
 
     /// Comma-separated list of regions to promote in, overriding Infra.toml
-    #[structopt(long, use_delimiter = true)]
+    #[arg(long, value_delimiter = ',')]
     regions: Vec<String>,
 
     /// File holding the parameter templates
-    #[structopt(long)]
+    #[arg(long)]
     template_path: PathBuf,
 
     /// If set, contains the path to the file holding the original SSM parameters
     /// and where the newly promoted parameters will be written
-    #[structopt(long)]
+    #[arg(long)]
     ssm_parameter_output: Option<PathBuf>,
 }
 

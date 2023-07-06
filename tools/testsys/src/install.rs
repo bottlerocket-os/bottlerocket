@@ -11,10 +11,10 @@ use testsys_model::test_manager::{ImageConfig, TestManager};
 #[derive(Debug, Parser)]
 pub(crate) struct Install {
     /// The path to `Test.toml`
-    #[clap(long, env = "TESTSYS_TEST_CONFIG_PATH", parse(from_os_str))]
+    #[arg(long, env = "TESTSYS_TEST_CONFIG_PATH")]
     test_config_path: PathBuf,
 
-    #[clap(flatten)]
+    #[command(flatten)]
     agent_images: TestsysImages,
 }
 

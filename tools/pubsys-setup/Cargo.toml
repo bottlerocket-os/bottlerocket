@@ -7,6 +7,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
+clap = { version = "4", features = ["derive"] }
 hex = "0.4"
 log = "0.4"
 pubsys-config = { path = "../pubsys-config/", version = "0.1" }
@@ -15,7 +16,6 @@ sha2 = "0.10"
 shell-words = "1"
 simplelog = "0.12"
 snafu = "0.7"
-structopt = { version = "0.3", default-features = false  }
 tempfile = "3"
 toml = "0.5"
 url = { version = "2", features = ["serde"] }

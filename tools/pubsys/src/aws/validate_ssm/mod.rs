@@ -9,39 +9,38 @@ use super::ssm::{SsmKey, SsmParameters};
 use crate::aws::client::build_client_config;
 use crate::Args;
 use aws_sdk_ssm::{Client as SsmClient, Region};
+use clap::Parser;
 use log::{error, info, trace};
 use pubsys_config::InfraConfig;
 use snafu::ResultExt;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::path::PathBuf;
-use structopt::{clap, StructOpt};
 
 /// Validates SSM parameters and AMIs
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub struct ValidateSsmArgs {
     /// File holding the expected parameters
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     expected_parameters_path: PathBuf,
 
     /// If this flag is set, check for unexpected parameters in the validation regions. If not,
     /// only the parameters present in the expected parameters file will be validated.
-    #[structopt(long)]
+    #[arg(long)]
     check_unexpected: bool,
 
     /// Optional path where the validation results should be written
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     write_results_path: Option<PathBuf>,
 
     /// Optional filter to only write validation results with these statuses to the above path
     /// Available statuses are: `Correct`, `Incorrect`, `Missing`, `Unexpected`
-    #[structopt(long, requires = "write-results-path")]
+    #[arg(long, requires = "write_results_path")]
     write_results_filter: Option<Vec<SsmValidationResultStatus>>,
 
     /// If this flag is added, print the results summary table as JSON instead of a
     /// plaintext table
-    #[structopt(long)]
+    #[arg(long)]
     json: bool,
 }
 

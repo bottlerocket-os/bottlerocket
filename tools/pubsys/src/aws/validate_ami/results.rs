@@ -10,7 +10,7 @@ use std::fmt::{self, Display};
 use tabled::{Table, Tabled};
 
 /// Represent the possible status of an EC2 image validation
-#[derive(Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Eq, Hash, PartialEq, Serialize, Deserialize, Clone)]
 pub(crate) enum AmiValidationResultStatus {
     /// The image was found and its monitored fields have the expected values
     Correct,

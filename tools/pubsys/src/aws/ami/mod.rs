@@ -21,6 +21,7 @@ use aws_sdk_ec2::{Client as Ec2Client, Region};
 use aws_sdk_sts::error::GetCallerIdentityError;
 use aws_sdk_sts::output::GetCallerIdentityOutput;
 use aws_sdk_sts::Client as StsClient;
+use clap::Parser;
 use futures::future::{join, lazy, ready, FutureExt};
 use futures::stream::{self, StreamExt};
 use log::{error, info, trace, warn};
@@ -30,49 +31,47 @@ use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use structopt::{clap, StructOpt};
 use wait::wait_for_ami;
 
 const WARN_SEPARATOR: &str = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
 
 /// Builds Bottlerocket AMIs using latest build artifacts
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub(crate) struct AmiArgs {
     /// Path to the image containing the os volume
-    #[structopt(short = "o", long, parse(from_os_str))]
+    #[arg(short = 'o', long)]
     os_image: PathBuf,
 
     /// Path to the image containing the data volume
-    #[structopt(short = "d", long, parse(from_os_str))]
+    #[arg(short = 'd', long)]
     data_image: Option<PathBuf>,
 
     /// Path to the variant manifest
-    #[structopt(short = "v", long, parse(from_os_str))]
+    #[arg(short = 'v', long)]
     variant_manifest: PathBuf,
 
     /// The architecture of the machine image
-    #[structopt(short = "a", long, parse(try_from_str = parse_arch))]
+    #[arg(short = 'a', long, value_parser = parse_arch)]
     arch: ArchitectureValues,
 
     /// The desired AMI name
-    #[structopt(short = "n", long)]
+    #[arg(short = 'n', long)]
     name: String,
 
     /// The desired AMI description
-    #[structopt(long)]
+    #[arg(long)]
     description: Option<String>,
 
     /// Don't display progress bars
-    #[structopt(long)]
+    #[arg(long)]
     no_progress: bool,
 
     /// Regions where you want the AMI, the first will be used as the base for copying
-    #[structopt(long, use_delimiter = true)]
+    #[arg(long, value_delimiter = ',')]
     regions: Vec<String>,
 
     /// If specified, save created regional AMI IDs in JSON at this path.
-    #[structopt(long)]
+    #[arg(long)]
     ami_output: Option<PathBuf>,
 }
 

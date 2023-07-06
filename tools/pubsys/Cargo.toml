@@ -19,7 +19,7 @@ aws-smithy-types = "0.54"
 aws-types = "0.54"
 buildsys = { path = "../buildsys", version = "0.1" }
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
-clap = "3"
+clap = { version = "4", features = ["derive"] }
 coldsnap = { version = "0.5", default-features = false, features = ["aws-sdk-rust-rustls"] }
 duct = "0.13"
 futures = "0.3"
@@ -41,7 +41,6 @@ serde_json = "1"
 serde_plain = "1"
 simplelog = "0.12"
 snafu = "0.7"
-structopt = { version = "0.3", default-features = false }
 tabled = "0.10"
 tempfile = "3"
 tinytemplate = "1"

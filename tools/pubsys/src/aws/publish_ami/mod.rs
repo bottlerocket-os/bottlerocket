@@ -14,6 +14,7 @@ use aws_sdk_ec2::model::{
 use aws_sdk_ec2::output::{ModifyImageAttributeOutput, ModifySnapshotAttributeOutput};
 use aws_sdk_ec2::types::SdkError;
 use aws_sdk_ec2::{Client as Ec2Client, Region};
+use clap::{Args as ClapArgs, Parser};
 use futures::future::{join, ready};
 use futures::stream::{self, StreamExt};
 use log::{debug, error, info, trace};
@@ -23,52 +24,49 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::iter::FromIterator;
 use std::path::PathBuf;
-use structopt::{clap, StructOpt};
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 pub(crate) struct ModifyOptions {
     /// User IDs to give/remove access
-    #[structopt(long, use_delimiter = true, group = "who")]
+    #[arg(long, value_delimiter = ',', group = "who")]
     pub(crate) user_ids: Vec<String>,
     /// Group names to give/remove access
-    #[structopt(long, use_delimiter = true, group = "who")]
+    #[arg(long, value_delimiter = ',', group = "who")]
     pub(crate) group_names: Vec<String>,
     /// Organization arns to give/remove access
-    #[structopt(long, use_delimiter = true, group = "who")]
+    #[arg(long, value_delimiter = ',', group = "who")]
     pub(crate) organization_arns: Vec<String>,
     /// Organizational unit arns to give/remove access
-    #[structopt(long, use_delimiter = true, group = "who")]
+    #[arg(long, value_delimiter = ',', group = "who")]
     pub(crate) organizational_unit_arns: Vec<String>,
 }
 
 /// Grants or revokes permissions to Bottlerocket AMIs
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
-#[structopt(group = clap::ArgGroup::with_name("mode").required(true).multiple(false))]
-#[structopt(group = clap::ArgGroup::with_name("who").required(true).multiple(true))]
-pub(crate) struct PublishArgs {
+#[derive(Debug, ClapArgs)]
+#[group(required = true, multiple = true)]
+pub(crate) struct Who {
     /// Path to the JSON file containing regional AMI IDs to modify
-    #[structopt(long)]
+    #[arg(long)]
     ami_input: PathBuf,
 
     /// Comma-separated list of regions to publish in, overriding Infra.toml; given regions must be
     /// in the --ami-input file
-    #[structopt(long, use_delimiter = true)]
+    #[arg(long, value_delimiter = ',')]
     regions: Vec<String>,
 
     /// Grant access to the given users/groups
-    #[structopt(long, group = "mode")]
+    #[arg(long, group = "mode")]
     grant: bool,
     /// Revoke access from the given users/groups
-    #[structopt(long, group = "mode")]
+    #[arg(long, group = "mode")]
     revoke: bool,
 
-    #[structopt(flatten)]
+    #[command(flatten)]
     modify_opts: ModifyOptions,
 }
 
 /// Common entrypoint from main()
-pub(crate) async fn run(args: &Args, publish_args: &PublishArgs) -> Result<()> {
+pub(crate) async fn run(args: &Args, publish_args: &Who) -> Result<()> {
     let (operation, description) = if publish_args.grant {
         (OperationType::Add, "granting access")
     } else if publish_args.revoke {

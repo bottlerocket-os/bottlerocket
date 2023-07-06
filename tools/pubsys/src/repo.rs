@@ -7,6 +7,7 @@ pub(crate) mod validate_repo;
 use crate::{friendly_version, Args};
 use aws_sdk_kms::{Client as KmsClient, Region};
 use chrono::{DateTime, Utc};
+use clap::Parser;
 use lazy_static::lazy_static;
 use log::{debug, info, trace, warn};
 use parse_datetime::parse_datetime;
@@ -19,7 +20,6 @@ use std::convert::TryInto;
 use std::fs::{self, File};
 use std::num::NonZeroU64;
 use std::path::{Path, PathBuf};
-use structopt::{clap, StructOpt};
 use tempfile::NamedTempFile;
 use tokio::runtime::Runtime;
 use tough::{
@@ -39,66 +39,65 @@ lazy_static! {
 }
 
 /// Builds Bottlerocket repos using latest build artifacts
-#[derive(Debug, StructOpt)]
-#[structopt(setting = clap::AppSettings::DeriveDisplayOrder)]
+#[derive(Debug, Parser)]
 pub(crate) struct RepoArgs {
     // Metadata about the update
-    #[structopt(long)]
+    #[arg(long)]
     /// Use this named repo infrastructure from Infra.toml
     repo: String,
-    #[structopt(long)]
+    #[arg(long)]
     /// The architecture of the repo and the update being added
     arch: String,
-    #[structopt(long, parse(try_from_str=friendly_version))]
+    #[arg(long, value_parser = friendly_version)]
     /// The version of the update being added
     version: Version,
-    #[structopt(long)]
+    #[arg(long)]
     /// The variant of the update being added
     variant: String,
 
     // The images to add in this update
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to the image containing the boot partition
     boot_image: PathBuf,
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to the image containing the root partition
     root_image: PathBuf,
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to the image containing the verity hashes
     hash_image: PathBuf,
 
     // Optionally add other files to the repo
-    #[structopt(long = "link-target", parse(from_os_str))]
+    #[arg(long = "link-target")]
     /// Optional paths to add as targets and symlink into repo
     link_targets: Vec<PathBuf>,
-    #[structopt(long = "copy-target", parse(from_os_str))]
+    #[arg(long = "copy-target")]
     /// Optional paths to add as targets and copy into repo
     copy_targets: Vec<PathBuf>,
 
     // Policies that pubsys interprets to set repo parameters
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to file that defines when repo metadata should expire
     repo_expiration_policy_path: PathBuf,
 
     // Configuration that pubsys passes on to other tools
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to Release.toml
     release_config_path: PathBuf,
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to file that defines when this update will become available
     wave_policy_path: PathBuf,
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Path to root.json for this repo
     root_role_path: PathBuf,
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// If we generated a local key, we'll find it here; used if Infra.toml has no key defined
     default_key_path: PathBuf,
 
-    #[structopt(long, parse(try_from_str = parse_datetime))]
+    #[arg(long, value_parser = parse_datetime)]
     /// When the waves and expiration timer will start; RFC3339 date or "in X hours/days/weeks"
     release_start_time: Option<DateTime<Utc>>,
 
-    #[structopt(long, parse(from_os_str))]
+    #[arg(long)]
     /// Where to store the created repo
     outdir: PathBuf,
 }

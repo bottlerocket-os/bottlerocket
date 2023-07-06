@@ -7,7 +7,7 @@ use testsys_model::SecretName;
 /// Add a testsys object to the testsys cluster.
 #[derive(Debug, Parser)]
 pub(crate) struct Add {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     command: AddCommand,
 }
 
@@ -28,7 +28,7 @@ impl Add {
 /// Add a secret to the cluster.
 #[derive(Debug, Parser)]
 pub(crate) struct AddSecret {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     command: Command,
 }
 
@@ -53,11 +53,11 @@ impl AddSecret {
 #[derive(Debug, Parser)]
 pub(crate) struct AddSecretMap {
     /// Name of the secret
-    #[clap(short, long)]
+    #[arg(short, long)]
     name: SecretName,
 
     /// Key value pairs for secrets. (Key=value)
-    #[clap(parse(try_from_str = parse_key_val))]
+    #[arg(value_parser = parse_key_val)]
     args: Vec<(String, String)>,
 }
 
@@ -84,19 +84,19 @@ fn parse_key_val(s: &str) -> Result<(String, String)> {
 #[derive(Debug, Parser)]
 pub(crate) struct AddSecretImage {
     /// Controller image pull username
-    #[clap(long, short = 'u')]
+    #[arg(long, short = 'u')]
     pull_username: String,
 
     /// Controller image pull password
-    #[clap(long, short = 'p')]
+    #[arg(long, short = 'p')]
     pull_password: String,
 
     /// Image uri
-    #[clap(long = "image-uri", short)]
+    #[arg(long = "image-uri", short)]
     image_uri: String,
 
     /// Controller image uri
-    #[clap(long, short = 'n')]
+    #[arg(long, short = 'n')]
     secret_name: String,
 }
 

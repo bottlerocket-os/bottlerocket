@@ -74,9 +74,6 @@ skip = [
 ]
 
 skip-tree = [
-    # structopt pulls in an older version of clap
-    { name = "structopt", version = "0.3.26" },
-
     # windows-sys is not a direct dependency. mio and schannel
     # are using different versions of windows-sys. we skip the
     # dependency tree because windows-sys has many sub-crates
@@ -86,6 +83,9 @@ skip-tree = [
     # TestSys uses a newer version of base64 and serde_yaml
     { name = "testsys-model", version = "=0.0.8" },
     { name = "bottlerocket-types", version = "=0.0.8" },
+
+    # generate-readme uses an old version of clap and other dependencies
+    { name = "generate-readme", version = "0.1.0" }
 ]
 
 [sources]

@@ -10,31 +10,31 @@ use testsys_model::test_manager::{CrdState, CrdType, SelectionParams, StatusColu
 #[derive(Debug, Parser)]
 pub(crate) struct Status {
     /// Configure the output of the command (json, narrow, wide).
-    #[clap(long, short = 'o')]
+    #[arg(long, short = 'o')]
     output: Option<StatusOutput>,
 
     /// Focus status on a particular arch
-    #[clap(long)]
+    #[arg(long)]
     arch: Option<String>,
 
     /// Focus status on a particular variant
-    #[clap(long)]
+    #[arg(long)]
     variant: Option<String>,
 
     /// Only show tests
-    #[clap(long)]
+    #[arg(long)]
     test: bool,
 
     /// Only show passed tests
-    #[clap(long, conflicts_with_all=&["failed", "running"])]
+    #[arg(long, conflicts_with_all=&["failed", "running"])]
     passed: bool,
 
     /// Only show failed tests
-    #[clap(long, conflicts_with_all=&["passed", "running"])]
+    #[arg(long, conflicts_with_all=&["passed", "running"])]
     failed: bool,
 
     /// Only CRD's that haven't finished
-    #[clap(long, conflicts_with_all=&["passed", "failed"])]
+    #[arg(long, conflicts_with_all=&["passed", "failed"])]
     running: bool,
 }
 
@@ -114,7 +114,7 @@ impl Status {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "kebab-case")]
 enum StatusOutput {
     /// Output the status in json
