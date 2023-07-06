@@ -7,52 +7,68 @@ mod error;
 extern crate log;
 
 use crate::error::Result;
+
+use argh::FromArgs;
 use chrono::{DateTime, Utc};
 use semver::Version;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
 use std::fs;
 use std::path::PathBuf;
-use structopt::StructOpt;
 use update_metadata::{Images, Manifest, Release, UpdateWaves};
 
-#[derive(Debug, StructOpt)]
-struct GeneralArgs {
-    // metadata file to create/modify
+/// Create an empty manifest
+#[derive(Debug, FromArgs)]
+#[argh(subcommand, name = "init")]
+struct InitArgs {
+    /// metadata file to create/modify
+    #[argh(positional)]
     file: PathBuf,
 }
 
-#[derive(Debug, StructOpt)]
+/// Validate a manifest file, but make no changes
+#[derive(Debug, FromArgs)]
+#[argh(subcommand, name = "validate")]
+struct ValidateArgs {
+    /// metadata file to create/modify
+    #[argh(positional)]
+    file: PathBuf,
+}
+
+/// Add a new update to the manifest, not including wave information
+#[derive(Debug, FromArgs)]
+#[argh(subcommand, name = "add-update")]
 struct AddUpdateArgs {
-    // metadata file to create/modify
+    /// metadata file to create/modify
+    #[argh(positional)]
     file: PathBuf,
 
-    // image 'variant', eg. 'aws-ecs-1'
-    #[structopt(short = "f", long = "variant")]
+    /// image 'variant', eg. 'aws-ecs-1'
+    #[argh(option, short = 'f', long = "variant")]
     variant: String,
 
-    // image version
-    #[structopt(short = "v", long = "version")]
+    /// image version
+    #[argh(option, short = 'v', long = "version")]
     image_version: Version,
 
-    // architecture image is built for
-    #[structopt(short = "a", long = "arch")]
+    /// architecture image is built for
+    #[argh(option, short = 'a', long = "arch")]
     arch: String,
 
-    // maximum valid version
-    #[structopt(short = "m", long = "max-version")]
+    /// maximum valid version
+    #[argh(option, short = 'm', long = "max-version")]
     max_version: Option<Version>,
 
-    // root image target name
-    #[structopt(short = "r", long = "root")]
+    /// root image target name
+    #[argh(option, short = 'r', long = "root")]
     root: String,
 
-    // boot image target name
-    #[structopt(short = "b", long = "boot")]
+    /// boot image target name
+    #[argh(option, short = 'b', long = "boot")]
     boot: String,
 
-    // verity "hash" image target name
-    #[structopt(short = "h", long = "hash")]
+    /// verity "hash" image target name
+    #[argh(option, short = 'h', long = "hash")]
     hash: String,
 }
 
@@ -75,21 +91,24 @@ impl AddUpdateArgs {
     }
 }
 
-#[derive(Debug, StructOpt)]
+/// Remove an update from the manifest, including wave information
+#[derive(Debug, FromArgs)]
+#[argh(subcommand, name = "remove-update")]
 struct RemoveUpdateArgs {
-    // metadata file to create/modify
+    /// metadata file to create/modify
+    #[argh(positional)]
     file: PathBuf,
 
-    // image 'variant', eg. 'aws-ecs-1'
-    #[structopt(short = "l", long = "variant")]
+    /// image 'variant', eg. 'aws-ecs-1'
+    #[argh(option, short = 'l', long = "variant")]
     variant: String,
 
-    // image version
-    #[structopt(short = "v", long = "version")]
+    /// image version
+    #[argh(option, short = 'v', long = "version")]
     image_version: Version,
 
-    // architecture image is built for
-    #[structopt(short = "a", long = "arch")]
+    /// architecture image is built for
+    #[argh(option, short = 'a', long = "arch")]
     arch: String,
 }
 
@@ -119,25 +138,28 @@ impl RemoveUpdateArgs {
     }
 }
 
-#[derive(Debug, StructOpt)]
+/// Set waves for an update
+#[derive(Debug, FromArgs)]
+#[argh(subcommand, name = "set-waves")]
 struct WaveArgs {
-    // metadata file to create/modify
+    /// metadata file to create/modify
+    #[argh(positional)]
     file: PathBuf,
 
-    // image 'variant', eg. 'aws-ecs-1'
-    #[structopt(short = "l", long = "variant")]
+    /// image 'variant', eg. 'aws-ecs-1'
+    #[argh(option, short = 'l', long = "variant")]
     variant: String,
 
-    // image version
-    #[structopt(short = "v", long = "version")]
+    /// image version
+    #[argh(option, short = 'v', long = "version")]
     image_version: Version,
 
-    // architecture image is built for
-    #[structopt(short = "a", long = "arch")]
+    /// architecture image is built for
+    #[argh(option, short = 'a', long = "arch")]
     arch: String,
 
-    // file that contains wave structure
-    #[structopt(short = "w", long = "wave-file", conflicts_with_all = &["bound", "start"])]
+    /// file that contains wave structure
+    #[argh(option, short = 'w', long = "wave-file")]
     wave_file: Option<PathBuf>,
 
     // The user can specify the starting point for the the wave offsets, if they don't want them to
@@ -149,8 +171,8 @@ struct WaveArgs {
     //
     // If instead you specify --start-at "2020-02-02T10:00:00Z" then the first wave will start 1
     // hour after that, i.e. 2020-02-02 11:00.
-    /// Wave offsets will be relative to this RFC3339 datetime, instead of right now
-    #[structopt(long = "start-at")]
+    /// wave offsets will be relative to this RFC3339 datetime, instead of right now
+    #[argh(option, long = "start-at")]
     start_at: Option<DateTime<Utc>>,
 }
 
@@ -181,14 +203,16 @@ impl WaveArgs {
     }
 }
 
-#[derive(Debug, StructOpt)]
+/// Copy the migrations from an input file to an output file
+#[derive(Debug, FromArgs)]
+#[argh(subcommand, name = "set-migrations")]
 struct MigrationArgs {
-    // file to get migrations from (probably Release.toml)
-    #[structopt(short = "f", long = "from")]
+    /// file to get migrations from (probably Release.toml)
+    #[argh(option, short = 'f', long = "from")]
     from: PathBuf,
 
-    // file to write migrations to (probably manifest.json)
-    #[structopt(short = "t", long = "to")]
+    /// file to write migrations to (probably manifest.json)
+    #[argh(option, short = 't', long = "to")]
     to: PathBuf,
 }
 
@@ -211,13 +235,16 @@ impl MigrationArgs {
     }
 }
 
-#[derive(Debug, StructOpt)]
+/// Set the global maximum image version
+#[derive(Debug, FromArgs)]
+#[argh(subcommand, name = "set-max-version")]
 struct MaxVersionArgs {
-    // metadata file to create/modify
+    /// metadata file to create/modify
+    #[argh(positional)]
     file: PathBuf,
 
-    // maximum valid version
-    #[structopt(short, long)]
+    /// maximum valid version
+    #[argh(option, short = 'v', long = "max-version")]
     max_version: Version,
 }
 
@@ -230,30 +257,31 @@ impl MaxVersionArgs {
     }
 }
 
-#[derive(Debug, StructOpt)]
-#[structopt(rename_all = "kebab-case")]
+#[derive(FromArgs, Debug)]
+#[argh(subcommand)]
 enum Command {
-    /// Create an empty manifest
-    Init(GeneralArgs),
-    /// Add a new update to the manifest, not including wave information
+    Init(InitArgs),
     AddUpdate(AddUpdateArgs),
-    /// Set waves for an update
     SetWaves(WaveArgs),
-    /// Set the global maximum image version
     SetMaxVersion(MaxVersionArgs),
-    /// Remove an update from the manifest, including wave information
     RemoveUpdate(RemoveUpdateArgs),
-    /// Copy the migrations from an input file to an output file
     SetMigrations(MigrationArgs),
-    /// Validate a manifest file, but make no changes
-    Validate(GeneralArgs),
+    Validate(ValidateArgs),
+}
+
+#[derive(FromArgs, Debug)]
+/// Top-level command.
+struct TopLevel {
+    #[argh(subcommand)]
+    cmd: Command,
 }
 
 fn main_inner() -> Result<()> {
     // SimpleLogger will send errors to stderr and anything less to stdout.
     SimpleLogger::init(LevelFilter::Info, LogConfig::default()).context(error::LoggerSnafu)?;
 
-    match Command::from_args() {
+    let cmd: TopLevel = argh::from_env();
+    match cmd.cmd {
         Command::Init(args) => {
             match update_metadata::write_file(&args.file, &Manifest::default()) {
                 Ok(_) => Ok(()),

@@ -56,14 +56,17 @@ license-files = [
 multiple-versions = "deny"
 wildcards = "deny"
 
+deny = [
+    { name = "structopt" },
+    { name = "clap", wrappers = [ "cargo-readme" ] },
+]
+
 skip = [
 ]
 
 skip-tree = [
     # hyper-proxy is using an older hyper-rustls
     { name = "hyper-proxy", version = "=0.9.1" },
-    # structopt pulls in an older version of clap
-    { name = "structopt", version = "=0.3.26" },
     # tungstenite is using an older sha-1
     { name = "tungstenite", version = "=0.16" },
     # windows-sys is not a direct dependency. mio and schannel
@@ -71,6 +74,9 @@ skip-tree = [
     # dependency tree because windows-sys has many sub-crates
     # that differ in major version.
     { name = "windows-sys", version = "=0.42.0" },
+    # generate-readme pulls in an older clap that causes some duplicate
+    # dependencies
+    { name = "generate-readme", version = "=0.1.0" }
 ]
 
 [sources]
