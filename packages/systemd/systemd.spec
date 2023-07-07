@@ -78,6 +78,10 @@ Patch9011: 9011-units-keep-modprobe-service-units-running.patch
 # allows us to exclude them when not using networkd.
 Patch9012: 9012-tmpfiles-Split-networkd-entries-into-a-separate-file.patch
 
+# Local patch to conditionalize systemd-networkd calls to hostname and timezone
+# DBUS services not used in Bottlerocket
+Patch9013: 9013-systemd-networkd-Conditionalize-hostnamed-timezoned-DBUS.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
