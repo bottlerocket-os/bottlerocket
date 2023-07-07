@@ -6,6 +6,7 @@ mod vlan;
 
 use super::config::NetworkDConfigFile;
 use super::{NetDevFileCreator, NetworkFileCreator, Vlans};
+use crate::interface_id::InterfaceId;
 pub(crate) use bond::NetworkDBond;
 pub(crate) use interface::NetworkDInterface;
 pub(crate) use vlan::NetworkDVlan;
@@ -47,6 +48,14 @@ impl NetworkDDevice {
         };
 
         configs
+    }
+
+    pub(super) fn name(&self) -> InterfaceId {
+        match self {
+            NetworkDDevice::Interface(i) => i.name.clone(),
+            NetworkDDevice::Bond(b) => b.name.clone().into(),
+            NetworkDDevice::Vlan(v) => v.name.clone().into(),
+        }
     }
 }
 
