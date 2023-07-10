@@ -34,6 +34,11 @@ const SENSITIVE_SETTINGS_PATTERNS: &[&str] = &[
     "settings.kubernetes.bootstrap-token",
     // Can contain a username:password component
     "settings.network.https-proxy",
+    "settings.kubernetes.server-key",
+    "settings.container-registry.credentials",
+    // Can be stored in settings.aws.credentials, but user can also add creds here
+    "settings.aws.config",
+    "settings.aws.credentials",
 ];
 
 /// Returns the list of log requests to run by combining `VARIANT_REQUESTS` and `COMMON_REQUESTS`.
