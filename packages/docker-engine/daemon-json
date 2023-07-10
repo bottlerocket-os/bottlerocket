@@ -3,7 +3,6 @@
   "live-restore": true,
   "max-concurrent-downloads": 10,
   "storage-driver": "overlay2",
-  "exec-opts": ["native.cgroupdriver=cgroupfs"],
   "data-root": "/var/lib/docker",
   "default-runtime": "shimpei",
   "runtimes": { "shimpei": { "path": "shimpei" } },
