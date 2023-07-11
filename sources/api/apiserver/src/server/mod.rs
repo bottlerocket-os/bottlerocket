@@ -15,7 +15,7 @@ use error::Result;
 use fs2::FileExt;
 use http::StatusCode;
 use log::info;
-use model::{ConfigurationFiles, Model, Services, Settings};
+use model::{ConfigurationFiles, Model, Report, Services, Settings};
 use nix::unistd::{chown, Gid};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
@@ -27,6 +27,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync;
 use thar_be_updates::status::{UpdateStatus, UPDATE_LOCKFILE};
+use tokio::process::Command as AsyncCommand;
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -121,6 +122,11 @@ where
             )
             .service(web::scope("/updates").route("/status", web::get().to(get_update_status)))
             .service(web::resource("/exec").route(web::get().to(exec::ws_exec)))
+            .service(
+                web::scope("/report")
+                    .route("", web::get().to(list_reports))
+                    .route("/cis", web::get().to(get_cis_report)),
+            )
     })
     .workers(threads)
     .bind_uds(socket_path.as_ref())
@@ -543,6 +549,46 @@ async fn reboot() -> Result<HttpResponse> {
     Ok(HttpResponse::NoContent().finish())
 }
 
+/// Gets the set of report types supported by this host.
+async fn list_reports() -> Result<ReportListResponse> {
+    // Add each report to list response when adding a new handler
+    let data = vec![Report {
+        name: "cis".to_string(),
+        description: "CIS Bottlerocket Benchmark".to_string(),
+    }];
+    Ok(ReportListResponse(data))
+}
+
+/// Gets the Bottlerocket CIS benchmark report.
+async fn get_cis_report(query: web::Query<HashMap<String, String>>) -> Result<HttpResponse> {
+    let mut cmd = AsyncCommand::new("/usr/bin/bloodhound");
+
+    // Check for requested level, default is 1
+    if let Some(level) = query.get("level") {
+        cmd.arg("-l").arg(level);
+    }
+
+    // Check for requested format, default is text
+    if let Some(format) = query.get("format") {
+        cmd.arg("-f").arg(format);
+    }
+
+    let output = cmd.output().await.context(error::ReportExecSnafu)?;
+    ensure!(
+        output.status.success(),
+        error::ReportResultSnafu {
+            exit_code: match output.status.code() {
+                Some(code) => code,
+                None => output.status.signal().unwrap_or(1),
+            },
+            stderr: String::from_utf8_lossy(&output.stderr),
+        }
+    );
+    Ok(HttpResponse::Ok()
+        .content_type("application/text")
+        .body(String::from_utf8_lossy(&output.stdout).to_string()))
+}
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 // Helpers for handler methods called by the router
@@ -572,6 +618,7 @@ impl ResponseError for error::Error {
             MissingInput { .. } => StatusCode::BAD_REQUEST,
             EmptyInput { .. } => StatusCode::BAD_REQUEST,
             NewKey { .. } => StatusCode::BAD_REQUEST,
+            ReportTypeMissing { .. } => StatusCode::BAD_REQUEST,
 
             // 404 Not Found
             MissingData { .. } => StatusCode::NOT_FOUND,
@@ -582,6 +629,7 @@ impl ResponseError for error::Error {
 
             // 422 Unprocessable Entity
             CommitWithNoPending => StatusCode::UNPROCESSABLE_ENTITY,
+            ReportNotSupported { .. } => StatusCode::UNPROCESSABLE_ENTITY,
 
             // 423 Locked
             UpdateShareLock { .. } => StatusCode::LOCKED,
@@ -618,6 +666,8 @@ impl ResponseError for error::Error {
             UpdateStatusParse { .. } => StatusCode::INTERNAL_SERVER_ERROR,
             UpdateInfoParse { .. } => StatusCode::INTERNAL_SERVER_ERROR,
             UpdateLockOpen { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ReportExec { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ReportResult { .. } => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         HttpResponse::build(status_code).body(self.to_string())
@@ -702,3 +752,6 @@ impl_responder_for!(ChangedKeysResponse, self, self.0);
 
 struct TransactionListResponse(HashSet<String>);
 impl_responder_for!(TransactionListResponse, self, self.0);
+
+struct ReportListResponse(Vec<Report>);
+impl_responder_for!(ReportListResponse, self, self.0);
