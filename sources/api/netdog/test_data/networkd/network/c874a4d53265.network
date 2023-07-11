@@ -1,0 +1,8 @@
+[Match]
+PermanentMACAddress=c8:74:a4:d5:32:65
+[Network]
+Address=192.168.14.5/24
+[Route]
+Destination=10.10.10.0/24
+Gateway=192.168.14.25
+PreferredSource=192.168.14.5

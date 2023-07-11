@@ -1,0 +1,13 @@
+[Match]
+Name=eno17
+[Network]
+Address=3001:f00f:f00f::2/64
+Address=3001:f00f:f00f::3/64
+[Route]
+Destination=3001:dead:beef::2/64
+Gateway=3001:beef:beef::1
+Metric=100
+[Route]
+Destination=3001:dead:feed::2/64
+Gateway=3001:beef:beef::2
+Metric=200

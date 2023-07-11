@@ -1,0 +1,10 @@
+[Match]
+Name=bond2
+[Link]
+RequiredForOnline=true
+[Network]
+ConfigureWithoutCarrier=true
+DHCP=ipv6
+[DHCPv6]
+UseDNS=true
+UseDomains=true

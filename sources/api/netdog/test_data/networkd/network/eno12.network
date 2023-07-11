@@ -1,0 +1,7 @@
+[Match]
+Name=eno12
+[Network]
+Address=10.0.0.9/24
+[Route]
+Destination=10.10.10.0/24
+Gateway=10.0.0.1

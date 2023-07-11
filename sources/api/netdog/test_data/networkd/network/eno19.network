@@ -1,0 +1,11 @@
+[Match]
+Name=eno19
+[Link]
+RequiredForOnline=true
+[Network]
+Address=3001:f00f:f00f::2/64
+Address=3001:f00f:f00f::3/64
+DHCP=ipv6
+[DHCPv6]
+UseDNS=true
+UseDomains=true

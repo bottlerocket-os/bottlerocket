@@ -1,0 +1,11 @@
+[Match]
+Name=eno6
+[Link]
+RequiredForOnline=true
+RequiredFamilyForOnline=ipv4
+[Network]
+DHCP=ipv4
+[DHCPv4]
+RouteMetric=100
+UseDNS=true
+UseDomains=true

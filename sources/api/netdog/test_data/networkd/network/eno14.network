@@ -1,0 +1,13 @@
+[Match]
+Name=eno14
+[Network]
+Address=10.0.0.10/24
+Address=11.0.0.11/24
+[Route]
+Destination=0.0.0.0/0
+Gateway=10.0.0.1
+Metric=100
+[Route]
+Destination=0.0.0.0/0
+Gateway=11.0.0.1
+Metric=200
