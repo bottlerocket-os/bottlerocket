@@ -8,12 +8,12 @@
         "cwd": "/",
         {{~#if settings.oci-defaults.capabilities~}}
         "capabilities": {
-            {{~oci_defaults settings.oci-defaults.capabilities~}}
+            {{~oci_defaults "containerd" settings.oci-defaults.capabilities~}}
         },
         {{~/if~}}
         {{~#if settings.oci-defaults.resource-limits~}}
         "rlimits": [
-            {{~oci_defaults settings.oci-defaults.resource-limits~}}
+            {{~oci_defaults "containerd" settings.oci-defaults.resource-limits~}}
         ],
         {{~/if~}}
         "noNewPrivileges": true

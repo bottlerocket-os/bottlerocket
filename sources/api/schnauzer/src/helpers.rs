@@ -307,6 +307,12 @@ mod error {
             number: usize,
             source: std::num::TryFromIntError,
         },
+
+        #[snafu(display("Invalid output type '{}', expected 'docker' or 'containerd'", runtime))]
+        InvalidOutputType {
+            source: serde_plain::Error,
+            runtime: String,
+        },
     }
 
     // Handlebars helpers are required to return a RenderError.
@@ -1371,6 +1377,111 @@ enum OciSpecSection {
 
 derive_fromstr_from_deserialize!(OciSpecSection);
 
+#[derive(Deserialize, Debug, Clone, Copy)]
+#[serde(rename_all = "kebab-case")]
+enum Runtime {
+    Docker,
+    Containerd,
+}
+
+derive_fromstr_from_deserialize!(Runtime);
+
+impl Runtime {
+    fn get_capabilities(&self, caps: String) -> String {
+        match self {
+            Self::Docker => Docker::get_capabilities(caps),
+            Self::Containerd => Containerd::get_capabilities(caps),
+        }
+    }
+
+    fn get_resource_limits(
+        &self,
+        rlimit_type: &OciDefaultsResourceLimitType,
+        values: &OciDefaultsResourceLimit,
+    ) -> String {
+        match self {
+            Self::Docker => Docker::get_resource_limits(rlimit_type, values),
+            Self::Containerd => Containerd::get_resource_limits(rlimit_type, values),
+        }
+    }
+}
+
+struct Docker;
+struct Containerd;
+
+impl Docker {
+    /// Formats capabilities for Docker
+    fn get_capabilities(caps: String) -> String {
+        format!(
+            concat!(r#"["#, "{capabilities}", "],\n",),
+            capabilities = caps,
+        )
+    }
+
+    /// Formats resource limits for Docker
+    fn get_resource_limits(
+        rlimit_type: &OciDefaultsResourceLimitType,
+        values: &OciDefaultsResourceLimit,
+    ) -> String {
+        format!(
+            r#" "{}":{{ "Name": "{}", "Hard": {}, "Soft": {} }}"#,
+            rlimit_type
+                .to_linux_string()
+                .replace("RLIMIT_", "")
+                .to_lowercase(),
+            rlimit_type
+                .to_linux_string()
+                .replace("RLIMIT_", "")
+                .to_lowercase(),
+            values.hard_limit,
+            values.soft_limit,
+        )
+    }
+}
+
+impl Containerd {
+    /// Formats capabilities for Containerd
+    fn get_capabilities(caps: String) -> String {
+        format!(
+            concat!(
+                r#""bounding": ["#,
+                "{capabilities_bounding}",
+                "],\n",
+                r#""effective": ["#,
+                "{capabilities_effective}",
+                "],\n",
+                r#""permitted": ["#,
+                "{capabilities_permitted}",
+                "]\n",
+            ),
+            capabilities_bounding = caps,
+            capabilities_effective = caps,
+            capabilities_permitted = caps,
+        )
+    }
+
+    /// Formats resource limits for Containerd
+    fn get_resource_limits(
+        rlimit_type: &OciDefaultsResourceLimitType,
+        values: &OciDefaultsResourceLimit,
+    ) -> String {
+        format!(
+            r#"{{ "type": "{}", "hard": {}, "soft": {} }}"#,
+            rlimit_type.to_linux_string(),
+            Self::get_limit(values.hard_limit),
+            Self::get_limit(values.soft_limit),
+        )
+    }
+
+    /// Converts I64 values to u64 for Containerd
+    fn get_limit(limit: i64) -> u64 {
+        match limit {
+            -1 => u64::MAX,
+            _ => limit as u64,
+        }
+    }
+}
+
 /// This helper writes out the default OCI runtime spec.
 ///
 /// The calling pattern is `{{ oci_defaults settings.oci-defaults.resource-limits }}`,
@@ -1398,14 +1509,28 @@ pub fn oci_defaults(
 
     // Check number of parameters, must be exactly two (OCI spec section to render and settings values for the section)
     debug!("Number of params: {}", helper.params().len());
-    check_param_count(helper, template_name, 1)?;
+    check_param_count(helper, template_name, 2)?;
     debug!("params: {:?}", helper.params());
 
+    debug!("Getting the requested output type to render");
+    let runtime_val = get_param(helper, 0)?;
+    let runtime_str = runtime_val
+        .as_str()
+        .with_context(|| error::InvalidTemplateValueSnafu {
+            expected: "string",
+            value: runtime_val.to_owned(),
+            template: template_name.to_owned(),
+        })?;
+
+    let runtime = Runtime::from_str(runtime_str).context(error::InvalidOutputTypeSnafu {
+        runtime: runtime_str.to_owned(),
+    })?;
+
     debug!("Getting the requested OCI spec section to render");
-    let oci_defaults_values = get_param(helper, 0)?;
+    let oci_defaults_values = get_param(helper, 1)?;
     // We want the settings path so we know which OCI spec section we are rendering.
     // e.g. settings.oci-defaults.resource-limits
-    let settings_path = get_param_key_name(helper, 0)?;
+    let settings_path = get_param_key_name(helper, 1)?;
     // Extract the last part of the settings path, which is the OCI spec section we want to render.
     let oci_spec_section = settings_path
         .split('.')
@@ -1416,9 +1541,21 @@ pub fn oci_defaults(
     let section =
         OciSpecSection::from_str(oci_spec_section).context(error::InvalidOciSpecSectionSnafu)?;
     let result_lines = match section {
-        OciSpecSection::Capabilities => oci_spec_capabilities(oci_defaults_values)?,
-        OciSpecSection::ResourceLimits => oci_spec_resource_limits(oci_defaults_values)?,
+        OciSpecSection::Capabilities => {
+            let capabilities = oci_spec_capabilities(oci_defaults_values)?;
+            runtime.get_capabilities(capabilities)
+        }
+        OciSpecSection::ResourceLimits => {
+            let rlimits = oci_spec_resource_limits(oci_defaults_values)?;
+            rlimits
+                .iter()
+                .map(|(rlimit_type, values)| runtime.get_resource_limits(rlimit_type, values))
+                .collect::<Vec<String>>()
+                .join(",\n")
+        }
     };
+
+    debug!("{}_section: \n{}", oci_spec_section, result_lines);
 
     // Write out the final values to the configuration file
     out.write(result_lines.as_str())
@@ -1454,26 +1591,7 @@ fn oci_spec_capabilities(value: &Value) -> Result<String, RenderError> {
     capabilities_lines.sort();
     let capabilities_lines_joined = capabilities_lines.join(",\n");
 
-    let capabilities_section = format!(
-        concat!(
-            r#""bounding": ["#,
-            "{capabilities_bounding}",
-            "],\n",
-            r#""effective": ["#,
-            "{capabilities_effective}",
-            "],\n",
-            r#""permitted": ["#,
-            "{capabilities_permitted}",
-            "]\n",
-        ),
-        capabilities_bounding = capabilities_lines_joined,
-        capabilities_effective = capabilities_lines_joined,
-        capabilities_permitted = capabilities_lines_joined,
-    );
-
-    debug!("capabilities_section: \n{}", capabilities_section);
-
-    Ok(capabilities_section)
+    Ok(capabilities_lines_joined)
 }
 
 /// This helper writes out the resource limits section of the default
@@ -1486,25 +1604,10 @@ fn oci_spec_capabilities(value: &Value) -> Result<String, RenderError> {
 /// This helper function generates the resource limits section of
 /// the OCI runtime spec from the provided `value` parameter, which is
 /// the settings data from the datastore (`settings.oci-defaults.resource-limits`).
-fn oci_spec_resource_limits(value: &Value) -> Result<String, RenderError> {
-    let oci_default_rlimits: HashMap<OciDefaultsResourceLimitType, OciDefaultsResourceLimit> =
-        serde_json::from_value(value.clone())?;
-
-    let result_lines = oci_default_rlimits
-        .iter()
-        .map(|(rlimit_type, values)| {
-            format!(
-                r#"{{ "type": "{}", "hard": {}, "soft": {} }}"#,
-                rlimit_type.to_linux_string(),
-                values.get_hard_limit(),
-                values.get_soft_limit(),
-            )
-        })
-        .collect::<Vec<String>>()
-        .join(",\n");
-
-    debug!("resource_limits result_lines: \n{}", result_lines);
-    Ok(result_lines)
+fn oci_spec_resource_limits(
+    value: &Value,
+) -> Result<HashMap<OciDefaultsResourceLimitType, OciDefaultsResourceLimit>, RenderError> {
+    Ok(serde_json::from_value(value.clone())?)
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -2701,6 +2804,7 @@ mod test_any_enabled {
 
 #[cfg(test)]
 mod test_oci_spec {
+    use super::{Containerd, Docker};
     use crate::helpers::*;
     use serde_json::json;
     use OciDefaultsResourceLimitType::*;
@@ -2713,7 +2817,8 @@ mod test_oci_spec {
             "mac-admin": true,
             "mknod": true
         });
-        let rendered = oci_spec_capabilities(&json).unwrap();
+        let capabilities = oci_spec_capabilities(&json).unwrap();
+        let rendered = Containerd::get_capabilities(capabilities);
         assert_eq!(
             rendered,
             r#""bounding": ["CAP_KILL",
@@ -2733,7 +2838,8 @@ mod test_oci_spec {
         (cap, bottlerocket, hard_limit, soft_limit): (OciDefaultsResourceLimitType, &str, i64, i64),
     ) {
         let json = json!({bottlerocket: {"hard-limit": hard_limit, "soft-limit": soft_limit}});
-        let rendered = oci_spec_resource_limits(&json).unwrap();
+        let rlimits = oci_spec_resource_limits(&json).unwrap();
+        let rendered = Containerd::get_resource_limits(&cap, rlimits.get(&cap).unwrap());
         let result = format!(
             r#"{{ "type": "{}", "hard": {}, "soft": {} }}"#,
             cap.to_linux_string(),
@@ -2772,7 +2878,12 @@ mod test_oci_spec {
     #[test]
     fn oci_spec_max_locked_memory_as_unlimited_resource_limit_test() {
         let json = json!({"max-locked-memory": {"hard-limit": "unlimited", "soft-limit": 18}});
-        let rendered = oci_spec_resource_limits(&json).unwrap();
+        let rlimits = oci_spec_resource_limits(&json).unwrap();
+        let rendered = Containerd::get_resource_limits(
+            &MaxLockedMemory,
+            rlimits.get(&MaxLockedMemory).unwrap(),
+        );
+
         assert_eq!(
             rendered,
             r#"{ "type": "RLIMIT_MEMLOCK", "hard": 18446744073709551615, "soft": 18 }"#
@@ -2782,10 +2893,58 @@ mod test_oci_spec {
     #[test]
     fn oci_spec_max_locked_memory_as_minus_one_resource_limit_test() {
         let json = json!({"max-locked-memory": {"hard-limit": -1, "soft-limit": 18}});
-        let rendered = oci_spec_resource_limits(&json).unwrap();
+        let rlimits = oci_spec_resource_limits(&json).unwrap();
+        let rendered = Containerd::get_resource_limits(
+            &MaxLockedMemory,
+            rlimits.get(&MaxLockedMemory).unwrap(),
+        );
         assert_eq!(
             rendered,
             r#"{ "type": "RLIMIT_MEMLOCK", "hard": 18446744073709551615, "soft": 18 }"#
+        );
+    }
+
+    #[test]
+    fn oci_spec_capabilities_docker_test() {
+        let json = json!({
+            "kill": true,
+            "lease": false,
+            "mac-admin": true,
+            "mknod": true
+        });
+        let capabilities = oci_spec_capabilities(&json).unwrap();
+        let rendered = Docker::get_capabilities(capabilities);
+        assert_eq!(
+            rendered,
+            r#"["CAP_KILL",
+"CAP_MAC_ADMIN",
+"CAP_MKNOD"],
+"#
+        );
+    }
+
+    #[test]
+    fn oci_spec_resource_limits_test_docker() {
+        let json = json!({"max-open-files": {"hard-limit": 1, "soft-limit": 2}});
+        let rlimits = oci_spec_resource_limits(&json).unwrap();
+        let rendered =
+            Docker::get_resource_limits(&MaxOpenFiles, rlimits.get(&MaxOpenFiles).unwrap());
+        assert_eq!(
+            rendered,
+            r#" "nofile":{ "Name": "nofile", "Hard": 1, "Soft": 2 }"#
+        );
+    }
+
+    #[test]
+    fn oci_spec_max_locked_memory_as_unlimited_docker_resource_limit_test() {
+        let json = json!({"max-locked-memory": {"hard-limit": "unlimited", "soft-limit": 18}});
+        let rlimits = oci_spec_resource_limits(&json).unwrap();
+        let rendered =
+            Docker::get_resource_limits(&MaxLockedMemory, rlimits.get(&MaxLockedMemory).unwrap());
+
+        assert_eq!(
+            rendered,
+            r#" "memlock":{ "Name": "memlock", "Hard": -1, "Soft": 18 }"#
         );
     }
 }

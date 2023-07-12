@@ -1,6 +1,5 @@
 [settings.oci-defaults.capabilities]
-# These values represent the default capabilities in the default 
-# OCI spec for containerd.
+# These values represent the default capabilities for Docker and Containerd.
 audit-write = true
 chown = true
 dac-override = true

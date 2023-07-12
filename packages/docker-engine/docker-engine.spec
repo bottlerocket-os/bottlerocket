@@ -31,6 +31,7 @@ Source1000: clarify.toml
 
 # Backport to fix host header issue when compiling with Go 1.20.6 or later
 Patch0001: 0001-non-tcp-host-header.patch
+Patch0002: 0002-Change-default-capabilities-using-daemon-config.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel

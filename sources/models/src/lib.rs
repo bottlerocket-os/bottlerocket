@@ -540,23 +540,6 @@ struct OciDefaultsResourceLimit {
     soft_limit: i64,
 }
 
-impl OciDefaultsResourceLimit {
-    pub fn get_hard_limit(self) -> u64 {
-        Self::get_limit(self.hard_limit)
-    }
-
-    pub fn get_soft_limit(self) -> u64 {
-        Self::get_limit(self.soft_limit)
-    }
-
-    fn get_limit(limit: i64) -> u64 {
-        match limit {
-            -1 => u64::MAX,
-            _ => limit as u64,
-        }
-    }
-}
-
 #[model(add_option = false)]
 struct Report {
     name: String,
