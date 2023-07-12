@@ -60,6 +60,8 @@ members = [
     "api/migration/migrations/v1.15.0/oci-defaults-resource-setting",
     "api/migration/migrations/v1.15.0/oci-defaults-max-open-files",
     "api/migration/migrations/v1.15.0/seccomp-default-setting",
+    "api/migration/migrations/v1.15.0/oci-defaults-docker-setting",
+    "api/migration/migrations/v1.15.0/oci-defaults-docker-setting-metadata",
 
     "bloodhound",
 

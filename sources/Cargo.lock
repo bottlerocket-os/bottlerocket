@@ -2765,6 +2765,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "oci-defaults-docker-setting"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
+name = "oci-defaults-docker-setting-metadata"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
 name = "oci-defaults-max-open-files"
 version = "0.1.0"
 dependencies = [
