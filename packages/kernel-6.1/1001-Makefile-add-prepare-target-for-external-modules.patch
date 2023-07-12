@@ -1,4 +1,4 @@
-From fc06fd8a1e59838d431c85bc8017c2520bf08695 Mon Sep 17 00:00:00 2001
+From e6e9b5adc830c0924d81c348c8d5b12e3dc4242e Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Mon, 19 Apr 2021 18:46:04 +0000
 Subject: [PATCH] Makefile: add prepare target for external modules
@@ -23,23 +23,27 @@ existing solutions.
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 ---
- Makefile | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ Makefile | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
 diff --git a/Makefile b/Makefile
-index 23390805e..346b898eb 100644
+index 23390805e..2f78ac123 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -1874,6 +1874,15 @@ else # KBUILD_EXTMOD
+@@ -1874,6 +1874,19 @@ else # KBUILD_EXTMOD
  KBUILD_BUILTIN :=
  KBUILD_MODULES := 1
  
 +PHONY += modules_prepare
-+modules_prepare: tools/objtool
++modules_prepare:
 +	$(Q)$(MAKE) $(build)=scripts/basic
 +	$(Q)$(MAKE) $(build)=scripts/dtc
 +	$(Q)$(MAKE) $(build)=scripts/mod
 +	$(Q)$(MAKE) $(build)=scripts
++
++ifdef CONFIG_OBJTOOL
++prepare: tools/objtool
++endif
 +
 +prepare: modules_prepare
 +
@@ -47,5 +51,5 @@ index 23390805e..346b898eb 100644
  
  compile_commands.json: $(extmod_prefix)compile_commands.json
 -- 
-2.39.1
+2.40.0
 
