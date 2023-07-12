@@ -38,14 +38,14 @@ pub use error::{Error, Result};
 pub use filesystem::FilesystemDataStore;
 pub use key::{Key, KeyType, KEY_SEPARATOR, KEY_SEPARATOR_STR};
 
-use log::trace;
+use log::{info, trace};
 use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 use std::collections::{HashMap, HashSet};
 
 /// Committed represents whether we want to look at pending (uncommitted) or live (committed) data
 /// in the datastore.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Committed {
     Live,
     Pending {
@@ -147,7 +147,14 @@ pub trait DataStore {
         S: AsRef<str>,
     {
         for (key, value) in pairs {
-            trace!("Setting data key {}", key.name());
+            match committed {
+                Committed::Live => {
+                    info!("Committed data key {}", key.name());
+                }
+                state => {
+                    trace!("Data key {} state changed to {:?}", key.name(), state);
+                }
+            };
             self.set_key(key, value, committed)?;
         }
         Ok(())
