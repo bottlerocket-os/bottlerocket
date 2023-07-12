@@ -1,0 +1,64 @@
+# This is basically a duplicate of the main "build" workflow, but uses GOPROXY=direct
+# to try to catch errors close to their introduction due to yanked Go modules. These
+# could otherwise be covered up by caching and not discovered until much later when
+# bypassing the main cache.
+name: Nightly
+on:
+  schedule:
+    # Run once a day at 02:15 UTC. Randomly chosen as a "quiet" time for this to run.
+    # See syntax for format details: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onschedule
+    - cron: '15 2 * * *'
+
+env:
+  # When Go packages are built, buildsys will vendor in dependent Go code for
+  # that package and bundle it up in a tarball. This env variable is consumed
+  # and used to configure Go to directly download code from its upstream source.
+  # This is a useful early signal during GitHub actions to see if there are
+  # upstream Go code problems.
+  GOPROXY: direct
+
+jobs:
+  list-variants:
+    # This needs to be its own job since the build job needs its output before
+    # it can initialize
+    if: github.repository == 'bottlerocket-os/bottlerocket'
+    name: "Determine variants"
+    runs-on: ubuntu-latest
+    outputs:
+      variants: ${{ steps.get-variants.outputs.variants }}
+      aarch-enemies: ${{ steps.get-variants.outputs.aarch-enemies }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/list-variants
+        id: get-variants
+
+  build:
+    needs: list-variants
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        variant: ${{ fromJson(needs.list-variants.outputs.variants) }}
+        arch: [x86_64, aarch64]
+        exclude: ${{ fromJson(needs.list-variants.outputs.aarch-enemies) }}
+      fail-fast: false
+    name: "Build ${{ matrix.variant }}-${{ matrix.arch }}"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Preflight step to set up the runner
+        uses: ./.github/actions/setup-node
+      - if: contains(matrix.variant, 'nvidia')
+        run: |
+          cat <<-EOF > Licenses.toml
+          [nvidia]
+          spdx-id = "LICENSE-LicenseRef-NVIDIA-Customer"
+          licenses = [
+            { path = "NVIDIA", license-url = "https://www.nvidia.com/en-us/drivers/nvidia-license/" }
+          ]
+          EOF
+      - run: |
+          cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} \
+            -e BUILDSYS_ARCH=${{ matrix.arch }} \
+            -e BUILDSYS_JOBS=12 \
+            -e BUILDSYS_UPSTREAM_SOURCE_FALLBACK="${{ contains(matrix.variant, 'nvidia') }}" \
+            -e BUILDSYS_UPSTREAM_LICENSE_FETCH="${{ contains(matrix.variant, 'nvidia') }}"
