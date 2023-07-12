@@ -622,7 +622,7 @@ impl Checker for BR03040101Checker {
         ];
 
         check_output_contains!(
-            SYSCTL_CMD,
+            IPTABLES_CMD,
             ["-L"],
             output,
             "unable to verify iptables settings",
