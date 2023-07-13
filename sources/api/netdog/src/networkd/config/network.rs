@@ -164,6 +164,23 @@ impl NetworkConfig {
         }
     }
 
+    /// The name of the device that corresponds to this config
+    // This method is useful but is only used in tests so far
+    #[cfg(test)]
+    pub(crate) fn name(&self) -> Option<InterfaceId> {
+        let maybe_name = self.r#match.as_ref().and_then(|m| m.name.as_ref());
+        let maybe_mac = self
+            .r#match
+            .as_ref()
+            .and_then(|m| m.permanent_mac_address.first());
+
+        match (maybe_name, maybe_mac) {
+            (Some(name), _) => Some(InterfaceId::from(name.clone())),
+            (None, Some(mac)) => Some(InterfaceId::from(mac.clone())),
+            (None, None) => None,
+        }
+    }
+
     /// Add config to accept IPv6 router advertisements
     // TODO: expose a network config option for this
     pub(crate) fn accept_ra(&mut self) {

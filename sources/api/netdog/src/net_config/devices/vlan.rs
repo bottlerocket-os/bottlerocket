@@ -6,7 +6,7 @@ use crate::net_config::devices::generate_addressing_validation;
 use crate::vlan_id::VlanId;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct NetVlanV1 {
     pub(crate) primary: Option<bool>,
@@ -24,7 +24,7 @@ pub(crate) struct NetVlanV1 {
 
 // Single variant enum only used to direct deserialization.  If the kind is not "VLAN", "Vlan", or
 // "vlan" deserialization will fail.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 enum VlanKind {
     #[serde(alias = "VLAN")]
     #[serde(alias = "vlan")]

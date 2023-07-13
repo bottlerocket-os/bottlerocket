@@ -183,9 +183,9 @@ mod tests {
 mod error {
     #[cfg(net_backend = "wicked")]
     use crate::lease;
-    #[cfg(net_backend = "systemd-networkd")]
-    use crate::networkd_status;
     use crate::{dns, interface_id, net_config, wicked};
+    #[cfg(net_backend = "systemd-networkd")]
+    use crate::{networkd, networkd_status};
     use snafu::Snafu;
     use std::ffi::OsString;
     use std::io;
@@ -255,6 +255,14 @@ mod error {
 
         #[snafu(display("Unable to find an interface with MAC address '{}'", mac))]
         NonExistentMac { mac: String },
+
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Unable to create systemd-networkd config: {}", source))]
+        NetworkDConfigCreate { source: net_config::Error },
+
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Failed to write network interface configuration: {}", source))]
+        NetworkDConfigWrite { source: networkd::Error },
 
         #[snafu(display("Unable to read '{}': {}", path.display(), source))]
         PathRead {

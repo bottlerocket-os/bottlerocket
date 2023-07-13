@@ -143,7 +143,7 @@ via = "2001:beef:beef::1"
 {{#if (eq version 3)}}
 [myvlan]
 kind = "vlan"
-device = "eno1"
+device = "eno100"
 id = 42
 dhcp4 = true
 

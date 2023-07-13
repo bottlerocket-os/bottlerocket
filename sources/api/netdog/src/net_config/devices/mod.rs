@@ -13,7 +13,7 @@ use interface::NetInterfaceV2;
 use serde::Deserialize;
 use vlan::NetVlanV1;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
 pub(crate) enum NetworkDeviceV1 {
     Interface(NetInterfaceV2),

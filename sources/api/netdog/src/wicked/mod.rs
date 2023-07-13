@@ -322,6 +322,7 @@ mod error {
 
 type Result<T> = std::result::Result<T, error::Error>;
 
+#[cfg(net_backend = "wicked")]
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -397,7 +398,7 @@ mod tests {
     #[test]
     #[allow(clippy::to_string_in_format_args)]
     fn net_config_to_interface_config() {
-        let net_config_path = wicked_config().join("net_config.toml");
+        let net_config_path = test_data().join("net_config.toml");
 
         for version in NET_CONFIG_VERSIONS {
             let temp_config = tempfile::NamedTempFile::new().unwrap();

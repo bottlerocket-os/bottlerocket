@@ -1,9 +1,8 @@
 [Match]
-Name=bond1
+PermanentMACAddress=f8:74:a4:d5:32:65
 [Link]
 RequiredForOnline=true
 [Network]
-ConfigureWithoutCarrier=true
 DHCP=ipv4
 [DHCPv4]
 UseDNS=true

@@ -11,6 +11,11 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use snafu::ensure;
 
+#[cfg(net_backend = "systemd-networkd")]
+use crate::networkd::NetworkDConfig;
+#[cfg(net_backend = "systemd-networkd")]
+use snafu::ResultExt;
+
 #[derive(Debug, Deserialize)]
 pub(crate) struct NetConfigV2 {
     #[serde(flatten)]
@@ -30,6 +35,7 @@ impl Interfaces for NetConfigV2 {
         !self.interfaces.is_empty()
     }
 
+    #[cfg(net_backend = "wicked")]
     fn as_wicked_interfaces(&self) -> Vec<WickedInterface> {
         let mut wicked_interfaces = Vec::with_capacity(self.interfaces.len());
         for (name, config) in &self.interfaces {
@@ -39,6 +45,12 @@ impl Interfaces for NetConfigV2 {
         }
 
         wicked_interfaces
+    }
+
+    #[cfg(net_backend = "systemd-networkd")]
+    fn as_networkd_config(&self) -> Result<NetworkDConfig> {
+        let devices = self.interfaces.clone().into_iter().collect();
+        NetworkDConfig::new(devices).context(error::NetworkDConfigCreateSnafu)
     }
 }
 

@@ -71,8 +71,7 @@ mod private {
 mod tests {
     use crate::networkd::devices::{NetworkDBond, NetworkDInterface, NetworkDVlan};
     use serde::Deserialize;
-    use std::fs;
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     pub(super) const BUILDER_DATA: &str = include_str!("../../../test_data/networkd/builder.toml");
 

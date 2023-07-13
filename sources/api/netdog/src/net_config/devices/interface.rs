@@ -4,7 +4,7 @@ use crate::addressing::{RouteV1, StaticConfigV1};
 use crate::net_config::devices::generate_addressing_validation;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct NetInterfaceV2 {
     // Use this interface as the primary interface for the system
