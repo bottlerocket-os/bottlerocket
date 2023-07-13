@@ -1,4 +1,4 @@
-mod config;
+pub(crate) mod config;
 mod devices;
 
 use self::config::{NetDevConfig, NetworkConfig, NetworkDConfigFile};

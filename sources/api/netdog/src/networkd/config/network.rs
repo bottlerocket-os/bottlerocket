@@ -164,6 +164,12 @@ impl NetworkConfig {
         }
     }
 
+    /// Add config to accept IPv6 router advertisements
+    // TODO: expose a network config option for this
+    pub(crate) fn accept_ra(&mut self) {
+        self.network_mut().ipv6_accept_ra = Some(true)
+    }
+
     /// Write the config to the proper directory with the proper prefix and file extention
     pub(crate) fn write_config_file<P: AsRef<Path>>(&self, config_dir: P) -> Result<()> {
         let cfg_path = self.config_path(config_dir)?;
