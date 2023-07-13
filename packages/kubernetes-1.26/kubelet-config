@@ -108,9 +108,7 @@ topologyManagerScope: {{settings.kubernetes.topology-manager-scope}}
 {{#if settings.kubernetes.topology-manager-policy}}
 topologyManagerPolicy: {{settings.kubernetes.topology-manager-policy}}
 {{/if}}
-{{#if settings.kubernetes.pod-pids-limit includeZero=true}}
-podPidsLimit: {{settings.kubernetes.pod-pids-limit}}
-{{/if}}
+podPidsLimit: {{default 1048576 settings.kubernetes.pod-pids-limit}}
 {{#if settings.kubernetes.image-gc-high-threshold-percent includeZero=true}}
 imageGCHighThresholdPercent: {{settings.kubernetes.image-gc-high-threshold-percent}}
 {{/if}}
