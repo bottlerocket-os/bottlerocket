@@ -69,6 +69,7 @@ ARG REPO
 ARG GRUB_SET_PRIVATE_VAR
 ARG SYSTEMD_NETWORKD
 ARG UNIFIED_CGROUP_HIERARCHY
+ARG XFS_DATA_PARTITION
 ENV SYSTEMD_NETWORKD=${SYSTEMD_NETWORKD}
 ENV VARIANT=${VARIANT}
 WORKDIR /home/builder
@@ -102,6 +103,7 @@ RUN rpmdev-setuptree \
    && echo -e -n "${GRUB_SET_PRIVATE_VAR:+%bcond_without grub_set_private_var\n}" >> .bconds \
    && echo -e -n "${SYSTEMD_NETWORKD:+%bcond_without systemd_networkd\n}" >> .bconds \
    && echo -e -n "${UNIFIED_CGROUP_HIERARCHY:+%bcond_without unified_cgroup_hierarchy\n}" >> .bconds \
+   && echo -e -n "${XFS_DATA_PARTITION:+%bcond_without xfs_data_partition\n}" >> .bconds \
    && cat .bconds ${PACKAGE}.spec >> rpmbuild/SPECS/${PACKAGE}.spec \
    && find . -maxdepth 1 -not -path '*/\.*' -type f -exec mv {} rpmbuild/SOURCES/ \; \
    && echo ${NOCACHE}
@@ -197,6 +199,7 @@ ARG OS_IMAGE_PUBLISH_SIZE_GIB
 ARG DATA_IMAGE_PUBLISH_SIZE_GIB
 ARG KERNEL_PARAMETERS
 ARG GRUB_SET_PRIVATE_VAR
+ARG XFS_DATA_PARTITION
 ENV VARIANT=${VARIANT} VERSION_ID=${VERSION_ID} BUILD_ID=${BUILD_ID} \
     PRETTY_NAME=${PRETTY_NAME} IMAGE_NAME=${IMAGE_NAME} \
     KERNEL_PARAMETERS=${KERNEL_PARAMETERS}
@@ -214,6 +217,7 @@ RUN --mount=target=/host \
       --data-image-publish-size-gib="${DATA_IMAGE_PUBLISH_SIZE_GIB}" \
       --partition-plan="${PARTITION_PLAN}" \
       --ovf-template="/host/variants/${VARIANT}/template.ovf" \
+      ${XFS_DATA_PARTITION:+--xfs-data-partition=yes} \
       ${GRUB_SET_PRIVATE_VAR:+--with-grub-set-private-var=yes} \
     && echo ${NOCACHE}
 

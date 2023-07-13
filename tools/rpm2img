@@ -13,6 +13,7 @@ BUILDER_ARCH="$(uname -m)"
 OVF_TEMPLATE=""
 
 GRUB_SET_PRIVATE_VAR="no"
+XFS_DATA_PARTITION="no"
 
 for opt in "$@"; do
    optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
@@ -27,6 +28,7 @@ for opt in "$@"; do
       --partition-plan=*) PARTITION_PLAN="${optarg}" ;;
       --ovf-template=*) OVF_TEMPLATE="${optarg}" ;;
       --with-grub-set-private-var=*) GRUB_SET_PRIVATE_VAR="${optarg}" ;;
+      --xfs-data-partition=*) XFS_DATA_PARTITION="${optarg}" ;;
    esac
 done
 
@@ -277,6 +279,13 @@ SUPPORT_URL="https://github.com/bottlerocket-os/bottlerocket/discussions"
 BUG_REPORT_URL="https://github.com/bottlerocket-os/bottlerocket/issues"
 EOF
 
+# Set the BOTTLEROCKET-DATA Filesystem for creating/mounting
+if [ "${XFS_DATA_PARTITION}" == "yes" ] ; then
+  printf "%s\n" "DATA_PARTITION_FILESYSTEM=xfs" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/share/bottlerocket/image-features.env"
+else
+  printf "%s\n" "DATA_PARTITION_FILESYSTEM=ext4" >> "${ROOT_MOUNT}/${SYS_ROOT}/usr/share/bottlerocket/image-features.env"
+fi
+
 # BOTTLEROCKET-ROOT-A
 mkdir -p "${ROOT_MOUNT}/lost+found"
 ROOT_LABELS=$(setfiles -n -d -F -m -r "${ROOT_MOUNT}" \
@@ -408,8 +417,28 @@ mkfs_data() {
   target="${1:?}"
   size="${2:?}"
   offset="${3:?}"
-  mkfs.ext4 -m 0 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" "${size}"
-  echo "${UNLABELED}" | debugfs -w -f - "${BOTTLEROCKET_DATA}"
+  # Create an XFS filesystem if requested
+  if [ "${XFS_DATA_PARTITION}" == "yes" ] ; then
+    echo "writing XFS filesystem for DATA"
+    # Create a file to write the filesystem to first
+    dd if=/dev/zero of="${BOTTLEROCKET_DATA}" bs=1M count=${size%?}
+    # block size of 4096, directory block size of 16384
+    # enable inotbtcount, bigtime, and reflink
+    # use an internal log with starting size of 64m
+    # use the minimal 2 Allocation groups, this still overprovisions when expanded
+    # set strip units of 512k and sectsize to make EBS volumes align
+    mkfs.xfs \
+      -b size=4096 -n size=16384 \
+      -m inobtcount=1,bigtime=1,reflink=1 \
+      -l internal,size=64m \
+      -d agcount=2,su=512k,sw=1,sectsize=4096 \
+      -f "${BOTTLEROCKET_DATA}"
+  else
+    # default to ext4
+    echo "writing ext4 filesystem for DATA"
+    mkfs.ext4 -m 0 -d "${DATA_MOUNT}" "${BOTTLEROCKET_DATA}" "${size}"
+    echo "${UNLABELED}" | debugfs -w -f - "${BOTTLEROCKET_DATA}"
+  fi
   dd if="${BOTTLEROCKET_DATA}" of="${target}" conv=notrunc bs=1M seek="${offset}"
 }
 

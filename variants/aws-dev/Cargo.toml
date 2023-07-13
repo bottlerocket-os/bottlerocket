@@ -10,6 +10,7 @@ exclude = ["README.md"]
 [package.metadata.build-variant.image-features]
 grub-set-private-var = true
 unified-cgroup-hierarchy = true
+xfs-data-partition = true
 
 [package.metadata.build-variant]
 kernel-parameters = [

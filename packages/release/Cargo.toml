@@ -47,3 +47,4 @@ selinux-policy = { path = "../selinux-policy" }
 systemd = { path = "../systemd" }
 util-linux = { path = "../util-linux" }
 wicked = { path = "../wicked" }
+xfsprogs = { path = "../xfsprogs" }

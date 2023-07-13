@@ -214,6 +214,13 @@ line arguments set in the boot configuration.
 [package.metadata.build-variant.image-features]
 unified-cgroup-hierarchy = true
 ```
+
+`xfs-data-partition` changes the filesystem for the data partition from ext4 to xfs. The
+default will remain ext4 and xfs is opt-in.
+
+```ignore
+[package.metadata.build-variant.image-features]
+xfs-data-partition = true
 */
 
 mod error;
@@ -505,6 +512,7 @@ pub enum ImageFeature {
     GrubSetPrivateVar,
     SystemdNetworkd,
     UnifiedCgroupHierarchy,
+    XfsDataPartition,
 }
 
 impl TryFrom<String> for ImageFeature {
@@ -514,6 +522,7 @@ impl TryFrom<String> for ImageFeature {
             "grub-set-private-var" => Ok(ImageFeature::GrubSetPrivateVar),
             "systemd-networkd" => Ok(ImageFeature::SystemdNetworkd),
             "unified-cgroup-hierarchy" => Ok(ImageFeature::UnifiedCgroupHierarchy),
+            "xfs-data-partition" => Ok(ImageFeature::XfsDataPartition),
             _ => error::ParseImageFeatureSnafu { what: s }.fail()?,
         }
     }
@@ -525,6 +534,7 @@ impl fmt::Display for ImageFeature {
             ImageFeature::GrubSetPrivateVar => write!(f, "GRUB_SET_PRIVATE_VAR"),
             ImageFeature::SystemdNetworkd => write!(f, "SYSTEMD_NETWORKD"),
             ImageFeature::UnifiedCgroupHierarchy => write!(f, "UNIFIED_CGROUP_HIERARCHY"),
+            ImageFeature::XfsDataPartition => write!(f, "XFS_DATA_PARTITION"),
         }
     }
 }
