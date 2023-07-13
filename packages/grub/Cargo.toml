@@ -9,5 +9,5 @@ build = "../build.rs"
 path = "/dev/null"
 
 [[package.metadata.build-package.external-files]]
-url = "https://al2022-repos-us-west-2-9761ab97.s3.dualstack.us-west-2.amazonaws.com/blobstore/aa41fdf9982b65a4c4dad5df5b49ba143b1710d60f82688221966f3c790c6c63/grub2-2.06-42.amzn2022.0.1.src.rpm"
-sha512 = "3dbfc0cc48dc7125dca445ca9b6538ecb2c548cadc77714b930eb9992697e6eaef6c5eaece6a367b232d20a2d693a4fbd93b537d79596de4791c576f3b8ecc18"
+url = "https://cdn.amazonlinux.com/al2023/blobstore/74f9ee6e75b8f89fe91ccda86896243179968a8664ba045bece11dc5aff61f4e/grub2-2.06-61.amzn2023.0.6.src.rpm"
+sha512 = "aac3fbee3ec5e5a28176d338eab85c660c9525ef3b34ccf84f7c837c724c72b089bc2b57207e36b12c09a7cdd2c7d6e658288c98b9a66cb98e8edd650f302ba5"

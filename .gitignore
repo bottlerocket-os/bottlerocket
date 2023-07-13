@@ -11,6 +11,7 @@
 /*.pem
 /keys
 /roles
+/sbkeys/**/
 /Licenses.toml
 /licenses
 *.run

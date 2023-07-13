@@ -1,0 +1,46 @@
+From 2dd65e321c9786dbec249e0826c58f530bcb5883 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Fri, 28 Oct 2022 13:39:03 +0000
+Subject: [PATCH] util/mkimage: Bump EFI PE header size to accommodate .sbat
+ section
+
+With the --sbat option mkimage can embed SBAT metadata into a dedicated
+.sbat section of the EFI image. However, no space was explicitly
+reserved for this section in the section table of the PE header.
+
+The miss has no adverse effects since there was enough padding in the
+header anyway due to alignment constraints. An earlier commit,
+a51f953f4ee8 ("mkimage: Align efi sections on 4k boundary"), increased
+alignment to 4 KiB, so that the extra section table entry fit
+comfortably inside the space reserved for the entire header anyway.
+
+Fixes: b11547137703 ("util/mkimage: Add an option to import SBAT metadata into a .sbat section")
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ util/mkimage.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/util/mkimage.c b/util/mkimage.c
+index c3d33aa..2db1045 100644
+--- a/util/mkimage.c
++++ b/util/mkimage.c
+@@ -65,14 +65,14 @@
+ 				    + GRUB_PE32_SIGNATURE_SIZE		\
+ 				    + sizeof (struct grub_pe32_coff_header) \
+ 				    + sizeof (struct grub_pe32_optional_header) \
+-				    + 4 * sizeof (struct grub_pe32_section_table), \
++				    + 5 * sizeof (struct grub_pe32_section_table), \
+ 				    GRUB_PE32_FILE_ALIGNMENT)
+ 
+ #define EFI64_HEADER_SIZE ALIGN_UP (GRUB_PE32_MSDOS_STUB_SIZE		\
+ 				    + GRUB_PE32_SIGNATURE_SIZE		\
+ 				    + sizeof (struct grub_pe32_coff_header) \
+ 				    + sizeof (struct grub_pe64_optional_header) \
+-				    + 4 * sizeof (struct grub_pe32_section_table), \
++				    + 5 * sizeof (struct grub_pe32_section_table), \
+ 				    GRUB_PE32_FILE_ALIGNMENT)
+ 
+ static const struct grub_install_image_target_desc image_targets[] =
+-- 
+2.39.0
+

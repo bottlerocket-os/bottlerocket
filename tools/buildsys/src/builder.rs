@@ -16,7 +16,7 @@ use sha2::{Digest, Sha512};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashSet;
 use std::env;
-use std::fs::{self, File};
+use std::fs::{self, read_dir, File};
 use std::num::NonZeroU16;
 use std::path::{Path, PathBuf};
 use std::process::Output;
@@ -98,6 +98,8 @@ impl PackageBuilder {
             .goarch();
 
         let mut args = Vec::new();
+        args.push("--network".into());
+        args.push("none".into());
         args.build_arg("PACKAGE", package);
         args.build_arg("ARCH", &arch);
         args.build_arg("GOARCH", goarch);
@@ -168,6 +170,8 @@ impl VariantBuilder {
             image_layout.publish_image_sizes_gib();
 
         let mut args = Vec::new();
+        args.push("--network".into());
+        args.push("host".into());
         args.build_arg("PACKAGES", packages.join(" "));
         args.build_arg("ARCH", &arch);
         args.build_arg("GOARCH", goarch);
@@ -213,6 +217,9 @@ impl VariantBuilder {
                 args.build_arg(format!("{}", image_feature), "1");
             }
         }
+
+        // Add known secrets to the build argments.
+        add_secrets(&mut args)?;
 
         // Always rebuild variants since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.
@@ -277,7 +284,6 @@ fn build(
 
     let mut build = format!(
         "build . \
-        --network none \
         --target {target} \
         --tag {tag}",
         target = target,
@@ -379,6 +385,37 @@ enum Retry<'a> {
         attempts: NonZeroU16,
         messages: &'a [&'static Regex],
     },
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// Add secrets that might be needed for builds. Since most builds won't use
+/// them, they are not automatically tracked for changes. If necessary, builds
+/// can emit the relevant cargo directives for tracking in their build script.
+fn add_secrets(args: &mut Vec<String>) -> Result<()> {
+    let sbkeys_var = "BUILDSYS_SBKEYS_PROFILE_DIR";
+    let sbkeys_dir = env::var(sbkeys_var).context(error::EnvironmentSnafu { var: sbkeys_var })?;
+
+    let sbkeys = read_dir(&sbkeys_dir).context(error::DirectoryReadSnafu { path: &sbkeys_dir })?;
+    for s in sbkeys {
+        let s = s.context(error::DirectoryReadSnafu { path: &sbkeys_dir })?;
+        args.build_secret(
+            "file",
+            &s.file_name().to_string_lossy(),
+            &s.path().to_string_lossy(),
+        );
+    }
+
+    for var in &[
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+    ] {
+        let id = format!("{}.env", var.to_lowercase().replace('_', "-"));
+        args.build_secret("env", &id, var);
+    }
+
+    Ok(())
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -572,6 +609,28 @@ impl BuildArg for Vec<String> {
     {
         self.push("--build-arg".to_string());
         self.push(format!("{}={}", key.as_ref(), value.as_ref()));
+    }
+}
+
+/// Helper trait for constructing buildkit --secret arguments.
+trait BuildSecret {
+    fn build_secret<S>(&mut self, typ: S, id: S, src: S)
+    where
+        S: AsRef<str>;
+}
+
+impl BuildSecret for Vec<String> {
+    fn build_secret<S>(&mut self, typ: S, id: S, src: S)
+    where
+        S: AsRef<str>,
+    {
+        self.push("--secret".to_string());
+        self.push(format!(
+            "type={},id={},src={}",
+            typ.as_ref(),
+            id.as_ref(),
+            src.as_ref()
+        ));
     }
 }
 

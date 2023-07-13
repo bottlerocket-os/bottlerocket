@@ -2,7 +2,7 @@
 %global __strip %{_bindir}/true
 
 %global efidir /boot/efi/EFI/BOOT
-%global efi_image boot%{_cross_efi_arch}.efi
+%global efi_image grub%{_cross_efi_arch}.efi
 %global biosdir /boot/grub
 
 # This is specific to the upstream source RPM, and will likely need to be
@@ -15,9 +15,10 @@ Release: 1%{?dist}
 Summary: Bootloader with support for Linux and more
 License: GPL-3.0-or-later AND Unicode-DFS-2015
 URL: https://www.gnu.org/software/grub/
-Source0: https://al2022-repos-us-west-2-9761ab97.s3.dualstack.us-west-2.amazonaws.com/blobstore/aa41fdf9982b65a4c4dad5df5b49ba143b1710d60f82688221966f3c790c6c63/grub2-2.06-42.amzn2022.0.1.src.rpm
+Source0: https://cdn.amazonlinux.com/al2023/blobstore/74f9ee6e75b8f89fe91ccda86896243179968a8664ba045bece11dc5aff61f4e/grub2-2.06-61.amzn2023.0.6.src.rpm
 Source1: bios.cfg
 Source2: efi.cfg
+Source3: sbat.csv.in
 Patch0001: 0001-setup-Add-root-device-argument-to-grub-setup.patch
 Patch0002: 0002-gpt-start-new-GPT-module.patch
 Patch0003: 0003-gpt-rename-misnamed-header-location-fields.patch
@@ -59,6 +60,10 @@ Patch0038: 0038-gpt-report-all-revalidation-errors.patch
 Patch0039: 0039-gpt-rename-and-update-documentation-for-grub_gpt_upd.patch
 Patch0040: 0040-gpt-write-backup-GPT-first-skip-if-inaccessible.patch
 Patch0041: 0041-gptprio-Use-Bottlerocket-boot-partition-type-GUID.patch
+Patch0042: 0042-util-mkimage-Bump-EFI-PE-header-size-to-accommodate-.patch
+Patch0043: 0043-util-mkimage-avoid-adding-section-table-entry-outsid.patch
+Patch0044: 0044-efi-return-virtual-size-of-section-found-by-grub_efi.patch
+Patch0045: 0045-mkimage-pgp-move-single-public-key-into-its-own-sect.patch
 
 BuildRequires: automake
 BuildRequires: bison
@@ -152,6 +157,8 @@ popd
 mkdir efi-build
 pushd efi-build
 
+sed -e "s,__VERSION__,%{version},g" %{S:3} > sbat.csv
+
 %cross_configure \
   CFLAGS="" \
   LDFLAGS="" \
@@ -170,7 +177,11 @@ pushd efi-build
 popd
 
 %install
-MODS="configfile echo ext2 gptprio linux normal part_gpt reboot sleep zstd search"
+MODS=(configfile echo ext2 gptprio linux normal part_gpt reboot sleep zstd search)
+
+# These modules are needed for signature verification, which is currently only
+# done for the EFI build of GRUB.
+VERIFY_MODS=(pgp crypto gcry_sha256 gcry_sha512 gcry_dsa gcry_rsa)
 
 %if "%{_cross_arch}" == "x86_64"
 pushd bios-build
@@ -182,7 +193,7 @@ mkdir -p %{buildroot}%{biosdir}
   -O "i386-pc" \
   -o "%{buildroot}%{biosdir}/core.img" \
   -p "(hd0,gpt2)/boot/grub" \
-  biosdisk serial ${MODS}
+  biosdisk serial ${MODS[@]}
 install -m 0644 ./grub-core/boot.img \
   %{buildroot}%{biosdir}/boot.img
 popd
@@ -191,13 +202,20 @@ popd
 pushd efi-build
 %make_install
 mkdir -p %{buildroot}%{efidir}
+
+# Make sure the `.pubkey` section is large enough to cover a replacement
+# certificate, or `objcopy` may silently retain the existing section.
+truncate -s 4096 empty.pubkey
+
 %{buildroot}%{_cross_bindir}/grub-mkimage \
   -c %{S:2} \
   -d ./grub-core/ \
   -O "%{_cross_grub_efi_format}" \
   -o "%{buildroot}%{efidir}/%{efi_image}" \
   -p "/EFI/BOOT" \
-  efi_gop ${MODS}
+  --pubkey empty.pubkey \
+  --sbat sbat.csv \
+  efi_gop ${MODS[@]} ${VERIFY_MODS[@]}
 popd
 
 %files

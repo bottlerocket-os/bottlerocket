@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -e
+
+readonly grub_image="${1:?expecting GRUB image as first argument}"
+readonly public_key="${2:?expecting GPG public key file as second argument}"
+readonly local_keys="${3:?expecting directory containing local signing keys as third argument}"
+
+
+#
+# Create unsigned image with embedded key replaced
+#
+
+rm -f "${grub_image}.unsigned"
+pesign -r -u 0 -i "${grub_image}" -o "${grub_image}.unsigned"
+objcopy --update-section .pubkey="${public_key}" "${grub_image}.unsigned"
+
+
+#
+# Re-sign resulting image (steps copied from rpm2img)
+#
+
+# Generate the PKCS12 archive for import.
+openssl pkcs12 \
+    -export \
+    -passout pass: \
+    -inkey "${local_keys}/code-sign.key" \
+    -in "${local_keys}/code-sign.crt" \
+    -certfile "${local_keys}/CA.crt" \
+    -out "${local_keys}/code-sign.p12"
+
+# Import certificates and private key archive.
+PEDB="/etc/pki/pesign"
+certutil -d "${PEDB}" -A -n CA -i "${local_keys}/CA.crt" -t "CT,C,C"
+certutil -d "${PEDB}" -A -n code-sign-key -i "${local_keys}/code-sign.crt" -t ",,P"
+pk12util -d "${PEDB}" -i "${local_keys}/code-sign.p12" -W ""
+certutil -d "${PEDB}" -L
+PESIGN_KEY="-c code-sign-key"
+
+openssl x509 \
+    -inform PEM -in "${local_keys}/CA.crt" \
+    -outform DER -out "${local_keys}/CA.der"
+
+pesign -i "${grub_image}.unsigned" -o "${grub_image}" -f -s ${PESIGN_KEY}
+pesigcheck -i "${grub_image}" -n 0 -c "${local_keys}/CA.der"

@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+
+# Helper script for running commands to generate Secure Boot files.
+
+set -euo pipefail
+
+usage() {
+   cat >&2 <<EOF
+usage: ${0##*/} [--sdk-image SDK_IMAGE]
+                [--output-dir OUTPUT_DIR]
+
+Generate Secure Boot related files. Local-only edition.
+
+Options:
+    --sdk-image         Name of the (optional) SDK image to use.
+    --output-dir        Path where the files will be written.
+    --help              shows this usage text
+EOF
+}
+
+required_arg() {
+   local arg="${1:?}"
+   local value="${2}"
+   if [ -z "${value}" ]; then
+      echo "ERROR: ${arg} is required" >&2
+      exit 2
+   fi
+}
+
+parse_args() {
+  while [ ${#} -gt 0 ] ; do
+    case "${1}" in
+        --help ) usage; exit 0 ;;
+        --sdk-image ) shift; SDK_IMAGE="${1}" ;;
+        --output-dir ) shift; OUTPUT_DIR="${1}" ;;
+        *) ;;
+    esac
+    shift
+  done
+
+  # Required arguments
+  required_arg "--output-dir" "${OUTPUT_DIR:-}"
+}
+
+parse_args "${@}"
+
+# Create the output directory with the current user, rather than letting Docker
+# create it as a root-owned directory.
+mkdir -p "${OUTPUT_DIR}"
+
+# To avoid needing separate scripts to parse args and launch the SDK container,
+# the logic to generate the profile is found below the separator. Copy that to
+# a temporary file so it can be executed using the desired method.
+PRELUDE_END=$(awk '/=\^\.\.\^=/ { print NR+1; exit 0; }' "${0}")
+SBKEYS_SCRIPT="$(mktemp)"
+cleanup() {
+  rm -f "${SBKEYS_SCRIPT}"
+}
+trap 'cleanup' EXIT
+tail -n +"${PRELUDE_END}" "${0}" >"${SBKEYS_SCRIPT}"
+chmod +x "${SBKEYS_SCRIPT}"
+
+if [ -n "${SDK_IMAGE:-}" ] ; then
+  docker run -a stdin -a stdout -a stderr --rm \
+    --user "$(id -u):$(id -g)" \
+    --security-opt label:disable \
+    -v "${OUTPUT_DIR}":/tmp/output \
+    -v "${SBKEYS_SCRIPT}":/tmp/sbkeys \
+    -e OUTPUT_DIR="/tmp/output" \
+    -w /tmp \
+    "${SDK_IMAGE}" bash /tmp/sbkeys
+else
+  export OUTPUT_DIR
+  bash "${SBKEYS_SCRIPT}"
+fi
+
+exit
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+set -euo pipefail
+
+WORKDIR="$(mktemp -d)"
+cd "${WORKDIR}"
+cleanup() {
+  rm -rf "${WORKDIR}"
+}
+trap 'cleanup' EXIT
+
+genca() {
+  local ca cn
+  ca="${1:?}"
+  cn="${2:?}"
+  openssl req -newkey rsa:2048 \
+    -batch -noenc -new -x509 -sha256 -days 3650 \
+    -subj "/CN=${cn}/" \
+    -keyout "${ca}.key" -out "${ca}.crt"
+}
+
+genkey() {
+  local ca key cn
+  ca="${1:?}"
+  key="${2:?}"
+  cn="${3:?}"
+  openssl genrsa -verbose \
+    -out "${key}.key" 2048
+
+  openssl req -new \
+    -key "${key}.key" \
+    -subj "/CN=${cn}/" \
+    -out "${key}.csr"
+
+  openssl req \
+    -in "${key}.csr" \
+    -CA "${ca}.crt" -CAkey "${ca}.key" \
+    -config /dev/null \
+    -days 3650 -x509 -sha256 -copy_extensions none \
+    -addext "basicConstraints=CA:FALSE" \
+    -addext "extendedKeyUsage=codeSigning,1.3.6.1.4.1.311.10.3.6" \
+    -out "${key}.crt"
+}
+
+# Generate local EFI CAs and signing keys.
+genca PK "Bottlerocket Secure Boot Platform CA"
+genca KEK "Bottlerocket Secure Boot Key Exchange CA"
+genca db "Bottlerocket Secure Boot Database CA"
+genca vendor "Bottlerocket Secure Boot Vendor CA"
+
+genkey db shim-sign "Bottlerocket Shim Signing Key"
+genkey vendor code-sign "Bottlerocket Code Signing Key"
+
+# Generate GPG key for signing grub.cfg.
+export GNUPGHOME="${WORKDIR}"
+gpg --gen-key --batch <<EOF
+Key-Type: RSA
+Key-Length: 2048
+Name-Real: Bottlerocket Config Signing Key
+Expire-Date: 0
+%no-protection
+EOF
+
+# Export the GPG key.
+gpg --armor --export-secret-keys > config-sign.key
+
+# Generate EFI vars for use with EC2 or others.
+GUID="$(uuidgen --random)"
+virt-fw-vars \
+  --set-pk "${GUID}" PK.crt \
+  --add-kek "${GUID}" KEK.crt \
+  --add-db "${GUID}" db.crt \
+  --secure-boot \
+  --output-json "efi-vars.json"
+
+virt-fw-vars \
+  --set-json "efi-vars.json" \
+  --output-aws "efi-vars.aws"
+
+# Copy all expected files out.
+cp -t "${OUTPUT_DIR}" \
+  PK.{key,crt} \
+  KEK.{key,crt} \
+  db.{key,crt} \
+  vendor.{key,crt} \
+  shim-sign.{key,crt} \
+  code-sign.{key,crt} \
+  config-sign.key \
+  efi-vars.{aws,json}

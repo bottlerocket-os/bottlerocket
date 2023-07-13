@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2054  # Arrays are formatted for passing args to other tools
 
+#
+# Common error handling
+#
+#
+exit_trap_cmds=()
+
+on_exit() {
+    exit_trap_cmds+=( "$1" )
+}
+
+run_exit_trap_cmds() {
+    for cmd in "${exit_trap_cmds[@]}"; do
+        eval "${cmd}"
+    done
+}
+
+trap run_exit_trap_cmds exit
+
+bail() {
+    >&2 echo "$@"
+    exit 1
+}
+
 shopt -s nullglob
 
 arch=${BUILDSYS_ARCH}
@@ -15,10 +38,6 @@ declare -A extra_files=()
 boot_image=
 data_image=
 
-bail() {
-    >&2 echo "$@"
-    exit 1
-}
 
 if ! git_toplevel=$(git rev-parse --show-toplevel); then
     bail "Failed to get the root of the repo."
@@ -59,6 +78,8 @@ Options:
                         Bottlerocket image before launching the virtual machine
                         (may be given multiple times); existing data on the
                         private partition will be lost
+    --firmware-code     override the default firmware executable file
+    --firmware-vars     override the initial firmware variable storage file
     --help              shows this usage text
 
 By default, the virtual machine's port 22 (SSH) will be exposed via the local
@@ -118,6 +139,12 @@ parse_args() {
                 fi
                 extra_files[${local_file}]=${image_file}
                 ;;
+            --firmware-code)
+                shift; firmware_code=$1
+                ;;
+            --firmware-vars)
+                shift; firmware_vars=$1
+                ;;
             *)
                 usage_error "unknown option '$1'" ;;
         esac
@@ -167,6 +194,35 @@ prepare_raw_images() {
     fi
 }
 
+prepare_firmware() {
+    # Create local copies of the edk2 firmware variable storage, to help with
+    # faciliate Secure Boot testing where custom variables are needed for both
+    # architectures, but can't safely be reused across QEMU invocations. Also
+    # set reasonable defaults for both firmware files, if nothing more specific
+    # was requested.
+    local original_vars
+
+    if [[ ${arch} = x86_64 ]]; then
+        firmware_code=${firmware_code:-/usr/share/edk2/ovmf/OVMF_CODE.fd}
+        original_vars=${firmware_vars:-/usr/share/edk2/ovmf/OVMF_VARS.fd}
+        firmware_vars="$(mktemp)"
+        on_exit "rm '${firmware_vars}'"
+        cp "${original_vars}" "${firmware_vars}"
+    fi
+
+    if [[ ${arch} = aarch64 ]]; then
+        original_code=${firmware_code:-/usr/share/edk2/aarch64/QEMU_EFI.silent.fd}
+        original_vars=${firmware_vars:-/usr/share/edk2/aarch64/QEMU_VARS.fd}
+        firmware_code="$(mktemp)"
+        firmware_vars="$(mktemp)"
+        on_exit "rm '${firmware_code}' '${firmware_vars}'"
+        cat "${original_code}" /dev/zero \
+            | head -c 64m > "${firmware_code}"
+        cat "${original_vars}" /dev/zero \
+            | head -c 64m > "${firmware_vars}"
+    fi
+}
+
 create_extra_files() {
     # Explicitly instruct the kernel to send its output to the serial port on
     # x86 via a bootconfig initrd. Passing in settings via user-data would be
@@ -213,6 +269,7 @@ inject_files() {
     local private_mount private_image
     private_mount=$(mktemp -d)
     private_image=$(mktemp)
+    on_exit "rm -rf '${private_mount}' '${private_image}'"
 
     for local_file in "${!extra_files[@]}"; do
         local image_file=${extra_files[${local_file}]}
@@ -235,6 +292,8 @@ launch_vm() {
         -cpu host
         -smp "${vm_cpus}"
         -m "${vm_mem}"
+        -drive if=pflash,format=raw,unit=0,file="${firmware_code}",readonly=on
+        -drive if=pflash,format=raw,unit=1,file="${firmware_vars}"
         -drive index=0,if=virtio,format=raw,file="${boot_image}"
     )
 
@@ -251,11 +310,11 @@ launch_vm() {
     # emulated x86_64 chipset only to achieve parity.
     if [[ ${arch} = x86_64 ]]; then
         qemu_args+=( -global PIIX4_PM.acpi-root-pci-hotplug=off )
+        qemu_args+=( -machine q35,smm=on )
     fi
 
     if [[ ${arch} = aarch64 ]]; then
         qemu_args+=( -machine virt )
-        qemu_args+=( -bios /usr/share/edk2/aarch64/QEMU_EFI.silent.fd )
     fi
 
     if [[ -n ${data_image} ]]; then
@@ -267,6 +326,7 @@ launch_vm() {
 
 parse_args "$@"
 prepare_raw_images
+prepare_firmware
 create_extra_files
 inject_files
 launch_vm

@@ -13,14 +13,16 @@ We will add and enhance security features over time based on these goals.
 
 ## Overview
 
-| Feature                                                                           | Version |
-| :-------------------------------------------------------------------------------- | :-----: |
-| [Automated security updates](#automated-security-updates)                         |  0.3.0  |
-| [Immutable rootfs backed by dm-verity](#immutable-rootfs-backed-by-dm-verity)     |  0.3.0  |
-| [Stateless tmpfs for /etc](#stateless-tmpfs-for-etc)                              |  0.3.0  |
-| [No shell or interpreters installed](#no-shell-or-interpreters-installed)         |  0.3.0  |
-| [Executables built with hardening flags](#executables-built-with-hardening-flags) |  0.3.0  |
-| [SELinux enabled in enforcing mode](#selinux-enabled-in-enforcing-mode)           |  0.3.0  |
+| Feature                                                                           | Version  |
+| :-------------------------------------------------------------------------------- | :------: |
+| [Automated security updates](#automated-security-updates)                         |  0.3.0   |
+| [Immutable rootfs backed by dm-verity](#immutable-rootfs-backed-by-dm-verity)     |  0.3.0   |
+| [Stateless tmpfs for /etc](#stateless-tmpfs-for-etc)                              |  0.3.0   |
+| [No shell or interpreters installed](#no-shell-or-interpreters-installed)         |  0.3.0   |
+| [Executables built with hardening flags](#executables-built-with-hardening-flags) |  0.3.0   |
+| [SELinux enabled in enforcing mode](#selinux-enabled-in-enforcing-mode)           |  0.3.0   |
+| [Kernel lockdown in integrity mode](#kernel-lockdown-in-integrity-mode)           |  1.1.0   |
+| [Secure Boot enabled](#secure-boot-enabled)                                       |  1.15.0  |
 
 The version listed indicates the first release of Bottlerocket that included the feature.
 Features may evolve or improve over time.
@@ -71,8 +73,8 @@ The kernel is configured to restart if corruption is detected.
 That allows the system to fail closed if the underlying block device is unexpectedly modified and the node is in an unknown state.
 The uncontrolled reboot will disrupt running containers, which can trigger alarms and prompt administrators to investigate.
 
-Although this provides a powerful layer of protection, it is **incomplete**.
-An attacker with full access to the block device could alter both the verity metadata and the contents of the root filesystem.
+Although this provides a powerful layer of protection, it is incomplete unless [Secure Boot is enabled](#secure-boot-enabled).
+Otherwise, an attacker with full access to the block device could alter both the verity metadata and the contents of the root filesystem.
 
 ### Stateless tmpfs for /etc
 
@@ -151,3 +153,30 @@ The policy in Bottlerocket has the following objectives:
 
 The policy is currently aimed at hardening the OS against persistent threats.
 Future enhancements to the policy will focus on mitigating the impact of OS vulnerabilities, and protecting containers from other containers.
+
+### Kernel lockdown in integrity mode
+
+Bottlerocket enables Lockdown in "integrity" mode by default on most variants.
+
+Lockdown is a Linux Security Module (LSM) that blocks certain actions which could compromise the Linux kernel.
+As with SELinux, even processes that run as root with full capabilities are subject to these restrictions.
+
+Certain variants such as `*-nvidia` need to load unsigned kernel modules at runtime.
+This is prohibited by the "integrity" mode, but required for the hardware to work as expected.
+On these variants, Lockdown is set to "none" instead.
+
+### Secure Boot enabled
+
+Bottlerocket enables Secure Boot for all new variants on platforms that support UEFI boot.
+
+The goal is to prevent unsigned, untrusted code from running at any point until containers are started.
+This is achieved by establishing the following chain of trust:
+1) The trusted platform firmware verifies that shim is signed correctly, then loads it.
+2) shim verifies that grub is signed correctly, then loads it.
+3) grub verifies that its grub.cfg is signed correctly, then loads it.
+4) grub verifies that the Linux kernel is signed correctly, then loads it.
+5) The Linux kernel verifies that the [immutable root filesystem](#immutable-rootfs-backed-by-dm-verity) has not been altered.
+
+Secure Boot only applies to platforms using UEFI firmware, and it is only enforced when the feature is enabled in the firmware.
+Therefore, systems using the legacy BIOS boot mode cannot benefit from Secure Boot.
+This includes Xen-based EC2 instance types, and bare metal machines configured to emulate the legacy BIOS boot mode.
