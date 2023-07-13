@@ -4,12 +4,14 @@
 use super::{error, Interfaces, Result, Validate};
 use crate::interface_id::{InterfaceId, InterfaceName};
 use crate::net_config::devices::interface::NetInterfaceV2;
-use crate::wicked::{
-    wicked_from, WickedDhcp4, WickedDhcp6, WickedInterface, WickedRoutes, WickedStaticAddress,
-};
 use indexmap::IndexMap;
 use serde::Deserialize;
 use snafu::ensure;
+
+#[cfg(net_backend = "wicked")]
+use crate::wicked::{
+    wicked_from, WickedDhcp4, WickedDhcp6, WickedInterface, WickedRoutes, WickedStaticAddress,
+};
 
 #[cfg(net_backend = "systemd-networkd")]
 use crate::networkd::NetworkDConfig;

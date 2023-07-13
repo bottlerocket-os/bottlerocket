@@ -3,16 +3,16 @@
 
 use super::{error, Error, Interfaces, Result, Validate};
 use crate::addressing::{Dhcp4ConfigV1, Dhcp4OptionsV1, Dhcp6ConfigV1, Dhcp6OptionsV1};
-use crate::{
-    interface_id::{InterfaceId, InterfaceName},
-    wicked::{WickedDhcp4, WickedDhcp6, WickedInterface},
-};
+use crate::interface_id::{InterfaceId, InterfaceName};
 use indexmap::indexmap;
 use indexmap::IndexMap;
 use serde::Deserialize;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::{collections::HashSet, str::FromStr};
 use std::{convert::TryInto, ops::Deref};
+
+#[cfg(net_backend = "wicked")]
+use crate::wicked::{WickedDhcp4, WickedDhcp6, WickedInterface};
 
 #[cfg(net_backend = "systemd-networkd")]
 use crate::networkd::NetworkDConfig;

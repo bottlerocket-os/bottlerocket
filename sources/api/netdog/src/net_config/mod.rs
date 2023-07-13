@@ -12,7 +12,6 @@ mod v3;
 
 use crate::addressing::StaticConfigV1;
 use crate::interface_id::InterfaceId;
-use crate::wicked::WickedInterface;
 pub(crate) use error::{Error, Result};
 use ipnet::IpNet;
 use serde::Deserialize;
@@ -21,6 +20,9 @@ use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 pub(crate) use v1::NetConfigV1;
+
+#[cfg(net_backend = "wicked")]
+use crate::wicked::WickedInterface;
 
 #[cfg(net_backend = "systemd-networkd")]
 use crate::networkd;

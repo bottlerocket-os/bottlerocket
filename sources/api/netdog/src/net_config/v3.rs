@@ -4,11 +4,13 @@
 use super::devices::NetworkDeviceV1;
 use super::{error, Interfaces, Result, Validate};
 use crate::interface_id::{InterfaceId, InterfaceName};
-use crate::wicked::{WickedInterface, WickedLinkConfig};
 use indexmap::IndexMap;
 use serde::Deserialize;
 use snafu::ensure;
 use std::collections::HashSet;
+
+#[cfg(net_backend = "wicked")]
+use crate::wicked::{WickedInterface, WickedLinkConfig};
 
 #[cfg(net_backend = "systemd-networkd")]
 use crate::networkd::NetworkDConfig;

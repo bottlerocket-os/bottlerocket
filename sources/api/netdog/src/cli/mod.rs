@@ -1,8 +1,6 @@
 pub(crate) mod generate_hostname;
 pub(crate) mod generate_net_config;
 pub(crate) mod node_ip;
-#[cfg(net_backend = "systemd-networkd")]
-pub(crate) mod primary_interface;
 pub(crate) mod set_hostname;
 pub(crate) mod write_resolv_conf;
 
@@ -11,6 +9,8 @@ pub(crate) mod install;
 #[cfg(net_backend = "wicked")]
 pub(crate) mod remove;
 
+#[cfg(net_backend = "systemd-networkd")]
+pub(crate) mod primary_interface;
 #[cfg(net_backend = "systemd-networkd")]
 pub(crate) mod write_primary_interface_status;
 
@@ -21,8 +21,6 @@ use crate::{
 pub(crate) use generate_hostname::GenerateHostnameArgs;
 pub(crate) use generate_net_config::GenerateNetConfigArgs;
 pub(crate) use node_ip::NodeIpArgs;
-#[cfg(net_backend = "systemd-networkd")]
-pub(crate) use primary_interface::PrimaryInterfaceArgs;
 use serde::{Deserialize, Serialize};
 pub(crate) use set_hostname::SetHostnameArgs;
 use snafu::{ensure, OptionExt, ResultExt};
@@ -37,6 +35,8 @@ pub(crate) use install::InstallArgs;
 #[cfg(net_backend = "wicked")]
 pub(crate) use remove::RemoveArgs;
 
+#[cfg(net_backend = "systemd-networkd")]
+pub(crate) use primary_interface::PrimaryInterfaceArgs;
 #[cfg(net_backend = "systemd-networkd")]
 pub(crate) use write_primary_interface_status::WritePrimaryInterfaceStatusArgs;
 
@@ -181,15 +181,17 @@ mod tests {
 
 /// Potential errors during netdog execution
 mod error {
-    #[cfg(net_backend = "wicked")]
-    use crate::lease;
-    use crate::{dns, interface_id, net_config, wicked};
-    #[cfg(net_backend = "systemd-networkd")]
-    use crate::{networkd, networkd_status};
+    use crate::{dns, interface_id, net_config};
     use snafu::Snafu;
     use std::ffi::OsString;
     use std::io;
     use std::path::PathBuf;
+
+    #[cfg(net_backend = "wicked")]
+    use crate::{lease, wicked};
+
+    #[cfg(net_backend = "systemd-networkd")]
+    use crate::{networkd, networkd_status};
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(crate)))]
@@ -219,6 +221,7 @@ mod error {
         #[snafu(display("Failed to write hostname to '{}': {}", path.display(), source))]
         HostnameWriteFailed { path: PathBuf, source: io::Error },
 
+        #[cfg(net_backend = "wicked")]
         #[snafu(display("Failed to write network interface configuration: {}", source))]
         InterfaceConfigWrite { source: wicked::Error },
 

@@ -1,7 +1,7 @@
 use super::private::{
     Bond, BondWorker, CanHaveVlans, Device, Interface, NotBonded, Vlan, VlanLink,
 };
-use super::{CONFIG_FILE_PREFIX, NETWORKD_CONFIG_DIR};
+use super::CONFIG_FILE_PREFIX;
 use crate::addressing::{Dhcp4ConfigV1, Dhcp6ConfigV1, RouteTo, RouteV1, StaticConfigV1};
 use crate::interface_id::InterfaceId;
 use crate::interface_id::{InterfaceName, MacAddress};
@@ -103,6 +103,8 @@ struct Dhcp6Section {
     use_domains: Option<bool>,
 }
 
+// The `Any` variant isn't currently used, but is valid
+#[allow(dead_code)]
 #[derive(Debug)]
 enum RequiredFamily {
     Any,
@@ -231,10 +233,6 @@ impl NetworkConfig {
     // are convenience methods to access the referenced structs (which are `Option`s) since they
     // may need to be accessed in multiple places during the builder's construction process. (And
     // no one wants to call `get_or_insert_with()` everywhere)
-    fn match_mut(&mut self) -> &mut MatchSection {
-        self.r#match.get_or_insert_with(MatchSection::default)
-    }
-
     fn link_mut(&mut self) -> &mut LinkSection {
         self.link.get_or_insert_with(LinkSection::default)
     }

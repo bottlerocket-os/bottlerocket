@@ -34,15 +34,18 @@ mod bonding;
 mod cli;
 mod dns;
 mod interface_id;
+mod net_config;
+mod vlan_id;
+
 #[cfg(net_backend = "wicked")]
 mod lease;
-mod net_config;
+#[cfg(net_backend = "wicked")]
+mod wicked;
+
 #[cfg(net_backend = "systemd-networkd")]
 mod networkd;
 #[cfg(net_backend = "systemd-networkd")]
 mod networkd_status;
-mod vlan_id;
-mod wicked;
 
 use argh::FromArgs;
 use std::process;
