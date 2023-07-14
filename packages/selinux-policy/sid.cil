@@ -54,25 +54,3 @@
 (sidcontext netif any)
 (sidcontext netmsg any)
 (sidcontext node any)
-
-; Most of the initial SIDs have never been used, or are no longer used.
-; We use the placeholder "unused" context for all of these, since the
-; policy isn't allowed to omit them yet. We'll need a 5.7+ kernel and
-; updated userspace tools first.
-(sidcontext fs unused)
-(sidcontext file_labels unused)
-(sidcontext init unused)
-(sidcontext igmp_packet unused)
-(sidcontext icmp_socket unused)
-(sidcontext tcp_socket unused)
-(sidcontext sysctl_modprobe unused)
-(sidcontext sysctl unused)
-(sidcontext sysctl_fs unused)
-(sidcontext sysctl_kernel unused)
-(sidcontext sysctl_net unused)
-(sidcontext sysctl_net_unix unused)
-(sidcontext sysctl_vm unused)
-(sidcontext sysctl_dev unused)
-(sidcontext kmod unused)
-(sidcontext policy unused)
-(sidcontext scmp_packet unused)
