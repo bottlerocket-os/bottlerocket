@@ -48,6 +48,10 @@ Source119: reboot-if-required.service
 Source120: warm-pool-wait.service
 Source121: disable-udp-offload.service
 Source122: has-boot-ever-succeeded.service
+Source123: etc-systemd-network.mount
+
+# Drop-ins
+Source150: requires-mounts-network-config.conf
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -416,6 +420,12 @@ install -p -m 0644 \
   %{S:113} %{S:114} %{S:118} %{S:119} %{S:122} \
   %{buildroot}%{_cross_unitdir}
 
+%if %{with systemd_networkd}
+install -d %{buildroot}%{_cross_unitdir}/generate-network-config.service.d
+install -p -m 0644 %{S:150} %{buildroot}%{_cross_unitdir}/generate-network-config.service.d
+install -p -m 0644 %{S:123} %{buildroot}%{_cross_unitdir}
+%endif
+
 %if %{with nvidia_flavor}
 sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:115} > link-kernel-modules.service
 sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:116} > load-kernel-modules.service
@@ -455,6 +465,12 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 
 %files
 %{_cross_attribution_vendor_dir}
+
+%if %{with systemd_networkd}
+%dir %{_cross_unitdir}/generate-network-config.service.d
+%{_cross_unitdir}/generate-network-config.service.d/requires-mounts-network-config.conf
+%{_cross_unitdir}/etc-systemd-network.mount
+%endif
 
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
