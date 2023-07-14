@@ -34,8 +34,10 @@ jobs:
 
   build:
     needs: list-variants
-    runs-on: ubuntu-latest
-    continue-on-error: true
+    runs-on:
+      group: bottlerocket
+      labels: bottlerocket_ubuntu-latest_32-core
+    continue-on-error: false
     strategy:
       matrix:
         variant: ${{ fromJson(needs.list-variants.outputs.variants) }}
