@@ -41,7 +41,6 @@ included-packages = [
     "login",
     "iputils",
     "strace",
-    "tcpdump",
     "chrony-tools",
 ]
 
@@ -62,5 +61,4 @@ docker-proxy = { path = "../../packages/docker-proxy" }
 login = { path = "../../packages/login" }
 iputils = { path = "../../packages/iputils" }
 strace = { path = "../../packages/strace" }
-tcpdump = { path = "../../packages/tcpdump" }
 chrony = { path = "../../packages/chrony" }

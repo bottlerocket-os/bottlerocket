@@ -30,7 +30,6 @@ dependencies = [
  "login",
  "release",
  "strace",
- "tcpdump",
 ]
 
 [[package]]
@@ -740,13 +739,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libpcap"
-version = "0.1.0"
-dependencies = [
- "glibc",
-]
-
-[[package]]
 name = "libpcre"
 version = "0.1.0"
 dependencies = [
@@ -863,7 +855,6 @@ dependencies = [
  "login",
  "release",
  "strace",
- "tcpdump",
 ]
 
 [[package]]
@@ -1079,14 +1070,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tcpdump"
-version = "0.1.0"
-dependencies = [
- "glibc",
- "libpcap",
-]
-
-[[package]]
 name = "util-linux"
 version = "0.1.0"
 dependencies = [
@@ -1112,7 +1095,6 @@ dependencies = [
  "open-vm-tools",
  "release",
  "strace",
- "tcpdump",
 ]
 
 [[package]]
