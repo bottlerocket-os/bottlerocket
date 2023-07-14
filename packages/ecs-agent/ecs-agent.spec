@@ -62,14 +62,11 @@ Patch0002: 0002-bottlerocket-remove-unsupported-capabilities.patch
 # https://github.com/aws/amazon-ecs-agent/pull/2588
 Patch0003: 0003-bottlerocket-bind-introspection-to-localhost.patch
 
-# Bottlerocket-specific - remove unsupported CNI plugins
-Patch0004: 0004-bottlerocket-remove-unsupported-CNI-plugins.patch
-
 # Bottlerocket-specific - fix procfs path for non-containerized ECS agent
-Patch0005: 0005-bottlerocket-fix-procfs-path-on-host.patch
+Patch0004: 0004-bottlerocket-fix-procfs-path-on-host.patch
 
 # Bottlerocket-specific - fix ECS exec directories
-Patch0006: 0006-execcmd-change-execcmd-directories-for-Bottlerocket.patch
+Patch0005: 0005-bottlerocket-change-execcmd-directories-for-Bottlero.patch
 
 # Bottlerocket-specific - filesystem location for ECS CNI plugins
 Patch1001: 1001-bottlerocket-default-filesystem-locations.patch
@@ -236,6 +233,12 @@ go build -a \
   -mod=vendor \
   -o vpc-branch-eni \
   ./plugins/vpc-branch-eni
+go build -a \
+  -buildmode=pie \
+  -ldflags "${GOLDFLAGS} ${LD_VPC_CNI_VERSION} ${LD_VPC_CNI_SHORT_HASH} ${LD_VPC_CNI_PORCELAIN}" \
+  -mod=vendor \
+  -o aws-appmesh \
+  ./plugins/aws-appmesh
 
 %install
 install -D -p -m 0755 %{agent_gorepo}-%{agent_gover}/amazon-ecs-agent %{buildroot}%{_cross_bindir}/amazon-ecs-agent
@@ -244,6 +247,7 @@ install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-bridge %{buildroot}%
 install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-eni %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/ecs-eni
 install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-ipam %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
 install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/vpc-branch-eni %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
+install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/aws-appmesh %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/aws-appmesh
 
 install -d %{buildroot}%{_cross_unitdir}
 install -D -p -m 0644 %{S:101} %{S:200} %{buildroot}%{_cross_unitdir}
@@ -314,6 +318,7 @@ mv %{vpccni_gorepo}-%{vpccni_gitrev}/vendor go-vendor/%{vpccni_gorepo}
 %{_cross_libexecdir}/amazon-ecs-agent/ecs-eni
 %{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
 %{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
+%{_cross_libexecdir}/amazon-ecs-agent/aws-appmesh
 %{_cross_libexecdir}/amazon-ecs-agent/managed-agents
 %{_cross_unitdir}/ecs.service
 %{_cross_unitdir}/etc-ecs.mount

@@ -1,7 +1,7 @@
-From c9f3e2e695fa0c426c7c9196354c5ac7f138845a Mon Sep 17 00:00:00 2001
+From cef5037351f2b214b9239d59dec7a83a0db75b0c Mon Sep 17 00:00:00 2001
 From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 Date: Wed, 3 May 2023 18:23:40 +0000
-Subject: [PATCH] execcmd: change execcmd directories for Bottlerocket
+Subject: [PATCH] bottlerocket: change execcmd directories for Bottlerocket
 
 The ECS agent performs checks on directories that, in normal
 circumstances, are mounted on the ECS agent container.  Since the ECS
@@ -63,5 +63,5 @@ index 706d5da..6322816 100644
  	HostBinDir      = hostExecDepsDir + "/bin"
  )
 -- 
-2.39.2
+2.40.1
 
