@@ -37,7 +37,7 @@ jobs:
     runs-on:
       group: bottlerocket
       labels: bottlerocket_ubuntu-latest_32-core
-    continue-on-error: true
+    continue-on-error: false
     strategy:
       matrix:
         variant: ${{ fromJson(needs.list-variants.outputs.variants) }}
