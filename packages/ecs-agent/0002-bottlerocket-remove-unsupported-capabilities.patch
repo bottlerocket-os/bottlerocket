@@ -1,23 +1,20 @@
-From effeecb19f10b639608bf3b5a5b09d1dbd19abf9 Mon Sep 17 00:00:00 2001
+From b84708cfb634e84ca0ef2ac95292ddc1b370b41f Mon Sep 17 00:00:00 2001
 From: Sean McGinnis <stmcg@amazon.com>
 Date: Tue, 21 Feb 2023 19:06:43 +0000
-Subject: [PATCH] Create capabilities diff
+Subject: [PATCH] bottlerocket: remove unsupported capabilities
 
 Signed-off-by: Sean McGinnis <stmcg@amazon.com>
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 ---
- agent/app/agent_capability.go | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ agent/app/agent_capability.go | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/agent/app/agent_capability.go b/agent/app/agent_capability.go
-index 601879cd..d965f8af 100644
+index 0f78c00..746d87a 100644
 --- a/agent/app/agent_capability.go
 +++ b/agent/app/agent_capability.go
-@@ -238,10 +238,10 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
- 	capabilities = agent.appendPIDAndIPCNamespaceSharingCapabilities(capabilities)
- 
- 	// ecs agent version 1.26.0 supports aws-appmesh cni plugin
--	capabilities = agent.appendAppMeshCapabilities(capabilities)
-+	// capabilities = agent.appendAppMeshCapabilities(capabilities)
+@@ -248,7 +248,7 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
+ 	capabilities = agent.appendAppMeshCapabilities(capabilities)
  
  	// support elastic inference in agent
 -	capabilities = agent.appendTaskEIACapabilities(capabilities)
@@ -25,7 +22,7 @@ index 601879cd..d965f8af 100644
  
  	// support aws router capabilities for fluentd
  	capabilities = agent.appendFirelensFluentdCapabilities(capabilities)
-@@ -265,9 +265,9 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
+@@ -272,9 +272,9 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
  	capabilities = agent.appendGMSACapabilities(capabilities)
  
  	// support efs auth on ecs capabilities
@@ -39,5 +36,5 @@ index 601879cd..d965f8af 100644
  	// support fsxWindowsFileServer on ecs capabilities
  	capabilities = agent.appendFSxWindowsFileServerCapabilities(capabilities)
 -- 
-2.34.1
+2.40.1
 

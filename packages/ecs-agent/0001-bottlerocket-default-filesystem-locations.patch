@@ -1,7 +1,7 @@
-From 9c29e409e68789b2bae933e5be4f0c8828a3f59a Mon Sep 17 00:00:00 2001
+From 09721aa67086fde4f3cfd05d13b7ba1c4b05d379 Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Wed, 8 Jul 2020 11:18:35 -0700
-Subject: [PATCH 1/5] bottlerocket: default filesystem locations
+Subject: [PATCH] bottlerocket: default filesystem locations
 
 Signed-off-by: Sean P. Kelly <seankell@amazon.com>
 ---
@@ -13,7 +13,7 @@ Signed-off-by: Sean P. Kelly <seankell@amazon.com>
  5 files changed, 11 insertions(+), 11 deletions(-)
 
 diff --git a/agent/config/config.go b/agent/config/config.go
-index 4b308bb..5d0aa36 100644
+index 38f0d0f..acebb26 100644
 --- a/agent/config/config.go
 +++ b/agent/config/config.go
 @@ -51,7 +51,7 @@ const (
@@ -42,7 +42,7 @@ index 4b308bb..5d0aa36 100644
  	// DefaultTaskMetadataSteadyStateRate is set as 40. This is arrived from our benchmarking
  	// results where task endpoint can handle 4000 rps effectively. Here, 100 containers
 diff --git a/agent/config/config_unix.go b/agent/config/config_unix.go
-index 8f6b801..b8e7f93 100644
+index 6c1254d..3adefaa 100644
 --- a/agent/config/config_unix.go
 +++ b/agent/config/config_unix.go
 @@ -29,10 +29,10 @@ const (
@@ -68,7 +68,7 @@ index 8f6b801..b8e7f93 100644
  		DisableMetrics:                      BooleanDefaultFalse{Value: ExplicitlyDisabled},
  		ReservedMemory:                      0,
 diff --git a/agent/ecscni/plugin_linux.go b/agent/ecscni/plugin_linux.go
-index aa56d0a..e8f71b4 100644
+index cb13d41..4acf042 100644
 --- a/agent/ecscni/plugin_linux.go
 +++ b/agent/ecscni/plugin_linux.go
 @@ -33,7 +33,7 @@ import (
@@ -111,5 +111,5 @@ index 6eccff6..324307c 100644
  
  var readFile = ioutil.ReadFile
 -- 
-2.32.0
+2.40.1
 

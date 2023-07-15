@@ -1,7 +1,7 @@
-From a2d84c6d919ac637150ac36e0b5f104213f7dcc5 Mon Sep 17 00:00:00 2001
+From 41908954afbd0c56802b4116f43f2884124666ed Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Fri, 26 Mar 2021 17:48:28 -0700
-Subject: [PATCH 5/5] bottlerocket: fix procfs path on host
+Subject: [PATCH] bottlerocket: fix procfs path on host
 
 Bottlerocket runs the ECS agent directly on the host rather than in a
 container.  In other environments, the ECS agent runs in a container
@@ -14,7 +14,7 @@ ECS agent in a container, the ECS agent can directly read the host's
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/agent/ecscni/types_linux.go b/agent/ecscni/types_linux.go
-index 6d6ce353..1f2d0914 100644
+index 6d6ce35..1f2d091 100644
 --- a/agent/ecscni/types_linux.go
 +++ b/agent/ecscni/types_linux.go
 @@ -47,7 +47,7 @@ const (
@@ -27,5 +27,5 @@ index 6d6ce353..1f2d0914 100644
  	// NetworkName has to be non-empty field for network config.
  	// We do not actually make use of the field, hence passing in a placeholder string to fulfill the API spec
 -- 
-2.25.1
+2.40.1
 

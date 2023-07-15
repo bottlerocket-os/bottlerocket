@@ -1,7 +1,7 @@
-From 709aa50f6cefbb860fdc38894d1d82907444343f Mon Sep 17 00:00:00 2001
+From 4341f9ecc3e527ffd2329359e86c5f74e64c5b74 Mon Sep 17 00:00:00 2001
 From: Samuel Karp <skarp@amazon.com>
 Date: Fri, 21 Aug 2020 11:07:32 -0700
-Subject: [PATCH 3/5] bottlerocket: bind introspection to localhost
+Subject: [PATCH] bottlerocket: bind introspection to localhost
 
 ---
  agent/handlers/introspection_server_setup.go | 2 +-
@@ -21,5 +21,5 @@ index 3ca0ecc..b7f70e9 100644
  		ReadTimeout:  readTimeout,
  		WriteTimeout: wTimeout,
 -- 
-2.32.0
+2.40.1
 
