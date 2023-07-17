@@ -522,6 +522,8 @@ impl Checker for K8S04020900Checker {
 
 pub struct K8S04021000Checker {}
 
+// Not actually applicable for Bottlerocket, but leaving logic here in case we
+// make any changes in the future.
 impl Checker for K8S04021000Checker {
     fn execute(&self) -> CheckerResult {
         #[derive(Deserialize)]
