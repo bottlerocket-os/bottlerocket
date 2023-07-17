@@ -6,7 +6,7 @@
 // library calls based on the given flags, etc.)  The library modules contain the code for talking
 // to the API, which is intended to be reusable by other crates.
 
-use apiclient::{apply, exec, get, reboot, set, update};
+use apiclient::{apply, exec, get, reboot, report, set, update};
 use datastore::{serialize_scalar, Key, KeyType};
 use log::{info, log_enabled, trace, warn};
 use simplelog::{
@@ -48,6 +48,7 @@ enum Subcommand {
     Reboot(RebootArgs),
     Set(SetArgs),
     Update(UpdateSubcommand),
+    Report(ReportSubcommand),
 }
 
 /// Stores user-supplied arguments for the 'apply' subcommand.
@@ -98,6 +99,19 @@ enum UpdateSubcommand {
     Cancel(UpdateCancelArgs),
 }
 
+/// The available 'report' subcommands.
+#[derive(Debug)]
+enum ReportSubcommand {
+    Cis(CisReportArgs),
+}
+
+/// Stores common user-supplied arguments for the cis report subcommand.
+#[derive(Debug)]
+struct CisReportArgs {
+    level: Option<i32>,
+    format: Option<String>,
+}
+
 /// Stores user-supplied arguments for the 'update check' subcommand.
 #[derive(Debug)]
 struct UpdateCheckArgs {}
@@ -136,6 +150,7 @@ fn usage() -> ! {
             update cancel              Deactivates an applied update.
             reboot                     Reboots the host.
             exec                       Execute a command in a host container.
+            report cis                 Retrieve a Bottlerocket CIS benchmark compliance report.
 
         raw options:
             -u, --uri URI              Required; URI to request from the server, e.g. /tx
@@ -185,7 +200,11 @@ fn usage() -> ! {
 
             TARGET                     Required; the name of the container in which to run the command.
             COMMAND                    Required; the command to run.
-            [ ARG ...]                 Any desired arguments to the command."#,
+            [ ARG ...]                 Any desired arguments to the command.
+
+        report cis options:
+            -f, --format               Format of the CIS report (text or json). Default format is text.
+            -l, --level                CIS compliance level to report on (1 or 2). Default is 1."#,
         socket = constants::API_SOCKET,
         method = DEFAULT_METHOD,
     );
@@ -233,7 +252,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
             }
 
             // Subcommands
-            "raw" | "apply" | "exec" | "get" | "reboot" | "set" | "update"
+            "raw" | "apply" | "exec" | "get" | "reboot" | "report" | "set" | "update"
                 if subcommand.is_none() && !arg.starts_with('-') =>
             {
                 subcommand = Some(arg)
@@ -251,6 +270,7 @@ fn parse_args(args: env::Args) -> (Args, Subcommand) {
         Some("exec") => (global_args, parse_exec_args(subcommand_args)),
         Some("get") => (global_args, parse_get_args(subcommand_args)),
         Some("reboot") => (global_args, parse_reboot_args(subcommand_args)),
+        Some("report") => (global_args, parse_report_args(subcommand_args)),
         Some("set") => (global_args, parse_set_args(subcommand_args)),
         Some("update") => (global_args, parse_update_args(subcommand_args)),
         _ => usage_msg("Missing or unknown subcommand"),
@@ -550,6 +570,61 @@ fn parse_update_cancel_args(args: Vec<String>) -> UpdateSubcommand {
     UpdateSubcommand::Cancel(UpdateCancelArgs {})
 }
 
+/// Parses the desired subcommand of 'report'.
+fn parse_report_args(args: Vec<String>) -> Subcommand {
+    let mut subcommand = None;
+    let mut subcommand_args = Vec::new();
+
+    for arg in args.into_iter() {
+        match arg.as_ref() {
+            // Subcommands
+            "cis" if subcommand.is_none() && !arg.starts_with('-') => subcommand = Some(arg),
+
+            // Other arguments are passed to the subcommand parser
+            _ => subcommand_args.push(arg),
+        }
+    }
+
+    let report_type = match subcommand.as_deref() {
+        Some("cis") => parse_report_cis_args(subcommand_args),
+        _ => usage_msg("Missing or unknown subcommand for 'report'"),
+    };
+
+    Subcommand::Report(report_type)
+}
+
+/// Parses arguments for the 'report' cis subcommand.
+fn parse_report_cis_args(args: Vec<String>) -> ReportSubcommand {
+    let mut level: Option<i32> = None;
+    let mut format = None;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_ref() {
+            "-l" | "--level" => {
+                let level_str = iter
+                    .next()
+                    .unwrap_or_else(|| usage_msg("Did not give argument to -l | --level"));
+                let level_int = level_str
+                    .parse::<i32>()
+                    .unwrap_or_else(|_| usage_msg("Invalid argument to -l | --level"));
+                level = Some(level_int);
+            }
+
+            "-f" | "--format" => {
+                format = Some(
+                    iter.next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to -f | --format")),
+                )
+            }
+
+            x => usage_msg(format!("Unknown argument '{}'", x)),
+        }
+    }
+
+    ReportSubcommand::Cis(CisReportArgs { level, format })
+}
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 // Helpers
 
@@ -735,6 +810,22 @@ async fn run() -> Result<()> {
                     .context(error::UpdateCancelSnafu)?;
             }
         },
+
+        Subcommand::Report(subcommand) => match subcommand {
+            ReportSubcommand::Cis(cis_args) => {
+                let body = report::get_bottlerocket_cis_report(
+                    &args.socket_path,
+                    cis_args.format,
+                    cis_args.level,
+                )
+                .await
+                .context(error::ReportSnafu)?;
+
+                if !body.is_empty() {
+                    print!("{}", body);
+                }
+            }
+        },
     }
 
     Ok(())
@@ -752,7 +843,7 @@ async fn main() {
 }
 
 mod error {
-    use apiclient::{apply, exec, get, reboot, set, update};
+    use apiclient::{apply, exec, get, reboot, report, set, update};
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
@@ -791,6 +882,9 @@ mod error {
             #[snafu(source(from(apiclient::Error, Box::new)))]
             source: Box<apiclient::Error>,
         },
+
+        #[snafu(display("Failed to get report: {}", source))]
+        Report { source: report::Error },
 
         #[snafu(display("Unable to serialize data: {}", source))]
         Serialize { source: serde_json::Error },

@@ -189,11 +189,59 @@ If you want to group sets of changes yourself, pick a transaction name and appen
 For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` and `POST` to `/tx/commit_and_apply?tx=FOO`.
 (Transactions are created automatically when used, and are cleaned up on reboot.)
 
+### Report mode
+
+This allows you to generate certain reports based on the current state of the system.
+
+#### Bottlerocket CIS Benchmark report
+
+This command can be used to evaluate the current system state and settings for compliance with the [Bottlerocket CIS Benchmark].
+
+```shell
+apiclient report cis
+```
+
+Additional arguments may be provided to control the CIS Benchmark Level to evaluate and the output format.
+
+**Level**
+
+CIS Benchmarks have a "Level 1" compliance that includes some basic checks that provide a clear security benefit without inhibiting system operation.
+By default, Bottlerocket instances meet level 1 compliance unless specific settings are changed that would invalidate that.
+
+The "Level 2" compliance are things that provide more defense in depth and include settings that may be specific to the deployed environment and usage.
+While these settings are considered more secure, there may be a trade off with inhibiting utility or performance.
+
+By default, the `report cis` command evaluates against the level 1 benchmark requirements.
+To check level 2 compliance, use the command:
+
+```shell
+apiclient report cis -l 2
+```
+
+**Format**
+
+The default format of the `cis` report is a human readable text report.
+To allow for programmatic parsing of the output, and to get more detailed output including any failure reasons, the format may be changed to `json`:
+
+```shell
+apiclient report cis -f json
+```
+
+The results from the evaluation of each benchmark item will be one of:
+
+- **PASS**: The system has been evaluated to be in compliance with the benchmark requirement.
+- **FAIL**: The system has been evaluated to not be in compliance with the benchmark requirement.
+- **SKIP**: Compliance could not be evaluated in an automated fashion and the user must perform manual auditing to evaluate whether the system meets the expected state.
+
+Refer to the [Bottlerocket CIS Benchmark] for detailed audit and remediation steps.
+
+[Bottlerocket CIS Benchmark]: https://www.cisecurity.org/benchmark/bottlerocket
+
 ## apiclient library
 
 The apiclient library provides high-level methods to interact with the Bottlerocket API.  See
-the documentation for submodules [`apply`], [`exec`], [`get`], [`reboot`], [`set`], and
-[`update`] for high-level helpers.
+the documentation for submodules [`apply`], [`exec`], [`get`], [`reboot`], [`report`], [`set`],
+and [`update`] for high-level helpers.
 
 For more control, and to handle APIs without high-level wrappers, there are also 'raw' methods
 to query an HTTP API over a Unix-domain socket.
