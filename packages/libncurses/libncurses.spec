@@ -1,5 +1,5 @@
 Name: %{_cross_os}libncurses
-Version: 6.2
+Version: 6.4
 Release: 1%{?dist}
 Summary: Ncurses libraries
 License: X11
