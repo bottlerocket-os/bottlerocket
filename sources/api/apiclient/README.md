@@ -193,13 +193,9 @@ For example, if you want the name "FOO", you can `PATCH` to `/settings?tx=FOO` a
 
 This allows you to generate certain reports based on the current state of the system.
 
-#### Bottlerocket CIS Benchmark report
+#### CIS Benchmark Reports
 
-This command can be used to evaluate the current system state and settings for compliance with the [Bottlerocket CIS Benchmark].
-
-```shell
-apiclient report cis
-```
+These reports can be used to evaluate the current system state and settings for compliance with the [Center for Internet Security (CIS) Benchmarks].
 
 Additional arguments may be provided to control the CIS Benchmark Level to evaluate and the output format.
 
@@ -211,21 +207,12 @@ By default, Bottlerocket instances meet level 1 compliance unless specific setti
 The "Level 2" compliance are things that provide more defense in depth and include settings that may be specific to the deployed environment and usage.
 While these settings are considered more secure, there may be a trade off with inhibiting utility or performance.
 
-By default, the `report cis` command evaluates against the level 1 benchmark requirements.
-To check level 2 compliance, use the command:
-
-```shell
-apiclient report cis -l 2
-```
-
 **Format**
 
-The default format of the `cis` report is a human readable text report.
-To allow for programmatic parsing of the output, and to get more detailed output including any failure reasons, the format may be changed to `json`:
+The default format of the CIS reports is a human readable text report.
+To allow for programmatic parsing of the output, and to get more detailed output including any failure reasons, the format may be changed to `json`.
 
-```shell
-apiclient report cis -f json
-```
+**Results**
 
 The results from the evaluation of each benchmark item will be one of:
 
@@ -233,9 +220,55 @@ The results from the evaluation of each benchmark item will be one of:
 - **FAIL**: The system has been evaluated to not be in compliance with the benchmark requirement.
 - **SKIP**: Compliance could not be evaluated in an automated fashion and the user must perform manual auditing to evaluate whether the system meets the expected state.
 
+##### Bottlerocket CIS Benchmark report
+
+This command can be used to evaluate the current system state and settings for compliance with the [Bottlerocket CIS Benchmark].
+
+```shell
+apiclient report cis
+```
+
+By default, the `report cis` command evaluates against the level 1 benchmark requirements.
+To check level 2 compliance, use the command:
+
+```shell
+apiclient report cis -l 2
+```
+
+The format can be changed to `json` using:
+
+```shell
+apiclient report cis -f json
+```
+
 Refer to the [Bottlerocket CIS Benchmark] for detailed audit and remediation steps.
 
+##### Kubernetes CIS Benchmark report
+
+This command can be used to evaluate the current system state and settings for compliance with the [Kubernetes CIS Benchmark].
+
+```shell
+apiclient report cis-k8s
+```
+
+By default, the `report cis-k8s` command evaluates against the level 1 benchmark requirements.
+To check level 2 compliance, use the command:
+
+```shell
+apiclient report cis-k8s -l 2
+```
+
+The format can be changed to `json` using:
+
+```shell
+apiclient report cis-k8s -f json
+```
+
+Refer to the [Kubernetes CIS Benchmark] for detailed audit and remediation steps.
+
+[Center for Internet Security (CIS) Benchmarks]: https://www.cisecurity.org/benchmark/
 [Bottlerocket CIS Benchmark]: https://www.cisecurity.org/benchmark/bottlerocket
+[Kubernetes CIS Benchmark]: https://www.cisecurity.org/benchmark/kubernetes
 
 ## apiclient library
 
