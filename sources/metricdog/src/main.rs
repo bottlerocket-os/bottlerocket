@@ -60,18 +60,22 @@ ignore_waves = false
 mod args;
 mod config;
 mod error;
+mod host_check;
 #[cfg(test)]
 mod main_test;
 mod metricdog;
 #[cfg(test)]
 mod metricdog_test;
 mod service_check;
+mod systemd;
 
 use crate::args::{Arguments, Command};
 use crate::config::Config;
 use crate::error::Result;
+use crate::host_check::HostCheck;
 use crate::metricdog::Metricdog;
-use crate::service_check::{ServiceCheck, SystemdCheck};
+use crate::service_check::ServiceCheck;
+use crate::systemd::SystemdCheck;
 use bottlerocket_release::BottlerocketRelease;
 use log::error;
 use simplelog::{Config as LogConfig, SimpleLogger};
@@ -81,17 +85,24 @@ use std::process;
 fn main() -> ! {
     let args: Arguments = argh::from_env();
     SimpleLogger::init(args.log_level, LogConfig::default()).expect("unable to configure logger");
-    process::exit(match main_inner(args, Box::new(SystemdCheck {})) {
-        Ok(()) => 0,
-        Err(err) => {
-            eprintln!("{}", err);
-            1
-        }
-    })
+    let systemd_check = SystemdCheck {};
+    process::exit(
+        match main_inner(args, Box::new(systemd_check), Box::new(systemd_check)) {
+            Ok(()) => 0,
+            Err(err) => {
+                eprintln!("{}", err);
+                1
+            }
+        },
+    )
 }
 
 /// pub(crate) for testing.
-pub(crate) fn main_inner(arguments: Arguments, service_check: Box<dyn ServiceCheck>) -> Result<()> {
+pub(crate) fn main_inner(
+    arguments: Arguments,
+    service_check: Box<dyn ServiceCheck>,
+    host_check: Box<dyn HostCheck>,
+) -> Result<()> {
     // load the metricdog config file
     let config = match &arguments.config {
         None => Config::new()?,
@@ -112,7 +123,7 @@ pub(crate) fn main_inner(arguments: Arguments, service_check: Box<dyn ServiceChe
     .context(error::BottlerocketReleaseSnafu)?;
 
     // instantiate the metricdog object
-    let metricdog = Metricdog::from_parts(config, os_release, service_check)?;
+    let metricdog = Metricdog::from_parts(config, os_release, service_check, host_check)?;
 
     // execute the specified command
     match arguments.command {
