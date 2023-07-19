@@ -87,7 +87,9 @@ members = [
 
     "constants",
 
-    "shimpei"
+    "shimpei",
+
+    "whippet"
 ]
 
 [profile.release]

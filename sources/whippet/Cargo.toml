@@ -1,0 +1,20 @@
+[package]
+name = "whippet"
+version = "0.1.0"
+authors = ["Matthew Yeazel <yeazelm@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+snafu = "0.7"
+zbus = "3.8.0"
+tokio = { version = "~1.25", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
+futures = { version = "0.3", default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[build-dependencies]
+generate-readme = { version = "0.1", path = "../generate-readme" }
