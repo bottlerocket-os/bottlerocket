@@ -82,6 +82,11 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/aws-ecs-1-nvidia/mod.rs)
 * [Default settings](src/aws-ecs-1-nvidia/defaults.d/)
 
+### aws-ecs-2: Amazon ECS
+
+* [Model](src/aws-ecs-1/mod.rs)
+* [Default settings](src/aws-ecs-1/defaults.d/)
+
 ### aws-dev: AWS development build
 
 * [Model](src/aws-dev/mod.rs)
