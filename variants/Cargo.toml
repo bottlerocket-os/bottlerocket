@@ -4,6 +4,7 @@ members = [
     "aws-ecs-1",
     "aws-ecs-2",
     "aws-ecs-1-nvidia",
+    "aws-ecs-2-nvidia",
     "aws-k8s-1.23",
     "aws-k8s-1.23-nvidia",
     "aws-k8s-1.24",
