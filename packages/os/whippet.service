@@ -1,0 +1,15 @@
+[Unit]
+Description=Bottlerocket D-Bus listener for network events
+After=generate-network-config.service
+Requires=generate-network-config.service
+Requires=dbus-org.freedesktop.network1.service
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/whippet
+Restart=always
+RestartSec=5
+StandardError=journal+console
+
+[Install]
+WantedBy=network-pre.target

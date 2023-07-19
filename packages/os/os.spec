@@ -49,6 +49,7 @@ Source119: reboot-if-required.service
 Source120: warm-pool-wait.service
 Source121: disable-udp-offload.service
 Source122: has-boot-ever-succeeded.service
+Source123: whippet.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -131,6 +132,7 @@ Summary: Bottlerocket userdata configuration system
 Summary: Bottlerocket network configuration helper
 %if %{with systemd_networkd}
 Requires: %{_cross_os}systemd-networkd
+Requires: %{_cross_os}whippet
 %else
 Requires: %{_cross_os}wicked
 %endif
@@ -287,6 +289,11 @@ Summary: Compliance check framework
 %description -n %{_cross_os}bloodhound
 %{summary}.
 
+%package -n %{_cross_os}whippet
+Summary: D-Bus listener and marshaller
+%description -n %{_cross_os}whippet
+%{summary}.
+
 %prep
 %setup -T -c
 %cargo_prep
@@ -346,6 +353,7 @@ echo "** Output from non-static builds:"
     -p certdog \
     -p shimpei \
     -p bloodhound \
+    %{?with_systemd_networkd: -p whippet} \
     %{?with_ecs_runtime: -p ecs-settings-applier} \
     %{?with_aws_platform: -p shibaken -p cfsignal} \
     %{?with_aws_k8s_family: -p pluto} \
@@ -372,6 +380,7 @@ for p in \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
   shimpei bloodhound bottlerocket-checks \
+  %{?with_systemd_networkd: whippet} \
   %{?with_ecs_runtime: ecs-settings-applier} \
   %{?with_aws_platform: shibaken cfsignal} \
   %{?with_aws_k8s_family: pluto} \
@@ -469,6 +478,11 @@ install -p -m 0644 %{S:302} %{buildroot}%{_cross_udevrulesdir}/82-supplemental-s
 
 %if %{with vmware_platform}
 install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
+%endif
+
+# Whippet should only have a service file installed if using systemd-networkd
+%if %{with systemd_networkd}
+install -p -m 0644 %{S:123} %{buildroot}%{_cross_unitdir}
 %endif
 
 %cross_scan_attribution --clarify %{_builddir}/sources/clarify.toml \
@@ -630,5 +644,11 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %{_cross_bindir}/bloodhound
 %{_cross_bindir}/bottlerocket-checks
 %{_cross_libexecdir}/cis-checks/bottlerocket
+
+%files -n %{_cross_os}whippet
+%if %{with systemd_networkd}
+%{_cross_bindir}/whippet
+%{_cross_unitdir}/whippet.service
+%endif
 
 %changelog
