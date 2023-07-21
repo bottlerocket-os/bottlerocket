@@ -1,0 +1,4 @@
+[required-extensions]
+extension = { version = "version" }
+++++++
+config-value: {{ settings.extension.attribute }}

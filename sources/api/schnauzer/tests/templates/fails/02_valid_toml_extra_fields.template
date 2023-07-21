@@ -1,0 +1,5 @@
+[required-extensions]
+puppies = "yes"
+[extraneous-key]
+kittens = "also yes"
++++

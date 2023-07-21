@@ -3341,14 +3341,18 @@ dependencies = [
  "http",
  "lazy_static",
  "log",
+ "maplit",
  "models",
  "num_cpus",
  "percent-encoding",
+ "pest",
+ "pest_derive",
  "serde",
  "serde_json",
  "serde_plain",
  "snafu",
  "tokio",
+ "toml",
  "url",
 ]
 
