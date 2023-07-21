@@ -1794,7 +1794,6 @@ dependencies = [
  "simplelog",
  "snafu",
  "tokio",
- "toml",
  "url",
 ]
 
