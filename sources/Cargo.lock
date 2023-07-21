@@ -3671,8 +3671,6 @@ dependencies = [
  "log",
  "models",
  "schnauzer",
- "serde",
- "serde_json",
  "simplelog",
  "snafu",
  "tempfile",
