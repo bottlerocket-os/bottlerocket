@@ -27,7 +27,7 @@ included-packages = [
 ]
 
 [lib]
-path = "/dev/null"
+path = "../variants.rs"
 
 [build-dependencies]
 # core

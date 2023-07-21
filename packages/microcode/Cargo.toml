@@ -6,7 +6,7 @@ publish = false
 build = "../build.rs"
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 # Use latest-srpm-urls.sh to get these.
 

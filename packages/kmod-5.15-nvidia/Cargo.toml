@@ -6,7 +6,7 @@ publish = false
 build = "../build.rs"
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 [package.metadata.build-package]
 package-name = "kmod-5.15-nvidia"

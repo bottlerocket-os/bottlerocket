@@ -37,7 +37,7 @@ kernel-parameters = [
 ]
 
 [lib]
-path = "/dev/null"
+path = "../variants.rs"
 
 [build-dependencies]
 aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
