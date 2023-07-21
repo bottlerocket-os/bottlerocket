@@ -2451,7 +2451,6 @@ dependencies = [
  "serde",
  "serde_json",
  "snafu",
- "toml",
 ]
 
 [[package]]
