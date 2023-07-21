@@ -2433,7 +2433,6 @@ dependencies = [
 name = "pubsys"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "aws-config",
  "aws-credential-types",
  "aws-sdk-ebs",
@@ -2450,7 +2449,6 @@ dependencies = [
  "duct",
  "futures",
  "governor",
- "http",
  "indicatif",
  "lazy_static",
  "log",
