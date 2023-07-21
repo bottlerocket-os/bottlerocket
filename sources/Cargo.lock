@@ -1241,7 +1241,6 @@ dependencies = [
  "http",
  "log",
  "models",
- "serde",
  "serde_json",
  "simplelog",
  "snafu",
