@@ -16,7 +16,6 @@ lz4 = "1"
 nix = "0.24"
 pentacle = "1"
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
-regex = "1"
 semver = "1"
 simplelog = "0.12"
 snafu = "0.7"

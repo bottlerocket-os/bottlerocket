@@ -2465,7 +2465,6 @@ dependencies = [
  "nix",
  "pentacle",
  "rand",
- "regex",
  "semver",
  "simplelog",
  "snafu",
