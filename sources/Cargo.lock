@@ -352,7 +352,6 @@ dependencies = [
  "bytes",
  "datastore",
  "fs2",
- "futures",
  "generate-readme",
  "http",
  "libc",
@@ -361,9 +360,7 @@ dependencies = [
  "models",
  "nix",
  "num",
- "percent-encoding",
  "rand",
- "semver",
  "serde",
  "serde_json",
  "simplelog",
@@ -371,7 +368,6 @@ dependencies = [
  "thar-be-updates",
  "tokio",
  "toml",
- "walkdir",
 ]
 
 [[package]]
