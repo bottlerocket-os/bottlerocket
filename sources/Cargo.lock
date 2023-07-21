@@ -4247,8 +4247,6 @@ dependencies = [
  "log",
  "lz4",
  "models",
- "rand",
- "reqwest",
  "semver",
  "serde",
  "serde_json",
