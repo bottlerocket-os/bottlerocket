@@ -1154,7 +1154,6 @@ dependencies = [
  "aws-sdk-cloudformation",
  "aws-types",
  "generate-readme",
- "hyper",
  "imdsclient",
  "log",
  "serde",
