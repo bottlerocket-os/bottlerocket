@@ -11,6 +11,185 @@ servers:
 - url: file:///run/api.sock
   description: The production API server
 
+components:
+  schemas:
+    HashMap:
+      type: object
+      additionalProperties:
+        type: string
+    Service:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/HashMap'
+    Services:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/Service'
+    ConfigurationFileInfo:
+      type: object
+      properties:
+        template-path:
+          type: string
+        path:
+          type: string
+        mode:
+          type: string
+    ConfigurationFiles:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/ConfigurationFileInfo'
+    Report:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    Version:
+      type: object
+      properties:
+        major:
+          type: integer
+        minor:
+          type: integer
+        patch:
+          type: integer
+    UpdateImage:
+      type: object
+      properties:
+        arch:
+          type: string
+        variant:
+          type: string
+        version:
+          $ref: '#/components/schemas/Version'
+    StagedImage:
+      type: object
+      properties:
+        image:
+          $ref: '#/components/schemas/UpdateImage'
+        next_to_boot:
+          type: boolean
+    CommandResult:
+      type: object
+      properties:
+        cmd_type:
+          type: string
+        cmd_status:
+          type: string
+        timestamp:
+          type: string
+        exit_status:
+          type: integer
+        stderr:
+          type: string
+    UpdateStatus:
+      type: object
+      properties:
+        update_state:
+          type: string
+        available_updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Version'
+        chosen-update:
+          $ref: '#/components/schemas/UpdateImage'
+        active-partition:
+          $ref: '#/components/schemas/StagedImage'
+        staging-partition:
+          $ref: '#/components/schemas/StagedImage'
+        most-recent-command:
+          $ref: '#/components/schemas/CommandResult'
+    Settings:
+      type: object
+      properties:
+        motd:
+          type: string
+        kubernetes:
+          type: object
+        ecs:
+          type: object
+        updates:
+          type: object
+        host-containers:
+          type: object
+        ntp:
+          type: object
+          properties:
+            time-servers:
+              type: array
+              items:
+                type: string
+        network:
+          type: object
+          properties:
+            hostname:
+              type: string
+        kernel:
+          type: object
+          properties:
+            lockdown:
+              type: string
+        aws:
+          type: object
+          properties:
+          region:
+            type: string
+          config:
+            type: string
+          credentials:
+            type: string
+          profile:
+            type: string
+        metrics:
+          type: object
+        oci-defaults:
+          type: object
+        oci-hooks:
+          type: object
+          properties:
+            log4j-hotpatch-enabled:
+              type: boolean
+        cloudformation:
+          type: object
+          properties:
+            should-signal:
+              type: boolean
+            stack-name:
+              type: string
+            logical-resource-id:
+              type: string
+        autoscaling:
+          type: object
+          properties:
+            should-wait:
+              type: boolean
+      additionalProperties: true
+    BottlerocketRelease:
+      type: object
+      properties:
+        pretty-name:
+          type: string
+        variant-id:
+          type: string
+        version-id:
+          type: string
+        build-id:
+          type: string
+        arch:
+          type: string
+    Model:
+      type: object
+      properties:
+        settings:
+          $ref: '#/components/schemas/Settings'
+        services:
+          $ref: '#/components/schemas/Services'
+        configuration-files:
+          $ref: '#/components/schemas/ConfigurationFiles'
+        os:
+          $ref: '#/components/schemas/BottlerocketRelease'
+
 paths:
   /:
     get:
@@ -462,13 +641,14 @@ paths:
             application/json:
               schema:
                 type: array
-                $ref: "Report"
+                items:
+                  $ref: "Report"
         500:
           description: "Server error"
 
   /report/cis:
     get:
-      summary: "Get CIS Bottlerocket benchmark report"
+      summary: "Get CIS benchmark report"
       operationId: "cis-report"
       parameters:
         - in: query
@@ -491,7 +671,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "String"
+                type: string
         400:
           description: "Bad request input"
         422:
