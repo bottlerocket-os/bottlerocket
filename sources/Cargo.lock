@@ -3476,7 +3476,6 @@ dependencies = [
  "generate-readme",
  "http",
  "log",
- "serde",
  "serde_json",
  "simplelog",
  "snafu",
