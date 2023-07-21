@@ -10,7 +10,6 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-libc = "0.2"
 log = "0.4"
 percent-encoding = "2"
 serde = { version = "1", features = ["derive"] }
