@@ -17,7 +17,6 @@ serde_json = "1"
 snafu = "0.7"
 tokio = { version = "~1.25", default-features = false, features = ["macros", "rt-multi-thread", "time"] }  # LTS
 tokio-retry = "0.3"
-url = "2"
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../generate-readme" }
