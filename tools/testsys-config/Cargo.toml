@@ -10,8 +10,6 @@ publish = false
 bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.8", tag = "v0.0.8"}
 bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
 handlebars = "4"
-home = "0.5"
-lazy_static = "1"
 log = "0.4"
 maplit="1"
 testsys-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.8", tag = "v0.0.8"}
@@ -20,4 +18,3 @@ serde_plain = "1"
 serde_yaml = "0.8"
 snafu = "0.7"
 toml = "0.5"
-url = { version = "2", features = ["serde"] }

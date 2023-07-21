@@ -3252,8 +3252,6 @@ dependencies = [
  "bottlerocket-types",
  "bottlerocket-variant",
  "handlebars",
- "home",
- "lazy_static",
  "log",
  "maplit",
  "serde",
@@ -3262,7 +3260,6 @@ dependencies = [
  "snafu",
  "testsys-model",
  "toml",
- "url",
 ]
 
 [[package]]
