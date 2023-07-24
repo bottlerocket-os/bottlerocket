@@ -18,7 +18,6 @@ aws-config = "0.54"
 aws-sdk-cloudformation = "0.24"
 aws-types = "0.54"
 imdsclient = { path = "../imdsclient", version = "0.1" }
-hyper = "0.14"
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../generate-readme" }

@@ -352,7 +352,6 @@ dependencies = [
  "bytes",
  "datastore",
  "fs2",
- "futures",
  "generate-readme",
  "http",
  "libc",
@@ -361,9 +360,7 @@ dependencies = [
  "models",
  "nix",
  "num",
- "percent-encoding",
  "rand",
- "semver",
  "serde",
  "serde_json",
  "simplelog",
@@ -371,7 +368,6 @@ dependencies = [
  "thar-be-updates",
  "tokio",
  "toml",
- "walkdir",
 ]
 
 [[package]]
@@ -1019,10 +1015,8 @@ dependencies = [
  "constants",
  "datastore",
  "generate-readme",
- "http",
  "log",
  "models",
- "serde",
  "serde_json",
  "simplelog",
  "snafu",
@@ -1136,10 +1130,8 @@ dependencies = [
  "base64 0.13.1",
  "constants",
  "generate-readme",
- "http",
  "log",
  "models",
- "serde",
  "serde_json",
  "simplelog",
  "snafu",
@@ -1162,7 +1154,6 @@ dependencies = [
  "aws-sdk-cloudformation",
  "aws-types",
  "generate-readme",
- "hyper",
  "imdsclient",
  "log",
  "serde",
@@ -1249,7 +1240,6 @@ dependencies = [
  "http",
  "log",
  "models",
- "serde",
  "serde_json",
  "simplelog",
  "snafu",
@@ -1417,7 +1407,6 @@ name = "datastore"
 version = "0.1.0"
 dependencies = [
  "generate-readme",
- "libc",
  "log",
  "maplit",
  "percent-encoding",
@@ -1972,7 +1961,6 @@ dependencies = [
  "http",
  "log",
  "models",
- "serde",
  "serde_json",
  "simplelog",
  "snafu",
@@ -2177,7 +2165,6 @@ dependencies = [
  "tokio",
  "tokio-retry",
  "tokio-test",
- "url",
 ]
 
 [[package]]
@@ -2462,7 +2449,6 @@ dependencies = [
  "serde",
  "serde_json",
  "snafu",
- "toml",
 ]
 
 [[package]]
@@ -2477,7 +2463,6 @@ dependencies = [
  "nix",
  "pentacle",
  "rand",
- "regex",
  "semver",
  "simplelog",
  "snafu",
@@ -2527,7 +2512,6 @@ version = "0.1.0"
 dependencies = [
  "darling",
  "generate-readme",
- "proc-macro2",
  "quote",
  "syn 1.0.109",
 ]
@@ -3489,7 +3473,6 @@ dependencies = [
  "generate-readme",
  "http",
  "log",
- "serde",
  "serde_json",
  "simplelog",
  "snafu",
@@ -3685,8 +3668,6 @@ dependencies = [
  "log",
  "models",
  "schnauzer",
- "serde",
- "serde_json",
  "simplelog",
  "snafu",
  "tempfile",
@@ -3742,7 +3723,6 @@ dependencies = [
  "http",
  "log",
  "models",
- "serde",
  "serde_json",
  "simplelog",
  "snafu",
@@ -4267,8 +4247,6 @@ dependencies = [
  "log",
  "lz4",
  "models",
- "rand",
- "reqwest",
  "semver",
  "serde",
  "serde_json",

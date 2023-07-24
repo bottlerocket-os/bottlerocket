@@ -15,7 +15,6 @@ proc-macro = true
 
 [dependencies]
 darling = "0.14"
-proc-macro2 = "1"
 quote = "1"
 syn = { version = "1", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "visit-mut"] }
 
