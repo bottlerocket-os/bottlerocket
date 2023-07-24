@@ -26,6 +26,7 @@ use std::iter::FromIterator;
 use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
+#[group(id = "who", required = true, multiple = true)]
 pub(crate) struct ModifyOptions {
     /// User IDs to give/remove access
     #[arg(long, value_delimiter = ',', group = "who")]
@@ -43,7 +44,7 @@ pub(crate) struct ModifyOptions {
 
 /// Grants or revokes permissions to Bottlerocket AMIs
 #[derive(Debug, ClapArgs)]
-#[group(required = true, multiple = true)]
+#[group(id = "mode", required = true, multiple = false)]
 pub(crate) struct Who {
     /// Path to the JSON file containing regional AMI IDs to modify
     #[arg(long)]
