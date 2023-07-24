@@ -4,7 +4,7 @@ Welcome to Bottlerocket!
 
 Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
 
-If you’re ready to jump right in, read one of our setup guides for running Bottlerocket in [Amazon EKS](QUICKSTART-EKS.md), [Amazon ECS](QUICKSTART-ECS.md), or [VMware](QUICKSTART-VMWARE.md).
+If you’re ready to jump right in, read one of our setup guides for running Bottlerocket in [Amazon EKS](https://bottlerocket.dev/en/os/latest/#/install/quickstart/aws/k8s/), [Amazon ECS](QUICKSTART-ECS.md), or [VMware](QUICKSTART-VMWARE.md).
 If you're interested in running Bottlerocket on bare metal servers, please refer to the [provisioning guide](PROVISIONING-METAL.md) to get started.
 
 Bottlerocket focuses on security and maintainability, providing a reliable, consistent, and safe platform for container-based workloads.
@@ -107,7 +107,7 @@ Our supported architectures include `x86_64` and `aarch64` (written as `arm64` i
 :walking: :running:
 
 Bottlerocket is best used with a container orchestrator.
-To get started with Kubernetes in Amazon EKS, please see [QUICKSTART-EKS](QUICKSTART-EKS.md).
+To get started with Kubernetes in Amazon EKS, please see [the current Amazon EKS Quickstart guide on bottlerocket.dev](https://bottlerocket.dev/en/os/latest/#/install/quickstart/aws/k8s/).
 To get started with Kubernetes in VMware, please see [QUICKSTART-VMWARE](QUICKSTART-VMWARE.md).
 To get started with Amazon ECS, please see [QUICKSTART-ECS](QUICKSTART-ECS.md).
 These guides describe:
@@ -149,7 +149,7 @@ Bottlerocket has a ["control" container](https://github.com/bottlerocket-os/bott
 This container runs the [AWS SSM agent](https://github.com/aws/amazon-ssm-agent) that lets you run commands, or start shell sessions, on Bottlerocket instances in EC2.
 (You can easily replace this control container with your own just by changing the URI; see [Settings](#settings).)
 
-In AWS, you need to give your instance the SSM role for this to work; see the [setup guide](QUICKSTART-EKS.md#enabling-ssm).
+In AWS, you need to give your instance the SSM role for this to work; see the [EKS setup guide](QUICKSTART-EKS.md#enabling-ssm).
 Outside of AWS, you can use [AWS Systems Manager for hybrid environments](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-managedinstances.html).
 There's more detail about hybrid environments in the [control container documentation](https://github.com/bottlerocket-os/bottlerocket-control-container/#connecting-to-aws-systems-manager-ssm).
 
@@ -363,7 +363,7 @@ You should [specify them in user data](#using-user-data).
 
 For Kubernetes variants in AWS, you must also specify:
 
-* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [setup guide](QUICKSTART-EKS.md) uses "bottlerocket".
+* `settings.kubernetes.cluster-name`: The cluster name you chose during setup; the [EKS setup guide](QUICKSTART-EKS.md) uses "bottlerocket".
 
 For Kubernetes variants in VMware, you must specify:
 
@@ -1255,7 +1255,7 @@ Currently, the following NVIDIA driver versions are supported in Bottlerocket:
 The official AMIs for these variants can be used with EC2 GPU-equipped instance types such as: `p2`, `p3`, `p4`, `g3`, `g4dn`, `g5` and `g5g`.
 Note that older instance types, such as `p2`, are not supported by NVIDIA driver `515.X` and above.
 You need to make sure you select the appropriate AMI depending on the instance type you are planning to use.
-Please see [QUICKSTART-EKS](QUICKSTART-EKS.md#aws-k8s--nvidia-variants) for further details about Kubernetes variants, and [QUICKSTART-ECS](QUICKSTART-ECS.md#aws-ecs--nvidia-variants) for ECS variants.
+Please see [the EKS setup guide](QUICKSTART-EKS.md#aws-k8s--nvidia-variants) for further details about Kubernetes variants, and [QUICKSTART-ECS](QUICKSTART-ECS.md#aws-ecs--nvidia-variants) for ECS variants.
 
 ## Details
 
