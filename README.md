@@ -4,7 +4,8 @@ Welcome to Bottlerocket!
 
 Bottlerocket is a free and open-source Linux-based operating system meant for hosting containers.
 
-If you’re ready to jump right in, read one of our setup guides for running Bottlerocket in [Amazon EKS](QUICKSTART-EKS.md), [Amazon ECS](QUICKSTART-ECS.md), or [VMware](QUICKSTART-VMWARE.md).
+To learn more about Bottlerocket, visit the [official Bottlerocket website and documentation](https://bottlerocket.dev/).
+Otherwise, if you’re ready to jump right in, read one of our setup guides for running Bottlerocket in [Amazon EKS](QUICKSTART-EKS.md), [Amazon ECS](QUICKSTART-ECS.md), or [VMware](QUICKSTART-VMWARE.md).
 If you're interested in running Bottlerocket on bare metal servers, please refer to the [provisioning guide](PROVISIONING-METAL.md) to get started.
 
 Bottlerocket focuses on security and maintainability, providing a reliable, consistent, and safe platform for container-based workloads.
