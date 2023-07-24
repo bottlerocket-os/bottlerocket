@@ -1,4 +1,4 @@
-From a30b5e19083d88a9e26027488e42cc3105ad4689 Mon Sep 17 00:00:00 2001
+From 3ba1f48b28c5d510222066e5a9b211828ac8f426 Mon Sep 17 00:00:00 2001
 From: Zac Mrowicki <mrowicki@amazon.com>
 Date: Thu, 6 Jul 2023 17:50:28 +0000
 Subject: [PATCH] systemd-networkd: Conditionalize hostnamed/timezoned DBUS
@@ -59,7 +59,7 @@ index c19bc10..9d13cde 100644
  bool address_is_filtered(int family, const union in_addr_union *address, uint8_t prefixlen, Set *allow_list, Set *deny_list);
  static inline bool in4_address_is_filtered(const struct in_addr *address, Set *allow_list, Set *deny_list) {
 diff --git a/src/network/networkd-manager.c b/src/network/networkd-manager.c
-index ff2770f..a225526 100644
+index ff2770f..5aede2d 100644
 --- a/src/network/networkd-manager.c
 +++ b/src/network/networkd-manager.c
 @@ -845,6 +845,7 @@ static int set_hostname_handler(sd_bus_message *m, void *userdata, sd_bus_error
@@ -92,7 +92,7 @@ index ff2770f..a225526 100644
  }
 +#endif
 diff --git a/src/network/networkd-manager.h b/src/network/networkd-manager.h
-index 86de529..b80c6c5 100644
+index 86de529..0fef259 100644
 --- a/src/network/networkd-manager.h
 +++ b/src/network/networkd-manager.h
 @@ -110,7 +110,20 @@ bool manager_should_reload(Manager *m);
@@ -117,5 +117,5 @@ index 86de529..b80c6c5 100644
  
  DEFINE_TRIVIAL_CLEANUP_FUNC(Manager*, manager_free);
 -- 
-2.38.1
+2.40.1
 

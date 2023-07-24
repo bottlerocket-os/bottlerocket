@@ -1,7 +1,7 @@
-From 13bf60bf11edf407246176262865c8e93f66c1e8 Mon Sep 17 00:00:00 2001
+From 4444604feb71d9b31896fbf0a5bf02e8270a3411 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sun, 17 Jul 2022 16:21:16 +0000
-Subject: [PATCH 9011/9011] units: keep modprobe service units running
+Subject: [PATCH] units: keep modprobe service units running
 
 Otherwise, the units are restarted when the default target changes.
 
@@ -11,14 +11,14 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 1 insertion(+)
 
 diff --git a/units/modprobe@.service b/units/modprobe@.service
-index cf8baf6..a029ab0 100644
+index 85a2c08..2994082 100644
 --- a/units/modprobe@.service
 +++ b/units/modprobe@.service
-@@ -17,3 +17,4 @@ ConditionCapability=CAP_SYS_MODULE
+@@ -18,3 +18,4 @@ StartLimitIntervalSec=0
  [Service]
  Type=oneshot
  ExecStart=-/sbin/modprobe -abq %I
 +RemainAfterExit=true
 -- 
-2.36.1
+2.40.1
 

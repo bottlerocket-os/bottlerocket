@@ -1,7 +1,7 @@
-From 2e871585a26b1f107db88a0ec0d9951735a6ec49 Mon Sep 17 00:00:00 2001
+From d45be2a1f7a2d58efff7921c350fffe8f26901a4 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Thu, 9 Jul 2020 20:00:36 +0000
-Subject: [PATCH 9006/9011] mount-setup: mount /etc with specific label
+Subject: [PATCH] mount-setup: mount /etc with specific label
 
 The filesystem is mounted after we load the SELinux policy, so we can
 apply the label we need to restrict access.
@@ -12,7 +12,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/src/shared/mount-setup.c b/src/shared/mount-setup.c
-index debc043..a9c00b3 100644
+index 03fc774..8a25823 100644
 --- a/src/shared/mount-setup.c
 +++ b/src/shared/mount-setup.c
 @@ -61,6 +61,8 @@ typedef struct MountPoint {
@@ -24,7 +24,7 @@ index debc043..a9c00b3 100644
  static const MountPoint mount_table[] = {
          { "proc",        "/proc",                     "proc",       NULL,                                      MS_NOSUID|MS_NOEXEC|MS_NODEV,
            NULL,          MNT_FATAL|MNT_IN_CONTAINER|MNT_FOLLOW_SYMLINK },
-@@ -110,6 +112,8 @@ static const MountPoint mount_table[] = {
+@@ -112,6 +114,8 @@ static const MountPoint mount_table[] = {
  #endif
          { "bpf",         "/sys/fs/bpf",               "bpf",        "mode=700",                                MS_NOSUID|MS_NOEXEC|MS_NODEV,
            NULL,          MNT_NONE,                  },
@@ -34,5 +34,5 @@ index debc043..a9c00b3 100644
  
  bool mount_point_is_api(const char *path) {
 -- 
-2.36.1
+2.40.1
 

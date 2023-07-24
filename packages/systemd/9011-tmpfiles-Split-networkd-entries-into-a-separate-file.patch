@@ -1,4 +1,4 @@
-From abdd268ab3c16c606a1578e5d40d5847a1d99523 Mon Sep 17 00:00:00 2001
+From 036e90b85cc26200b1887ca764f703f2a9f4fb74 Mon Sep 17 00:00:00 2001
 From: Daan De Meyer <daan.j.demeyer@gmail.com>
 Date: Wed, 27 Apr 2022 10:25:22 +0100
 Subject: [PATCH] tmpfiles: Split networkd entries into a separate file
@@ -15,7 +15,7 @@ into a separate file to make that possible.
  create mode 100644 tmpfiles.d/systemd-network.conf
 
 diff --git a/tmpfiles.d/meson.build b/tmpfiles.d/meson.build
-index b8d3919025..7c2604cfe1 100644
+index b8d3919..7c2604c 100644
 --- a/tmpfiles.d/meson.build
 +++ b/tmpfiles.d/meson.build
 @@ -13,6 +13,7 @@ files = [['README',               ''],
@@ -28,7 +28,7 @@ index b8d3919025..7c2604cfe1 100644
  foreach pair : files
 diff --git a/tmpfiles.d/systemd-network.conf b/tmpfiles.d/systemd-network.conf
 new file mode 100644
-index 0000000000..b30bc914a5
+index 0000000..b30bc91
 --- /dev/null
 +++ b/tmpfiles.d/systemd-network.conf
 @@ -0,0 +1,13 @@
@@ -46,7 +46,7 @@ index 0000000000..b30bc914a5
 +d /run/systemd/netif/leases 0755 systemd-network systemd-network -
 +d /run/systemd/netif/lldp 0755 systemd-network systemd-network -
 diff --git a/tmpfiles.d/systemd.conf.in b/tmpfiles.d/systemd.conf.in
-index 9b2357cd31..e23e102782 100644
+index 9b2357c..e23e102 100644
 --- a/tmpfiles.d/systemd.conf.in
 +++ b/tmpfiles.d/systemd.conf.in
 @@ -18,12 +18,6 @@ d /run/systemd/sessions 0755 root root -
@@ -63,5 +63,5 @@ index 9b2357cd31..e23e102782 100644
  d /run/log 0755 root root -
  
 -- 
-2.38.1
+2.40.1
 

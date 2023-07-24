@@ -56,31 +56,26 @@ Patch9005: 9005-mount-setup-apply-noexec-to-more-mounts.patch
 # Local patch to handle mounting /etc with our SELinux label.
 Patch9006: 9006-mount-setup-mount-etc-with-specific-label.patch
 
-# Local patch to disable the keyed hashes feature in the journal, which
-# makes it unreadable by older versions of systemd. Can be dropped once
-# there's sufficiently broad adoption of systemd >= 246.
-Patch9007: 9007-journal-disable-keyed-hashes-for-compatibility.patch
-
 # We need `prefix` to be configurable for our own packaging so we can avoid
 # dependencies on the host OS.
-Patch9008: 9008-pkg-config-stop-hardcoding-prefix-to-usr.patch
+Patch9007: 9007-pkg-config-stop-hardcoding-prefix-to-usr.patch
 
 # Local patch to stop overriding rp_filter defaults with wildcard values.
-Patch9009: 9009-sysctl-do-not-set-rp_filter-via-wildcard.patch
+Patch9008: 9008-sysctl-do-not-set-rp_filter-via-wildcard.patch
 
 # Local patch to set root's shell to /sbin/nologin rather than /bin/sh.
-Patch9010: 9010-sysusers-set-root-shell-to-sbin-nologin.patch
+Patch9009: 9009-sysusers-set-root-shell-to-sbin-nologin.patch
 
 # Local patch to keep modprobe units running to avoid repeated log entries.
-Patch9011: 9011-units-keep-modprobe-service-units-running.patch
+Patch9010: 9010-units-keep-modprobe-service-units-running.patch
 
 # Local patch to split the systemd-networkd tmpfiles into a separate file which
 # allows us to exclude them when not using networkd.
-Patch9012: 9012-tmpfiles-Split-networkd-entries-into-a-separate-file.patch
+Patch9011: 9011-tmpfiles-Split-networkd-entries-into-a-separate-file.patch
 
 # Local patch to conditionalize systemd-networkd calls to hostname and timezone
 # DBUS services not used in Bottlerocket
-Patch9013: 9013-systemd-networkd-Conditionalize-hostnamed-timezoned-DBUS.patch
+Patch9012: 9012-systemd-networkd-Conditionalize-hostnamed-timezoned-.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
