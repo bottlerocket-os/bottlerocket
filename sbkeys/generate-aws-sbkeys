@@ -117,11 +117,12 @@ mkdir -p "${OUTPUT_DIR}"
 
 if [ -n "${SDK_IMAGE:-}" ] ; then
   docker run -a stdin -a stdout -a stderr --rm \
+    --network=host \
     --user "$(id -u):$(id -g)" \
     --security-opt label:disable \
-    -v "${OUTPUT_DIR}":/tmp/output \
-    -v "${SBKEYS_SCRIPT}":/tmp/sbkeys \
-    -v "${AWS_KMS_PKCS11_CONF}":/tmp/aws-kms-pkcs11-conf \
+    -v "${OUTPUT_DIR}":"${OUTPUT_DIR}" \
+    -v "${SBKEYS_SCRIPT}":"${SBKEYS_SCRIPT}" \
+    -v "${AWS_KMS_PKCS11_CONF}":"${AWS_KMS_PKCS11_CONF}" \
     ${AWS_ACCESS_KEY_ID:+-e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID} \
     ${AWS_SECRET_ACCESS_KEY:+-e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY} \
     ${AWS_SESSION_TOKEN:+-e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN} \
@@ -134,10 +135,10 @@ if [ -n "${SDK_IMAGE:-}" ] ; then
     -e SHIM_SIGN_KEY="${SHIM_SIGN_KEY}" \
     -e CODE_SIGN_KEY="${CODE_SIGN_KEY}" \
     -e CONFIG_SIGN_KEY="${CONFIG_SIGN_KEY}" \
-    -e AWS_KMS_PKCS11_CONF="/tmp/aws-kms-pkcs11-conf" \
-    -e OUTPUT_DIR="/tmp/output" \
+    -e AWS_KMS_PKCS11_CONF="${AWS_KMS_PKCS11_CONF}" \
+    -e OUTPUT_DIR="${OUTPUT_DIR}" \
     -w /tmp \
-    "${SDK_IMAGE}" bash /tmp/sbkeys
+    "${SDK_IMAGE}" bash "${SBKEYS_SCRIPT}"
 else
   export PK_CA KEK_CA DB_CA VENDOR_CA
   export CODE_SIGN_KEY CONFIG_SIGN_KEY SHIM_SIGN_KEY

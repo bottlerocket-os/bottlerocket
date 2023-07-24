@@ -64,11 +64,10 @@ if [ -n "${SDK_IMAGE:-}" ] ; then
   docker run -a stdin -a stdout -a stderr --rm \
     --user "$(id -u):$(id -g)" \
     --security-opt label:disable \
-    -v "${OUTPUT_DIR}":/tmp/output \
-    -v "${SBKEYS_SCRIPT}":/tmp/sbkeys \
-    -e OUTPUT_DIR="/tmp/output" \
-    -w /tmp \
-    "${SDK_IMAGE}" bash /tmp/sbkeys
+    -v "${OUTPUT_DIR}":"${OUTPUT_DIR}" \
+    -v "${SBKEYS_SCRIPT}":"${SBKEYS_SCRIPT}" \
+    -e OUTPUT_DIR="${OUTPUT_DIR}" \
+    "${SDK_IMAGE}" bash "${SBKEYS_SCRIPT}"
 else
   export OUTPUT_DIR
   bash "${SBKEYS_SCRIPT}"
