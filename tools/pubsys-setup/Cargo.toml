@@ -17,5 +17,4 @@ shell-words = "1"
 simplelog = "0.12"
 snafu = "0.7"
 tempfile = "3"
-toml = "0.5"
 url = { version = "2", features = ["serde"] }
