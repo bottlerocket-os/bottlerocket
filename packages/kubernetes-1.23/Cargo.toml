@@ -8,7 +8,7 @@ publish = false
 build = "../build.rs"
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 [package.metadata.build-package]
 package-name = "kubernetes-1.23"

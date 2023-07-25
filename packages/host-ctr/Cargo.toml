@@ -9,7 +9,7 @@ build = "../build.rs"
 source-groups = [ "host-ctr" ]
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 # RPM BuildRequires
 [build-dependencies]

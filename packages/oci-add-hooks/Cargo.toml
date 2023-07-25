@@ -6,7 +6,7 @@ publish = false
 build = "../build.rs"
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/awslabs/oci-add-hooks/archive/ef29fe312d2e1858d5eb28ab0abe0cbee298a165/oci-add-hooks-ef29fe3.tar.gz"

@@ -10,7 +10,7 @@ variant-sensitive = "platform"
 package-name = "kernel-6.1"
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 [[package.metadata.build-package.external-files]]
 # Use latest-srpm-url.sh to get this.

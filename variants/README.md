@@ -369,7 +369,7 @@ data-image-size-gib = 20
 partition-plan = "unified"
 
 [lib]
-path = "/dev/null"
+path = "../variants.rs"
 
 [build-dependencies]
 "my-agent" = { path = "../../packages/my-agent" }

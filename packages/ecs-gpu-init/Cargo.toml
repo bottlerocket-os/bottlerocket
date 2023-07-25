@@ -9,7 +9,7 @@ build = "../build.rs"
 source-groups = [ "ecs-gpu-init" ]
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 # RPM BuildRequires
 [build-dependencies]
