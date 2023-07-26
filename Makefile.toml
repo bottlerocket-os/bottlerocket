@@ -2,8 +2,16 @@
 skip_core_tasks = true
 
 [env]
-BUILDSYS_ARCH = { script = ['echo "${BUILDSYS_ARCH:-$(uname -m)}"'] }
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
+# TODO - replace with crates.io version when published
+TWOLITER_GIT = "https://github.com/bottlerocket-os/twoliter"
+TWOLITER_REV = "v0.0.2"
+TWOLITER_LOG_LEVEL = "info"
+TWOLITER_INSTALL_ROOT = "${BUILDSYS_ROOT_DIR}/tools"
+TWOLITER_BIN_DIR = "${TWOLITER_INSTALL_ROOT}/bin"
+TWOLITER = "${TWOLITER_BIN_DIR}/twoliter"
+TWOLITER_PROJECT = "${BUILDSYS_ROOT_DIR}/Twoliter.toml"
+BUILDSYS_ARCH = { script = ['echo "${BUILDSYS_ARCH:-$(uname -m)}"'] }
 BUILDSYS_BUILD_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_PACKAGES_DIR = "${BUILDSYS_BUILD_DIR}/rpms"
 BUILDSYS_STATE_DIR = "${BUILDSYS_BUILD_DIR}/state"
@@ -233,1398 +241,210 @@ fi
 '''
 ] }
 
-[tasks.setup]
-script = [
-'''
-# Ensure we use a supported architecture
-case "${BUILDSYS_ARCH}" in
-   x86_64|aarch64) ;;
-   *)
-      echo "Unrecognized architecture '${BUILDSYS_ARCH}'; please use 'x86_64 or 'aarch64'"
-      exit 1
-      ;;
-esac
-
-mkdir -p ${BUILDSYS_BUILD_DIR}
-mkdir -p ${BUILDSYS_OUTPUT_DIR}
-mkdir -p ${BUILDSYS_PACKAGES_DIR}
-mkdir -p ${BUILDSYS_STATE_DIR}
-mkdir -p ${GO_MOD_CACHE}
-'''
-]
-
-[tasks.setup-build]
-dependencies = ["setup"]
-script = [
-'''
-for cmd in docker gzip lz4; do
-  if ! command -v ${cmd} >/dev/null 2>&1 ; then
-    echo "required program '${cmd}' not found" >&2
-    exit 1
-  fi
-done
-'''
-]
-
-[tasks.fetch]
-dependencies = [
-  "fetch-sdk",
-  "fetch-toolchain",
-  "fetch-sources",
-  "fetch-vendored",
-]
-
-[tasks.fetch-sdk]
-dependencies = ["setup-build"]
-script_runner = "bash"
-script = [
-'''
-if ! docker image inspect "${BUILDSYS_SDK_IMAGE}" >/dev/null 2>&1 ; then
-  if ! docker pull "${BUILDSYS_SDK_IMAGE}" ; then
-    echo "failed to pull '${BUILDSYS_SDK_IMAGE}'" >&2
-    exit 1
-  fi
-fi
-'''
-]
-
-[tasks.fetch-toolchain]
-dependencies = ["setup-build"]
-script_runner = "bash"
-script = [
-'''
-if docker image inspect "${BUILDSYS_TOOLCHAIN}-${BUILDSYS_ARCH}" >/dev/null 2>&1 ; then
-  exit 0
-fi
-
-case "${BUILDSYS_ARCH}" in
-  x86_64) docker_arch="amd64" ;;
-  aarch64) docker_arch="arm64" ;;
-esac
-
-# We want the image with the target's native toolchain, rather than one that matches the
-# host architecture.
-if ! docker pull --platform "${docker_arch}" "${BUILDSYS_TOOLCHAIN}" ; then
-  echo "could not pull '${BUILDSYS_TOOLCHAIN}' for ${docker_arch}" >&2
-  exit 1
-fi
-
-# Apply a tag to distinguish the image from other architectures.
-if ! docker tag "${BUILDSYS_TOOLCHAIN}" "${BUILDSYS_TOOLCHAIN}-${BUILDSYS_ARCH}" ; then
-  echo "could not tag '${BUILDSYS_TOOLCHAIN}-${BUILDSYS_ARCH}'" >&2
-  exit 1
-fi
-'''
-]
-
-[tasks.fetch-sources]
-dependencies = ["setup"]
-script_runner = "bash"
-script = [
-'''
-for ws in sources variants tools; do
-  [ -d "${ws}" ] || continue
-  cargo fetch --locked --manifest-path ${ws}/Cargo.toml
-done
-chmod -R o+r ${CARGO_HOME}
-'''
-]
-
-[tasks.fetch-vendored]
-dependencies = ["fetch-sdk"]
-script = [
-'''
-go_fetch() {
-  local module
-  module="${1:?}"
-  ${BUILDSYS_TOOLS_DIR}/docker-go \
-    --module-path "${BUILDSYS_SOURCES_DIR}/${module}" \
-    --sdk-image ${BUILDSYS_SDK_IMAGE} \
-    --go-mod-cache ${GO_MOD_CACHE} \
-    --command "go list -mod=readonly ./... >/dev/null && go mod vendor"
-}
-
-for m in ${GO_MODULES}; do
-  go_fetch ${m}
-done
-'''
-]
-
-[tasks.unit-tests]
-dependencies = ["fetch-sdk", "fetch-sources", "fetch-vendored"]
-script = [
-'''
-export VARIANT="${BUILDSYS_VARIANT}"
-
-cargo test \
-  ${CARGO_BUILD_ARGS} \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --manifest-path ${BUILDSYS_SOURCES_DIR}/Cargo.toml \
-  --all
-
-# unit tests (go)
-test_go_module() {
-  local module
-  module="${1:?}"
-  ${BUILDSYS_TOOLS_DIR}/docker-go \
-    --module-path "${BUILDSYS_SOURCES_DIR}/${module}" \
-    --sdk-image ${BUILDSYS_SDK_IMAGE} \
-    --go-mod-cache ${GO_MOD_CACHE} \
-    --command "cd cmd/$module; go test -v"
-}
-
-for m in ${GO_MODULES}; do
-  test_go_module ${m}
-done
-'''
-]
-
-# A top level target for devs to ensure review and patch readiness
-[tasks.check]
-dependencies = [
-   "check-cargo-version",
-   "unit-tests",
-   "check-fmt",
-   "check-lints",
-   "check-migrations",
-]
-
-[tasks.check-fmt]
-script = [
-'''
-rc=0
-# For golang first-party source code
-go_fmt() {
-  local module
-  module="${1:?}"
-  ${BUILDSYS_TOOLS_DIR}/docker-go \
-    --module-path "${BUILDSYS_SOURCES_DIR}/${module}" \
-    --sdk-image ${BUILDSYS_SDK_IMAGE} \
-    --go-mod-cache ${GO_MOD_CACHE} \
-    --command "gofmt -l cmd/$module"
-}
-
-for m in ${GO_MODULES}; do
-  unformatted_files=$(go_fmt ${m})
-  if [ -n "${unformatted_files}" ]; then
-    echo "${unformatted_files}"
-    rc=1
-  fi
-done
-
-# For rust first-party source code
-if ! docker run --rm \
-   -u $(id -u):$(id -g) \
-   -e CARGO_HOME="/tmp/.cargo" \
-   -v "${CARGO_HOME}":/tmp/.cargo \
-   -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
-   "${BUILDSYS_SDK_IMAGE}" \
-   cargo fmt \
-  --manifest-path /tmp/sources/Cargo.toml \
-  --message-format short \
-  --all \
-  -- --check; then
-  rc=1
-fi
-
-if ! docker run --rm \
-   -u $(id -u):$(id -g) \
-   -e CARGO_HOME="/tmp/.cargo" \
-   -v "${CARGO_HOME}":/tmp/.cargo \
-   -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
-   -v "${BUILDSYS_ROOT_DIR}/tools":/tmp/tools \
-   "${BUILDSYS_SDK_IMAGE}" \
-   cargo fmt \
-  --manifest-path /tmp/tools/Cargo.toml \
-  --message-format short \
-  --all \
-  -- --check; then
-  rc=1
-fi
-
-if [ "${rc}" -ne 0 ]; then
-  echo "Found unformatted source files listed above. First-party source code is checked with gofmt and rustfmt." >&2
-  exit $rc
-fi
-'''
-]
-
-[tasks.check-lints]
-dependencies = [
-   "check-clippy",
-   "check-shell",
-   "check-golangci-lint",
-]
-
-[tasks.check-clippy]
-script = [
-'''
-rc=0
-
-export VARIANT="${BUILDSYS_VARIANT}"
-
-# For rust first-party source code
-if ! docker run --rm \
-   -u $(id -u):$(id -g) \
-   -e CARGO_HOME="/tmp/.cargo" \
-   -v "${CARGO_HOME}":/tmp/.cargo \
-   -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
-   -v "${BUILDSYS_ROOT_DIR}/tools":/tmp/tools \
-   "${BUILDSYS_SDK_IMAGE}" \
-   cargo clippy \
-  --manifest-path /tmp/tools/Cargo.toml \
-  --locked -- -D warnings --no-deps; then
-  rc=1
-fi
-
-if ! docker run --rm \
-   -u $(id -u):$(id -g) \
-   -e CARGO_HOME="/tmp/.cargo" \
-   -v "${CARGO_HOME}":/tmp/.cargo \
-   -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
-   -e VARIANT \
-   "${BUILDSYS_SDK_IMAGE}" \
-   cargo clippy \
-  --manifest-path /tmp/sources/Cargo.toml \
-  --locked -- -D warnings --no-deps; then
-  rc=1
-fi
-
-if [ "${rc}" -ne 0 ]; then
-  echo "Found lint warnings. First-party source code is checked with clippy." >&2
-  exit $rc
-fi
-'''
-]
-
-[tasks.check-shell]
-script = [
-'''
-rc=0
-
-# For bash first-party shell code
-if ! docker run --rm \
-  --network=none \
-  --user "$(id -u):$(id -g)" \
-  --security-opt="label=disable" \
-  -v "${BUILDSYS_TOOLS_DIR}":/tmp/tools \
-  "${BUILDSYS_SDK_IMAGE}" \
-  bash -c \
-    'flagged_scripts=0 && \
-    cd /tmp/tools && \
-    for shell_script in $(grep -l --directories=skip --regexp="^#\!.*bash$" * ); do
-      if ! shellcheck \
-        --external-sources \
-        --source-path=SCRIPTDIR \
-        --format=gcc \
-        --severity=warning \
-        "${shell_script}"; then
-        ((++flagged_scripts))
-      fi
-    done && \
-    if [ "${flagged_scripts}" -ne 0 ]; then
-      exit 1
-    fi'; then
-  rc=1
-fi
-
-if [ "${rc}" -ne 0 ]; then
-  echo "Found lint warnings. First-party shell code is checked with ShellCheck." >&2
-  exit $rc
-fi
-'''
-]
-
-[tasks.check-golangci-lint]
-script = [
-'''
-top_path=$(pwd)
-config_path="${top_path}/.golangci.yaml"
-
-for m in ${GO_MODULES}; do
-    cd "sources/${m}"
-    mod_name=$(pwd)
-    docker run --rm \
-        -v "${mod_name}":/"${mod_name}" \
-        -v "${config_path}":/"${config_path}" \
-        -w /"${mod_name}" \
-        golangci/golangci-lint \
-        golangci-lint run --config "${config_path}"
-    cd "${top_path}"
-done'''
-]
-
-[tasks.check-migrations]
-script_runner = "bash"
-script = [
-'''
-# Collect all found problems and report in bulk; patterns become easier to see
-problems=()
-
-# From Release.toml's
-#
-#     version = "1.14.0"
-#                ^^^^^^
-#             extract this
-version=$(grep -Po '(?<=^version = ")[0-9.]+(?=")' Release.toml)
-if [[ -z ${version} ]]; then
-    echo "Cannot determine current Bottlerocket version."
-    exit 1
-fi
-
-migrations_root="sources/api/migration/migrations/v${version}"
-
-# First pass: Check all migrations explicitly listed in Release.toml
-
-# From Release.toml's
-#
-#     "(0.4.0, 0.4.1)" = ["migrate_v0.4.1_add-version-lock-ignore-waves.lz4", "migrate_v0.4.1_pivot-repo-2020-07-07.lz4"]
-#                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^                       ^^^^^^^^^^^^^^^^^^^^^
-#                                                  extract this                                     and this
-mapfile -t migrations < <(
-    grep -Po "(?<=\"migrate_v${version}_)[^\"]+(?=.lz4\")" Release.toml
-)
-for name in "${migrations[@]}"; do
-    # actual migration exists
-    if ! [[ -d ${migrations_root}/${name} ]]; then
-        problems+=("Migration '${name}' does not exist")
-        continue
-    fi
-
-    # migration's Cargo.toml
-    pattern="name = \"${name}\""
-    if ! grep -q "${pattern}" "${migrations_root}/${name}/Cargo.toml"; then
-        problems+=("Migration '${name}' is named differently in its Cargo.toml")
-    fi
-
-    # sources/Cargo.toml
-    pattern="${migrations_root#sources/}/${name}"
-    if ! grep -q "${pattern}" sources/Cargo.toml; then
-        problems+=("Migration '${name}' is missing in sources/Cargo.toml")
-    fi
-
-    # sources/Cargo.lock
-    pattern="name = \"${name}\""
-    if ! grep -q "${pattern}" sources/Cargo.lock; then
-        problems+=("Migration '${name}' is missing in sources/Cargo.lock")
-    fi
-done
-
-# Second pass: Find existing migrations that have not been listed in Release.toml
-
-if [[ -d ${migrations_root} ]]; then
-    mapfile -t undeclared_migrations < <(
-        comm -13 \
-            <(printf '%s\n' "${migrations[@]}" | LC=C sort) \
-            <(find "${migrations_root}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | LC=C sort)
-    )
-    for name in "${undeclared_migrations[@]}"; do
-        problems+=("Migration '${name}' is missing a declaration in Release.toml")
-    done
-fi
-
-# Rattle off whatever we found
-
-if [[ ${#problems[@]} -gt 0 ]]; then
-    echo "Found ${#problems[@]} problem(s) with data store migrations:"
-    printf "    - %s\n" "${problems[@]}"
-    exit 1
-fi
-'''
-]
-
-[tasks.build-tools]
-dependencies = ["setup", "fetch-sources"]
-script = [
-'''
-cargo install \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --path tools/buildsys \
-  --root tools \
-  --force \
-  --quiet
-'''
-]
-
-# Note: this is separate from publish-tools because publish-tools takes a while
-# to build and isn't needed to build an image.
-[tasks.publish-setup-tools]
-dependencies = ["setup", "fetch-sources", "tuftool"]
-script = [
-'''
-cargo install \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --path tools/pubsys-setup \
-  --root tools \
-  --force \
-  --quiet
-'''
-]
-
-[tasks.infra-tools]
-dependencies = ["setup", "fetch-sources", "tuftool"]
-script = [
-'''
-cargo install \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --path tools/infrasys \
-  --root tools \
-  --force \
-  --quiet
-'''
-]
-
-[tasks.publish-tools]
-dependencies = ["setup", "fetch-sources"]
-script = [
-'''
-cargo install \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  --path tools/pubsys \
-  --root tools \
-  --force \
-  --quiet
-'''
-]
-
-[tasks.build-sbkeys]
-dependencies = ["fetch"]
-script_runner = "bash"
-script = [
-'''
-# Check the profile for all files needed for Secure Boot signing.
-profile="${BUILDSYS_SBKEYS_PROFILE_DIR}"
-
-found=0
-# A local profile has signing keys and certificates, while an AWS profile
-# has a config for the aws-kms-pkcs11 helper. Either type is supported.
-if [ -s "${profile}/shim-sign.key" ] && \
-   [ -s "${profile}/shim-sign.crt" ] && \
-   [ -s "${profile}/code-sign.key" ] && \
-   [ -s "${profile}/code-sign.crt" ] ; then
-   let found+=1
-elif [ -s "${profile}/kms-sign.json" ] ; then
-   let found+=1
-fi
-
-expected=1
-for f in {PK,KEK,db,vendor}.crt config-sign.key efi-vars.{json,aws} ; do
-  let expected+=1
-  [ -s "${profile}/${f}" ] && let found+=1
-done
-
-if [ "${found}" -eq "${expected}" ] ; then
-  exit 0
-fi
-
-if [ "${found}" -gt 0 ] ; then
-  echo "Incomplete Secure Boot signing profile found in ${profile}." >&2
-  echo "Missing $(( expected - found )) files." >&2
-  exit 1
-fi
-
-echo "No Secure Boot signing profile found in ${profile}." >&2
-echo "Generating local keys." >&2
-
-mkdir -p "${BUILDSYS_SBKEYS_PROFILE_DIR}"
-${BUILDSYS_SBKEYS_DIR}/generate-local-sbkeys \
-  --sdk-image "${BUILDSYS_SDK_IMAGE}" \
-  --output-dir "${BUILDSYS_SBKEYS_PROFILE_DIR}"
-'''
-]
-
-# We need Cargo version 1.51 or higher in order to build a workspace's
-# dependency during build-package
-[tasks.check-cargo-version]
-script_runner = "bash"
-script = [
-'''
-set -euo pipefail
-cargo_version=$(cargo --version | awk '{print $2}')
-strarr=(${cargo_version//./ })
-cargo_major="${strarr[0]}"
-cargo_minor="${strarr[1]}"
-if [ "${cargo_major}" -gt "1" ] ; then
-  # cargo is version 2 or higher, so it's higher than 1.51
-  exit 0
-fi
-if [ "${cargo_minor}" -lt "51" ] ; then
-  echo "Error: Cargo 1.51.0 or greater is required, your version is ${cargo_version}" >&2
-  exit 1
-fi
-'''
-]
-
-[tasks.boot-config]
-dependencies = ["fetch-sdk"]
-script_runner = "bash"
-script = [
-'''
-set -euo pipefail
-
-if [ ! -s "${BOOT_CONFIG_INPUT}" ]; then
-   echo "No boot configuration file exists, please create one at ${BOOT_CONFIG_INPUT}"
-   exit 1
-fi
-
-# If a Boot Config initrd already exists update it, otherwise create a new one
-boot_config_tmp=""
-boot_config=""
-if [ -s "${BOOT_CONFIG}" ]; then
-   echo "Boot config exists at '${BOOT_CONFIG}', updating it with input ${BOOT_CONFIG_INPUT}"
-   boot_config="${BOOT_CONFIG}"
-else
-   echo "Creating a new boot config from input ${BOOT_CONFIG_INPUT}"
-   boot_config_tmp=$(mktemp /tmp/bootconfig.data.XXXXX)
-   boot_config="${boot_config_tmp}"
-fi
-
-docker run --rm \
-   --network=none \
-   --user "$(id -u):$(id -g)" \
-   --security-opt="label=disable" \
-   -v "${BOOT_CONFIG_INPUT}":/tmp/bootconfig-input \
-   -v "${boot_config}":/tmp/bootconfig.data \
-   "${BUILDSYS_SDK_IMAGE}" \
-   bootconfig -a /tmp/bootconfig-input /tmp/bootconfig.data
-
-if [ -e "${boot_config_tmp}" ] ; then
-   mv "${boot_config_tmp}" "${BOOT_CONFIG}"
-fi
-echo "Boot configuration initrd may be found at ${BOOT_CONFIG}"
-'''
-]
-
-[tasks.validate-boot-config]
-dependencies = ["fetch-sdk"]
-script_runner = "bash"
-script = [
-'''
-docker run --rm \
-   --network=none \
-   --user "$(id -u):$(id -g)" \
-   --security-opt="label=disable" \
-   -v "${BOOT_CONFIG}":/tmp/bootconfig.data \
-   "${BUILDSYS_SDK_IMAGE}" \
-   bootconfig -l /tmp/bootconfig.data
-'''
-]
-
-# Builds a package including its build-time and runtime dependency packages.
-[tasks.build-package]
-dependencies = ["check-cargo-version", "fetch-sdk", "build-tools", "publish-setup", "fetch-licenses"]
-script_runner = "bash"
-script = [
-'''
-set -e
-if [ -z "${PACKAGE}" ]; then
-    echo "The PACKAGE environment variable must be set. For example:"
-    echo "cargo make -e PACKAGE=kernel build-package"
-    exit 1
-fi
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-# Parse the variant into its components and set additional variables.
-eval "$(bottlerocket-variant)"
-export BUILDSYS_VARIANT_PLATFORM="${BUILDSYS_VARIANT_PLATFORM:?}"
-export BUILDSYS_VARIANT_RUNTIME="${BUILDSYS_VARIANT_RUNTIME:?}"
-export BUILDSYS_VARIANT_FAMILY="${BUILDSYS_VARIANT_FAMILY:?}"
-export BUILDSYS_VARIANT_FLAVOR="${BUILDSYS_VARIANT_FLAVOR}"
-
-# Save built artifacts for each architecture.  We don't set this everywhere
-# because we build host tools with cargo as well, like buildsys and pubsys.
-export CARGO_TARGET_DIR=${BUILDSYS_ROOT_DIR}/variants/target/${BUILDSYS_ARCH}
-
-cargo build \
-  ${CARGO_BUILD_ARGS} \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  ${CARGO_MAKE_CARGO_LIMIT_JOBS} \
-  --manifest-path "variants/Cargo.toml" \
-  --package "${PACKAGE}"
-'''
-]
-
-[tasks.build-variant]
-dependencies = ["fetch-sdk", "build-tools", "build-sbkeys", "publish-setup"]
-script = [
-'''
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-# Parse the variant into its components and set additional variables.
-eval "$(bottlerocket-variant)"
-export BUILDSYS_VARIANT_PLATFORM="${BUILDSYS_VARIANT_PLATFORM:?}"
-export BUILDSYS_VARIANT_RUNTIME="${BUILDSYS_VARIANT_RUNTIME:?}"
-export BUILDSYS_VARIANT_FAMILY="${BUILDSYS_VARIANT_FAMILY:?}"
-export BUILDSYS_VARIANT_FLAVOR="${BUILDSYS_VARIANT_FLAVOR}"
-
-# Save built artifacts for each architecture.  We don't set this everywhere
-# because we build host tools with cargo as well, like buildsys and pubsys.
-export CARGO_TARGET_DIR=${BUILDSYS_ROOT_DIR}/variants/target/${BUILDSYS_ARCH}
-
-rm -rf "${BUILDSYS_OUTPUT_DIR}/latest"
-cargo build \
-  ${CARGO_BUILD_ARGS} \
-  ${CARGO_MAKE_CARGO_ARGS} \
-  ${CARGO_MAKE_CARGO_LIMIT_JOBS} \
-  --manifest-path variants/${BUILDSYS_VARIANT}/Cargo.toml
-ln -snf "${BUILDSYS_VERSION_FULL}" "${BUILDSYS_OUTPUT_DIR}/latest"
-'''
-]
-
-[tasks.check-licenses]
-dependencies = ["fetch"]
-script = [
-'''
-run_cargo_deny="
-(cd /tmp/sources && cargo deny --all-features check --disable-fetch licenses bans sources) &&
-(cd /tmp/tools && cargo deny --all-features check --disable-fetch licenses bans sources)
-"
-set +e
-docker run --rm \
-  --network=none \
-  --user "$(id -u):$(id -g)" \
-  --security-opt="label=disable" \
-  -e CARGO_HOME="/tmp/.cargo" \
-  -v "${CARGO_HOME}":/tmp/.cargo \
-  -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
-  -v "${BUILDSYS_ROOT_DIR}/tools":/tmp/tools \
-  "${BUILDSYS_SDK_IMAGE}" \
-  bash -c "${run_cargo_deny}"
-[ "${?}" -eq 0 ] || [ "${BUILDSYS_ALLOW_FAILED_LICENSE_CHECK}" = "true" ]
-'''
-]
-
-[tasks.fetch-licenses]
-dependencies = ["fetch"]
-script = [
-'''
-if [ "${BUILDSYS_UPSTREAM_LICENSE_FETCH}" = "false" ]; then
-  echo "Skipping fetching licenses"
-  exit 0
-fi
-
-# Attempt copy Licenses.toml
-cp "${BUILDSYS_LICENSES_CONFIG_PATH}" "${BUILDSYS_ROOT_DIR}/Licenses.toml" 2>/dev/null \
-  || echo "Skipping copying file from ${BUILDSYS_LICENSES_CONFIG_PATH}"
-
-if [ ! -s "${BUILDSYS_ROOT_DIR}"/Licenses.toml ] ; then
-  echo "Not fetching licenses since 'Licenses.toml' doesn't exist"
-  exit 0
-fi
-
-mkdir -p "${BUILDSYS_ROOT_DIR}"/licenses
-
-run_fetch_licenses="
-bottlerocket-license-tool -l /tmp/Licenses.toml fetch /tmp/licenses
-"
-set +e
-
-docker run --rm \
-  --user "$(id -u):$(id -g)" \
-  --security-opt="label=disable" \
-  -e CARGO_HOME="/tmp/.cargo" \
-  -v "${CARGO_HOME}":/tmp/.cargo \
-  -v "${BUILDSYS_ROOT_DIR}/licenses:/tmp/licenses" \
-  -v "${BUILDSYS_ROOT_DIR}/Licenses.toml:/tmp/Licenses.toml" \
-  "${BUILDSYS_SDK_IMAGE}" \
-  bash -c "${run_fetch_licenses}"
-'''
-]
-
-[tasks.build]
-dependencies = [
-    "check-licenses",
-    "fetch-licenses",
-    "build-variant",
-]
-
-[tasks.tuftool]
+[tasks.install-twoliter]
 script = [
 '''
 cargo install \
   --locked \
-  --root tools \
+  --root "${TWOLITER_INSTALL_ROOT}" \
   --quiet \
-  --version ${PUBLISH_TUFTOOL_VERSION} \
-  tuftool
+  --git "${TWOLITER_GIT}" \
+  --rev "${TWOLITER_REV}" \
+  twoliter
 '''
 ]
+
+[tasks.run-twoliter]
+dependencies = ["install-twoliter"]
+command = "${TWOLITER}"
+args = [
+    "--log-level=${TWOLITER_LOG_LEVEL}",
+    "make",
+    "${CARGO_MAKE_TASK}",
+    "--project-path=${TWOLITER_PROJECT}",
+    "--cargo-home=${CARGO_HOME}",
+    "${@}",
+]
+
+[tasks.setup]
+run_task = "run-twoliter"
+
+[tasks.setup-build]
+run_task = "run-twoliter"
+
+[tasks.fetch]
+run_task = "run-twoliter"
+
+[tasks.fetch-sdk]
+run_task = "run-twoliter"
+
+[tasks.fetch-toolchain]
+run_task = "run-twoliter"
+
+[tasks.fetch-sources]
+run_task = "run-twoliter"
+
+[tasks.fetch-vendored]
+run_task = "run-twoliter"
+
+[tasks.unit-tests]
+run_task = "run-twoliter"
+
+# A top level target for devs to ensure review and patch readiness
+[tasks.check]
+run_task = "run-twoliter"
+
+[tasks.check-fmt]
+run_task = "run-twoliter"
+
+[tasks.check-lints]
+run_task = "run-twoliter"
+
+[tasks.check-clippy]
+run_task = "run-twoliter"
+
+[tasks.check-shell]
+run_task = "run-twoliter"
+
+[tasks.check-golangci-lint]
+run_task = "run-twoliter"
+
+[tasks.check-migrations]
+run_task = "run-twoliter"
+
+[tasks.build-tools]
+run_task = "run-twoliter"
+
+# Note: this is separate from publish-tools because publish-tools takes a while
+# to build and isn't needed to build an image.
+[tasks.publish-setup-tools]
+run_task = "run-twoliter"
+
+[tasks.infra-tools]
+run_task = "run-twoliter"
+
+[tasks.publish-tools]
+run_task = "run-twoliter"
+
+[tasks.build-sbkeys]
+run_task = "run-twoliter"
+
+# We need Cargo version 1.51 or higher in order to build a workspace's
+# dependency during build-package
+[tasks.check-cargo-version]
+run_task = "run-twoliter"
+
+[tasks.boot-config]
+run_task = "run-twoliter"
+
+[tasks.validate-boot-config]
+run_task = "run-twoliter"
+
+# Builds a package including its build-time and runtime dependency packages.
+[tasks.build-package]
+run_task = "run-twoliter"
+
+[tasks.build-variant]
+run_task = "run-twoliter"
+
+[tasks.check-licenses]
+run_task = "run-twoliter"
+
+[tasks.fetch-licenses]
+run_task = "run-twoliter"
+
+[tasks.build]
+run_task = "run-twoliter"
+
+[tasks.tuftool]
+run_task = "run-twoliter"
 
 [tasks.create-infra]
-dependencies = ["infra-tools"]
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-infrasys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}"  \
-   \
-   create-infra \
-   --root-role-path "${PUBLISH_REPO_ROOT_JSON}"
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.publish-setup]
-dependencies = ["publish-setup-tools"]
-script = [
-'''
-set -e
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-if [ "${ALLOW_MISSING_KEY}" = "true" ]; then
-   ALLOW_MISSING_KEY_ARG="--allow-missing-key"
-fi
-
-pubsys-setup \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
-   --default-key-path "${PUBLISH_REPO_KEY}" \
-   --repo "${PUBLISH_REPO}" \
-   ${ALLOW_MISSING_KEY_ARG}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.publish-setup-without-key]
-env = { "ALLOW_MISSING_KEY" = "true" }
-run_task = "publish-setup"
+run_task = "run-twoliter"
 
 # Builds a local repository based on the 'latest' built targets.  Uses pubsys
 # to create a repo under /build/repos, named after the arch/variant/version,
 # containing subdirectories for the repo metadata and targets.
 [tasks.repo]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# check for the image files below to save time.  This does mean that `cargo
-# make` must be run before `cargo make repo`.
-dependencies = ["publish-setup", "publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-cleanup() {
-   [ -n "${MIGRATIONS_DIR}" ] && rm -rf "${MIGRATIONS_DIR}"
-}
-trap 'cleanup' EXIT
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-bootlz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-boot.ext4.lz4"
-rootlz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-root.ext4.lz4"
-hashlz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-root.verity.lz4"
-if [ ! -s "${bootlz4}" ] || [ ! -s "${rootlz4}" ] || [ ! -s "${hashlz4}" ]; then
-   echo "Image files don't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
-   exit 1
-fi
-
-COPY_REPO_TARGETS=()
-
-# TODO: only add migrations from Release.toml, not all
-MIGRATIONS_DIR="$(mktemp -d)"
-tar xpf "${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-migrations.tar" -C "${MIGRATIONS_DIR}"
-for file in ${MIGRATIONS_DIR}/*; do
-   [ -e "${file}" ] || continue
-   COPY_REPO_TARGETS+=("--copy-target ${file}")
-done
-
-# Include the kmod kit in the repo so it's easier to build out-of-tree kernel
-# modules for a given release.
-LINK_REPO_TARGETS=("--link-target ${BUILDSYS_KMOD_KIT_PATH}")
-
-# Include the os and data disk images in the repo both with and without a
-# friendly name if they exist.  Check for the existence of the image and not
-# the friendly symlink to guard against the case where the link may not have
-# been created. `pubsys` will also fail if the friendly link does not exist
-os_disk_img="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
-os_disk_img_friendly="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FRIENDLY}.img.lz4"
-if [ -s "${os_disk_img}" ] ; then
-   LINK_REPO_TARGETS+=("--link-target ${os_disk_img}")
-   LINK_REPO_TARGETS+=("--link-target ${os_disk_img_friendly}")
-fi
-
-data_disk_img="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
-data_disk_img_friendly="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FRIENDLY}-data.img.lz4"
-if [ -s "${data_disk_img}" ]; then
-   LINK_REPO_TARGETS+=("--link-target ${data_disk_img}")
-   LINK_REPO_TARGETS+=("--link-target ${data_disk_img_friendly}")
-fi
-
-# Ensure we link an OVA if an OVF template exists (in which case we should have
-# built an OVA)
-if [ -s "${BUILDSYS_OVF_TEMPLATE}" ]; then
-   if [ -s "${BUILDSYS_OVA_PATH}" ]; then
-      LINK_REPO_TARGETS+=("--link-target ${BUILDSYS_OVA_PATH}")
-   else
-      echo "An OVA doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL}. An OVA is required to build a repo" >&2
-      exit 1
-   fi
-fi
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   repo \
-   \
-   --repo "${PUBLISH_REPO}" \
-   --arch "${BUILDSYS_ARCH}" \
-   --version "${BUILDSYS_VERSION_IMAGE}" \
-   --variant "${BUILDSYS_VARIANT}" \
-   \
-   --boot-image "${bootlz4}" \
-   --root-image "${rootlz4}" \
-   --hash-image "${hashlz4}" \
-   ${LINK_REPO_TARGETS[*]} \
-   ${COPY_REPO_TARGETS[*]} \
-   \
-   --repo-expiration-policy-path "${PUBLISH_EXPIRATION_POLICY_PATH}" \
-   --release-config-path "${BUILDSYS_RELEASE_CONFIG_PATH}" \
-   --wave-policy-path "${PUBLISH_WAVE_POLICY_PATH}" \
-   \
-   ${RELEASE_START_TIME:+--release-start-time ${RELEASE_START_TIME}} \
-   \
-   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
-   --default-key-path "${PUBLISH_REPO_KEY}" \
-   \
-   --outdir "${PUBLISH_REPO_OUTPUT_DIR}"
-
-ln -sfn "${PUBLISH_REPO_OUTPUT_DIR##*/}" "${PUBLISH_REPO_OUTPUT_DIR%/*}/latest"
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.validate-repo]
-dependencies = ["publish-setup-without-key", "publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-if [ "${REPO_VALIDATE_TARGETS}" = "true" ]; then
-   REPO_VALIDATE_TARGETS_ARG="--validate-targets"
-fi
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   validate-repo \
-   \
-   --repo "${PUBLISH_REPO}" \
-   --arch "${BUILDSYS_ARCH}" \
-   --variant "${BUILDSYS_VARIANT}" \
-   \
-   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
-   ${REPO_VALIDATE_TARGETS_ARG}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.check-repo-expirations]
-dependencies = ["publish-setup-without-key", "publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   check-repo-expirations \
-   \
-   --repo "${PUBLISH_REPO}" \
-   --arch "${BUILDSYS_ARCH}" \
-   --variant "${BUILDSYS_VARIANT}" \
-   \
-   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
-   --expiration-limit "${REPO_METADATA_EXPIRING_WITHIN}"
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.refresh-repo]
-dependencies = ["publish-setup", "publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-if [ "${REPO_UNSAFE_REFRESH}" = "true" ]; then
-   REPO_UNSAFE_REFRESH_ARG="--unsafe-refresh"
-fi
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   refresh-repo \
-   \
-   --repo "${PUBLISH_REPO}" \
-   --arch "${BUILDSYS_ARCH}" \
-   --variant "${BUILDSYS_VARIANT}" \
-   \
-   --root-role-path "${PUBLISH_REPO_ROOT_JSON}" \
-   --default-key-path "${PUBLISH_REPO_KEY}" \
-   --repo-expiration-policy-path "${PUBLISH_EXPIRATION_POLICY_PATH}" \
-   ${REPO_UNSAFE_REFRESH_ARG} \
-   --outdir "${PUBLISH_REPO_OUTPUT_DIR}"
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.ami]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# depend on publish-tools and check for the image files below to save time.
-# This does mean that `cargo make` must be run before `cargo make ami`.
-dependencies = ["setup-build", "publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-cleanup() {
-   ([ -f "${os_image}" ] && rm -f "${os_image}") ||:
-   ([ -f "${data_image}" ] && rm -f "${data_image}") ||:
-}
-trap 'cleanup' EXIT
-
-# Unlz4 the os image, and the data image if present
-oslz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.img.lz4"
-os_image="${oslz4%.lz4}"
-if [ ! -s "${oslz4}" ]; then
-   echo "Image file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
-   exit 1
-fi
-lz4 -df "${oslz4}" "${os_image}"
-
-datalz4="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-data.img.lz4"
-data_image="${datalz4%.lz4}"
-
-# We will only have a data image if the variant uses the "split" format.
-is_split="no"
-if [ -s "${datalz4}" ] ; then
-   lz4 -df "${datalz4}" "${data_image}"
-   is_split="yes"
-fi
-
-os_volume_args=(--os-image "${os_image}")
-data_volume_args=()
-if [ "${is_split}" == "yes" ] ; then
-   # Pass the data image to register as a snapshot.
-   data_volume_args+=(--data-image "${data_image}")
-fi
-
-ami_output="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-ami_output_latest="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_VARIANT}-${AMI_DATA_FILE_SUFFIX}"
-
-ami_name="${PUBLISH_AMI_NAME:-${PUBLISH_AMI_NAME_DEFAULT}}"
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   ami \
-   \
-   "${os_volume_args[@]}" \
-   "${data_volume_args[@]}" \
-   \
-   --variant-manifest "${BUILDSYS_ROOT_DIR}/variants/${BUILDSYS_VARIANT}/Cargo.toml" \
-   --uefi-data "${BUILDSYS_SBKEYS_PROFILE_DIR}/efi-vars.aws" \
-   --arch "${BUILDSYS_ARCH}" \
-   --name "${ami_name}" \
-   --description "${PUBLISH_AMI_DESCRIPTION:-${ami_name}}" \
-   \
-   --ami-output "${ami_output}" \
-   \
-   ${NO_PROGRESS:+--no-progress} \
-   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
-
-ln -snf "${ami_output##*/}" "${ami_output_latest}"
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.ami-public]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# depend on publish-tools and check for the input file below to save time.
-# This does mean that `cargo make ami` must be run before `cargo make ami-public`.
-dependencies = ["publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-if [ ! -s "${ami_input}" ]; then
-   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
-   exit 1
-fi
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   publish-ami \
-   --grant \
-   --group-names all \
-   \
-   --ami-input "${ami_input}" \
-   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.ami-private]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# depend on publish-tools and check for the input file below to save time.
-# This does mean that `cargo make ami` must be run before `cargo make ami-private`.
-dependencies = ["publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-if [ ! -s "${ami_input}" ]; then
-   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
-   exit 1
-fi
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   publish-ami \
-   --revoke \
-   --group-names all \
-   \
-   --ami-input "${ami_input}" \
-   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.grant-ami]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# depend on publish-tools and check for the input file below to save time.
-# This does mean that `cargo make ami` must be run before `cargo make grant-ami`.
-dependencies = ["publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-if [ -z "${GRANT_TO_USERS}" ] && [ -z "${GRANT_TO_GROUPS}" ] && [ -z "${GRANT_TO_ORGS}" ] && [ -z "${GRANT_TO_ORG_UNITS}" ]; then
-   echo "GRANT_TO_USERS, GRANT_TO_GROUPS, GRANT_TO_ORGs, and/or GRANT_TO_ORG_UNITS is mandatory for grant-ami; please give a comma-separated list of user IDs, group names, organizations, or organizational units" >&2
-   exit 1
-fi
-
-ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-if [ ! -s "${ami_input}" ]; then
-   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
-   exit 1
-fi
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   publish-ami \
-   --grant \
-   ${GRANT_TO_USERS:+--user-ids "${GRANT_TO_USERS}"} \
-   ${GRANT_TO_GROUPS:+--group-names "${GRANT_TO_GROUPS}"} \
-   ${GRANT_TO_ORGS:+--organization-arns "${GRANT_TO_ORGS}"} \
-   ${GRANT_TO_ORG_UNITS:+--organizational-unit-arns "${GRANT_TO_ORG_UNITS}"} \
-   \
-   --ami-input "${ami_input}" \
-   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.revoke-ami]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# depend on publish-tools and check for the input file below to save time.
-# This does mean that `cargo make ami` must be run before `cargo make revoke-ami`.
-dependencies = ["publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-if [ -z "${REVOKE_FROM_USERS}" ] && [ -z "${REVOKE_FROM_GROUPS}" ] && [ -z "${REVOKE_FROM_ORGS}" ] && [ -z "${REVOKE_FROM_ORG_UNITS}" ]; then
-   echo "REVOKE_FROM_USERS, REVOKE_FROM_GROUPS, REVOKE_FROM_ORGS, and/or REVOKE_FROM_ORG_UNITS is mandatory for revoke-ami; please give a comma-separated list of user IDs, group names, organizations, or organizational units" >&2
-   exit 1
-fi
-
-ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-if [ ! -s "${ami_input}" ]; then
-   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
-   exit 1
-fi
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   publish-ami \
-   --revoke \
-   ${REVOKE_FROM_USERS:+--user-ids "${REVOKE_FROM_USERS}"} \
-   ${REVOKE_FROM_GROUPS:+--group-names "${REVOKE_FROM_GROUPS}"} \
-   ${REVOKE_FROM_ORGS:+--organization-arns "${REVOKE_FROM_ORGS}"} \
-   ${REVOKE_FROM_ORG_UNITS:+--organizational-unit-arns "${REVOKE_FROM_ORG_UNITS}"} \
-   \
-   --ami-input "${ami_input}" \
-   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.validate-ami]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# depend on publish-tools and check for the input file below to save time.
-# This does mean that `cargo make ami` must be run before `cargo make validate-ami`.
-dependencies = ["publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-expected_amis_path="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-if [ ! -s "${expected_amis_path}" ]; then
-   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
-   exit 1
-fi
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   validate-ami \
-   \
-   --expected-amis-path "${expected_amis_path}" \
-   \
-   ${AMI_VALIDATION_RESULTS_FILTER:+--write-results-filter "${AMI_VALIDATION_RESULTS_FILTER}"} \
-   ${AMI_VALIDATION_RESULTS_PATH:+--write-results-path "${AMI_VALIDATION_RESULTS_PATH}"}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.ssm]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# depend on publish-tools and check for the input file below to save time.
-# This does mean that `cargo make ami` must be run before `cargo make ssm`.
-dependencies = ["publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-if [ ! -s "${ami_input}" ]; then
-   echo "AMI input file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ami'" >&2
-   exit 1
-fi
-
-ssm_parameter_output="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${SSM_DATA_FILE_SUFFIX}"
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   ssm \
-   \
-   --ami-input "${ami_input}" \
-   --arch "${BUILDSYS_ARCH}" \
-   --variant "${BUILDSYS_VARIANT}" \
-   --version "${BUILDSYS_VERSION_FULL}" \
-   --template-path "${PUBLISH_SSM_TEMPLATES_PATH}" \
-   --ssm-parameter-output "${ssm_parameter_output}" \
-   \
-   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"} \
-   ${ALLOW_CLOBBER:+--allow-clobber}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.promote-ssm]
-dependencies = ["publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-source="${SSM_SOURCE:-${BUILDSYS_VERSION_FULL}}"
-target="${SSM_TARGET}"
-if [ -z "${target}" ]; then
-   echo "SSM_TARGET is mandatory for promote-ssm; please give the version (or pointer like "latest") to which you want to promote ${source}" >&2
-   exit 1
-fi
-
-ssm_parameter_output="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${SSM_DATA_FILE_SUFFIX}"
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   promote-ssm \
-   \
-   --arch "${BUILDSYS_ARCH}" \
-   --variant "${BUILDSYS_VARIANT}" \
-   --source "${source}" \
-   --target "${target}" \
-   --template-path "${PUBLISH_SSM_TEMPLATES_PATH}" \
-   --ssm-parameter-output "${ssm_parameter_output}" \
-   \
-   ${PUBLISH_REGIONS:+--regions "${PUBLISH_REGIONS}"}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.validate-ssm]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# depend on publish-tools and check for the input file below to save time.
-# This does mean that `cargo make ssm` must be run before `cargo make validate-ssm`.
-dependencies = ["publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-expected_parameters_path="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${SSM_DATA_FILE_SUFFIX}"
-if [ ! -s "${expected_parameters_path}" ]; then
-   echo "SSM parameters file doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make ssm'" >&2
-   exit 1
-fi
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   validate-ssm \
-   \
-   --expected-parameters-path "${expected_parameters_path}" \
-   \
-   ${SSM_VALIDATION_RESULTS_FILTER:+--write-results-filter "${SSM_VALIDATION_RESULTS_FILTER}"} \
-   ${SSM_VALIDATION_RESULTS_PATH:+--write-results-path "${SSM_VALIDATION_RESULTS_PATH}"}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks._upload-ova-base]
-# Rather than depend on "build", which currently rebuilds images each run, we
-# depend on publish-tools and check for the image files below to save time.
-# This does mean that `cargo make` must be run before
-# `cargo make _upload-ova-base`.
-dependencies = ["setup-build", "publish-tools"]
-script_runner = "bash"
-script = [
-'''
-set -e
-
-export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-
-ova_path="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}.ova"
-if [ ! -s "${ova_path}" ]; then
-   echo "An OVA doesn't exist for the current version/commit - ${BUILDSYS_VERSION_FULL} - please run 'cargo make'" >&2
-   exit 1
-fi
-
-vm_name="${VMWARE_VM_NAME:-${VMWARE_VM_NAME_DEFAULT}}"
-
-pubsys \
-   --infra-config-path "${PUBLISH_INFRA_CONFIG_PATH}" \
-   \
-   upload-ova \
-   \
-   --ova "${ova_path}" \
-   --spec "${VMWARE_IMPORT_SPEC_PATH}" \
-   --name "${vm_name}" \
-   \
-   ${MARK_OVA_AS_TEMPLATE:+--mark-as-template} \
-   \
-   ${VMWARE_DATACENTERS:+--datacenters "${VMWARE_DATACENTERS}"}
-'''
-]
+run_task = "run-twoliter"
 
 # This task runs `_upload-ova-base` which will upload the OVA and *not* mark it
 # as a template
 [tasks.upload-ova]
-script_runner = "bash"
-extend = "_upload-ova-base"
+run_task = "run-twoliter"
 
 # This task runs `_upload-ova-base` with the environment variable
 # `MARK_OVA_AS_TEMPLATE` set, which will upload the OVA *and* mark it as a
 # template
 [tasks.vmware-template]
-script_runner = "bash"
-env = { "MARK_OVA_AS_TEMPLATE" = "true" }
-extend = "_upload-ova-base"
+run_task = "run-twoliter"
 
 [tasks.clean]
-dependencies = [
-  "clean-sources",
-  "clean-packages",
-  "clean-images",
-  "clean-repos",
-  "clean-state",
-]
+run_task = "run-twoliter"
 
 [tasks.clean-sources]
-script_runner = "bash"
-script = [
-'''
-for ws in sources tools; do
-  [ -d "${ws}" ] || continue
-  cargo clean --manifest-path ${ws}/Cargo.toml
-done
-rm -f ${BUILDSYS_TOOLS_DIR}/bin/*
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.clean-packages]
-script_runner = "bash"
-script = [
-'''
-for ws in variants; do
-  [ -d "${ws}" ] || continue
-  cargo clean --manifest-path ${ws}/Cargo.toml
-done
-rm -rf ${BUILDSYS_PACKAGES_DIR}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.clean-images]
-script_runner = "bash"
-script = [
-'''
-rm -rf ${BUILDSYS_IMAGES_DIR}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.clean-repos]
-script_runner = "bash"
-script = [
-'''
-rm -rf ${PUBLISH_REPO_BASE_DIR}
-'''
-]
+run_task = "run-twoliter"
 
 [tasks.clean-state]
-script_runner = "bash"
-script = [
-'''
-rm -rf ${BUILDSYS_STATE_DIR}
-'''
-]
+run_task = "run-twoliter"
 
 # Deletes cached code used for Bottlerocket builds
 [tasks.purge-cache]
-dependencies = [
-  "purge-go-vendor",
-  "purge-cargo",
-]
+run_task = "run-twoliter"
 
 # This task will delete vendored Go code, primarily, the Go module cache.
 # The Go module cache is intentionally readonly and does not have writable
@@ -1632,157 +452,63 @@ dependencies = [
 # have permissions to delete it.
 # See for more context: https://github.com/golang/go/issues/27455
 [tasks.purge-go-vendor]
-script_runner = "bash"
-script = [
-    '''
-    chmod -R 755 ${GO_MOD_CACHE}
-    rm -rf ${GO_MOD_CACHE}
-    '''
-]
+run_task = "run-twoliter"
 
 # This task will remove all the cached Rust code found in the cargo home dir
 [tasks.purge-cargo]
-script_runner = "bash"
-script = [
-    '''
-    rm -rf ${CARGO_HOME}
-    '''
-]
+run_task = "run-twoliter"
 
 [tasks.test-tools]
-dependencies = ["setup", "fetch-sources"]
-script = [
-    '''
-    cargo install \
-    ${CARGO_MAKE_CARGO_ARGS} \
-    --path tools/testsys \
-    --root tools \
-    --force \
-    --quiet
-    '''
-]
+run_task = "run-twoliter"
 
 [tasks.setup-test]
-dependencies = ["test-tools"]
-script = [
-    '''
-    set -eu
-    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-    testsys ${CARGO_MAKE_TESTSYS_ARGS} install
-    '''
-]
+run_task = "run-twoliter"
 
 # This task is used to test bottlerocket build artifacts. By default the region first listed in Infra.toml
 # is used for testing; however, `TESTSYS_REGION` can be used to test in a different region.
 [tasks.test]
-dependencies = ["test-tools"]
-script = [
-    '''
-    set -eu
-    ami_input="${BUILDSYS_VARIANT_DIR}/${BUILDSYS_NAME_FULL}-${AMI_DATA_FILE_SUFFIX}"
-    testsys_ami_input=""
-    if [ -s "${ami_input}" ]; then
-      testsys_ami_input="--ami-input ${ami_input}"
-    fi
-    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-    # The ami that is selected from `amis.json` is determined by `TESTSYS_REGION` if set; otherwise,
-    # it is the first region listed in `Infra.toml` (for aws variants).
-    testsys ${CARGO_MAKE_TESTSYS_ARGS} run ${TESTSYS_TEST} \
-      ${testsys_ami_input} \
-      ${TESTSYS_AWS_SECRET_NAME:+--secret ${TESTSYS_AWS_SECRET_NAME}} \
-      ${@}
-    '''
-]
+run_task = "run-twoliter"
 
 # This task will clear all tests from the testsys cluster.
 # To delete all passed tests use `cargo make clean-test --passed`
 # To delete all failed tests use `cargo make clean-test --failed`
 # To delete all incomplete tests use `cargo make clean-test --running`
 [tasks.clean-test]
-dependencies = ["test-tools"]
-script = [
-    '''
-    set -eu
-    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-    testsys ${CARGO_MAKE_TESTSYS_ARGS} delete --test ${@}
-    '''
-]
+run_task = "run-twoliter"
 
 # This task will clear all tests and resources from the testsys cluster.
 [tasks.reset-test]
-dependencies = ["test-tools"]
-script = [
-    '''
-    set -eu
-    export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-    testsys ${CARGO_MAKE_TESTSYS_ARGS} delete ${@}
-    '''
-]
+run_task = "run-twoliter"
 
 # This task will clear all testsys components from the testsys cluster.
 [tasks.uninstall-test]
-dependencies = ["test-tools"]
-script = [
-   '''
-   set -eu
-   export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-   testsys ${CARGO_MAKE_TESTSYS_ARGS} uninstall
-   '''
-]
+run_task = "run-twoliter"
 
 # This task will clear all testsys components from the testsys cluster.
 [tasks.purge-test]
-dependencies = ["test-tools","reset-test","uninstall-test"]
+run_task = "run-twoliter"
 
 # This task will call watch on the `status` testsys command to show the results of all tests.
 # To see all passed tests use `cargo make watch-test --passed`
 # To see all failed tests use `cargo make watch-test --failed`
 # To see all incomplete tests use `cargo make watch-test --running`
 [tasks.watch-test]
-dependencies = ["test-tools"]
-script = [
-   '''
-   set -eu
-   export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-   watch -- testsys ${CARGO_MAKE_TESTSYS_ARGS} status --test ${@}
-   '''
-]
+run_task = "run-twoliter"
 
 # This task will call watch on the `status` testsys command to show the results of all tests and
 # resources.
 # To see all incomplete crds use `cargo make watch-test-all --running` 
 [tasks.watch-test-all]
-dependencies = ["test-tools"]
-script = [
-   '''
-   set -eu
-   export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-   watch -- testsys ${CARGO_MAKE_TESTSYS_ARGS} status ${@}
-   '''
-]
+run_task = "run-twoliter"
 
 # This task will retrieve testsys logs from a test. You can add `--follow` to continue to receive
 # logs as they come in.
 [tasks.log-test]
-dependencies = ["test-tools"]
-script = [
-   '''
-   set -eu
-   export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-   testsys ${CARGO_MAKE_TESTSYS_ARGS} logs --test ${@}
-   '''
-]
+run_task = "run-twoliter"
 
 # This task is useful for using the current tree's testsys without symlinks
 [tasks.testsys]
-dependencies = ["test-tools"]
-script = [
-   '''
-   set -eu
-   export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-   testsys ${CARGO_MAKE_TESTSYS_ARGS} ${@}
-   '''
-]
+run_task = "run-twoliter"
 
 [tasks.default]
 alias = "build"
