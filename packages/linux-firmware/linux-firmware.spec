@@ -16,6 +16,17 @@ URL: https://www.kernel.org/
 
 Source0: https://www.kernel.org/pub/linux/kernel/firmware/linux-firmware-%{version}.tar.xz
 
+Patch0001: 0001-linux-firmware-snd-remove-firmware-for-snd-audio-dev.patch
+Patch0002: 0002-linux-firmware-video-Remove-firmware-for-video-broad.patch
+Patch0003: 0003-linux-firmware-bt-wifi-Remove-firmware-for-Bluetooth.patch
+Patch0004: 0004-linux-firmware-scsi-Remove-firmware-for-SCSI-devices.patch
+Patch0005: 0005-linux-firmware-usb-remove-firmware-for-USB-Serial-PC.patch
+Patch0006: 0006-linux-firmware-ethernet-Remove-firmware-for-ethernet.patch
+Patch0007: 0007-linux-firmware-Remove-firmware-for-Accelarator-devic.patch
+Patch0008: 0008-linux-firmware-gpu-Remove-firmware-for-GPU-devices.patch
+Patch0009: 0009-linux-firmware-various-Remove-firmware-for-various-d.patch
+Patch0010: 0010-linux-firmware-amd-ucode-Remove-amd-microcode.patch
+
 %description
 %{summary}.
 

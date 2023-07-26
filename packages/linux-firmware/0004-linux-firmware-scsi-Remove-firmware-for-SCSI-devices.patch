@@ -1,0 +1,191 @@
+From 8d9ded48714bc49d16a2250e1b477244c66d16a9 Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Tue, 25 Jul 2023 12:12:03 +0000
+Subject: [PATCH] linux-firmware: scsi: Remove firmware for SCSI devices
+
+Bottlerocket does not configure drivers for most SCSI devices for any of
+its kernels. Without the driver support, there is no point in providing
+firmware for these devices. The list below maps driver names as
+specified in WHENCE and maps them to kernel config options to enable us
+to easily add firmware when necessitated by driver addition.
+
+* advansys - CONFIG_SCSI_ADVANSYS
+* qla1280 - CONFIG_SCSI_QLOGIC_1280
+* qlogicpti - CONFIG_SCSI_QLOGICPTI
+* isci - CONFIG_SCSI_ISCI
+* BFA/BNA - CONFIG_BNA && CONFIG_SCSI_BFA
+* qla2xxx - CONFIG_TCM_QLA2XXX
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENCE.qla1280 | 23 ------------------
+ LICENCE.qla2xxx | 31 ------------------------
+ WHENCE          | 63 -------------------------------------------------
+ 3 files changed, 117 deletions(-)
+ delete mode 100644 LICENCE.qla1280
+ delete mode 100644 LICENCE.qla2xxx
+
+diff --git a/LICENCE.qla1280 b/LICENCE.qla1280
+deleted file mode 100644
+index 00cd353..0000000
+--- a/LICENCE.qla1280
++++ /dev/null
+@@ -1,23 +0,0 @@
+-Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 QLogic, Inc.
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms are permitted provided
+-that the following conditions are met:
+-1. Redistribution of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistribution in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-3. The name of the author may not be used to endorse or promote products
+-   derived from this software without specific prior written permission
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+-IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENCE.qla2xxx b/LICENCE.qla2xxx
+deleted file mode 100644
+index 6b3d8ff..0000000
+--- a/LICENCE.qla2xxx
++++ /dev/null
+@@ -1,31 +0,0 @@
+-Copyright (c) 2003-2017 QLogic Corporation
+-QLogic Linux Fibre Channel Adapter Firmware
+-
+-Redistribution and use in binary form, without modification, for use in conjunction
+-with QLogic authorized products is permitted provided that the following conditions
+-are met:
+-
+-1. Redistribution in binary form must reproduce the above copyright notice, this
+-   list of conditions and the following disclaimer in the documentation and/or
+-   other materials provided with the distribution.
+-2. The name of QLogic Corporation may not be used to endorse or promote products
+-   derived from this software without specific prior written permission.
+-3. Reverse engineering, decompilation, or disassembly of this firmware is not
+-   permitted.
+-
+-REGARDLESS OF WHAT LICENSING MECHANISM IS USED OR APPLICABLE,THIS PROGRAM IS
+-PROVIDED BY QLOGIC CORPORATION "AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR
+-BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+-GOODS OR SERVICES; LOSS OF USE,DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-LIABILITY,OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-USER ACKNOWLEDGES AND AGREES THAT USE OF THIS PROGRAM WILL NOT CREATE OR GIVE
+-GROUNDS FOR A LICENSE BY IMPLICATION, ESTOPPEL, OR OTHERWISE IN ANY INTELLECTUAL
+-PROPERTY RIGHTS (PATENT, COPYRIGHT, TRADE SECRET, MASK WORK, OR OTHER PROPRIETARY
+-RIGHT) EMBODIED IN ANY OTHER QLOGIC HARDWARE OR SOFTWARE EITHER SOLELY OR IN
+-COMBINATION WITH THIS PROGRAM.
+diff --git a/WHENCE b/WHENCE
+index edf6f75..bf5204f 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -8,29 +8,6 @@ kernel.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: advansys - AdvanSys SCSI
+-
+-File: advansys/mcode.bin
+-File: advansys/3550.bin
+-File: advansys/38C0800.bin
+-File: advansys/38C1600.bin
+-
+-Licence: BSD, no source available.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: qla1280 - Qlogic QLA 1240/1x80/1x160 SCSI support
+-
+-File: qlogic/1040.bin
+-File: qlogic/1280.bin
+-File: qlogic/12160.bin
+-
+-Licence: Redistributable. See LICENCE.qla1280 for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: kaweth -- USB KLSI KL5USB101-based Ethernet device
+ 
+ File: kaweth/new_code.bin
+@@ -265,27 +242,6 @@ http://www.zdomain.com/a56.html
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: qla2xxx - QLogic QLA2XXX Fibre Channel
+-
+-File: ql2100_fw.bin
+-Version: 1.19.38 TP
+-File: ql2200_fw.bin
+-Version: 2.02.08 TP
+-File: ql2300_fw.bin
+-Version: 3.03.28 IPX
+-File: ql2322_fw.bin
+-Version: 3.03.28 IPX
+-File: ql2400_fw.bin
+-Version: 8.07.00 MID
+-File: ql2500_fw.bin
+-Version: 8.07.00 MIDQ
+-
+-Licence: Redistributable. See LICENCE.qla2xxx for details
+-
+-Available from http://ldriver.qlogic.com/firmware/
+-
+---------------------------------------------------------------------------
+-
+ Driver: orinoco - Agere/Prism/Symbol Orinoco support
+ 
+ File: agere_sta_fw.bin
+@@ -631,16 +587,6 @@ Found in hex form in kernel source.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: qlogicpti - PTI Qlogic, ISP Driver
+-
+-File: qlogic/isp1000.bin
+-
+-Licence: Unknown
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: myri_sbus - MyriCOM Gigabit Ethernet
+ 
+ File: myricom/lanai.bin
+@@ -1810,15 +1756,6 @@ Licence: Redistributable. See LICENCE.ene_firmware for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: isci -- Intel C600 SAS controller driver
+-
+-File: isci/isci_firmware.bin
+-Source: isci/
+-
+-Licence: GPLv2. See GPL-2 for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: rp2 -- Comtrol RocketPort 2 serial driver
+ 
+ File: rp2.fw
+-- 
+2.40.1
+

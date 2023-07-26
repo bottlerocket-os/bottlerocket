@@ -1,0 +1,1979 @@
+From c5e85907233a5ddc7df414744561f0fd848e907f Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Tue, 25 Jul 2023 09:22:51 +0000
+Subject: [PATCH] linux-firmware: snd: remove firmware for snd/audio devices
+
+Bottlerocket does not configure drivers for audio devices for any of its
+kernels. Hence, we do not need to ship firmware for these devices. The
+following list maps the drivers as they are named in WHENCE to the
+kernel config option for reference and easy searchability should we need
+to find the right firmware to add when adding a driver to our kernel
+configuation:
+
+* snd-korg1212 - CONFIG_SND_KORG1212
+* snd-maestro3 - CONFIG_SND_MAESTRO3
+* snd-ymfpci - CONFIG_SND_YMFPCI
+* snd-sb16_csp - CONFIG_SND_SB16_CSP
+* snd-wavefront - CONFIG_SND_WAVEFRONT
+* mtk-sof - CONFIG_SND_SOC_SOF_MTK_TOPLEVEL
+* snd-hda-codex-ca0132 - CONFIG_SND_HDA_INTEL && CONFIG_SND_HDA_CODEC_CA0132
+* snd_soc_sst_acpi - CONFIG_SND_SOC_INTEL_SST_ACPI
+* snd_intel_sst_core - CONFIG_SND_SOC_INTEL_SST
+* snd_soc_catpt - CONFIG_SND_SOC_INTEL_CATPT
+* snd_soc_avs - CONFIG_SND_SOC_INTEL_AVS
+* snd_soc_skl - CONFIG_SND_SOC_INTEL_SKL
+* cs35l41_hda - CONFIG_SND_SOC_C35L41* && SND_HDA_SCODEC_CS35L41*
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENCE.IntcSST2    |  39 --
+ LICENCE.adsp_sst    | 999 --------------------------------------------
+ LICENCE.ca0132      |  47 ---
+ LICENCE.fw_sst_0f28 |  40 --
+ LICENSE.cirrus      | 182 --------
+ WHENCE              | 545 ------------------------
+ 6 files changed, 1852 deletions(-)
+ delete mode 100644 LICENCE.IntcSST2
+ delete mode 100644 LICENCE.adsp_sst
+ delete mode 100644 LICENCE.ca0132
+ delete mode 100644 LICENCE.fw_sst_0f28
+ delete mode 100644 LICENSE.cirrus
+
+diff --git a/LICENCE.IntcSST2 b/LICENCE.IntcSST2
+deleted file mode 100644
+index d4f1609..0000000
+--- a/LICENCE.IntcSST2
++++ /dev/null
+@@ -1,39 +0,0 @@
+-Copyright (c) 2014, Intel Corporation.
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-  following disclaimer in the documentation and/or other materials
+-  provided with the distribution.
+-* Neither the name of Intel Corporation nor the names of its suppliers
+-  may be used to endorse or promote products derived from this software
+-  without specific prior written permission.
+-* No reverse engineering, decompilation, or disassembly of this software
+-  is permitted.
+-
+-Limited patent license.  Intel Corporation grants a world-wide,
+-royalty-free, non-exclusive license under patents it now or hereafter
+-owns or controls to make, have made, use, import, offer to sell and
+-sell ("Utilize") this software, but solely to the extent that any
+-such patent is necessary to Utilize the software alone, or in
+-combination with an operating system licensed under an approved Open
+-Source license as listed by the Open Source Initiative at
+-http://opensource.org/licenses.  The patent license shall not apply to
+-any other combinations which include this software.  No hardware per
+-se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGE.
+diff --git a/LICENCE.adsp_sst b/LICENCE.adsp_sst
+deleted file mode 100644
+index c66b1b2..0000000
+--- a/LICENCE.adsp_sst
++++ /dev/null
+@@ -1,999 +0,0 @@
+-***** INTEL BINARY FIRMWARE RELEASE LICENCE ********************************
+-
+-Copyright (c) 2014-15 Intel Corporation.
+-All rights reserved.
+-
+-Redistribution.
+-
+-Redistribution and use in binary form, without modification, are permitted
+-provided that the following conditions are met:
+-*    Redistributions must reproduce the above copyright notice and the
+-     following disclaimer in the documentation and/or other materials provided
+-     with the distribution.
+-*    Neither the name of Intel Corporation nor the names of its suppliers may
+-     be used to endorse or promote products derived from this software without
+-     specific prior written permission.
+-*    No reverse engineering, decompilation, or disassembly of this software is
+-     permitted.
+-
+-
+-Limited patent license.
+-
+-Intel Corporation grants a world-wide, royalty-free, non-exclusive license
+-under patents it now or hereafter owns or controls to make, have made, use,
+-import, offer to sell and sell ("Utilize") this software, but solely to the
+-extent that any such patent is necessary to Utilize the software alone. The
+-patent license shall not apply to any combinations which include this software.
+-No hardware per se is licensed hereunder.
+-
+-
+-DISCLAIMER.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+-POSSIBILITY OF SUCH DAMAGE.
+-
+-
+-***** NEW LIBC LICENCE********************************
+-
+-The newlib subdirectory is a collection of software from several sources.
+-
+-Each file may have its own copyright/license that is embedded in the source 
+-file.  Unless otherwise noted in the body of the source file(s), the following copyright
+-notices will apply to the contents of the newlib subdirectory:
+-
+-(1) Red Hat Incorporated
+-
+-Copyright (c) 1994-2009  Red Hat, Inc. All rights reserved.
+-
+-This copyrighted material is made available to anyone wishing to use,
+-modify, copy, or redistribute it subject to the terms and conditions
+-of the BSD License.   This program is distributed in the hope that 
+-it will be useful, but WITHOUT ANY WARRANTY expressed or implied, 
+-including the implied warranties of MERCHANTABILITY or FITNESS FOR 
+-A PARTICULAR PURPOSE.  A copy of this license is available at 
+-http://www.opensource.org/licenses. Any Red Hat trademarks that are
+-incorporated in the source code or documentation are not subject to
+-the BSD License and may only be used or replicated with the express
+-permission of Red Hat, Inc.
+-
+-(2) University of California, Berkeley
+-
+-Copyright (c) 1981-2000 The Regents of the University of California.
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without modification,
+-are permitted provided that the following conditions are met:
+-
+-    * Redistributions of source code must retain the above copyright notice, 
+-      this list of conditions and the following disclaimer.
+-    * Redistributions in binary form must reproduce the above copyright notice,
+-      this list of conditions and the following disclaimer in the documentation
+-      and/or other materials provided with the distribution.
+-    * Neither the name of the University nor the names of its contributors 
+-      may be used to endorse or promote products derived from this software 
+-      without specific prior written permission.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+-IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT 
+-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
+-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+-OF SUCH DAMAGE.
+-
+-(3) David M. Gay (AT&T 1991, Lucent 1998)
+-
+-The author of this software is David M. Gay.
+-
+-Copyright (c) 1991 by AT&T.
+-
+-Permission to use, copy, modify, and distribute this software for any
+-purpose without fee is hereby granted, provided that this entire notice
+-is included in all copies of any software which is or includes a copy
+-or modification of this software and in all copies of the supporting
+-documentation for such software.
+-
+-THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
+-WARRANTY.  IN PARTICULAR, NEITHER THE AUTHOR NOR AT&T MAKES ANY
+-REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
+-OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
+-
+--------------------------------------------------------------------
+-
+-The author of this software is David M. Gay.
+-
+-Copyright (C) 1998-2001 by Lucent Technologies
+-All Rights Reserved
+-
+-Permission to use, copy, modify, and distribute this software and
+-its documentation for any purpose and without fee is hereby
+-granted, provided that the above copyright notice appear in all
+-copies and that both that the copyright notice and this
+-permission notice and warranty disclaimer appear in supporting
+-documentation, and that the name of Lucent or any of its entities
+-not be used in advertising or publicity pertaining to
+-distribution of the software without specific, written prior
+-permission.
+-
+-LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+-INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+-IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
+-SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+-IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+-ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+-THIS SOFTWARE.
+-
+-
+-(4) Advanced Micro Devices
+-
+-Copyright 1989, 1990 Advanced Micro Devices, Inc.
+-
+-This software is the property of Advanced Micro Devices, Inc  (AMD)  which
+-specifically  grants the user the right to modify, use and distribute this
+-software provided this notice is not removed or altered.  All other rights
+-are reserved by AMD.
+-
+-AMD MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH REGARD TO THIS
+-SOFTWARE.  IN NO EVENT SHALL AMD BE LIABLE FOR INCIDENTAL OR CONSEQUENTIAL
+-DAMAGES IN CONNECTION WITH OR ARISING FROM THE FURNISHING, PERFORMANCE, OR
+-USE OF THIS SOFTWARE.
+-
+-So that all may benefit from your experience, please report  any  problems
+-or  suggestions about this software to the 29K Technical Support Center at
+-800-29-29-AMD (800-292-9263) in the USA, or 0800-89-1131  in  the  UK,  or
+-0031-11-1129 in Japan, toll free.  The direct dial number is 512-462-4118.
+-
+-Advanced Micro Devices, Inc.
+-29K Support Products
+-Mail Stop 573
+-5900 E. Ben White Blvd.
+-Austin, TX 78741
+-800-292-9263
+-
+-(5) 
+-
+-(6)
+-
+-(7) Sun Microsystems
+-
+-Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+-
+-Developed at SunPro, a Sun Microsystems, Inc. business.
+-Permission to use, copy, modify, and distribute this
+-software is freely granted, provided that this notice is preserved.
+-
+-(8) Hewlett Packard
+-
+-(c) Copyright 1986 HEWLETT-PACKARD COMPANY
+-
+-To anyone who acknowledges that this file is provided "AS IS"
+-without any express or implied warranty:
+-    permission to use, copy, modify, and distribute this file
+-for any purpose is hereby granted without fee, provided that
+-the above copyright notice and this notice appears in all
+-copies, and that the name of Hewlett-Packard Company not be
+-used in advertising or publicity pertaining to distribution
+-of the software without specific, written prior permission.
+-Hewlett-Packard Company makes no representations about the
+-suitability of this software for any purpose.
+-
+-(9) Hans-Peter Nilsson
+-
+-Copyright (C) 2001 Hans-Peter Nilsson
+-
+-Permission to use, copy, modify, and distribute this software is
+-freely granted, provided that the above copyright notice, this notice
+-and the following disclaimer are preserved with no changes.
+-
+-THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+-PURPOSE.
+-
+-(10) Stephane Carrez (m68hc11-elf/m68hc12-elf targets only)
+-
+-Copyright (C) 1999, 2000, 2001, 2002 Stephane Carrez (stcarrez@nerim.fr)
+-
+-The authors hereby grant permission to use, copy, modify, distribute,
+-and license this software and its documentation for any purpose, provided
+-that existing copyright notices are retained in all copies and that this
+-notice is included verbatim in any distributions. No written agreement,
+-license, or royalty fee is required for any of the authorized uses.
+-Modifications to this software may be copyrighted by their authors
+-and need not follow the licensing terms described here, provided that
+-the new terms are clearly indicated on the first page of each file where
+-they apply.
+-
+-(11) Christopher G. Demetriou
+-
+-Copyright (c) 2001 Christopher G. Demetriou
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-3. The name of the author may not be used to endorse or promote products
+-   derived from this software without specific prior written permission.
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+-IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-(12) SuperH, Inc.
+-
+-Copyright 2002 SuperH, Inc. All rights reserved
+-
+-This software is the property of SuperH, Inc (SuperH) which specifically
+-grants the user the right to modify, use and distribute this software
+-provided this notice is not removed or altered.  All other rights are
+-reserved by SuperH.
+-
+-SUPERH MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH REGARD TO
+-THIS SOFTWARE.  IN NO EVENT SHALL SUPERH BE LIABLE FOR INDIRECT, SPECIAL,
+-INCIDENTAL OR CONSEQUENTIAL DAMAGES IN CONNECTION WITH OR ARISING FROM
+-THE FURNISHING, PERFORMANCE, OR USE OF THIS SOFTWARE.
+-
+-So that all may benefit from your experience, please report any problems
+-or suggestions about this software to the SuperH Support Center via
+-e-mail at softwaresupport@superh.com .
+-
+-SuperH, Inc.
+-405 River Oaks Parkway
+-San Jose
+-CA 95134
+-USA
+-
+-(13) Royal Institute of Technology
+-
+-Copyright (c) 1999 Kungliga Tekniska Högskolan
+-(Royal Institute of Technology, Stockholm, Sweden).
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-
+-3. Neither the name of KTH nor the names of its contributors may be
+-   used to endorse or promote products derived from this software without
+-   specific prior written permission.
+-
+-THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS ``AS IS'' AND ANY
+-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+-PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL KTH OR ITS CONTRIBUTORS BE
+-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+-BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+-OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-(14) Alexey Zelkin
+-
+-Copyright (c) 2000, 2001 Alexey Zelkin <phantom@FreeBSD.org>
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-SUCH DAMAGE.
+-
+-(15) Andrey A. Chernov
+-
+-Copyright (C) 1997 by Andrey A. Chernov, Moscow, Russia.
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-SUCH DAMAGE.
+-
+-(16) FreeBSD
+-
+-Copyright (c) 1997-2002 FreeBSD Project.
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-SUCH DAMAGE.
+-
+-(17) S. L. Moshier
+-
+-Author:  S. L. Moshier.
+-
+-Copyright (c) 1984,2000 S.L. Moshier
+-
+-Permission to use, copy, modify, and distribute this software for any
+-purpose without fee is hereby granted, provided that this entire notice
+-is included in all copies of any software which is or includes a copy
+-or modification of this software and in all copies of the supporting
+-documentation for such software.
+-
+-THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
+-WARRANTY.  IN PARTICULAR,  THE AUTHOR MAKES NO REPRESENTATION
+-OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY OF THIS
+-SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
+-
+-(18) Citrus Project
+-
+-Copyright (c)1999 Citrus Project,
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-SUCH DAMAGE.
+-
+-(19) Todd C. Miller
+-
+-Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-3. The name of the author may not be used to endorse or promote products
+-   derived from this software without specific prior written permission.
+-
+-THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+-AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+-THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+-OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+-OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-(20) DJ Delorie (i386)
+-Copyright (C) 1991 DJ Delorie
+-All rights reserved.
+-
+-Redistribution, modification, and use in source and binary forms is permitted
+-provided that the above copyright notice and following paragraph are
+-duplicated in all such forms.
+-
+-This file is distributed WITHOUT ANY WARRANTY; without even the implied
+-warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-
+-(21) Free Software Foundation LGPL License (*-linux* targets only)
+-
+-   Copyright (C) 1990-1999, 2000, 2001    Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-   Contributed by Mark Kettenis <kettenis@phys.uva.nl>, 1997.
+-
+-   The GNU C Library is free software; you can redistribute it and/or
+-   modify it under the terms of the GNU Lesser General Public
+-   License as published by the Free Software Foundation; either
+-   version 2.1 of the License, or (at your option) any later version.
+-
+-   The GNU C Library is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-   Lesser General Public License for more details.
+-
+-   You should have received a copy of the GNU Lesser General Public
+-   License along with the GNU C Library; if not, write to the Free
+-   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+-   02110-1301 USA.
+-
+-(22) Xavier Leroy LGPL License (i[3456]86-*-linux* targets only)
+-
+-Copyright (C) 1996 Xavier Leroy (Xavier.Leroy@inria.fr)
+-
+-This program is free software; you can redistribute it and/or
+-modify it under the terms of the GNU Library General Public License
+-as published by the Free Software Foundation; either version 2
+-of the License, or (at your option) any later version.
+-
+-This program is distributed in the hope that it will be useful,
+-but WITHOUT ANY WARRANTY; without even the implied warranty of
+-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-GNU Library General Public License for more details.
+-
+-(23) Intel (i960)
+-
+-Copyright (c) 1993 Intel Corporation
+-
+-Intel hereby grants you permission to copy, modify, and distribute this
+-software and its documentation.  Intel grants this permission provided
+-that the above copyright notice appears in all copies and that both the
+-copyright notice and this permission notice appear in supporting
+-documentation.  In addition, Intel grants this permission provided that
+-you prominently mark as "not part of the original" any modifications
+-made to this software or documentation, and that the name of Intel
+-Corporation not be used in advertising or publicity pertaining to
+-distribution of the software or the documentation without specific,
+-written prior permission.
+-
+-Intel Corporation provides this AS IS, WITHOUT ANY WARRANTY, EXPRESS OR
+-IMPLIED, INCLUDING, WITHOUT LIMITATION, ANY WARRANTY OF MERCHANTABILITY
+-OR FITNESS FOR A PARTICULAR PURPOSE.  Intel makes no guarantee or
+-representations regarding the use of, or the results of the use of,
+-the software and documentation in terms of correctness, accuracy,
+-reliability, currentness, or otherwise; and you rely on the software,
+-documentation and results solely at your own risk.
+-
+-IN NO EVENT SHALL INTEL BE LIABLE FOR ANY LOSS OF USE, LOSS OF BUSINESS,
+-LOSS OF PROFITS, INDIRECT, INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES
+-OF ANY KIND.  IN NO EVENT SHALL INTEL'S TOTAL LIABILITY EXCEED THE SUM
+-PAID TO INTEL FOR THE PRODUCT LICENSED HEREUNDER.
+-
+-(24) Hewlett-Packard  (hppa targets only)
+-
+-(c) Copyright 1986 HEWLETT-PACKARD COMPANY
+-
+-To anyone who acknowledges that this file is provided "AS IS"
+-without any express or implied warranty:
+-    permission to use, copy, modify, and distribute this file
+-for any purpose is hereby granted without fee, provided that
+-the above copyright notice and this notice appears in all
+-copies, and that the name of Hewlett-Packard Company not be
+-used in advertising or publicity pertaining to distribution
+-of the software without specific, written prior permission.
+-Hewlett-Packard Company makes no representations about the
+-suitability of this software for any purpose.
+-
+-(25) Henry Spencer (only *-linux targets)
+-
+-Copyright 1992, 1993, 1994 Henry Spencer.  All rights reserved.
+-This software is not subject to any license of the American Telephone
+-and Telegraph Company or of the Regents of the University of California.
+-
+-Permission is granted to anyone to use this software for any purpose on
+-any computer system, and to alter it and redistribute it, subject
+-to the following restrictions:
+-
+-1. The author is not responsible for the consequences of use of this
+-   software, no matter how awful, even if they arise from flaws in it.
+-
+-2. The origin of this software must not be misrepresented, either by
+-   explicit claim or by omission.  Since few users ever read sources,
+-   credits must appear in the documentation.
+-
+-3. Altered versions must be plainly marked as such, and must not be
+-   misrepresented as being the original software.  Since few users
+-   ever read sources, credits must appear in the documentation.
+-
+-4. This notice may not be removed or altered.
+-
+-(26) Mike Barcroft
+-
+-Copyright (c) 2001 Mike Barcroft <mike@FreeBSD.org>
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-SUCH DAMAGE.
+-
+-(27) Konstantin Chuguev (--enable-newlib-iconv)
+-
+-Copyright (c) 1999, 2000
+-   Konstantin Chuguev.  All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-SUCH DAMAGE.
+-
+-   iconv (Charset Conversion Library) v2.0
+-
+-(28) Artem Bityuckiy (--enable-newlib-iconv)
+-
+-Copyright (c) 2003, Artem B. Bityuckiy, SoftMine Corporation.
+-Rights transferred to Franklin Electronic Publishers.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-SUCH DAMAGE.
+-
+-(29) IBM, Sony, Toshiba (only spu-* targets)
+-
+-  (C) Copyright 2001,2006,
+-  International Business Machines Corporation,
+-  Sony Computer Entertainment, Incorporated,
+-  Toshiba Corporation,
+-
+-  All rights reserved.
+-
+-  Redistribution and use in source and binary forms, with or without
+-  modification, are permitted provided that the following conditions are met:
+-
+-    * Redistributions of source code must retain the above copyright notice,
+-      this list of conditions and the following disclaimer.
+-    * Redistributions in binary form must reproduce the above copyright
+-      notice, this list of conditions and the following disclaimer in the
+-      documentation and/or other materials provided with the distribution.
+-    * Neither the names of the copyright holders nor the names of their
+-      contributors may be used to endorse or promote products derived from this
+-      software without specific prior written permission.
+-
+-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+-  POSSIBILITY OF SUCH DAMAGE.
+-
+-(30) - Alex Tatmanjants (targets using libc/posix)
+-
+-  Copyright (c) 1995 Alex Tatmanjants <alex@elvisti.kiev.ua>
+- 		at Electronni Visti IA, Kiev, Ukraine.
+- 			All rights reserved.
+- 
+-  Redistribution and use in source and binary forms, with or without
+-  modification, are permitted provided that the following conditions
+-  are met:
+-  1. Redistributions of source code must retain the above copyright
+-     notice, this list of conditions and the following disclaimer.
+-  2. Redistributions in binary form must reproduce the above copyright
+-     notice, this list of conditions and the following disclaimer in the
+-     documentation and/or other materials provided with the distribution.
+- 
+-  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-  ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
+-  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-  SUCH DAMAGE.
+-
+-(31) - M. Warner Losh (targets using libc/posix)
+-
+-  Copyright (c) 1998, M. Warner Losh <imp@freebsd.org>
+-  All rights reserved.
+- 
+-  Redistribution and use in source and binary forms, with or without
+-  modification, are permitted provided that the following conditions
+-  are met:
+-  1. Redistributions of source code must retain the above copyright
+-     notice, this list of conditions and the following disclaimer.
+-  2. Redistributions in binary form must reproduce the above copyright
+-     notice, this list of conditions and the following disclaimer in the
+-     documentation and/or other materials provided with the distribution.
+- 
+-  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-  ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+-  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-  SUCH DAMAGE.
+-
+-(32) - Andrey A. Chernov (targets using libc/posix)
+-
+-  Copyright (C) 1996 by Andrey A. Chernov, Moscow, Russia.
+-  All rights reserved.
+- 
+-  Redistribution and use in source and binary forms, with or without
+-  modification, are permitted provided that the following conditions
+-  are met:
+-  1. Redistributions of source code must retain the above copyright
+-     notice, this list of conditions and the following disclaimer.
+-  2. Redistributions in binary form must reproduce the above copyright
+-     notice, this list of conditions and the following disclaimer in the
+-     documentation and/or other materials provided with the distribution.
+- 
+-  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
+-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-  ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+-  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-  SUCH DAMAGE.
+-
+-(33) - Daniel Eischen (targets using libc/posix)
+-
+-  Copyright (c) 2001 Daniel Eischen <deischen@FreeBSD.org>.
+-  All rights reserved.
+- 
+-  Redistribution and use in source and binary forms, with or without
+-  modification, are permitted provided that the following conditions
+-  are met:
+-  1. Redistributions of source code must retain the above copyright
+-     notice, this list of conditions and the following disclaimer.
+-  2. Redistributions in binary form must reproduce the above copyright
+-     notice, this list of conditions and the following disclaimer in the
+-     documentation and/or other materials provided with the distribution.
+- 
+-  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-  ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+-  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-  SUCH DAMAGE.
+-
+-
+-(34) - Jon Beniston (only lm32-* targets)
+-
+- Contributed by Jon Beniston <jon@beniston.com>
+-
+- Redistribution and use in source and binary forms, with or without
+- modification, are permitted provided that the following conditions
+- are met:
+- 1. Redistributions of source code must retain the above copyright
+- notice, this list of conditions and the following disclaimer.
+- 2. Redistributions in binary form must reproduce the above copyright
+- notice, this list of conditions and the following disclaimer in the
+- documentation and/or other materials provided with the distribution.
+-
+- THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+- ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+- FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+- OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+- HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+- SUCH DAMAGE.
+-
+-
+-(35) - ARM Ltd (arm and thumb variant targets only)
+-
+- Copyright (c) 2009 ARM Ltd
+- All rights reserved.
+- 
+- Redistribution and use in source and binary forms, with or without
+- modification, are permitted provided that the following conditions
+- are met:
+- 1. Redistributions of source code must retain the above copyright
+-    notice, this list of conditions and the following disclaimer.
+- 2. Redistributions in binary form must reproduce the above copyright
+-    notice, this list of conditions and the following disclaimer in the
+-    documentation and/or other materials provided with the distribution.
+- 3. The name of the company may not be used to endorse or promote
+-    products derived from this software without specific prior written
+-    permission.
+-
+- THIS SOFTWARE IS PROVIDED BY ARM LTD ``AS IS'' AND ANY EXPRESS OR IMPLIED
+- WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+- MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+- IN NO EVENT SHALL ARM LTD BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+- TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+- PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-(36) - Xilinx, Inc. (microblaze-* and powerpc-* targets)
+-
+-Copyright (c) 2004, 2009 Xilinx, Inc.  All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-1.  Redistributions source code must retain the above copyright notice,
+-this list of conditions and the following disclaimer.
+-
+-2.  Redistributions in binary form must reproduce the above copyright
+-notice, this list of conditions and the following disclaimer in the
+-documentation and/or other materials provided with the distribution.
+-
+-3.  Neither the name of Xilinx nor the names of its contributors may be
+-used to endorse or promote products derived from this software without
+-specific prior written permission.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS
+-IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+-TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+-PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+-TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-
+-(37) Texas Instruments Incorporated (tic6x-*, *-tirtos targets)
+-
+-Copyright (c) 1996-2010,2014 Texas Instruments Incorporated
+-http://www.ti.com/
+-
+- Redistribution and  use in source  and binary forms, with  or without
+- modification,  are permitted provided  that the  following conditions
+- are met:
+-
+-    Redistributions  of source  code must  retain the  above copyright
+-    notice, this list of conditions and the following disclaimer.
+-
+-    Redistributions in binary form  must reproduce the above copyright
+-    notice, this  list of conditions  and the following  disclaimer in
+-    the  documentation  and/or   other  materials  provided  with  the
+-    distribution.
+-
+-    Neither the  name of Texas Instruments Incorporated  nor the names
+-    of its  contributors may  be used to  endorse or  promote products
+-    derived  from   this  software  without   specific  prior  written
+-    permission.
+-
+- THIS SOFTWARE  IS PROVIDED BY THE COPYRIGHT  HOLDERS AND CONTRIBUTORS
+- "AS IS"  AND ANY  EXPRESS OR IMPLIED  WARRANTIES, INCLUDING,  BUT NOT
+- LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+- A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+- OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+- SPECIAL,  EXEMPLARY,  OR CONSEQUENTIAL  DAMAGES  (INCLUDING, BUT  NOT
+- LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+- DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+- THEORY OF  LIABILITY, WHETHER IN CONTRACT, STRICT  LIABILITY, OR TORT
+- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-(38) National Semiconductor (cr16-* and crx-* targets)
+-
+-Copyright (c) 2004 National Semiconductor Corporation
+-
+-The authors hereby grant permission to use, copy, modify, distribute,
+-and license this software and its documentation for any purpose, provided
+-that existing copyright notices are retained in all copies and that this
+-notice is included verbatim in any distributions. No written agreement,
+-license, or royalty fee is required for any of the authorized uses.
+-Modifications to this software may be copyrighted by their authors
+-and need not follow the licensing terms described here, provided that
+-the new terms are clearly indicated on the first page of each file where
+-they apply. 
+-
+-(39) - Adapteva, Inc. (epiphany-* targets)
+-
+-Copyright (c) 2011, Adapteva, Inc.
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions are met:
+- * Redistributions of source code must retain the above copyright notice, this
+-   list of conditions and the following disclaimer.
+- * Redistributions in binary form must reproduce the above copyright notice,
+-   this list of conditions and the following disclaimer in the documentation
+-   and/or other materials provided with the distribution.
+- * Neither the name of Adapteva nor the names of its contributors may be used
+-   to endorse or promote products derived from this software without specific
+-   prior written permission.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-(40) - Altera Corportion (nios2-* targets)
+-
+-Copyright (c) 2003 Altera Corporation
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-
+-   o Redistributions of source code must retain the above copyright
+-     notice, this list of conditions and the following disclaimer. 
+-   o Redistributions in binary form must reproduce the above copyright
+-     notice, this list of conditions and the following disclaimer in the 
+-     documentation and/or other materials provided with the distribution. 
+-   o Neither the name of Altera Corporation nor the names of its 
+-     contributors may be used to endorse or promote products derived from
+-     this software without specific prior written permission. 
+- 
+-THIS SOFTWARE IS PROVIDED BY ALTERA CORPORATION, THE COPYRIGHT HOLDER,
+-AND ITS CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+-AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+-THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  
+-
+-(41) Ed Schouten - Free BSD
+-
+-Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-SUCH DAMAGE.
+-
+diff --git a/LICENCE.ca0132 b/LICENCE.ca0132
+deleted file mode 100644
+index 411750a..0000000
+--- a/LICENCE.ca0132
++++ /dev/null
+@@ -1,47 +0,0 @@
+-Copyright (c) 2012, Creative Technology Ltd
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-  following disclaimer in the documentation and/or other materials
+-  provided with the distribution.
+-* Neither the name of Creative Technology Ltd or its affiliates ("CTL")
+-  nor the names of its suppliers may be used to endorse or promote
+-  products derived from this software without specific prior written
+-  permission.
+-* No reverse engineering, decompilation, or disassembly of this software
+-  (or any part thereof) is permitted.
+-
+-Limited patent license. CTL grants a limited, world-wide,
+-royalty-free, non-exclusive license under patents it now or hereafter
+-owns or controls to make, have made, use, import, offer to sell and
+-sell ("Utilize") this software, but strictly only to the extent that any
+-such patent is necessary to Utilize the software alone, or in
+-combination with an operating system licensed under an approved Open
+-Source license as listed by the Open Source Initiative at
+-http://opensource.org/licenses.  The patent license shall not be
+-applicable, to any other combinations which include this software.
+-No hardware per se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGE.
+-
+-NO OTHER RIGHTS GRANTED. USER HEREBY ACKNOWLEDGES AND AGREES THAT USE OF
+-THIS SOFTWARE SHALL NOT CREATE OR GIVE GROUNDS FOR A LICENSE BY
+-IMPLICATION, ESTOPPEL, OR OTHERWISE TO ANY INTELLECTUAL PROPERTY RIGHTS
+-(PATENT, COPYRIGHT, TRADE SECRET, MASK WORK, OR OTHER PROPRIETARY RIGHT)
+-EMBODIED IN ANY OTHER CTL HARDWARE OR SOFTWARE WHETHER SOLELY OR IN
+-COMBINATION WITH THIS SOFTWARE.
+diff --git a/LICENCE.fw_sst_0f28 b/LICENCE.fw_sst_0f28
+deleted file mode 100644
+index 247e35f..0000000
+--- a/LICENCE.fw_sst_0f28
++++ /dev/null
+@@ -1,40 +0,0 @@
+-Copyright (c) 2014 Intel Corporation.
+-All rights reserved.
+-
+-Redistribution.
+-
+-Redistribution and use in binary form, without modification, are permitted
+-provided that the following conditions are met:
+-*    Redistributions must reproduce the above copyright notice and the
+-     following disclaimer in the documentation and/or other materials provided
+-     with the distribution.
+-*    Neither the name of Intel Corporation nor the names of its suppliers may
+-     be used to endorse or promote products derived from this software without
+-     specific prior written permission.
+-*    No reverse engineering, decompilation, or disassembly of this software is
+-     permitted.
+-
+-
+-Limited patent license.
+-
+-Intel Corporation grants a world-wide, royalty-free, non-exclusive license
+-under patents it now or hereafter owns or controls to make, have made, use,
+-import, offer to sell and sell ("Utilize") this software, but solely to the
+-extent that any such patent is necessary to Utilize the software alone. The
+-patent license shall not apply to any combinations which include this software.
+-No hardware per se is licensed hereunder.
+-
+-
+-DISCLAIMER.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+-POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENSE.cirrus b/LICENSE.cirrus
+deleted file mode 100644
+index c9d7c22..0000000
+--- a/LICENSE.cirrus
++++ /dev/null
+@@ -1,182 +0,0 @@
+-Use, distribution, or reproduction of this CIRRUS LOGIC software is governed by
+-the terms of this Agreement.   Any use, distribution or reproduction of this
+-CIRRUS LOGIC software constitutes your acceptance of the following terms and
+-conditions.
+-
+-1.	DEFINED TERMS
+-
+-“CIRRUS LOGIC” means either Cirrus Logic, Inc., a Delaware Corporation (for
+-licensees based in the United States), or Cirrus Logic International (UK) Ltd, a
+-company registered in Scotland (for licensees based outside the United States).
+-
+-“Licensee” means the party which has accepted these terms, including by
+-distributing, reproducing and/or using the Software.
+-“Software” means software provided to Licensee in binary code form, that runs or
+-is intended to run on a processor embedded in an end product (and related files
+-and documentation) (“Software”).
+-
+-2.	GRANT OF LICENSE
+-
+-a.	Subject to the terms, conditions, and limitations of this Agreement, CIRRUS
+-LOGIC grants to Licensee a non-exclusive , non-transferable license (the
+-“License”) to (i) use and integrate the Software  with other software, and (ii)
+-reproduce and distribute the Software in its complete and unmodified form,
+-provided all use of the Software is in connection with CIRRUS LOGIC
+-semiconductor devices. These license rights do not automatically extend to any
+-third-party software within the Software for which a separate license is
+-required to enable use by the Licensee.  Licensee must agree applicable license
+-terms with the relevant third-party licensors to use such software.
+-b.	Licensee (i) shall not remove or obscure any copyright and/or trademark
+-notices from the Software, and (ii) shall maintain and reproduce all copyright
+-and other proprietary notices on any copy in the same form and manner that such
+-notices are included on the Software (except if the Software is embedded such
+-that it is not readily accessible to an end user).
+-c.	Licensee may not make any modifications to the Software and may only
+-distribute the Software under the terms of this Agreement.  Recipients of the
+-Software must be provided with a copy of this Agreement.
+-
+-3.	TERMINATION
+-
+-a.	This Agreement will automatically terminate if Licensee does not comply with
+-its terms.
+-b.	In the event of termination:
+-i.	Licensee must destroy all copies of the Software (and parts thereof), and all
+-Proprietary Information (as defined below), including any original, backup, or
+-archival copy that Licensee may have installed, downloaded, or recorded on any
+-medium.  Upon written request from CIRRUS LOGIC, Licensee will certify in
+-writing that it has complied with this provision and has not retained any copies
+-of the Software or any Proprietary Information;
+-ii.	the rights and licenses granted to Licensee under this Agreement will
+-immediately terminate;
+-iii.	all rights and obligations under this Agreement which by their nature
+-should survive termination, will remain in full force and effect.
+-
+-4.	OWNERSHIP, RIGHTS, USE LIMITATIONS, AND DUTIES
+-
+-a.	CIRRUS LOGIC and/or its licensors own all proprietary rights in the Software.
+- Whilst this Agreement is in effect,  Licensee hereby covenants that it will not
+-assert any claim that the Software infringes any intellectual property rights
+-owned or controlled by Licensee.
+-b.	Other than as expressly set forth in this Agreement, CIRRUS LOGIC does not
+-grant, and Licensee does not receive, any ownership right, title or interest in
+-any intellectual property rights relating to the Software, nor in any copy of
+-any part of the foregoing.  No license is granted to Licensee in any human
+-readable code of the Software (source code).
+-c.	Licensee shall not (i) use, license, sell or otherwise distribute the
+-Software except as provided in this Agreement, (ii) attempt to modify in any
+-way, reverse engineer, decompile or disassemble any portion of the Software; or
+-(iii) use the Software or other material in violation of any applicable law or
+-regulation.
+-d.	The Software is not intended or authorized for use in or with products for
+-which CIRRUS LOGIC semiconductor devices are not designed, tested or intended,
+-as detailed in the CIRRUS LOGIC Terms and Conditions of Sale, available at
+-www.cirrus.com/legal (as the same may be updated from time to time), which shall
+-apply to Licensee’s use of Software, insofar as relevant thereto.
+-e.	CIRRUS LOGIC may require Licensee to cease using a version of the Software,
+-and may require use of an updated version, where (a) a third-party has claimed
+-that the Software infringes its intellectual property rights, and/or (b) for
+-technical reasons CIRRUS LOGIC is no longer able to permit ongoing use of the
+-version of the Software being used by Licensee.
+-f.	If Licensee requests support, CIRRUS LOGIC has no obligation to provide any
+-such support but if it agrees to do so any such support will be on a reasonable
+-efforts basis.
+-g.	Licensee shall keep complete and accurate records of its use of the Software
+-and shall, on request, promptly provide to CIRRUS LOGIC a certificate evidencing
+-the extent of such use.
+-
+-5.	CONFIDENTIALITY
+-
+-a.	Licensee may obtain or be provided with information relating to the Software,
+-including in documentation provided to it (“Proprietary Information”).  Such
+-Proprietary Information shall belong solely to CIRRUS LOGIC and/or its
+-affiliates (or, as the case may be, relevant third parties).
+-b.	During and after the term of this Agreement, Licensee agrees  to maintain all
+-such Proprietary Information in strict confidence and to not use (except as
+-expressly authorized in this Agreement), disclose, or provide any third-party
+-with access to any Proprietary Information except under a written agreement with
+-terms at least as protective as the terms of this Agreement.  Licensee also
+-agrees to exercise the same degree of care and diligence as it uses in respect
+-of its own confidential and proprietary information when dealing with CIRRUS
+-LOGIC Proprietary Information, and in any event no less than reasonable care and
+-diligence.
+-c.	Information will not be considered Proprietary Information if (i) it becomes
+-public knowledge other than through any act or omission constituting a breach of
+-the Licensee’s obligations under this Agreement; (ii) the Licensee can prove it
+-was already in the Licensee’s possession and at its free disposal before the
+-disclosure hereunder; and (iii) it was received in good faith from a third party
+-having no obligation of confidentiality and which is free to disclose such
+-Confidential Information
+-
+-6.	NO WARRANTIES OR LIABILITIES
+-
+-LICENSEE EXPRESSLY ACKNOWLEDGES AND AGREES THAT THE SOFTWARE IS PROVIDED BY
+-CIRRUS LOGIC “AS IS” WITHOUT ANY WARRANTIES WHATSOEVER AND THAT THE
+-INSTALLATION, OPERATION AND USE OF THE SOFTWARE IS AT LICENSEE’S OWN RISK.
+-CIRRUS LOGIC MAKES NO WARRANTIES, EXPRESS, IMPLIED OR STATUTORY, AND EXPRESSLY
+-DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+-PURPOSE, GOOD TITLE, NON-INFRINGEMENT, SATISFACTORY QUALITY OR PERFORMANCE OR
+-WHICH MAY ARISE FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.  CIRRUS LOGIC
+-PROVIDES NO WARRANTY THAT THE SOFTWARE IS FREE FROM DEFECTS OR CHARACTERISTICS
+-THAT COULD CAUSE VULNERABILITY TO CYBER-ATTACK, DATA BREACH OR PRIVACY
+-VIOLATIONS. CIRRUS LOGIC SHALL IN NO EVENT BE LIABLE TO LICENSEE OR ANYONE ELSE
+-FOR ANY LOSS, INJURY OR DAMAGE CAUSED IN WHOLE OR PART BY THE INSTALLATION,
+-OPERATION OR USE OF THE SOFTWARE, LICENSEE’S INCORRECT USE OF THE SOFTWARE
+-INCLUDING ANY FAILURE TO PROPERLY INSTALL ANY UPDATES TO THE SOFTWARE OR OTHER
+-SOFTWARE WITH WHICH THE SOFTWARE OPERATES OR WHICH IT UPDATES, OR IS INTENDED TO
+-OPERATE WITH OR UPDATE, OR THE RESULTS PRODUCED BY, OR FAILURES, DELAYS, OR
+-INTERRUPTIONS OF THE SOFTWARE.  WITHOUT LIMITING THE FOREGOING GENERALITY,
+-CIRRUS LOGIC SHALL IN NO EVENT BE LIABLE WITH RESPECT TO ANY INTELLECTUAL
+-PROPERTY INFRINGEMENT CLAIMS WHICH ARISE FROM, OR IN ANY WAY RELATE TO, USE OF
+-THE SOFTWARE, INCLUDING, WITHOUT LIMITATION, ANY CLAIMS RELATING TO HAPTICS ON A
+-COMPONENT OR SYSTEM LEVEL.  CIRRUS LOGIC AND ITS LICENSORS SHALL IN NO EVENT BE
+-LIABLE TO LICENSEE OR ANYONE ELSE FOR ANY DIRECT, CONSEQUENTIAL, INCIDENTAL OR
+-SPECIAL DAMAGES, INCLUDING BUT NOT LIMITED TO ANY LOST PROFITS ARISING OUT OF OR
+-RELATING TO THE INSTALLATION, OPERATION OR USE OF THE SOFTWARE.    BECAUSE SOME
+-JURISDICTIONS DO NOT ALLOW THE EXCLUSION OR LIMITATION OF CERTAIN WARRANTIES OR
+-TYPES OF CLAIM OR LOSS THEN IN SUCH INSTANCES THE ABOVE EXCLUSIONS SHALL BE
+-INTERPRETED TO APPLY TO THE EXTENT PERMITTED BY LOCAL LAW.  SUBJECT TO THE
+-FOREGOING, THE TOTAL LIABILITY OF CIRRUS LOGIC AND ITS LICENSORS TO LICENSEE
+-UNDER THIS AGREEMENT, AND/OR ARISING FROM, OR IN CONNECTION WITH, THE USE OF (OR
+-INABILITY TO USE) THE SOFTWARE, WHETHER ARISING IN CONTRACT, TORT (INCLUDING
+-NEGLIGENCE), QUASI TORT, OR OTHERWISE SHALL NOT EXCEED THE LICENSE FEES (IF ANY)
+-PAID BY LICENSEE FOR THE SOFTWARE THAT GAVE RISE TO THE CLAIM, OR TEN THOUSAND
+-U.S. DOLLARS (U.S. $10,000), WHICHEVER IS GREATER.
+-
+-7.	EXPORT AND END USE RESTRICTIONS
+-
+-Licensee acknowledges that the Software is subject to United States and other
+-applicable export related laws and  regulations (“Export Laws”).  Licensee
+-agrees that it may not export, re-export or transfer the Software or any direct
+-product of the Software other than in accordance with those Export Laws.
+-Licensee further agrees to be bound by, and to act in accordance with,
+-provisions of the CIRRUS LOGIC Terms and Conditions of Sale available at
+-www.cirrus.com/legal (as updated from time to time), including insofar as they
+-relate to export/end use restrictions.
+-
+-8.	GENERAL PROVISIONS
+-
+-This Agreement is not assignable or sub-licensable by Licensee without the prior
+-written consent of CIRRUS LOGIC.  CIRRUS LOGIC may sub-license or assign any or
+-all of its rights and obligations under this Agreement without Licensee’s
+-consent.  The waiver by either party of a breach of this Agreement shall not
+-constitute a waiver of any subsequent breach of this Agreement; nor shall any
+-delay to exercise any right under this Agreement operate as a waiver of such
+-right.  This Agreement shall be deemed to have been made in, and shall be
+-construed pursuant to the laws of, the State of Texas without regard to
+-conflicts of laws provisions thereof.  Both parties hereby consent to the
+-exclusive jurisdiction of the State of Texas and the locale of Austin therein.
+-The prevailing party in any action to enforce this Agreement shall be entitled
+-to recover costs and expenses including, without limitation, attorneys' fees.
+-The parties agree that  CIRRUS LOGIC and its licensors shall be entitled to
+-equitable relief in addition to any remedies it may have hereunder or at law.
+-
+-9.	ENTIRE AGREEMENT
+-
+-This Agreement and any terms referenced or incorporated herein, constitutes the
+-entire agreement between Licensee and CIRRUS LOGIC with respect to the Software
+-provided pursuant to this Agreement and supersedes any other agreement between
+-Licensee and CIRRUS LOGIC with respect thereto (including terms presented and/or
+-accepted as part of an installation process), but does not otherwise replace,
+-modify or cancel any other written agreement between Licensee and CIRRUS LOGIC.
+-If there is any inconsistency between these terms and those presented as part of
+-the process to install the Software, these terms will prevail.
+diff --git a/WHENCE b/WHENCE
+index e6309eb..116d04d 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -17,43 +17,6 @@ Licence: Redistributable. See LICENCE.cypress for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: snd-korg1212 -- Korg 1212 IO audio device
+-
+-File: korg/k1212.dsp
+-
+-Licence: Unknown
+-
+-Found in alsa-firmware package in hex form; no licensing information.
+-
+---------------------------------------------------------------------------
+-
+-Driver: snd-maestro3 -- ESS Allegro Maestro3 audio device
+-
+-File: ess/maestro3_assp_kernel.fw
+-File: ess/maestro3_assp_minisrc.fw
+-
+-Licence: Unknown
+-
+-Found in alsa-firmware package in hex form with a comment claiming to
+-be GPLv2+, but without source -- and with another comment saying "ESS
+-drops binary dsp code images on our heads, but we don't get to see
+-specs on the dsp."
+-
+---------------------------------------------------------------------------
+-
+-Driver: snd-ymfpci -- Yamaha YMF724/740/744/754 audio devices
+-
+-File: yamaha/ds1_ctrl.fw
+-File: yamaha/ds1_dsp.fw
+-File: yamaha/ds1e_ctrl.fw
+-
+-Licence: Unknown
+-
+-Found alsa-firmware package in hex form, with the following comment:
+-   Copyright (c) 1997-1999 Yamaha Corporation. All Rights Reserved.
+-
+---------------------------------------------------------------------------
+-
+ Driver: advansys - AdvanSys SCSI
+ 
+ File: advansys/mcode.bin
+@@ -360,24 +323,6 @@ http://www.zdomain.com/a56.html
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: snd-sb16-csp - Sound Blaster 16/AWE CSP support
+-
+-File: sb16/mulaw_main.csp
+-File: sb16/alaw_main.csp
+-File: sb16/ima_adpcm_init.csp
+-File: sb16/ima_adpcm_playback.csp
+-File: sb16/ima_adpcm_capture.csp
+-
+-Licence: Allegedly GPLv2+, but no source visible. Marked:
+-/*
+- *  Copyright (c) 1994 Creative Technology Ltd.
+- *  Microcode files for SB16 Advanced Signal Processor
+- */
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: qla2xxx - QLogic QLA2XXX Fibre Channel
+ 
+ File: ql2100_fw.bin
+@@ -1383,17 +1328,6 @@ ARM assembly source code from https://linuxtv.org/downloads/firmware/Boot.S
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: snd-wavefront - ISA WaveFront sound card
+-
+-File: yamaha/yss225_registers.bin
+-
+-Licence: Allegedly GPLv2+, but no source visible.
+-
+-Found in hex form in kernel source, with the following comment:
+-   Copyright (c) 1998-2002 by Paul Davis <pbd@op.net>
+-
+---------------------------------------------------------------------------
+-
+ Driver: rt61pci - Ralink RT2561, RT2561S, RT2661 wireless MACs
+ 
+ File: rt2561.bin
+@@ -3605,17 +3539,6 @@ Licence: GPLv2. Some build scripts use the New BSD (3-clause) licence.. See GPL-
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: snd-hda-codec-ca0132 - Creative Sound Core3D codec
+-
+-File: ctefx.bin
+-File: ctspeq.bin
+-
+-Licence: Redistributable. See LICENCE.ca0132 for details
+-
+-Found also in alsa-firmware package.
+-
+---------------------------------------------------------------------------
+-
+ Driver: btusb - Bluetooth USB driver
+ 
+ File: intel/ibt-hw-37.7.bseq
+@@ -4044,14 +3967,6 @@ Licence: Redistributable. See LICENCE.r8a779x_usb3 for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: snd_soc_sst_acpi
+-
+-File: intel/fw_sst_0f28.bin-48kHz_i2s_master
+-
+-License: Redistributable. See LICENCE.fw_sst_0f28 for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: as102 - Abilis Systems Single DVB-T Receiver
+ 
+ File: as102_data1_st.hex
+@@ -4070,104 +3985,6 @@ Licence: Redistributable. See LICENCE.it913x for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: snd_soc_catpt -- Intel AudioDSP driver for HSW/BDW platforms
+-
+-File: intel/catpt/bdw/dsp_basefw.bin
+-Version: 44b81c4d5397a63108356f58f036953d9b288c4e
+-Link: intel/IntcSST2.bin -> catpt/bdw/dsp_basefw.bin
+-
+-License: Redistributable. See LICENCE.IntcSST2 for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: snd_soc_avs -- Intel AudioDSP driver for cAVS platforms
+-
+-File: intel/avs/skl/dsp_basefw.bin
+-File: intel/avs/skl/dsp_mod_7CAD0808-AB10-CD23-EF45-12AB34CD56EF.bin
+-Version: 9.21.00.4899
+-Link: intel/dsp_fw_release.bin -> avs/skl/dsp_basefw.bin
+-Link: intel/dsp_fw_kbl.bin -> avs/skl/dsp_basefw.bin
+-File: intel/avs/apl/dsp_basefw.bin
+-Version: 9.22.01.4908
+-Link: intel/dsp_fw_bxtn.bin -> avs/apl/dsp_basefw.bin
+-Link: intel/dsp_fw_glk.bin -> avs/apl/dsp_basefw.bin
+-File: intel/avs/cnl/dsp_basefw.bin
+-Version: 10.23.00.8551
+-Link: intel/dsp_fw_cnl.bin -> avs/cnl/dsp_basefw.bin
+-
+-License: Redistributable. See LICENCE.adsp_sst for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: snd_intel_sst_core
+-
+-File: intel/fw_sst_0f28.bin
+-File: intel/fw_sst_0f28_ssp0.bin
+-
+-License: Redistributable. See LICENCE.fw_sst_0f28 for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: snd_intel_sst_core
+-
+-File: intel/fw_sst_22a8.bin
+-Version: 01.0B.02.02
+-
+-License: Redistributable. See LICENCE.fw_sst_0f28 for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: snd-soc-skl
+-
+-File: intel/dsp_fw_release_v969.bin
+-Version: 8.20.00.969
+-File: intel/dsp_fw_release_v3402.bin
+-Version: 9.21.00.3402_161
+-
+-License: Redistributable. See LICENCE.adsp_sst for details
+-
+-File: intel/dsp_fw_bxtn_v2219.bin
+-Version: 9.22.01.2219_64
+-File: intel/dsp_fw_bxtn_v3366.bin
+-Version: 9.22.01.3366_157
+-
+-License: Redistributable. See LICENCE.adsp_sst for details
+-
+-File: intel/dsp_fw_kbl_v701.bin
+-Version: 9.21.00.701
+-File: intel/dsp_fw_kbl_v1037.bin
+-Version: 09.21.00.1037
+-File: intel/dsp_fw_kbl_v2042.bin
+-Version: 9.21.00.2042_46
+-File: intel/dsp_fw_kbl_v2630.bin
+-Version: 9.21.00.2630_97
+-File: intel/dsp_fw_kbl_v3266.bin
+-Version: 9.21.00.3266_144
+-File: intel/dsp_fw_kbl_v3420.bin
+-Version: 9.21.00.3420_163
+-File: intel/dsp_fw_kbl_v3402.bin
+-Version: 9.21.00.3402_161
+-
+-License: Redistributable. See LICENCE.adsp_sst for details
+-
+-File: intel/dsp_fw_glk_v1814.bin
+-Version: 9.92.01.1814
+-File: intel/dsp_fw_glk_v2880.bin
+-Version: 9.22.00.2880
+-File: intel/dsp_fw_glk_v2768.bin
+-Version: 9.22.01.2768
+-File: intel/dsp_fw_glk_v3366.bin
+-Version: 9.22.01.3366_157
+-
+-File: intel/dsp_fw_cnl_v1191.bin
+-Version: 10.00.00.1191
+-File: intel/dsp_fw_cnl_v1858.bin
+-Version: 10.23.00.1858
+-
+-License: Redistributable. See LICENCE.adsp_sst for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: smsmdtv - Siano MDTV Core module
+ 
+ File: cmmb_vega_12mhz.inp
+@@ -5935,368 +5752,6 @@ Licence: Redistributable. See LICENSE.amphion_vpu for details
+ 
+ ---------------------------------------------------------------------------
+ 
+-Driver: cs35l41_hda - CS35l41 ALSA HDA audio driver
+-
+-File: cirrus/cs35l41-dsp1-spk-prot.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot.bin
+-File: cirrus/cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8971.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8971.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8972.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8972.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8973.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8973.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8974.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8974.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8975.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8975.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c896e.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c896e.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c89c3.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c89c3.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8981.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8981.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c898e.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c898e.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c898f.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c898f.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8991.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8991.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8992.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8992.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8994.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8994.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8995.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8995.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c89c6.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c89c6.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8971.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8971.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8972.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8972.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8973.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8973.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8974.bin -> cs35l41-dsp1-spk-prot-103c8972.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8974.bin -> cs35l41-dsp1-spk-cali-103c8972.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8975-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8975-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8975-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8975-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c896e-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c896e-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c896e-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c896e-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c898e.bin -> cs35l41-dsp1-spk-prot-103c8971.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c898e.bin -> cs35l41-dsp1-spk-cali-103c8971.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c898f.bin -> cs35l41-dsp1-spk-prot-103c8971.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c898f.bin -> cs35l41-dsp1-spk-cali-103c8971.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8991.bin -> cs35l41-dsp1-spk-prot-103c8972.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8991.bin -> cs35l41-dsp1-spk-cali-103c8972.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8992.bin -> cs35l41-dsp1-spk-prot-103c8972.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8992.bin -> cs35l41-dsp1-spk-cali-103c8972.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8994.bin -> cs35l41-dsp1-spk-prot-103c8973.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8994.bin -> cs35l41-dsp1-spk-cali-103c8973.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8995.bin -> cs35l41-dsp1-spk-prot-103c8973.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8995.bin -> cs35l41-dsp1-spk-cali-103c8973.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c89c6-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c89c6-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c89c6-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c89c6-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c89c3-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c89c3-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c89c3-r1.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c89c3-r1.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c89c3-l0.bin -> cs35l41-dsp1-spk-prot-103c89c3-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c89c3-l0.bin -> cs35l41-dsp1-spk-cali-103c89c3-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c89c3-l1.bin -> cs35l41-dsp1-spk-prot-103c89c3-r1.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c89c3-l1.bin -> cs35l41-dsp1-spk-cali-103c89c3-r1.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8981-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8981-r1.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8981-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8981-l1.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8981-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8981-r1.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8981-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8981-l1.bin
+-File: cirrus/cs35l41/v6.39.0/halo_cspl_RAM_revB2_29.41.0.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa3847.wmfw -> cs35l41/v6.39.0/halo_cspl_RAM_revB2_29.41.0.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa3847.wmfw -> cs35l41/v6.39.0/halo_cspl_RAM_revB2_29.41.0.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa3847-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa3847-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa3847-spkid0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa3847-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa3847-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa3847-spkid1.bin
+-File: cirrus/cs35l41/v6.47.0/halo_cspl_RAM_revB2_29.49.0.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa3855.wmfw -> cs35l41/v6.47.0/halo_cspl_RAM_revB2_29.49.0.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa3855.wmfw -> cs35l41/v6.47.0/halo_cspl_RAM_revB2_29.49.0.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa3855-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa3855-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa3855-spkid0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa3855-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa3855-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa3855-spkid1.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa22f1.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa22f1.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa22f2.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa22f2.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa22f3.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa22f3.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa22f1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa22f1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa22f1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa22f1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa22f2-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa22f2-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa22f2-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa22f2-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa22f3-l0.bin -> cs35l41-dsp1-spk-prot-17aa22f2-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa22f3-r0.bin -> cs35l41-dsp1-spk-prot-17aa22f2-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa22f3-l0.bin -> cs35l41-dsp1-spk-cali-17aa22f2-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa22f3-r0.bin -> cs35l41-dsp1-spk-cali-17aa22f2-r0.bin
+-File: cirrus/cs35l41/v6.63.0/halo_cspl_RAM_revB2_29.65.0.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-104312af.wmfw -> cs35l41/v6.63.0/halo_cspl_RAM_revB2_29.65.0.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-104312af.wmfw -> cs35l41/v6.63.0/halo_cspl_RAM_revB2_29.65.0.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-104312af-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-104312af-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-104312af-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-104312af-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-104312af-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-104312af-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-104312af-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-104312af-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431a8f.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431a8f.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-10431a8f-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431a8f-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431a8f-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431a8f-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431a8f-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431a8f-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431a8f-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431a8f-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431e02.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431e02.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-10431e02-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431e02-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431e02-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431e02-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431e02-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431e02-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431e02-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431e02-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431f12.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431f12.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-File: cirrus/cs35l41-dsp1-spk-cali-10431f12-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431f12-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431f12-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431f12-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431f12-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431f12-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431f12-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431f12-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431e12.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431e12.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-File: cirrus/cs35l41-dsp1-spk-cali-10431e12-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431e12-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431e12-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431e12-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431e12-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431e12-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431e12-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431e12-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431b93.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431b93.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431a20.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431a20.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431a30.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431a30.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431a40.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431a40.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431a50.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431a50.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-10431a60.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-10431a60.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-10431b93-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431b93-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431b93-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10431b93-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431b93-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431b93-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431b93-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10431b93-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10433a20-spkid0-l0.bin -> cs35l41-dsp1-spk-prot-10431b93-spkid0-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10433a20-spkid0-r0.bin -> cs35l41-dsp1-spk-prot-10431b93-spkid0-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10433a20-spkid1-l0.bin -> cs35l41-dsp1-spk-prot-10431b93-spkid1-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10433a20-spkid1-r0.bin -> cs35l41-dsp1-spk-prot-10431b93-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-10433a20-spkid0-l0.bin -> cs35l41-dsp1-spk-cali-10431b93-spkid0-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-10433a20-spkid0-r0.bin -> cs35l41-dsp1-spk-cali-10431b93-spkid0-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-10433a20-spkid1-l0.bin -> cs35l41-dsp1-spk-cali-10431b93-spkid1-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-10433a20-spkid1-r0.bin -> cs35l41-dsp1-spk-cali-10431b93-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a30-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a30-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a30-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a30-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a30-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a30-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a30-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a30-spkid0-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10433a40-spkid0-l0.bin -> cs35l41-dsp1-spk-prot-10433a30-spkid0-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10433a40-spkid0-r0.bin -> cs35l41-dsp1-spk-prot-10433a30-spkid0-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10433a40-spkid1-l0.bin -> cs35l41-dsp1-spk-prot-10433a30-spkid1-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-10433a40-spkid1-r0.bin -> cs35l41-dsp1-spk-prot-10433a30-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-10433a40-spkid0-l0.bin -> cs35l41-dsp1-spk-cali-10433a30-spkid0-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-10433a40-spkid0-r0.bin -> cs35l41-dsp1-spk-cali-10433a30-spkid0-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-10433a40-spkid1-l0.bin -> cs35l41-dsp1-spk-cali-10433a30-spkid1-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-10433a40-spkid1-r0.bin -> cs35l41-dsp1-spk-cali-10433a30-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a50-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a50-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a50-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a50-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a50-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a50-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a50-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a50-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a60-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a60-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a60-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a60-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a60-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a60-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-10433a60-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-10433a60-spkid0-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2316.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2316.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2317.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2317.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa2316-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa2316-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa2316-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-17aa2316-spkid1-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa2316-spkid0-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa2316-spkid0-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa2316-spkid1-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-17aa2316-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2317-spkid0-l0.bin -> cs35l41-dsp1-spk-prot-17aa2316-spkid0-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2317-spkid0-r0.bin -> cs35l41-dsp1-spk-prot-17aa2316-spkid0-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2317-spkid1-l0.bin -> cs35l41-dsp1-spk-prot-17aa2316-spkid1-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2317-spkid1-r0.bin -> cs35l41-dsp1-spk-prot-17aa2316-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2317-spkid0-l0.bin -> cs35l41-dsp1-spk-cali-17aa2316-spkid0-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2317-spkid0-r0.bin -> cs35l41-dsp1-spk-cali-17aa2316-spkid0-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2317-spkid1-l0.bin -> cs35l41-dsp1-spk-cali-17aa2316-spkid1-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2317-spkid1-r0.bin -> cs35l41-dsp1-spk-cali-17aa2316-spkid1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2318.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2318.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2319.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2319.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa231a.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa231a.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2318-l0.bin -> cs35l41-dsp1-spk-prot-17aa22f1-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2318-r0.bin -> cs35l41-dsp1-spk-prot-17aa22f1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2318-l0.bin -> cs35l41-dsp1-spk-cali-17aa22f1-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2318-r0.bin -> cs35l41-dsp1-spk-cali-17aa22f1-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2319-l0.bin -> cs35l41-dsp1-spk-prot-17aa22f2-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa2319-r0.bin -> cs35l41-dsp1-spk-prot-17aa22f2-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2319-l0.bin -> cs35l41-dsp1-spk-cali-17aa22f2-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa2319-r0.bin -> cs35l41-dsp1-spk-cali-17aa22f2-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa231a-l0.bin -> cs35l41-dsp1-spk-prot-17aa22f2-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-17aa231a-r0.bin -> cs35l41-dsp1-spk-prot-17aa22f2-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa231a-l0.bin -> cs35l41-dsp1-spk-cali-17aa22f2-l0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-17aa231a-r0.bin -> cs35l41-dsp1-spk-cali-17aa22f2-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8c26.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8c26.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b42.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b42.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b43.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b43.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b44.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b44.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b45.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b45.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b46.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b46.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b47.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b47.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b63.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b63.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b70.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b70.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b72.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b72.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b74.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b74.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b77.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b77.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b8f.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b92.wmfw -> cs35l41/v6.61.1/halo_cspl_RAM_revB2_29.63.1.wmfw
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b42.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b42.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b43.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b43.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b44.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b44.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b45.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b45.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b46.bin -> cs35l41-dsp1-spk-prot-103c8b45.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b46.bin -> cs35l41-dsp1-spk-cali-103c8b45.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b47.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b47.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b63-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b63-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b63-r1.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b63-r1.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b63-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b63-l0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b63-l1.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b63-l1.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b70.bin -> cs35l41-dsp1-spk-prot-103c8b42.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b70.bin -> cs35l41-dsp1-spk-cali-103c8b42.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b72.bin -> cs35l41-dsp1-spk-prot-103c8b45.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b72.bin -> cs35l41-dsp1-spk-cali-103c8b45.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b74.bin -> cs35l41-dsp1-spk-prot-103c8b47.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b74.bin -> cs35l41-dsp1-spk-cali-103c8b47.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b77.bin -> cs35l41-dsp1-spk-prot-103c8b45.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b77.bin -> cs35l41-dsp1-spk-cali-103c8b45.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b8f-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b8f-r1.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b8f-r0.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b8f-r1.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b8f-l0.bin -> cs35l41-dsp1-spk-prot-103c8b8f-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8b8f-l1.bin -> cs35l41-dsp1-spk-prot-103c8b8f-r1.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b8f-l0.bin -> cs35l41-dsp1-spk-cali-103c8b8f-r0.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8b8f-l1.bin -> cs35l41-dsp1-spk-cali-103c8b8f-r1.bin
+-File: cirrus/cs35l41-dsp1-spk-prot-103c8b92.bin
+-File: cirrus/cs35l41-dsp1-spk-cali-103c8b92.bin
+-Link: cirrus/cs35l41-dsp1-spk-prot-103c8c26.bin -> cs35l41-dsp1-spk-prot-103c8b45.bin
+-Link: cirrus/cs35l41-dsp1-spk-cali-103c8c26.bin -> cs35l41-dsp1-spk-cali-103c8b45.bin
+-
+-License: Redistributable. See LICENSE.cirrus for details.
+-
+-Use of Cirrus Logic drivers, firmware and other materials is permitted
+-only in connection with Cirrus Logic hardware products.
+-
+-Copyright © 2022 Cirrus Logic, Inc. and Cirrus Logic International
+-Semiconductor Ltd. All Rights Reserved.
+-
+----------------------------------------------------------------------------
+-
+-Driver: mtk-sof - MediaTek Sound Open Firmware driver
+-
+-File: mediatek/sof/sof-mt8186.ri
+-File: mediatek/sof/sof-mt8186.ldc
+-File: mediatek/sof-tplg/sof-mt8186.tplg
+-Version: v0.2.1
+-
+-File: mediatek/sof/sof-mt8195.ri
+-File: mediatek/sof/sof-mt8195.ldc
+-File: mediatek/sof-tplg/sof-mt8195-mt6359-rt1019-rt5682.tplg
+-File: mediatek/sof-tplg/sof-mt8195-mt6359-rt1019-rt5682-dts.tplg
+-Version: v0.4.1
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: nxp-sr1xx - NXP Ultra Wide Band driver
+ File: nxp/sr150_fw.bin
+ Version: 35.00.03
+-- 
+2.40.1
+

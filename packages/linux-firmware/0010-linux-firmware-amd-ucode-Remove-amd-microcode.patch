@@ -1,0 +1,122 @@
+From 820980a4ec6d39dcec84639fb4b7a80bb33f8a21 Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Wed, 26 Jul 2023 11:28:35 +0000
+Subject: [PATCH] linux-firmware: amd-ucode: Remove amd microcode
+
+Bottlerocket ships AMD microcode as part of the kernel packages already.
+There is no need to ship these microcode images twice.
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENSE.amd-ucode | 64 -----------------------------------------------
+ WHENCE            | 23 -----------------
+ 2 files changed, 87 deletions(-)
+ delete mode 100644 LICENSE.amd-ucode
+
+diff --git a/LICENSE.amd-ucode b/LICENSE.amd-ucode
+deleted file mode 100644
+index ea47c57..0000000
+--- a/LICENSE.amd-ucode
++++ /dev/null
+@@ -1,64 +0,0 @@
+-Copyright (C) 2010-2022 Advanced Micro Devices, Inc., All rights reserved.
+-
+-Permission is hereby granted by Advanced Micro Devices, Inc. ("AMD"),
+-free of any license fees, to any person obtaining a copy of this
+-microcode in binary form (the "Software") ("You"), to install,
+-reproduce, copy and distribute copies of the Software and to permit
+-persons to whom the Software is provided to do the same, subject to
+-the following terms and conditions.  Your use of any portion of the
+-Software shall constitute Your acceptance of the following terms and
+-conditions. If You do not agree to the following terms and conditions,
+-do not use, retain or redistribute any portion of the Software.
+-
+-If You redistribute this Software, You must reproduce the above
+-copyright notice and this license with the Software.
+-Without specific, prior, written permission from AMD, You may not
+-reference AMD or AMD products in the promotion of any product derived
+-from or incorporating this Software in any manner that implies that
+-AMD endorses or has certified such product derived from or
+-incorporating this Software.
+-
+-You may not reverse engineer, decompile, or disassemble this Software
+-or any portion thereof.
+-
+-THE SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY EXPRESS OR IMPLIED
+-WARRANTY OF ANY KIND, INCLUDING BUT NOT LIMITED TO WARRANTIES OF
+-MERCHANTABILITY, NONINFRINGEMENT, TITLE, FITNESS FOR ANY PARTICULAR
+-PURPOSE, OR WARRANTIES ARISING FROM CONDUCT, COURSE OF DEALING, OR
+-USAGE OF TRADE. IN NO EVENT SHALL AMD OR ITS LICENSORS BE LIABLE FOR
+-ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR
+-LOSS OF PROFITS, BUSINESS INTERRUPTION, OR LOSS OF DATA OR
+-INFORMATION) ARISING OUT OF AMD'S NEGLIGENCE, GROSS NEGLIGENCE, THE
+-USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF AMD HAS BEEN ADVISED
+-OF THE POSSIBILITY OF SUCH DAMAGES. BECAUSE SOME JURISDICTIONS
+-PROHIBIT THE EXCLUSION OR LIMITATION OF LIABILITY FOR CONSEQUENTIAL OR
+-INCIDENTAL DAMAGES OR THE EXCLUSION OF IMPLIED WARRANTIES, THE ABOVE
+-LIMITATION MAY NOT APPLY TO YOU.
+-
+-Without limiting the foregoing, the Software may implement third party
+-technologies for which You must obtain licenses from parties other
+-than AMD. You agree that AMD has not obtained or conveyed to You, and
+-that You shall be responsible for obtaining the rights to use and/or
+-distribute the applicable underlying intellectual property rights
+-related to the third party technologies. These third party
+-technologies are not licensed hereunder.
+-
+-If You use the Software (in whole or in part), You shall adhere to all
+-applicable U.S., European, and other export laws, including but not
+-limited to the U.S. Export Administration Regulations ("EAR"), (15
+-C.F.R. Sections 730 through 774), and E.U. Council Regulation (EC) No
+-1334/2000 of 22 June 2000. Further, pursuant to Section 740.6  of the
+-EAR, You hereby certify that, except pursuant to a license granted by
+-the United States Department of Commerce Bureau of Industry and
+-Security or as otherwise permitted pursuant to a License Exception
+-under the U.S. Export Administration Regulations ("EAR"), You will not
+-(1) export, re-export or release to a national of a country in Country
+-Groups D:1, E:1 or E:2 any restricted technology, software, or source
+-code You receive hereunder, or (2) export to Country Groups D:1, E:1
+-or E:2 the direct product of such technology or software, if such
+-foreign produced direct product is subject to national security
+-controls as identified on the Commerce Control List (currently found
+-in Supplement 1 to Part 774 of EAR). For the most current Country
+-Group listings, or for additional information about the EAR or Your
+-obligations under those regulations, please refer to the U.S. Bureau
+-of Industry and Security?s website at ttp://www.bis.doc.gov/.
+diff --git a/WHENCE b/WHENCE
+index 748a81e..5c19692 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -147,29 +147,6 @@ License: Redistributable.  See LICENCE.myri10ge_firmware for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: microcode_amd - AMD CPU Microcode Update Driver for Linux
+-
+-File: amd-ucode/microcode_amd.bin
+-Raw: amd-ucode/microcode_amd.bin
+-Version: 2013-07-10
+-File: amd-ucode/microcode_amd_fam15h.bin
+-Raw: amd-ucode/microcode_amd_fam15h.bin
+-Version: 2018-05-24
+-File: amd-ucode/microcode_amd_fam16h.bin
+-Raw: amd-ucode/microcode_amd_fam16h.bin
+-Version: 2014-10-28
+-File: amd-ucode/microcode_amd_fam17h.bin
+-Raw: amd-ucode/microcode_amd_fam17h.bin
+-Version: 2023-04-13
+-File: amd-ucode/microcode_amd_fam19h.bin
+-Raw: amd-ucode/microcode_amd_fam19h.bin
+-Version: 2023-01-31
+-File: amd-ucode/README
+-
+-License: Redistributable. See LICENSE.amd-ucode for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: i915 -- Intel Integrated Graphics driver
+ 
+ File: i915/skl_dmc_ver1_23.bin
+-- 
+2.40.1
+

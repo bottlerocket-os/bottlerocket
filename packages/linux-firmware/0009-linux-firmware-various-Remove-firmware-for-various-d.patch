@@ -1,0 +1,324 @@
+From aa70d48430741bc74b64f9ceb0df1348e7a0aa6d Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Wed, 26 Jul 2023 11:23:46 +0000
+Subject: [PATCH] linux-firmware: various: Remove firmware for various devices
+
+This patch is a catch all for any specialized hardware that did not
+losely fit into any of the other categories. Bottlerocket does not
+provide drivers for any of these devices, so there is no use in shipping
+firmware for them.
+
+The following list maps driver names as specified in WHENCE to kernel
+config options to allow for easy adding of firmware should driver
+enablement make that necessary.
+
+* dsp56k - CONFIG_ATARI_DSP56K
+* yam - CONFIG_YAM
+* mtk_scp - CONFIG_MTK_SCP
+* imx-sdma - CONFIG_IMX_SDMA
+* mlxsw_spectrum - CONFIG_MLXSW_SPECTRUM
+* prestera - CONFIG_PRESTERA
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENCE.Marvell       |  22 ------
+ LICENCE.mediatek      |   9 ---
+ LICENSE.sdma_firmware |  47 ------------
+ WHENCE                | 164 ------------------------------------------
+ 4 files changed, 242 deletions(-)
+ delete mode 100644 LICENCE.Marvell
+ delete mode 100644 LICENCE.mediatek
+ delete mode 100644 LICENSE.sdma_firmware
+
+diff --git a/LICENCE.Marvell b/LICENCE.Marvell
+deleted file mode 100644
+index fdf4cda..0000000
+--- a/LICENCE.Marvell
++++ /dev/null
+@@ -1,22 +0,0 @@
+-Copyright © 2019.  Marvell International Ltd.  All rights reserved.
+-
+-Redistribution and use in binary form is permitted provided that the following
+-conditions are met:
+-
+-1. Redistributions must reproduce the above copyright notice, this list of
+-conditions and the following disclaimer in the documentation and/or other
+-materials provided with the distribution.
+-
+-2. Redistribution and use shall be used only with Marvell silicon products.
+-Any other use, reproduction, modification, translation, or compilation of the
+-Software is prohibited.
+-
+-3. No reverse engineering, decompilation, or disassembly is permitted.
+-
+-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THIS SOFTWARE IS PROVIDED
+-“AS IS” WITHOUT WARRANTY OF ANY KIND, INCLUDING, WITHOUT LIMITATION, ANY EXPRESS
+-OR IMPLIED WARRANTIES OF MERCHANTABILITY, ACCURACY, FITNESS OR SUFFICIENCY FOR A
+-PARTICULAR PURPOSE, SATISFACTORY QUALITY, CORRESPONDENCE WITH DESCRIPTION, QUIET
+-ENJOYMENT OR NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY RIGHTS.
+-MARVELL, ITS AFFILIATES AND THEIR SUPPLIERS DISCLAIM ANY WARRANTY THAT THE
+-DELIVERABLES WILL OPERATE WITHOUT INTERRUPTION OR BE ERROR-FREE.
+diff --git a/LICENCE.mediatek b/LICENCE.mediatek
+deleted file mode 100644
+index 6886c61..0000000
+--- a/LICENCE.mediatek
++++ /dev/null
+@@ -1,9 +0,0 @@
+-MediaTek Inc. grants permission to use and redistribute aforementioned firmware
+-files for the use with devices containing MediaTek chipsets, but not as part of
+-the Linux kernel or in any other form which would require these files themselves
+-to be covered by the terms of the GNU General Public License or the GNU Lesser
+-General Public License.
+-
+-These firmware files are distributed in the hope that they will be useful, but
+-are provided WITHOUT ANY WARRANTY, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTY
+-OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+diff --git a/LICENSE.sdma_firmware b/LICENSE.sdma_firmware
+deleted file mode 100644
+index 0d3d562..0000000
+--- a/LICENSE.sdma_firmware
++++ /dev/null
+@@ -1,47 +0,0 @@
+-Copyright 2017, NXP
+-All rights reserved.
+-
+-Redistribution. Reproduction and redistribution in binary form, without
+-modification, for use solely in conjunction with a NXP
+-chipset, is permitted provided that the following conditions are met:
+-
+-  . Redistributions must reproduce the above copyright notice and the following
+-    disclaimer in the documentation and/or other materials provided with the
+-    distribution.
+-
+-  . Neither the name of NXP nor the names of its suppliers
+-    may be used to endorse or promote products derived from this Software
+-    without specific prior written permission.
+-
+-  . No reverse engineering, decompilation, or disassembly of this Software is
+-    permitted.
+-
+-Limited patent license. NXP (.Licensor.) grants you
+-(.Licensee.) a limited, worldwide, royalty-free, non-exclusive license under
+-the Patents to make, have made, use, import, offer to sell and sell the
+-Software. No hardware per se is licensed hereunder.
+-The term .Patents. as used in this agreement means only those patents or patent
+-applications owned solely and exclusively by Licensor as of the date of
+-Licensor.s submission of the Software and any patents deriving priority (i.e.,
+-having a first effective filing date) therefrom. The term .Software. as used in
+-this agreement means the firmware image submitted by Licensor, under the terms
+-of this license, to git://git.kernel.org/pub/scm/linux/kernel/git/firmware/
+-linux-firmware.git.
+-Notwithstanding anything to the contrary herein, Licensor does not grant and
+-Licensee does not receive, by virtue of this agreement or the Licensor's
+-submission of any Software, any license or other rights under any patent or
+-patent application owned by any affiliate of Licensor or any other entity
+-(other than Licensor), whether expressly, impliedly, by virtue of estoppel or
+-exhaustion, or otherwise.
+-
+-DISCLAIMER. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+-THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/WHENCE b/WHENCE
+index 3bb6523..748a81e 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -8,20 +8,6 @@ kernel.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: dsp56k - Atari DSP56k support
+-
+-File: dsp56k/bootstrap.bin
+-Source: dsp56k/bootstrap.asm
+-Source: dsp56k/Makefile
+-Source: dsp56k/concat-bootstrap.pl
+-
+-Licence: GPLv2 or later. See GPL-2 and GPL-3 for details.
+-
+-DSP56001 assembler, buildable with a56 from
+-http://www.zdomain.com/a56.html
+-
+---------------------------------------------------------------------------
+-
+ Driver: cxgb4 - Chelsio Terminator 4/5/6 1/10/25/40/100G Ethernet adapter
+ 
+ File: cxgb4/t4fw-1.14.4.0.bin
+@@ -69,18 +55,6 @@ Found in hex form in kernel source.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: yam - YAM driver for AX.25
+-
+-File: yam/1200.bin
+-File: yam/9600.bin
+-
+-Licence:
+- * (C) F6FBB 1998
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: bnx2x: Broadcom Everest
+ 
+ File: bnx2x/bnx2x-e1-7.13.1.0.fw
+@@ -561,132 +535,6 @@ Version: HuC API/APB ver 8.5.0 for Meteorlake
+ License: Redistributable. See LICENSE.i915 for details
+ --------------------------------------------------------------------------
+ 
+-Driver: mtk_scp - MediaTek SCP System Control Processing Driver
+-
+-File: mediatek/mt8183/scp.img
+-Version: v2.0.13324
+-File: mediatek/mt8186/scp.img
+-Version: v0.0.9
+-File: mediatek/mt8192/scp.img
+-Version: v2.0.20536
+-File: mediatek/mt8195/scp.img
+-Version: v2.0.11966
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: imx-sdma - support for i.MX SDMA driver
+-
+-File: imx/sdma/sdma-imx6q.bin
+-Version: 3.3
+-File: imx/sdma/sdma-imx7d.bin
+-Version: 4.2
+-
+-Licence: Redistributable. See LICENSE.sdma_firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: mlxsw_spectrum - Mellanox Spectrum switch
+-
+-File: mellanox/mlxsw_spectrum-13.1420.122.mfa2
+-File: mellanox/mlxsw_spectrum-13.1530.152.mfa2
+-File: mellanox/mlxsw_spectrum-13.1620.192.mfa2
+-File: mellanox/mlxsw_spectrum-13.1702.6.mfa2
+-File: mellanox/mlxsw_spectrum-13.1703.4.mfa2
+-File: mellanox/mlxsw_spectrum-13.1910.622.mfa2
+-File: mellanox/mlxsw_spectrum-13.2000.1122.mfa2
+-File: mellanox/mlxsw_spectrum-13.2000.1886.mfa2
+-File: mellanox/mlxsw_spectrum-13.2000.2308.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2000.2308.mfa2
+-File: mellanox/mlxsw_spectrum-13.2000.2714.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2000.2714.mfa2
+-File: mellanox/mlxsw_spectrum-13.2007.1168.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2007.1168.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2007.1168.mfa2
+-File: mellanox/mlxsw_spectrum-13.2008.1036.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2008.1036.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2008.1036.mfa2
+-File: mellanox/mlxsw_spectrum-13.2008.1310.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2008.1310.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2008.1310.mfa2
+-File: mellanox/mlxsw_spectrum-13.2008.1312.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2008.1312.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2008.1312.mfa2
+-File: mellanox/mlxsw_spectrum-13.2008.2018.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2008.2018.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2008.2018.mfa2
+-File: mellanox/mlxsw_spectrum-13.2008.2304.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2008.2304.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2008.2304.mfa2
+-File: mellanox/mlxsw_spectrum-13.2008.2406.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2008.2406.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2008.2406.mfa2
+-File: mellanox/mlxsw_spectrum-13.2008.2438.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2008.2438.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2008.2438.mfa2
+-File: mellanox/mlxsw_spectrum-13.2008.2946.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2008.2946.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2008.2946.mfa2
+-File: mellanox/mlxsw_spectrum-13.2008.3326.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2008.3326.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2008.3326.mfa2
+-File: mellanox/mlxsw_spectrum-13.2010.1006.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2010.1006.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2010.1006.mfa2
+-File: mellanox/lc_ini_bundle_2010_1006.bin
+-File: mellanox/mlxsw_spectrum-13.2010.1232.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2010.1232.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2010.1232.mfa2
+-File: mellanox/mlxsw_spectrum-13.2010.1406.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2010.1406.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2010.1406.mfa2
+-File: mellanox/mlxsw_spectrum-13.2010.1502.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2010.1502.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2010.1502.mfa2
+-File: mellanox/lc_ini_bundle_2010_1502.bin
+-File: mellanox/mlxsw_spectrum-13.2010.3020.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2010.3020.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2010.3020.mfa2
+-File: mellanox/lc_ini_bundle_2010_3020.bin
+-File: mellanox/mlxsw_spectrum-13.2010.3146.mfa2
+-File: mellanox/mlxsw_spectrum2-29.2010.3146.mfa2
+-File: mellanox/mlxsw_spectrum3-30.2010.3146.mfa2
+-File: mellanox/lc_ini_bundle_2010_3146.bin
+-
+-Licence:
+- Copyright (c) 2017-2020 Mellanox Technologies, Ltd. All rights reserved.
+-
+- Redistribution and use in source and binary forms, with or without
+- modification, are permitted provided that the following conditions are met:
+-
+- 1. Redistributions of source code must retain the above copyright
+-    notice, this list of conditions and the following disclaimer.
+- 2. Redistributions in binary form must reproduce the above copyright
+-    notice, this list of conditions and the following disclaimer in the
+-    documentation and/or other materials provided with the distribution.
+- 3. Neither the names of the copyright holders nor the names of its
+-    contributors may be used to endorse or promote products derived from
+-    this software without specific prior written permission.
+-
+- Alternatively, this software may be distributed under the terms of the
+- GNU General Public License ("GPL") version 2 as published by the Free
+- Software Foundation.
+-
+- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+- ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+- POSSIBILITY OF SUCH DAMAGE.
+-
+---------------------------------------------------------------------------
+-
+ Driver: ice - Intel(R) Ethernet Connection E800 Series
+ 
+ File: intel/ice/ddp/ice-1.3.30.0.pkg
+@@ -700,15 +548,3 @@ File: intel/ice/ddp-wireless_edge/ice_wireless_edge-1.3.10.0.pkg
+ License: Redistributable. See LICENSE.ice_enhanced for details
+ 
+ --------------------------------------------------------------------------
+-
+-Driver: prestera - Marvell driver for Prestera family ASIC devices
+-
+-File: mrvl/prestera/mvsw_prestera_fw-v2.0.img
+-File: mrvl/prestera/mvsw_prestera_fw-v3.0.img
+-File: mrvl/prestera/mvsw_prestera_fw-v4.0.img
+-File: mrvl/prestera/mvsw_prestera_fw-v4.1.img
+-File: mrvl/prestera/mvsw_prestera_fw_arm64-v4.1.img
+-
+-Licence: Redistributable. See LICENCE.Marvell for details.
+-
+-------------------------------------------------
+-- 
+2.40.1
+
