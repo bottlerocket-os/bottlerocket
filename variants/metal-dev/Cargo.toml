@@ -26,6 +26,7 @@ included-packages = [
 # core
     "release",
     "kernel-6.1",
+    "linux-firmware",
 # docker
     "docker-cli",
     "docker-engine",
@@ -45,6 +46,7 @@ path = "../variants.rs"
 # core
 release = { path = "../../packages/release" }
 kernel-6_1 = { path = "../../packages/kernel-6.1" }
+linux-firmware = { path = "../../packages/linux-firmware" }
 # docker
 docker-cli = { path = "../../packages/docker-cli" }
 docker-engine = { path = "../../packages/docker-engine" }

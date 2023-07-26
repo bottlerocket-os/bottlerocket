@@ -28,6 +28,7 @@ included-packages = [
     "cni",
     "cni-plugins",
     "kernel-5.15",
+    "linux-firmware",
     "kubelet-1.26",
     "release",
 ]
@@ -39,5 +40,6 @@ path = "../variants.rs"
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
 kernel-5_15 = { path = "../../packages/kernel-5.15" }
+linux-firmware = { path = "../../packages/linux-firmware" }
 kubernetes-1_26 = { path = "../../packages/kubernetes-1.26" }
 release = { path = "../../packages/release" }
