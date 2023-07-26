@@ -51,6 +51,9 @@ parse_args() {
   required_arg "--command" "${COMMAND}"
 }
 
+# We need to mount the ../.. parent of GO_MOD_CACHE
+GOPATH=$(cd "${GO_MOD_CACHE}/../.." && pwd)
+
 DOCKER_RUN_ARGS="--network=host"
 
 parse_args "${@}"
@@ -78,14 +81,14 @@ done
 
 docker run --rm \
   -e GOCACHE='/tmp/.cache' \
-  -e GOPATH='/tmp/go' \
+  -e GOPATH="${GOPATH}" \
   "${go_env[@]}" \
   "${proxy_env[@]}" \
   --user "$(id -u):$(id -g)" \
   --security-opt label:disable \
   ${DOCKER_RUN_ARGS} \
-  -v "${GO_MOD_CACHE}":/tmp/go/pkg/mod \
-  -v "${GO_MODULE_PATH}":/usr/src/module \
-  -w /usr/src/module \
+  -v "${GOPATH}":"${GOPATH}" \
+  -v "${GO_MODULE_PATH}":"${GO_MODULE_PATH}" \
+  -w "${GO_MODULE_PATH}" \
   "${SDK_IMAGE}" \
     bash -c "${COMMAND}"

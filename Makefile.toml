@@ -98,7 +98,8 @@ BUILDSYS_UPSTREAM_LICENSE_FETCH= "false"
 BUILDSYS_JOBS = "8"
 
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
-GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache"
+# This needs to end with pkg/mod so that we can mount the parent of pkg/mod as GOPATH.
+GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache/pkg/mod"
 GO_MODULES = "ecs-gpu-init host-ctr"
 DOCKER_BUILDKIT = "1"
 
