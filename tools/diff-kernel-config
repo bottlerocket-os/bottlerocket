@@ -31,7 +31,7 @@ bail() {
 
 usage() {
     cat <<EOF
-Usage: $0 -b GITREV_BEFORE -a GITREV_AFTER -o OUTPUT_DIR [-k KERNEL_VERSION] [-h]
+Usage: $0 -b GITREV_BEFORE -a GITREV_AFTER -o OUTPUT_DIR [-v VARIANT] [-h]
 Compare kernel configurations before and after a series of commits.
 
     -a, --after         new Git revision to compare from
