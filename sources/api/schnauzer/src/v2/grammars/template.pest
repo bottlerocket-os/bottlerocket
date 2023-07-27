@@ -1,0 +1,10 @@
+template = ${ SOI ~ frontmatter ~ body ~ EOI }
+
+// Allow loose whitespace inside frontmatter
+frontmatter = !{ WHITESPACE* ~ toml_document ~ frontmatter_delim }
+frontmatter_delim = @{ "+++" ~ "+"* ~ NEWLINE }
+
+// TOML rules are found in toml.pest
+toml_document = { (table | array_table | pair)* }
+
+body = { ANY* }

@@ -6,6 +6,7 @@
 extern crate log;
 
 mod helpers;
+pub mod v2;
 
 use handlebars::Handlebars;
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};

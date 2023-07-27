@@ -1,0 +1,4 @@
+[required-extensions]
+motd = { version = "v1" }
++++
+{{ settings.motd }}
