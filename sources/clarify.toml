@@ -37,6 +37,13 @@ license-files = [
     { path = "src/unicode/data/LICENSE-UNICODE", hash = 0x70f7339 },
 ]
 
+[clarify.cached]
+expression = "MIT"
+license-files = [
+    { path = "COPYRIGHT", hash = 0xaf811590 },
+    { path = "LICENSE", hash = 0x77e163f0 },
+]
+
 [clarify.crossbeam-queue]
 expression = "MIT OR Apache-2.0"
 license-files = [

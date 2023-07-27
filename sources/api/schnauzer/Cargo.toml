@@ -11,7 +11,9 @@ exclude = ["README.md"]
 
 [dependencies]
 apiclient = { path = "../apiclient", version = "0.1" }
+async-trait = "0.1"
 base64 = "0.13"
+cached = "0.44"
 constants = { path = "../../constants", version = "0.1" }
 bottlerocket-release = { path = "../../bottlerocket-release", version = "0.1" }
 dns-lookup = "1"
