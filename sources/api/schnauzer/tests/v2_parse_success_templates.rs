@@ -137,8 +137,7 @@ fn succeeds_04_comments() {
             helpers: vec!["woof".to_string()],
         },
     };
-    let expected_body =
-        "# comments are included in template\n{{ helpers.labrador.woof }}\n".to_string();
+    let expected_body = "# comments are included in template\n{{ woof }}\n".to_string();
 
     assert_eq!(
         template
