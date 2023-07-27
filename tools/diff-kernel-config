@@ -206,7 +206,7 @@ for state in after before; do
                     ;;
             esac
 
-            kver_full=$(rpm --query --queryformat '%{VERSION}' "${kernel_rpm}")
+            kver_full=$(rpm --query --queryformat '%{VERSION}-%{RELEASE}' "${kernel_rpm}")
 
             #
             # Extract kernel config
