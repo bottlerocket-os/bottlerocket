@@ -1,4 +1,6 @@
-use super::private::{Bond, BondWorker, Device, Interface, NotBonded, Vlan};
+use super::private::{
+    Bond, BondWorker, CanHaveVlans, Device, Interface, NotBonded, Vlan, VlanLink,
+};
 use super::{CONFIG_FILE_PREFIX, NETWORKD_CONFIG_DIR};
 use crate::addressing::{Dhcp4ConfigV1, Dhcp6ConfigV1, RouteTo, RouteV1, StaticConfigV1};
 use crate::interface_id::InterfaceId;
@@ -320,6 +322,44 @@ impl NetworkBuilder<Vlan> {
     }
 }
 
+impl NetworkBuilder<VlanLink> {
+    pub(crate) fn new_vlan_link<I>(id: I) -> Self
+    where
+        I: Into<InterfaceId>,
+    {
+        let mut network = match id.into() {
+            InterfaceId::Name(n) => NetworkConfig::new_with_name(n),
+            InterfaceId::MacAddress(m) => NetworkConfig::new_with_mac_address(m),
+        };
+        // Disable all address autoconfig for vlan links
+        network.network_mut().link_local_addressing = Some(DhcpBool::No);
+        network.network_mut().ipv6_accept_ra = Some(false);
+
+        Self {
+            network,
+            spooky: PhantomData,
+        }
+    }
+}
+
+// The following methods are meant only for devices able to be members of VLANs
+impl<T> NetworkBuilder<T>
+where
+    T: CanHaveVlans + Device,
+{
+    /// Add multiple VLANs
+    pub(crate) fn with_vlans(&mut self, vlans: Vec<InterfaceName>) {
+        for vlan in vlans {
+            self.with_vlan(vlan)
+        }
+    }
+
+    /// Add a single VLAN
+    pub(crate) fn with_vlan(&mut self, vlan: InterfaceName) {
+        self.network.network_mut().vlan.push(vlan)
+    }
+}
+
 // The following methods are meant only for devices not bound to a bond
 impl<T> NetworkBuilder<T>
 where
@@ -455,18 +495,6 @@ where
         };
 
         self.network.route.push(route_section)
-    }
-
-    /// Add multiple VLANs
-    pub(crate) fn with_vlans(&mut self, vlans: Vec<InterfaceName>) {
-        for vlan in vlans {
-            self.with_vlan(vlan)
-        }
-    }
-
-    /// Add a single VLAN
-    pub(crate) fn with_vlan(&mut self, vlan: InterfaceName) {
-        self.network.network_mut().vlan.push(vlan)
     }
 
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
