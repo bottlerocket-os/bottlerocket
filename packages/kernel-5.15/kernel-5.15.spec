@@ -22,6 +22,11 @@ Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 # Increase default of sysctl net.unix.max_dgram_qlen to 512.
 Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
 
+# Cherry-picked fix for CVE-2023-20593 ("Zenbleed"). Can be dropped when moving
+# upstream to 5.15.122 or later.
+Patch5001: 5001-x86-cpu-amd-Move-the-errata-checking-functionality-u.patch
+Patch5002: 5002-x86-cpu-amd-Add-a-Zenbleed-fix.patch
+
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
