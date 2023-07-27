@@ -5,7 +5,7 @@
 use pest::Parser;
 use pest_derive::Parser;
 use serde::Deserialize;
-use snafu::{OptionExt, ResultExt, ensure};
+use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 
@@ -97,19 +97,19 @@ impl TemplateFrontmatter {
     /// character if they are called with arguments. (https://github.com/sunng87/handlebars-rust/issues/595)
     ///
     /// Instead, helpers are added to the global namespace, but we ensure that there are no collisions at parse time.
-    fn ensure_no_helper_names_collide(
-        &self,
-    ) -> Result<()> {
+    fn ensure_no_helper_names_collide(&self) -> Result<()> {
         let mut used_helper_names = HashSet::new();
         let mut collisions = HashSet::new();
 
-        let helper_names = self.extension_requirements().flat_map(|requirement| requirement.helpers);
+        let helper_names = self
+            .extension_requirements()
+            .flat_map(|requirement| requirement.helpers);
 
         helper_names.for_each(|helper_name| {
             if used_helper_names.contains(&helper_name) {
                 collisions.insert(helper_name.clone());
             }
-            used_helper_names.insert(helper_name.clone());
+            used_helper_names.insert(helper_name);
         });
 
         ensure!(
@@ -198,7 +198,8 @@ pub mod error {
     pub enum Error {
         #[snafu(display("Error when parsing template grammar: '{}'\n\nThis is usually due to errors in frontmatter TOML formatting.", source))]
         GrammarParse {
-            source: pest::error::Error<super::Rule>,
+            #[snafu(source(from(pest::error::Error<super::Rule>, Box::new)))]
+            source: Box<pest::error::Error<super::Rule>>,
         },
 
         #[snafu(display("Error when parsing template frontmatter: '{}'", source))]
