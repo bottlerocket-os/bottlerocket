@@ -2,5 +2,6 @@
 beagle = """
 +++
 """
+std = { version = "v1", helpers = ["join_map"] }
 +++
-{{ settings.beagle.howl }}
+{{ join_map "=" "," "fail-if-missing" settings.beagle }}

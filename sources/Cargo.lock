@@ -3375,6 +3375,7 @@ dependencies = [
  "percent-encoding",
  "pest",
  "pest_derive",
+ "schnauzer",
  "serde",
  "serde_json",
  "serde_plain",
