@@ -1,4 +1,4 @@
-version = "1.14.2"
+version = "1.14.3"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -215,3 +215,4 @@ version = "1.14.2"
 "(1.14.1, 1.14.2)" = [
     "migrate_v1.14.2_ecs-images-cleanup.lz4",
 ]
+"(1.14.2, 1.14.3)" = []
