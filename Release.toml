@@ -215,5 +215,8 @@ version = "1.15.0"
 "(1.14.1, 1.14.2)" = [
     "migrate_v1.14.2_ecs-images-cleanup.lz4",
 ]
-"(1.14.2, 1.14.3)" = []
+"(1.14.2, 1.14.3)" = [
+    "migrate_v1.14.3_aws-admin-container-v0-10-2.lz4",
+    "migrate_v1.14.3_public-admin-container-v0-10-2.lz4",
+]
 "(1.14.3, 1.15.0)" = []
