@@ -15,4 +15,4 @@ superpowered = false
 
 [metadata.settings.host-containers.control.source]
 setting-generator = "schnauzer settings.host-containers.control.source"
-template = "{{ ecr-prefix settings.aws.region }}/bottlerocket-control:v0.7.2"
+template = "{{ ecr-prefix settings.aws.region }}/bottlerocket-control:v0.7.3"
