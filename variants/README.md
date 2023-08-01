@@ -96,6 +96,13 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.27, 1.28, and 1.29 clusters.
 
+### aws-k8s-1.27-nvidia: Kubernetes 1.27 NVIDIA node
+
+The [aws-k8s-1.27-nvidia](aws-k8s-1.27-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It also includes the required packages to configure containers to leverage NVIDIA GPUs.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+This variant is compatible with Kubernetes 1.27, 1.28, and 1.29 clusters.
+
 ### aws-k8s-1.28: Kubernetes 1.28 node
 
 The [aws-k8s-1.28](aws-k8s-1.28/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -103,12 +110,12 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.28, 1.29, and 1.30 clusters.
 
-### aws-k8s-1.27-nvidia: Kubernetes 1.27 NVIDIA node
+### aws-k8s-1.28-nvidia: Kubernetes 1.28 NVIDIA node
 
-The [aws-k8s-1.27-nvidia](aws-k8s-1.27-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+The [aws-k8s-1.28-nvidia](aws-k8s-1.28-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
 It also includes the required packages to configure containers to leverage NVIDIA GPUs.
 It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-This variant is compatible with Kubernetes 1.27, 1.28, and 1.29 clusters.
+This variant is compatible with Kubernetes 1.28, 1.29, and 1.30 clusters.
 
 ### aws-ecs-1: Amazon ECS container instance
 
