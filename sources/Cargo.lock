@@ -3358,6 +3358,7 @@ name = "schnauzer"
 version = "0.1.0"
 dependencies = [
  "apiclient",
+ "argh",
  "async-trait",
  "base64 0.13.1",
  "bottlerocket-release",
@@ -3375,10 +3376,12 @@ dependencies = [
  "percent-encoding",
  "pest",
  "pest_derive",
+ "regex",
  "schnauzer",
  "serde",
  "serde_json",
  "serde_plain",
+ "simplelog",
  "snafu",
  "tokio",
  "toml",

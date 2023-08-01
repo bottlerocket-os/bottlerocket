@@ -18,7 +18,7 @@ async fn render_00_basictemplate() {
     );
 
     assert_eq!(
-        schnauzer::v2::render_template(&importer, template)
+        schnauzer::v2::render_template_str(&importer, template)
             .await
             .unwrap(),
         expected_render
@@ -35,7 +35,7 @@ async fn render_01_loose_frontmatter_whitespace() {
     let importer = FakeImporter::new(json!({}), vec![]);
 
     assert_eq!(
-        schnauzer::v2::render_template(&importer, template)
+        schnauzer::v2::render_template_str(&importer, template)
             .await
             .unwrap(),
         expected_render
@@ -52,7 +52,7 @@ async fn render_02_strict_body_whitespace() {
     let importer = FakeImporter::new(json!({}), vec![]);
 
     assert_eq!(
-        schnauzer::v2::render_template(&importer, template)
+        schnauzer::v2::render_template_str(&importer, template)
             .await
             .unwrap(),
         expected_render
@@ -78,7 +78,7 @@ async fn render_03_at_least_3_delims() {
     );
 
     assert_eq!(
-        schnauzer::v2::render_template(&importer, template)
+        schnauzer::v2::render_template_str(&importer, template)
             .await
             .unwrap(),
         expected_render
@@ -105,7 +105,7 @@ async fn render_04_comments() {
     let importer = FakeImporter::new(json!({}), vec![("woof", labrador_helper)]);
 
     assert_eq!(
-        schnauzer::v2::render_template(&importer, template)
+        schnauzer::v2::render_template_str(&importer, template)
             .await
             .unwrap(),
         expected_render
@@ -131,7 +131,7 @@ async fn render_05_unambiguous_delims() {
     );
 
     assert_eq!(
-        schnauzer::v2::render_template(&importer, template)
+        schnauzer::v2::render_template_str(&importer, template)
             .await
             .unwrap(),
         expected_render
@@ -148,7 +148,7 @@ async fn render_06_empty_frontmatter() {
     let importer = FakeImporter::new(json!({}), vec![]);
 
     assert_eq!(
-        schnauzer::v2::render_template(&importer, template)
+        schnauzer::v2::render_template_str(&importer, template)
             .await
             .unwrap(),
         expected_render
@@ -173,7 +173,7 @@ async fn render_07_aws_config() {
     );
 
     assert_eq!(
-        schnauzer::v2::render_template(&importer, template)
+        schnauzer::v2::render_template_str(&importer, template)
             .await
             .unwrap(),
         expected_render
