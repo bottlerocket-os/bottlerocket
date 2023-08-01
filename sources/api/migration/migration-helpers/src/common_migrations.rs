@@ -608,7 +608,7 @@ impl ReplaceTemplateMigration {
                     "template".to_string(),
                     serde_json::Value::String(incoming_template.to_string()),
                 );
-                let registry = schnauzer::build_template_registry()
+                let registry = schnauzer::v1::build_template_registry()
                     .context(error::BuildTemplateRegistrySnafu)?;
                 // Structure the input migration data into its hierarchical representation needed by render_template
                 let input_data = self.structure_migration_data(&input.data)?;

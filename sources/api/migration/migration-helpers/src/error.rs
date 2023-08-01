@@ -76,7 +76,7 @@ pub enum Error {
     },
 
     #[snafu(display("Unable to build handlebar template registry: {}", source))]
-    BuildTemplateRegistry { source: schnauzer::error::Error },
+    BuildTemplateRegistry { source: schnauzer::v1::error::Error },
 
     #[snafu(display("Unable to render template string '{}': {}", template, source))]
     RenderTemplate {

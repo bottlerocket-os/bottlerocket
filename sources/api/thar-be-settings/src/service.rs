@@ -102,7 +102,7 @@ where
     let uri = "/metadata/affected-services";
 
     let setting_to_services_map: HashMap<String, Vec<String>> =
-        schnauzer::get_json(socket_path, uri, Some(query))
+        schnauzer::v1::get_json(socket_path, uri, Some(query))
             .await
             .context(error::GetJsonSnafu { uri })?;
     trace!("API response: {:?}", &setting_to_services_map);
@@ -125,7 +125,7 @@ where
     // Query the API for affected service metadata
     debug!("Querying API for affected service metadata");
     let uri = "/services";
-    let service_map: model::Services = schnauzer::get_json(socket_path, uri, query)
+    let service_map: model::Services = schnauzer::v1::get_json(socket_path, uri, query)
         .await
         .context(error::GetJsonSnafu { uri })?;
     trace!("Service metadata: {:?}", &service_map);
