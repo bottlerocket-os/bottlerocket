@@ -26,7 +26,7 @@ where
 
     debug!("Querying API for configuration file metadata");
     let uri = "/configuration-files";
-    let config_files: model::ConfigurationFiles = schnauzer::get_json(socket_path, uri, query)
+    let config_files: model::ConfigurationFiles = schnauzer::v1::get_json(socket_path, uri, query)
         .await
         .context(error::GetJsonSnafu { uri })?;
 

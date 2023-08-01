@@ -134,7 +134,7 @@ async fn write_config_files(
 
     // Build the template registry from config file metadata
     debug!("Building template registry");
-    let mut template_registry = schnauzer::build_template_registry()?;
+    let mut template_registry = schnauzer::v1::build_template_registry()?;
     for (name, metadata) in &config_files {
         debug!(
             "Registering {} at path '{}'",
@@ -150,7 +150,7 @@ async fn write_config_files(
 
     // Get all settings values for config file templates
     debug!("Requesting settings values");
-    let settings = schnauzer::get_settings(&args.socket_path).await?;
+    let settings = schnauzer::v1::get_settings(&args.socket_path).await?;
 
     // Ensure all files render properly
     info!("Rendering config files...");

@@ -34,7 +34,7 @@ where
     P: AsRef<Path>,
 {
     debug!("Requesting settings values");
-    let settings = schnauzer::get_settings(socket_path)
+    let settings = schnauzer::v1::get_settings(socket_path)
         .await
         .context(error::RetrieveSettingsSnafu)?
         .settings
@@ -257,7 +257,7 @@ mod error {
         Usage { message: String },
 
         #[snafu(display("Failed to retrieve settings: {}", source))]
-        RetrieveSettings { source: schnauzer::Error },
+        RetrieveSettings { source: schnauzer::v1::Error },
 
         #[snafu(display("settings.kubernetes.static_pods missing in API response"))]
         MissingSettings {},
