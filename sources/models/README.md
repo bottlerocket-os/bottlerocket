@@ -114,28 +114,33 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 ### vmware-k8s-1.23: VMware Kubernetes 1.23
 
-* [Model](src/vmware-k8s-1.27/mod.rs)
-* [Default settings](src/vmware-k8s-1.27/defaults.d/)
+* [Model](src/vmware-k8s-1.28/mod.rs)
+* [Default settings](src/vmware-k8s-1.28/defaults.d/)
 
 ### vmware-k8s-1.24: VMware Kubernetes 1.24
 
-* [Model](src/vmware-k8s-1.27/mod.rs)
-* [Default settings](src/vmware-k8s-1.27/defaults.d/)
+* [Model](src/vmware-k8s-1.28/mod.rs)
+* [Default settings](src/vmware-k8s-1.28/defaults.d/)
 
 ### vmware-k8s-1.25: VMware Kubernetes 1.25
 
-* [Model](src/vmware-k8s-1.27/mod.rs)
-* [Default settings](src/vmware-k8s-1.27/defaults.d/)
+* [Model](src/vmware-k8s-1.28/mod.rs)
+* [Default settings](src/vmware-k8s-1.28/defaults.d/)
 
 ### vmware-k8s-1.26: VMware Kubernetes 1.26
 
-* [Model](src/vmware-k8s-1.27/mod.rs)
-* [Default settings](src/vmware-k8s-1.27/defaults.d/)
+* [Model](src/vmware-k8s-1.28/mod.rs)
+* [Default settings](src/vmware-k8s-1.28/defaults.d/)
 
 ### vmware-k8s-1.27: VMware Kubernetes 1.27
 
-* [Model](src/vmware-k8s-1.27/mod.rs)
-* [Default settings](src/vmware-k8s-1.27/defaults.d/)
+* [Model](src/vmware-k8s-1.28/mod.rs)
+* [Default settings](src/vmware-k8s-1.28/defaults.d/)
+
+### vmware-k8s-1.27: VMware Kubernetes 1.27
+
+* [Model](src/vmware-k8s-1.28/mod.rs)
+* [Default settings](src/vmware-k8s-1.28/defaults.d/)
 
 ### metal-dev: Metal development build
 

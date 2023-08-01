@@ -86,6 +86,7 @@ We also have variants that are designed to be Kubernetes worker nodes in VMware:
 * `vmware-k8s-1.25`
 * `vmware-k8s-1.26`
 * `vmware-k8s-1.27`
+* `vmware-k8s-1.28`
 
 The following variants are designed to be Kubernetes worker nodes on bare metal:
 

@@ -178,12 +178,19 @@ It supports self-hosted clusters.
 
 This variant is compatible with Kubernetes 1.26, 1.27, and 1.28 clusters.
 
-## vmware-k8s-1.27: VMware Kubernetes 1.26 7ode
+## vmware-k8s-1.27: VMware Kubernetes 1.27 node
 
 The [vmware-k8s-1.27](vmware-k8s-1.27/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
 It supports self-hosted clusters.
 
 This variant is compatible with Kubernetes 1.27, 1.28, and 1.29 clusters.
+
+## vmware-k8s-1.28: VMware Kubernetes 1.28 node
+
+The [vmware-k8s-1.27](vmware-k8s-1.28/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
+It supports self-hosted clusters.
+
+This variant is compatible with Kubernetes 1.28, 1.29, and 1.30 clusters.
 
 ### metal-dev: Metal development build
 

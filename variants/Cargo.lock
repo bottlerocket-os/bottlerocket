@@ -1235,6 +1235,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "vmware-k8s-1_28"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-6_1",
+ "kubernetes-1_28",
+ "open-vm-tools",
+ "release",
+]
+
+[[package]]
 name = "wicked"
 version = "0.1.0"
 dependencies = [
