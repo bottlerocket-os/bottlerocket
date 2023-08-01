@@ -12,21 +12,15 @@ pub use self::import::fake;
 pub use self::import::BottlerocketTemplateImporter;
 pub use template::{ExtensionRequirement, Template, TemplateFrontmatter};
 
-/// Renders a Bottlerocket config template represented by the input string.
-pub async fn render_template<SR, HR, S>(
+/// Renders a Bottlerocket config template
+pub async fn render_template<SR, HR>(
     template_importer: &dyn TemplateImporter<SettingsResolver = SR, HelperResolver = HR>,
-    template_str: S,
+    template: &Template,
 ) -> Result<String>
 where
     SR: SettingsResolver,
     HR: HelperResolver,
-    S: AsRef<str>,
 {
-    let template: Template = template_str
-        .as_ref()
-        .parse()
-        .context(error::TemplateParseSnafu)?;
-
     let handlebars = registry::construct_handlebars_registry(
         template_importer.helper_resolver(),
         &template.frontmatter,
@@ -43,8 +37,26 @@ where
     handlebars
         .render_template(&template.body, &settings)
         .context(error::RenderTemplateSnafu {
-            template: template_str.as_ref().to_string(),
+            template: template.clone(),
         })
+}
+
+/// Renders a Bottlerocket config template represented by the input string.
+pub async fn render_template_str<SR, HR, S>(
+    template_importer: &dyn TemplateImporter<SettingsResolver = SR, HelperResolver = HR>,
+    template_str: S,
+) -> Result<String>
+where
+    SR: SettingsResolver,
+    HR: HelperResolver,
+    S: AsRef<str>,
+{
+    let template: Template = template_str
+        .as_ref()
+        .parse()
+        .context(error::TemplateParseSnafu)?;
+
+    render_template(template_importer, &template).await
 }
 
 /// Renders a Bottlerocket config template from a given filepath.
@@ -60,7 +72,7 @@ where
     let template_str =
         std::fs::read_to_string(&input_file).context(error::TemplateFileReadSnafu)?;
 
-    render_template(template_importer, &template_str)
+    render_template_str(template_importer, &template_str)
         .await
         .context(error::TemplateFileRenderSnafu {
             filepath: input_file.as_ref().to_path_buf(),
@@ -68,6 +80,7 @@ where
 }
 
 pub mod error {
+    use super::Template;
     use std::path::PathBuf;
 
     use snafu::Snafu;
@@ -78,9 +91,9 @@ pub mod error {
         #[snafu(display("Failed to construct Handlebars registry: {}", source))]
         ConstructHandlebarsRegistry { source: super::registry::Error },
 
-        #[snafu(display("Failed to render template '{}': {}", template, source))]
+        #[snafu(display("Failed to render template '{:?}': {}", template, source))]
         RenderTemplate {
-            template: String,
+            template: Template,
             #[snafu(source(from(handlebars::RenderError, Box::new)))]
             source: Box<handlebars::RenderError>,
         },

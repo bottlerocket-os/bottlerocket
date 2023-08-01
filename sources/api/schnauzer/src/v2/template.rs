@@ -61,6 +61,15 @@ enum TemplateExtensionRequirements {
     VersionAndHelpers(DetailedTemplateExtensionRequirements),
 }
 
+impl From<ExtensionRequirement> for TemplateExtensionRequirements {
+    fn from(requirement: ExtensionRequirement) -> Self {
+        Self::VersionAndHelpers(DetailedTemplateExtensionRequirements {
+            version: requirement.version,
+            helpers: (!requirement.helpers.is_empty()).then_some(requirement.helpers),
+        })
+    }
+}
+
 /// Serialized structure of settings and handlebars helper requirements.
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq, Default)]
 #[serde(deny_unknown_fields)]
@@ -119,6 +128,31 @@ impl TemplateFrontmatter {
             }
         );
         Ok(())
+    }
+}
+
+impl TryFrom<Vec<ExtensionRequirement>> for TemplateFrontmatter {
+    type Error = Error;
+
+    fn try_from(extension_requirements: Vec<ExtensionRequirement>) -> Result<Self> {
+        let required_extensions = (!extension_requirements.is_empty()).then(|| {
+            extension_requirements
+                .into_iter()
+                .map(|extension_requirement| {
+                    (
+                        extension_requirement.name.clone(),
+                        extension_requirement.into(),
+                    )
+                })
+                .collect()
+        });
+
+        let frontmatter = Self {
+            required_extensions,
+        };
+        frontmatter.validate()?;
+
+        Ok(frontmatter)
     }
 }
 
