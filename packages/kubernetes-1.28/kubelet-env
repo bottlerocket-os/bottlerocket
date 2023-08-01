@@ -1,0 +1,4 @@
+NODE_IP={{settings.kubernetes.node-ip}}
+NODE_LABELS={{join_map "=" "," "no-fail-if-missing" settings.kubernetes.node-labels}}
+NODE_TAINTS={{join_node_taints settings.kubernetes.node-taints}}
+POD_INFRA_CONTAINER_IMAGE={{settings.kubernetes.pod-infra-container-image}}
