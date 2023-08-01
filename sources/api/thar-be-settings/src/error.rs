@@ -85,6 +85,6 @@ pub enum Error {
     #[snafu(display("Error GETing JSON from '{}': {}", uri, source))]
     GetJson {
         uri: String,
-        source: schnauzer::Error,
+        source: schnauzer::v1::Error,
     },
 }

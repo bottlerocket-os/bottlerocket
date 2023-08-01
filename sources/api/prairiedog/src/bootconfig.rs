@@ -100,7 +100,7 @@ where
 {
     let uri = "/settings";
     let settings: serde_json::Value =
-        schnauzer::get_json(socket_path, uri, Some(("prefix", "boot")))
+        schnauzer::v1::get_json(socket_path, uri, Some(("prefix", "boot")))
             .await
             .context(error::RetrieveSettingsSnafu)?;
 
