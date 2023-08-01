@@ -369,8 +369,8 @@ fi
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
-  early-boot-config netdog sundog schnauzer bork corndog \
-  thar-be-settings thar-be-updates host-containers \
+  early-boot-config netdog sundog schnauzer schnauzer-v2 bork \
+  corndog thar-be-settings thar-be-updates host-containers \
   storewolf settings-committer \
   migrator prairiedog certdog \
   signpost updog metricdog logdog \
@@ -524,6 +524,7 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 
 %files -n %{_cross_os}schnauzer
 %{_cross_bindir}/schnauzer
+%{_cross_bindir}/schnauzer-v2
 
 %files -n %{_cross_os}bork
 %{_cross_bindir}/bork
