@@ -1,3 +1,3 @@
 fn main() {
-    generate_readme::from_main().unwrap();
+    generate_readme::from_lib().unwrap();
 }
