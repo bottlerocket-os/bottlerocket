@@ -991,6 +991,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "metal-k8s-1_28"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-6_1",
+ "kubernetes-1_28",
+ "release",
+]
+
+[[package]]
 name = "microcode"
 version = "0.1.0"
 

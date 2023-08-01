@@ -95,6 +95,7 @@ The following variants are designed to be Kubernetes worker nodes on bare metal:
 * `metal-k8s-1.25`
 * `metal-k8s-1.26`
 * `metal-k8s-1.27`
+* `metal-k8s-1.28`
 
 The following variants are no longer supported:
 

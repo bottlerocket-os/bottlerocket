@@ -149,28 +149,33 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 ### metal-k8s-1.23: Metal Kubernetes 1.23
 
-* [Model](src/metal-k8s-1.27/mod.rs)
-* [Default settings](src/metal-k8s-1.27/defaults.d/)
+* [Model](src/metal-k8s-1.28/mod.rs)
+* [Default settings](src/metal-k8s-1.28/defaults.d/)
 
 ### metal-k8s-1.24: Metal Kubernetes 1.24
 
-* [Model](src/metal-k8s-1.27/mod.rs)
-* [Default settings](src/metal-k8s-1.27/defaults.d/)
+* [Model](src/metal-k8s-1.28/mod.rs)
+* [Default settings](src/metal-k8s-1.28/defaults.d/)
 
 ### metal-k8s-1.25: Metal Kubernetes 1.25
 
-* [Model](src/metal-k8s-1.27/mod.rs)
-* [Default settings](src/metal-k8s-1.27/defaults.d/)
+* [Model](src/metal-k8s-1.28/mod.rs)
+* [Default settings](src/metal-k8s-1.28/defaults.d/)
 
 ### metal-k8s-1.26: Metal Kubernetes 1.26
 
-* [Model](src/metal-k8s-1.27/mod.rs)
-* [Default settings](src/metal-k8s-1.27/defaults.d/)
+* [Model](src/metal-k8s-1.28/mod.rs)
+* [Default settings](src/metal-k8s-1.28/defaults.d/)
 
 ### metal-k8s-1.27: Metal Kubernetes 1.27
 
-* [Model](src/metal-k8s-1.27/mod.rs)
-* [Default settings](src/metal-k8s-1.27/defaults.d/)
+* [Model](src/metal-k8s-1.28/mod.rs)
+* [Default settings](src/metal-k8s-1.28/defaults.d/)
+
+### metal-k8s-1.28: Metal Kubernetes 1.28
+
+* [Model](src/metal-k8s-1.28/mod.rs)
+* [Default settings](src/metal-k8s-1.28/defaults.d/)
 
 ## This directory
 
