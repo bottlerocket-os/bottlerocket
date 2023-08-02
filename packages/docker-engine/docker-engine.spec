@@ -29,6 +29,9 @@ Source100: prepare-var-lib-docker.service
 
 Source1000: clarify.toml
 
+# Backport to fix host header issue when compiling with Go 1.20.6 or later
+Patch0001: 0001-non-tcp-host-header.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libseccomp-devel
