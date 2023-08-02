@@ -271,6 +271,7 @@ mod test {
                 name: setting_name.to_string(),
                 version: version.to_string(),
                 helpers: helpers.iter().map(|s| s.to_string()).collect(),
+                ..Default::default()
             };
             assert!(StaticHelperResolver::ensure_helpers_exist(&extension_requirement).is_err());
         }
@@ -286,6 +287,7 @@ mod test {
                 name: setting_name.to_string(),
                 version: version.to_string(),
                 helpers: helpers.iter().map(|s| s.to_string()).collect(),
+                ..Default::default()
             };
             assert!(StaticHelperResolver::ensure_helpers_exist(&extension_requirement).is_ok());
         }
