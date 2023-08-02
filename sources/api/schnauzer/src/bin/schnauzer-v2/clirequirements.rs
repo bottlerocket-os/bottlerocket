@@ -86,6 +86,7 @@ impl FromStr for CLIExtensionRequirement {
             name,
             version,
             helpers,
+            ..Default::default()
         }))
     }
 }
@@ -105,6 +106,7 @@ mod test {
                     name: "extension".to_string(),
                     version: "version".to_string(),
                     helpers: vec!["helper1".to_string()],
+                    ..Default::default()
                 },
             ),
             (
@@ -113,6 +115,7 @@ mod test {
                     name: "myextension".to_string(),
                     version: "v1".to_string(),
                     helpers: vec![],
+                    ..Default::default()
                 },
             ),
             (
@@ -121,6 +124,7 @@ mod test {
                     name: "extension".to_string(),
                     version: "version".to_string(),
                     helpers: vec![],
+                    ..Default::default()
                 },
             ),
             (
@@ -132,6 +136,7 @@ mod test {
                         .into_iter()
                         .map(String::from)
                         .collect(),
+                    ..Default::default()
                 },
             ),
             (
@@ -140,6 +145,7 @@ mod test {
                     name: "weird-extension".to_string(),
                     version: "but_valid1.23".to_string(),
                     helpers: vec!["1", "2", "3"].into_iter().map(String::from).collect(),
+                    ..Default::default()
                 },
             ),
         ];

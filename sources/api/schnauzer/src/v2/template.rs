@@ -66,6 +66,7 @@ impl From<ExtensionRequirement> for TemplateExtensionRequirements {
         Self::VersionAndHelpers(DetailedTemplateExtensionRequirements {
             version: requirement.version,
             helpers: (!requirement.helpers.is_empty()).then_some(requirement.helpers),
+            optional: requirement.optional,
         })
     }
 }
@@ -76,6 +77,8 @@ impl From<ExtensionRequirement> for TemplateExtensionRequirements {
 struct DetailedTemplateExtensionRequirements {
     version: ExtensionVersion,
     helpers: Option<Vec<HelperName>>,
+    #[serde(default)]
+    optional: bool,
 }
 
 impl TemplateFrontmatter {
@@ -161,6 +164,7 @@ pub struct ExtensionRequirement {
     pub name: ExtensionName,
     pub version: ExtensionVersion,
     pub helpers: Vec<HelperName>,
+    pub optional: bool,
 }
 
 impl ExtensionRequirement {
@@ -172,13 +176,14 @@ impl ExtensionRequirement {
             TemplateExtensionRequirements::Version(version) => ExtensionRequirement {
                 name: extension_name.clone(),
                 version: version.clone(),
-                helpers: vec![],
+                ..Default::default()
             },
             TemplateExtensionRequirements::VersionAndHelpers(extension_requirements) => {
                 ExtensionRequirement {
                     name: extension_name.clone(),
                     version: extension_requirements.version.clone(),
                     helpers: extension_requirements.helpers.clone().unwrap_or_default(),
+                    optional: extension_requirements.optional,
                 }
             }
         }
