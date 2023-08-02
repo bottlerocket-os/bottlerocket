@@ -11,9 +11,9 @@ use std::str::FromStr;
 #[derive(Debug, Clone)]
 pub struct CLIExtensionRequirement(ExtensionRequirement);
 
-impl Into<ExtensionRequirement> for CLIExtensionRequirement {
-    fn into(self) -> ExtensionRequirement {
-        self.0
+impl From<CLIExtensionRequirement> for ExtensionRequirement {
+    fn from(value: CLIExtensionRequirement) -> Self {
+        value.0
     }
 }
 
