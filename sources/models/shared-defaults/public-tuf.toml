@@ -2,5 +2,4 @@
 targets-base-url = "https://updates.bottlerocket.aws/targets/"
 
 [metadata.settings.updates.metadata-base-url]
-setting-generator = "schnauzer settings.updates.metadata-base-url"
-template = "https://updates.bottlerocket.aws/2020-07-07/{{ os.variant_id }}/{{ os.arch }}/"
+setting-generator = "schnauzer-v2 render --template 'https://updates.bottlerocket.aws/2020-07-07/{{ os.variant_id }}/{{ os.arch }}/'"
