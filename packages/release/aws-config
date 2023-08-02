@@ -1,3 +1,7 @@
+[required-extensions]
+aws = "v1"
+std = { version = "v1", helpers = ["base64_decode"] }
++++
 {{~#if settings.aws.config~}}
 {{base64_decode settings.aws.config}}
 {{~/if~}}

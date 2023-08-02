@@ -1,3 +1,6 @@
+[required-extensions]
+network = { version = "v1", helpers = ["localhost_aliases", "etc_hosts_entries"] }
++++
 127.0.0.1 localhost localhost.localdomain localhost4 localhost4.localdomain4 {{localhost_aliases "ipv4" settings.network.hostname settings.network.hosts}}
 ::1 localhost localhost.localdomain localhost6 localhost6.localdomain6 {{localhost_aliases "ipv6" settings.network.hostname settings.network.hosts}}
 

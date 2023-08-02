@@ -1,3 +1,9 @@
+[required-extensions]
+aws = "v1"
+metrics = "v1"
+std = { version = "v1", helpers = ["join_array"] }
+updates = "v1"
++++
 metrics_url = "{{settings.metrics.metrics-url}}"
 send_metrics = {{settings.metrics.send-metrics}}
 service_checks = [{{join_array ", " settings.metrics.service-checks}}]

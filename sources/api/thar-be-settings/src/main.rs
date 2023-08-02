@@ -2,6 +2,7 @@
 extern crate log;
 
 use nix::unistd::{fork, ForkResult};
+use schnauzer::BottlerocketTemplateImporter;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::collections::HashSet;
@@ -132,25 +133,7 @@ async fn write_config_files(
     let config_files = config::get_affected_config_files(&args.socket_path, files_limit).await?;
     trace!("Found config files: {:?}", config_files);
 
-    // Build the template registry from config file metadata
-    debug!("Building template registry");
-    let mut template_registry = schnauzer::v1::build_template_registry()?;
-    for (name, metadata) in &config_files {
-        debug!(
-            "Registering {} at path '{}'",
-            &name, &metadata.template_path
-        );
-        template_registry
-            .register_template_file(name, metadata.template_path.as_ref())
-            .context(error::TemplateRegisterSnafu {
-                name: name.as_str(),
-                path: metadata.template_path.as_ref(),
-            })?;
-    }
-
-    // Get all settings values for config file templates
-    debug!("Requesting settings values");
-    let settings = schnauzer::v1::get_settings(&args.socket_path).await?;
+    let template_importer = BottlerocketTemplateImporter::new((&args.socket_path).into());
 
     // Ensure all files render properly
     info!("Rendering config files...");
@@ -158,7 +141,7 @@ async fn write_config_files(
         RunMode::SpecificKeys => true,
         RunMode::All => false,
     };
-    let rendered = config::render_config_files(&template_registry, config_files, settings, strict)?;
+    let rendered = config::render_config_files(&template_importer, config_files, strict).await?;
 
     // If all the config renders properly, write it to disk
     info!("Writing config files to disk...");

@@ -1,3 +1,9 @@
+[required-extensions]
+container-registry = "v1"
+container-runtime = "v1"
+kubernetes = "v1"
+std = { version = "v1", helpers = ["join_array"]}
++++
 version = 2
 root = "/var/lib/containerd"
 state = "/run/containerd"

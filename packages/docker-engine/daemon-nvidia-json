@@ -1,3 +1,8 @@
+[required-extensions]
+container-registry = "v1"
+oci-defaults = { version = "v1", helpers = ["oci_defaults"] }
+std = { version = "v1", helpers = ["join_array"] }
++++
 {
   "log-driver": "journald",
   "live-restore": true,

@@ -1,3 +1,7 @@
+[required-extensions]
+kubernetes = { version = "v1", helpers = ["join_node_taints"] }
+std = { version = "v1", helpers = ["join_map"] }
++++
 NODE_IP={{settings.kubernetes.node-ip}}
 NODE_LABELS={{join_map "=" "," "no-fail-if-missing" settings.kubernetes.node-labels}}
 NODE_TAINTS={{join_node_taints settings.kubernetes.node-taints}}

@@ -1,1 +1,4 @@
+[required-extensions]
+network = "v1"
++++
 HOSTNAME={{settings.network.hostname}}

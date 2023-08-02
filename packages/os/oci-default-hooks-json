@@ -1,3 +1,6 @@
+[required-extensions]
+oci-hooks = "v1"
++++
 {
   "hooks": {
     "prestart": [
