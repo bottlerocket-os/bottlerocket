@@ -1,3 +1,6 @@
+[required-extensions]
+oci-defaults = { version = "v1", helpers = ["oci_defaults"] }
++++
 {
     "ociVersion": "1.0.2-dev",
     "process": {

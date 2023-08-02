@@ -1,3 +1,7 @@
+[required-extensions]
+container-registry = "v1"
+std = { version = "v1", helpers = ["join_array"] }
++++
 {
   "log-driver": "journald",
   "live-restore": true,

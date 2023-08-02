@@ -1,3 +1,7 @@
+[required-extensions]
+kubernetes = "v1"
+network = { version = "v1", helpers = ["host"] }
++++
 {{#if settings.network.https-proxy}}
 HTTPS_PROXY={{settings.network.https-proxy}}
 https_proxy={{settings.network.https-proxy}}

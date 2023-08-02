@@ -1,6 +1,7 @@
 use crate::service::Services;
 use crate::{error, Result};
 use itertools::join;
+use schnauzer::BottlerocketTemplateImporter;
 use snafu::{ensure, ResultExt};
 use std::collections::HashSet;
 use std::fs::{self, OpenOptions};
@@ -52,10 +53,9 @@ pub fn get_config_file_names(services: &Services) -> HashSet<String> {
 // If strict is True, return an error if we fail to render any template.
 // If strict is False, ignore failures, always returning an Ok value
 // containing any successfully rendered templates.
-pub fn render_config_files(
-    registry: &handlebars::Handlebars<'_>,
+pub async fn render_config_files(
+    template_importer: &BottlerocketTemplateImporter,
     config_files: model::ConfigurationFiles,
-    settings: model::Model,
     strict: bool,
 ) -> Result<Vec<RenderedConfigFile>> {
     // Go write all the configuration files from template
@@ -63,7 +63,10 @@ pub fn render_config_files(
     for (name, metadata) in config_files {
         debug!("Rendering {}", &name);
 
-        let try_rendered = registry.render(&name, &settings);
+        let try_rendered =
+            schnauzer::render_template_file(template_importer, &metadata.template_path.as_ref())
+                .await;
+
         if strict {
             let rendered = try_rendered.context(error::TemplateRenderSnafu { template: name })?;
             rendered_configs.push(RenderedConfigFile::new(

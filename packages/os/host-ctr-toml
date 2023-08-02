@@ -1,3 +1,7 @@
+[required-extensions]
+container-registry = "v1"
+std = { version = "v1", helpers = ["join_array"] }
++++
 {{#if settings.container-registry.mirrors}}
 {{#each settings.container-registry.mirrors}}
 [mirrors."{{registry}}"]

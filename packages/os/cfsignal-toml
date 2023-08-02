@@ -1,3 +1,6 @@
+[required-extensions]
+cloudformation = "v1"
++++
 should_signal = {{settings.cloudformation.should-signal}}
 stack_name = "{{settings.cloudformation.stack-name}}"
 logical_resource_id = "{{settings.cloudformation.logical-resource-id}}"
