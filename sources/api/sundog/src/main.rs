@@ -10,6 +10,7 @@ The output is collected and sent to a known Bottlerocket API server endpoint.
 #[macro_use]
 extern crate log;
 
+use shlex::Shlex;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
@@ -349,10 +350,12 @@ where
 
         // Split on space, assume the first item is the command
         // and the rest are args.
-        let mut command_strings = generator.split_whitespace();
+        let mut command_strings = Shlex::new(&generator);
+
         let command = command_strings.next().context(error::InvalidCommandSnafu {
             command: generator.as_str(),
         })?;
+        let command = command.as_str();
 
         let result = tokio::time::timeout(
             SETTINGS_GENERATOR_TIMEOUT,
