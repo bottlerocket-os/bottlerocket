@@ -1,3 +1,8 @@
+[required-extensions]
+network = "v1"
+std = { version = "v1", helpers = ["join_array"] }
+updates = "v1"
++++
 metadata_base_url = "{{settings.updates.metadata-base-url}}"
 targets_base_url = "{{settings.updates.targets-base-url}}"
 seed = {{settings.updates.seed}}

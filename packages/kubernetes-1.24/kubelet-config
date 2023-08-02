@@ -1,3 +1,7 @@
+[required-extensions]
+kubernetes = { version = "v1", helpers = ["any_enabled", "kube_reserve_cpu", "kube_reserve_memory"] }
+std = { version = "v1", helpers = ["default"] }
++++
 ---
 kind: KubeletConfiguration
 apiVersion: kubelet.config.k8s.io/v1beta1

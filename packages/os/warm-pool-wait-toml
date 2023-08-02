@@ -1,2 +1,5 @@
+[required-extensions]
+autoscaling = "v1"
++++
 should_wait = {{settings.autoscaling.should-wait}}
 marker_path = "/var/lib/bottlerocket/warm-pool-wait.ran"
