@@ -45,8 +45,8 @@ type HelperName = String;
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq, Default)]
 #[serde(deny_unknown_fields)]
 pub struct TemplateFrontmatter {
-    #[serde(rename = "required-extensions")]
-    required_extensions: Option<HashMap<ExtensionName, TemplateExtensionRequirements>>,
+    #[serde(rename = "required-extensions", default)]
+    required_extensions: HashMap<ExtensionName, TemplateExtensionRequirements>,
 }
 
 /// Template extension requirements can be specified in two ways, similar to Cargo.toml:
@@ -65,7 +65,7 @@ impl From<ExtensionRequirement> for TemplateExtensionRequirements {
     fn from(requirement: ExtensionRequirement) -> Self {
         Self::VersionAndHelpers(DetailedTemplateExtensionRequirements {
             version: requirement.version,
-            helpers: (!requirement.helpers.is_empty()).then_some(requirement.helpers),
+            helpers: requirement.helpers,
             optional: requirement.optional,
         })
     }
@@ -76,7 +76,8 @@ impl From<ExtensionRequirement> for TemplateExtensionRequirements {
 #[serde(deny_unknown_fields)]
 struct DetailedTemplateExtensionRequirements {
     version: ExtensionVersion,
-    helpers: Option<Vec<HelperName>>,
+    #[serde(default)]
+    helpers: Vec<HelperName>,
     #[serde(default)]
     optional: bool,
 }
@@ -85,9 +86,7 @@ impl TemplateFrontmatter {
     /// Returns the name, version of each setting and the associated helpers required by this template.
     pub fn extension_requirements(&self) -> impl Iterator<Item = ExtensionRequirement> + '_ {
         self.required_extensions
-            .as_ref()
-            .map(|requirements| Box::new(requirements.iter()) as Box<dyn Iterator<Item = _> + Send>)
-            .unwrap_or_else(|| Box::new(std::iter::empty()) as Box<dyn Iterator<Item = _> + Send>)
+            .iter()
             .map(|(extension_name, extension_requirements)| {
                 ExtensionRequirement::from_template_requirements(
                     extension_name,
@@ -138,17 +137,15 @@ impl TryFrom<Vec<ExtensionRequirement>> for TemplateFrontmatter {
     type Error = Error;
 
     fn try_from(extension_requirements: Vec<ExtensionRequirement>) -> Result<Self> {
-        let required_extensions = (!extension_requirements.is_empty()).then(|| {
-            extension_requirements
-                .into_iter()
-                .map(|extension_requirement| {
-                    (
-                        extension_requirement.name.clone(),
-                        extension_requirement.into(),
-                    )
-                })
-                .collect()
-        });
+        let required_extensions = extension_requirements
+            .into_iter()
+            .map(|extension_requirement| {
+                (
+                    extension_requirement.name.clone(),
+                    extension_requirement.into(),
+                )
+            })
+            .collect();
 
         let frontmatter = Self {
             required_extensions,
@@ -182,7 +179,7 @@ impl ExtensionRequirement {
                 ExtensionRequirement {
                     name: extension_name.clone(),
                     version: extension_requirements.version.clone(),
-                    helpers: extension_requirements.helpers.clone().unwrap_or_default(),
+                    helpers: extension_requirements.helpers.clone(),
                     optional: extension_requirements.optional,
                 }
             }
