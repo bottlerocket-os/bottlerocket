@@ -18,6 +18,7 @@ log = "0.4"
 models = { path = "../../models", version = "0.1" }
 serde_json = "1"
 simplelog = "0.12"
+shlex = "1"
 snafu = "0.7"
 tokio = { version = "~1.25", default-features = false, features = ["process", "macros", "rt-multi-thread"] }  # LTS
 
