@@ -53,6 +53,7 @@ members = [
     "api/migration/migrations/v1.14.0/aws-control-container-v0-7-2",
     "api/migration/migrations/v1.14.0/public-control-container-v0-7-2",
     "api/migration/migrations/v1.14.2/ecs-images-cleanup",
+    "api/migration/migrations/v1.15.0/schnauzer-v2-generators",
 
     "bloodhound",
 

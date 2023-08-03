@@ -216,4 +216,6 @@ version = "1.15.0"
     "migrate_v1.14.2_ecs-images-cleanup.lz4",
 ]
 "(1.14.2, 1.14.3)" = []
-"(1.14.3, 1.15.0)" = []
+"(1.14.3, 1.15.0)" = [
+    "migrate_v1.15.0_schnauzer-v2-generators.lz4",
+]
