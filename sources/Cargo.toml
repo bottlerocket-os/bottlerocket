@@ -62,6 +62,7 @@ members = [
     "api/migration/migrations/v1.15.0/seccomp-default-setting",
     "api/migration/migrations/v1.15.0/oci-defaults-docker-setting",
     "api/migration/migrations/v1.15.0/oci-defaults-docker-setting-metadata",
+    "api/migration/migrations/v1.15.0/schnauzer-v2-generators",
 
     "bloodhound",
 
