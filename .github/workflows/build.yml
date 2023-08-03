@@ -1,7 +1,7 @@
 name: Build
 on:
   pull_request:
-    branches: [develop]
+    branches: [develop, ootb-settings-extensions]
     # Here we list file types that don't affect the build and don't need to use
     # up our Actions runners.
     paths-ignore:

@@ -3,7 +3,7 @@
 name: CacheDepsAndTools
 on:
   push:
-    branches: [develop]
+    branches: [develop, ootb-settings-extensions]
     paths:
       - '.github/**'
       - 'sources/Cargo.lock'
