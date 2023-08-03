@@ -73,6 +73,7 @@ members = [
     "api/migration/migrations/v1.16.0/kernel-modules-autoload-files",
     "api/migration/migrations/v1.16.0/kernel-modules-autoload-restart",
     "api/migration/migrations/v1.16.0/kernel-modules-autoload-settings",
+    "api/migration/migrations/v1.16.0/schnauzer-v2-generators",
 
     "bloodhound",
 
