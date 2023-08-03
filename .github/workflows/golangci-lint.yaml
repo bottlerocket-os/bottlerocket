@@ -1,7 +1,7 @@
 name: golangci-lint
 on:
   pull_request:
-    branches: [develop]
+    branches: [develop, ootb-settings-extensions]
     # Only run this workflow if Go files or this workflow have been modified
     paths:
       - '**.go'
