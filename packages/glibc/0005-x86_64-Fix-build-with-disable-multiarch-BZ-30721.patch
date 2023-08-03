@@ -1,0 +1,60 @@
+From 6135d50e44233d8c89ca788f78c669941ad09fb9 Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Tue, 8 Aug 2023 09:27:54 -0300
+Subject: [PATCH] x86_64: Fix build with --disable-multiarch (BZ 30721)
+
+With multiarch disabled, the default memmove implementation provides
+the fortify routines for memcpy, mempcpy, and memmove.  However, it
+does not provide the internal hidden definitions used when building
+with fortify enabled.  The memset has a similar issue.
+
+Checked on x86_64-linux-gnu building with different options:
+default and --disable-multi-arch plus default, --disable-default-pie,
+--enable-fortify-source={2,3}, and --enable-fortify-source={2,3}
+with --disable-default-pie.
+Tested-by: Andreas K. Huettel <dilfridge@gentoo.org>
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+
+(cherry picked from commit 51cb52214fcd72849c640b12f5099ed3ac776181)
+---
+ sysdeps/x86_64/memcpy.S  | 2 +-
+ sysdeps/x86_64/memmove.S | 3 +++
+ sysdeps/x86_64/memset.S  | 1 +
+ 3 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/sysdeps/x86_64/memcpy.S b/sysdeps/x86_64/memcpy.S
+index d98500a78a..4922cba657 100644
+--- a/sysdeps/x86_64/memcpy.S
++++ b/sysdeps/x86_64/memcpy.S
+@@ -1 +1 @@
+-/* Implemented in memcpy.S.  */
++/* Implemented in memmove.S.  */
+diff --git a/sysdeps/x86_64/memmove.S b/sysdeps/x86_64/memmove.S
+index f0b84e3b52..c3c08165e1 100644
+--- a/sysdeps/x86_64/memmove.S
++++ b/sysdeps/x86_64/memmove.S
+@@ -46,6 +46,9 @@ weak_alias (__mempcpy, mempcpy)
+ 
+ #ifndef USE_MULTIARCH
+ libc_hidden_builtin_def (memmove)
++libc_hidden_builtin_def (__memmove_chk)
++libc_hidden_builtin_def (__memcpy_chk)
++libc_hidden_builtin_def (__mempcpy_chk)
+ # if defined SHARED && IS_IN (libc)
+ strong_alias (memmove, __memcpy)
+ libc_hidden_ver (memmove, memcpy)
+diff --git a/sysdeps/x86_64/memset.S b/sysdeps/x86_64/memset.S
+index 7c99df36db..c6df24e8de 100644
+--- a/sysdeps/x86_64/memset.S
++++ b/sysdeps/x86_64/memset.S
+@@ -32,6 +32,7 @@
+ #include "isa-default-impl.h"
+ 
+ libc_hidden_builtin_def (memset)
++libc_hidden_builtin_def (__memset_chk)
+ 
+ #if IS_IN (libc)
+ libc_hidden_def (__wmemset)
+-- 
+2.40.1
+

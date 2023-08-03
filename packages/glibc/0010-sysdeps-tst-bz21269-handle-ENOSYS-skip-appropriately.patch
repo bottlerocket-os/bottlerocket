@@ -1,0 +1,41 @@
+From ad9b8399537670a990572c4b0c4da5411e3b68cf Mon Sep 17 00:00:00 2001
+From: Sam James <sam@gentoo.org>
+Date: Sat, 5 Aug 2023 00:04:33 +0100
+Subject: [PATCH] sysdeps: tst-bz21269: handle ENOSYS & skip appropriately
+
+SYS_modify_ldt requires CONFIG_MODIFY_LDT_SYSCALL to be set in the kernel, which
+some distributions may disable for hardening. Check if that's the case (unset)
+and mark the test as UNSUPPORTED if so.
+
+Reviewed-by: DJ Delorie <dj@redhat.com>
+Signed-off-by: Sam James <sam@gentoo.org>
+(cherry picked from commit 652b9fdb77d9fd056d4dd26dad2c14142768ab49)
+---
+ sysdeps/unix/sysv/linux/i386/tst-bz21269.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/sysdeps/unix/sysv/linux/i386/tst-bz21269.c b/sysdeps/unix/sysv/linux/i386/tst-bz21269.c
+index f508ef8f16..28f5359bea 100644
+--- a/sysdeps/unix/sysv/linux/i386/tst-bz21269.c
++++ b/sysdeps/unix/sysv/linux/i386/tst-bz21269.c
+@@ -52,7 +52,16 @@ xset_thread_area (struct user_desc *u_info)
+ static void
+ xmodify_ldt (int func, const void *ptr, unsigned long bytecount)
+ {
+-  TEST_VERIFY_EXIT (syscall (SYS_modify_ldt, func, ptr, bytecount) == 0);
++  long ret = syscall (SYS_modify_ldt, func, ptr, bytecount);
++
++  if (ret == -1)
++    {
++      if (errno == ENOSYS)
++	FAIL_UNSUPPORTED ("modify_ldt not supported");
++      FAIL_EXIT1 ("modify_ldt failed (errno=%d)", errno);
++    }
++
++  return 0;
+ }
+ 
+ static int
+-- 
+2.40.1
+

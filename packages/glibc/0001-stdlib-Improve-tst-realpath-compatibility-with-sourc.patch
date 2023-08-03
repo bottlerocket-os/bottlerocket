@@ -1,0 +1,43 @@
+From d97cca1e5df812be0e4de1e38091f02bb1e7ec4e Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 1 Aug 2023 10:27:15 +0200
+Subject: [PATCH] stdlib: Improve tst-realpath compatibility with source
+ fortification
+
+On GCC before 11, IPA can make the fortified realpath aware that the
+buffer size is not large enough (8 bytes instead of PATH_MAX bytes).
+Fix this by using a buffer that is large enough.
+
+(cherry picked from commit 510fc20d73de12c85823d9996faac74666e9c2e7)
+---
+ stdlib/tst-realpath.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/stdlib/tst-realpath.c b/stdlib/tst-realpath.c
+index f325c95a44..3694ecd8af 100644
+--- a/stdlib/tst-realpath.c
++++ b/stdlib/tst-realpath.c
+@@ -24,6 +24,7 @@
+    License along with the GNU C Library; if not, see
+    <https://www.gnu.org/licenses/>.  */
+ 
++#include <limits.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <malloc.h>
+@@ -50,7 +51,11 @@ void dealloc (void *p)
+ 
+ char* alloc (void)
+ {
+-  return (char *)malloc (8);
++#ifdef PATH_MAX
++  return (char *)malloc (PATH_MAX);
++#else
++  return (char *)malloc (4096);
++#endif
+ }
+ 
+ static int
+-- 
+2.40.1
+

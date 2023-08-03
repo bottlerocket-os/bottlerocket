@@ -1,0 +1,100 @@
+From 7ac405a74c6069b0627dc2d8449a82a621f8ff06 Mon Sep 17 00:00:00 2001
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Date: Tue, 8 Aug 2023 09:27:55 -0300
+Subject: [PATCH] i686: Fix build with --disable-multiarch
+
+Since i686 provides the fortified wrappers for memcpy, mempcpy,
+memmove, and memset on the same string implementation, the static
+build tries to optimized it by not tying the fortified wrappers
+to string routine (to avoid pulling the fortify function if
+they are not required).
+
+Checked on i686-linux-gnu building with different option:
+default and --disable-multi-arch plus default, --disable-default-pie,
+--enable-fortify-source={2,3}, and --enable-fortify-source={2,3}
+with --disable-default-pie.
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+
+(cherry picked from commit c73c96a4a1af1326df7f96eec58209e1e04066d8)
+---
+ sysdeps/i386/i686/memcpy.S                | 2 +-
+ sysdeps/i386/i686/mempcpy.S               | 2 +-
+ sysdeps/i386/i686/multiarch/memcpy_chk.c  | 2 ++
+ sysdeps/i386/i686/multiarch/memmove_chk.c | 2 ++
+ sysdeps/i386/i686/multiarch/mempcpy_chk.c | 2 ++
+ sysdeps/i386/i686/multiarch/memset_chk.c  | 2 ++
+ 6 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/i386/i686/memcpy.S b/sysdeps/i386/i686/memcpy.S
+index 9b48ec0ea1..b86af4aac9 100644
+--- a/sysdeps/i386/i686/memcpy.S
++++ b/sysdeps/i386/i686/memcpy.S
+@@ -27,7 +27,7 @@
+ #define LEN	SRC+4
+ 
+ 	.text
+-#if defined PIC && IS_IN (libc)
++#if defined SHARED && IS_IN (libc)
+ ENTRY_CHK (__memcpy_chk)
+ 	movl	12(%esp), %eax
+ 	cmpl	%eax, 16(%esp)
+diff --git a/sysdeps/i386/i686/mempcpy.S b/sysdeps/i386/i686/mempcpy.S
+index 26f8501e7d..14d9dd681a 100644
+--- a/sysdeps/i386/i686/mempcpy.S
++++ b/sysdeps/i386/i686/mempcpy.S
+@@ -27,7 +27,7 @@
+ #define LEN	SRC+4
+ 
+ 	.text
+-#if defined PIC && IS_IN (libc)
++#if defined SHARED && IS_IN (libc)
+ ENTRY_CHK (__mempcpy_chk)
+ 	movl	12(%esp), %eax
+ 	cmpl	%eax, 16(%esp)
+diff --git a/sysdeps/i386/i686/multiarch/memcpy_chk.c b/sysdeps/i386/i686/multiarch/memcpy_chk.c
+index ec945dc91f..c3a8aeaf18 100644
+--- a/sysdeps/i386/i686/multiarch/memcpy_chk.c
++++ b/sysdeps/i386/i686/multiarch/memcpy_chk.c
+@@ -32,4 +32,6 @@ libc_ifunc_redirected (__redirect_memcpy_chk, __memcpy_chk,
+ __hidden_ver1 (__memcpy_chk, __GI___memcpy_chk, __redirect_memcpy_chk)
+   __attribute__ ((visibility ("hidden"))) __attribute_copy__ (__memcpy_chk);
+ # endif
++#else
++# include <debug/memcpy_chk.c>
+ #endif
+diff --git a/sysdeps/i386/i686/multiarch/memmove_chk.c b/sysdeps/i386/i686/multiarch/memmove_chk.c
+index 55c7601d5d..070dde083a 100644
+--- a/sysdeps/i386/i686/multiarch/memmove_chk.c
++++ b/sysdeps/i386/i686/multiarch/memmove_chk.c
+@@ -32,4 +32,6 @@ libc_ifunc_redirected (__redirect_memmove_chk, __memmove_chk,
+ __hidden_ver1 (__memmove_chk, __GI___memmove_chk, __redirect_memmove_chk)
+   __attribute__ ((visibility ("hidden"))) __attribute_copy__ (__memmove_chk);
+ # endif
++#else
++# include <debug/memmove_chk.c>
+ #endif
+diff --git a/sysdeps/i386/i686/multiarch/mempcpy_chk.c b/sysdeps/i386/i686/multiarch/mempcpy_chk.c
+index 83569cf9d9..14360f1828 100644
+--- a/sysdeps/i386/i686/multiarch/mempcpy_chk.c
++++ b/sysdeps/i386/i686/multiarch/mempcpy_chk.c
+@@ -32,4 +32,6 @@ libc_ifunc_redirected (__redirect_mempcpy_chk, __mempcpy_chk,
+ __hidden_ver1 (__mempcpy_chk, __GI___mempcpy_chk, __redirect_mempcpy_chk)
+   __attribute__ ((visibility ("hidden"))) __attribute_copy__ (__mempcpy_chk);
+ # endif
++#else
++# include <debug/mempcpy_chk.c>
+ #endif
+diff --git a/sysdeps/i386/i686/multiarch/memset_chk.c b/sysdeps/i386/i686/multiarch/memset_chk.c
+index 1a7503858d..8179ef7c0b 100644
+--- a/sysdeps/i386/i686/multiarch/memset_chk.c
++++ b/sysdeps/i386/i686/multiarch/memset_chk.c
+@@ -32,4 +32,6 @@ libc_ifunc_redirected (__redirect_memset_chk, __memset_chk,
+ __hidden_ver1 (__memset_chk, __GI___memset_chk, __redirect_memset_chk)
+   __attribute__ ((visibility ("hidden"))) __attribute_copy__ (__memset_chk);
+ # endif
++#else
++# include <debug/memset_chk.c>
+ #endif
+-- 
+2.40.1
+
