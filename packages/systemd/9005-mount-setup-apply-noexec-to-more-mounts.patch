@@ -1,7 +1,7 @@
-From 5a822486905915396d27da85b336f0877e612532 Mon Sep 17 00:00:00 2001
+From e6565e7f288f84b9e5f723c55ca9e5619b0db846 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Sat, 28 May 2022 03:49:46 +0000
-Subject: [PATCH 9005/9011] mount-setup: apply noexec to more mounts
+Subject: [PATCH] mount-setup: apply noexec to more mounts
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
@@ -9,7 +9,7 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/src/shared/mount-setup.c b/src/shared/mount-setup.c
-index 7917968..debc043 100644
+index 7ba579e..03fc774 100644
 --- a/src/shared/mount-setup.c
 +++ b/src/shared/mount-setup.c
 @@ -73,18 +73,18 @@ static const MountPoint mount_table[] = {
@@ -36,5 +36,5 @@ index 7917968..debc043 100644
          { "cgroup2",     "/sys/fs/cgroup",            "cgroup2",    "nsdelegate,memory_recursiveprot",         MS_NOSUID|MS_NOEXEC|MS_NODEV,
            cg_is_unified_wanted, MNT_IN_CONTAINER|MNT_CHECK_WRITABLE },
 -- 
-2.36.1
+2.40.1
 

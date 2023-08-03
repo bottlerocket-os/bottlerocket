@@ -2,7 +2,7 @@
 %global __brp_check_rpaths %{nil}
 
 Name: %{_cross_os}systemd
-Version: 250.11
+Version: 252.13
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
@@ -12,28 +12,7 @@ Source1: systemd-tmpfiles.conf
 Source2: systemd-modules-load.conf
 Source3: journald.conf
 Source4: issue
-
-# Backports for fixing udev skipping kernel uevents under special circumstances
-#  * https://github.com/systemd/systemd/commit/2d40f02ee4317233365f53c85234be3af6b000a6
-#  * https://github.com/systemd/systemd/pull/22717
-#  * https://github.com/systemd/systemd/commit/400e3d21f8cae53a8ba9f9567f244fbf6f3e076c
-#  * https://github.com/systemd/systemd/commit/4f294ffdf18ab9f187400dbbab593a980e60be89
-#  * https://github.com/systemd/systemd/commit/c02fb80479b23e70f4ad6f7717eec5c9444aa7f4
-# From v251:
-Patch0001: 0001-errno-util-add-ERRNO_IS_DEVICE_ABSENT-macro.patch
-Patch0002: 0002-udev-drop-unnecessary-clone-of-received-sd-device-ob.patch
-Patch0003: 0003-udev-introduce-device_broadcast-helper-function.patch
-Patch0004: 0004-udev-assume-there-is-no-blocker-when-failed-to-check.patch
-Patch0005: 0005-udev-store-action-in-struct-Event.patch
-Patch0006: 0006-udev-requeue-event-when-the-corresponding-block-devi.patch
-Patch0007: 0007-udev-only-ignore-ENOENT-or-friends-which-suggest-the.patch
-Patch0008: 0008-udev-split-worker_lock_block_device-into-two.patch
-Patch0009: 0009-udev-assume-block-device-is-not-locked-when-a-new-ev.patch
-#  From v252:
-Patch0010: 0010-udev-fix-inversed-inequality-for-timeout-of-retrying.patch
-Patch0011: 0011-udev-certainly-restart-event-for-previously-locked-d.patch
-#  From v251:
-Patch0012: 0012-udev-try-to-reload-selinux-label-database-less-frequ.patch
+Source5: systemd-journald.conf
 
 # Local patch to work around the fact that /var is a bind mount from
 # /local/var, and we want the /local/var/run symlink to point to /run.
@@ -56,31 +35,22 @@ Patch9005: 9005-mount-setup-apply-noexec-to-more-mounts.patch
 # Local patch to handle mounting /etc with our SELinux label.
 Patch9006: 9006-mount-setup-mount-etc-with-specific-label.patch
 
-# Local patch to disable the keyed hashes feature in the journal, which
-# makes it unreadable by older versions of systemd. Can be dropped once
-# there's sufficiently broad adoption of systemd >= 246.
-Patch9007: 9007-journal-disable-keyed-hashes-for-compatibility.patch
-
 # We need `prefix` to be configurable for our own packaging so we can avoid
 # dependencies on the host OS.
-Patch9008: 9008-pkg-config-stop-hardcoding-prefix-to-usr.patch
+Patch9007: 9007-pkg-config-stop-hardcoding-prefix-to-usr.patch
 
 # Local patch to stop overriding rp_filter defaults with wildcard values.
-Patch9009: 9009-sysctl-do-not-set-rp_filter-via-wildcard.patch
+Patch9008: 9008-sysctl-do-not-set-rp_filter-via-wildcard.patch
 
 # Local patch to set root's shell to /sbin/nologin rather than /bin/sh.
-Patch9010: 9010-sysusers-set-root-shell-to-sbin-nologin.patch
+Patch9009: 9009-sysusers-set-root-shell-to-sbin-nologin.patch
 
 # Local patch to keep modprobe units running to avoid repeated log entries.
-Patch9011: 9011-units-keep-modprobe-service-units-running.patch
-
-# Local patch to split the systemd-networkd tmpfiles into a separate file which
-# allows us to exclude them when not using networkd.
-Patch9012: 9012-tmpfiles-Split-networkd-entries-into-a-separate-file.patch
+Patch9010: 9010-units-keep-modprobe-service-units-running.patch
 
 # Local patch to conditionalize systemd-networkd calls to hostname and timezone
 # DBUS services not used in Bottlerocket
-Patch9013: 9013-systemd-networkd-Conditionalize-hostnamed-timezoned-DBUS.patch
+Patch9011: 9011-systemd-networkd-Conditionalize-hostnamed-timezoned-.patch
 
 BuildRequires: gperf
 BuildRequires: intltool
@@ -173,6 +143,7 @@ CONFIGURE_OPTS=(
  -Dmachined=false
  -Dportabled=false
  -Dsysext=false
+ -Dsysupdate=false
  -Duserdb=false
  -Dhomed=false
  -Dnetworkd=true
@@ -197,6 +168,7 @@ CONFIGURE_OPTS=(
  -Dman=false
  -Dhtml=false
  -Dtranslations=false
+ -Dlog-message-verification=false
 
  -Dcertificate-root='%{_cross_sysconfdir}/ssl'
  -Dpkgconfigdatadir='%{_cross_pkgconfigdir}'
@@ -259,6 +231,7 @@ CONFIGURE_OPTS=(
  -Ddbus=false
 
  -Dgnu-efi=false
+ -Defi-tpm-pcr-compat=false
 
  -Dbashcompletiondir=no
  -Dzshcompletiondir=no
@@ -292,7 +265,9 @@ install -d %{buildroot}%{_cross_libdir}/modules-load.d
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_libdir}/modules-load.d/nf_conntrack.conf
 
 install -d %{buildroot}%{_cross_libdir}/systemd/journald.conf.d
+install -d %{buildroot}%{_cross_libdir}/systemd/system/systemd-journald.service.d
 install -p -m 0644 %{S:3} %{buildroot}%{_cross_libdir}/systemd/journald.conf.d/journald.conf
+install -p -m 0644 %{S:5} %{buildroot}%{_cross_libdir}/systemd/system/systemd-journald.service.d/systemd-journald.conf
 
 # Remove all stock network configurations, as they can interfere
 # with container networking by attempting to manage veth devices.
@@ -384,6 +359,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 
 %dir %{_cross_factorydir}
 %{_cross_factorydir}%{_cross_sysconfdir}/issue
+%{_cross_factorydir}%{_cross_sysconfdir}/locale.conf
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d/other
