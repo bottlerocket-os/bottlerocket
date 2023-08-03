@@ -3,4 +3,4 @@
 labrador = { version = "v1", helpers = [ "woof" ] }
 +++
 # comments are included in template
-{{ helpers.labrador.woof }}
+{{ woof }}

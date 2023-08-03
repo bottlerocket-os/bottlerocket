@@ -2,7 +2,9 @@ use schnauzer::v2::{template, Template};
 
 macro_rules! assert_parse_error {
     ($error:ident, $template:expr) => {
-        match include_str!($template).parse::<Template>() {
+        let parsed = include_str!($template).parse::<Template>();
+        println!("Parsed '{}' as {:?}", $template, parsed);
+        match parsed {
             Err(template::error::Error::$error { .. }) => (),
             _ => panic!("Did not encounter expected error while parsing template."),
         };
@@ -47,5 +49,16 @@ fn fails_03_invalid_frontmatter_delim() {
     assert_parse_error!(
         GrammarParse,
         "./templates/fails/03_invalid_frontmatter_delim.template"
+    );
+}
+
+#[test]
+fn fails_04_duplicate_helpers() {
+    // Given a template with the same helper name imported from multiple extensions,
+    // when the template is parsed,
+    // then an error is returned.
+    assert_parse_error!(
+        HelperNameCollision,
+        "./templates/fails/04_duplicate_helpers.template"
     );
 }

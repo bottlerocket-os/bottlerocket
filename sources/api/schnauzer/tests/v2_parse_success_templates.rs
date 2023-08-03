@@ -137,8 +137,7 @@ fn succeeds_04_comments() {
             helpers: vec!["woof".to_string()],
         },
     };
-    let expected_body =
-        "# comments are included in template\n{{ helpers.labrador.woof }}\n".to_string();
+    let expected_body = "# comments are included in template\n{{ woof }}\n".to_string();
 
     assert_eq!(
         template
@@ -164,9 +163,15 @@ fn succeeds_05_unambiguous_delims() {
             name: "beagle".to_string(),
             version: "+++\n".to_string(),
             helpers: vec![],
-        },
+        }, ExtensionRequirement {
+            name: "std".to_string(),
+            version: "v1".to_string(),
+            helpers: vec!["join_map".to_string()],
+        }
     };
-    let expected_body = "{{ settings.beagle.howl }}\n".to_string();
+    let expected_body = r#"{{ join_map "=" "," "fail-if-missing" settings.beagle }}
+"#
+    .to_string();
 
     assert_eq!(
         template
@@ -189,6 +194,41 @@ fn succeeds_06_empty_frontmatter() {
 
     let expected_requirements = hashset! {};
     let expected_body = "Hello\n".to_string();
+
+    assert_eq!(
+        template
+            .frontmatter
+            .extension_requirements()
+            .collect::<HashSet<_>>(),
+        expected_requirements
+    );
+    assert_eq!(template.body, expected_body);
+}
+
+#[test]
+fn succeeds_07_aws_config() {
+    // Given an existing template file,
+    // when the template is parsed,
+    // Then the template will be parsed correctly.
+    let template: Template = include_str!("./templates/succeeds/07_aws-config.template")
+        .parse()
+        .expect("Could not parse template file as template");
+
+    let expected_requirements = hashset! {
+        ExtensionRequirement {
+            name: "aws".to_string(),
+            version: "v1".to_string(),
+            helpers: vec![],
+        },
+        ExtensionRequirement {
+            name: "std".to_string(),
+            version: "v1".to_string(),
+            helpers: vec!["base64_decode".to_string()],
+        },
+    };
+    let expected_body =
+        "{{~#if settings.aws.config~}}\n{{base64_decode settings.aws.config}}\n{{~/if~}}\n"
+            .to_string();
 
     assert_eq!(
         template

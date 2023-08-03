@@ -5,8 +5,8 @@
 use pest::Parser;
 use pest_derive::Parser;
 use serde::Deserialize;
-use snafu::{OptionExt, ResultExt};
-use std::collections::HashMap;
+use snafu::{ensure, OptionExt, ResultExt};
+use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 
 #[derive(Parser, Debug, Clone)]
@@ -27,6 +27,13 @@ pub struct Template {
     pub frontmatter: TemplateFrontmatter,
     /// The template body, using the `handlebars` template language.
     pub body: String,
+}
+
+impl Template {
+    /// Performs parse-time validations of the template.
+    fn validate(&self) -> Result<()> {
+        self.frontmatter.validate()
+    }
 }
 
 // Type aliases to clarify the intent of string data.
@@ -67,14 +74,51 @@ impl TemplateFrontmatter {
     pub fn extension_requirements(&self) -> impl Iterator<Item = ExtensionRequirement> + '_ {
         self.required_extensions
             .as_ref()
-            .map(|requirements| Box::new(requirements.iter()) as Box<dyn Iterator<Item = _>>)
-            .unwrap_or_else(|| Box::new(std::iter::empty()) as Box<dyn Iterator<Item = _>>)
+            .map(|requirements| Box::new(requirements.iter()) as Box<dyn Iterator<Item = _> + Send>)
+            .unwrap_or_else(|| Box::new(std::iter::empty()) as Box<dyn Iterator<Item = _> + Send>)
             .map(|(extension_name, extension_requirements)| {
                 ExtensionRequirement::from_template_requirements(
                     extension_name,
                     extension_requirements,
                 )
             })
+    }
+
+    /// Performs parse-time validations of a `TemplateFrontmatter`.
+    fn validate(&self) -> Result<()> {
+        self.ensure_no_helper_names_collide()?;
+        Ok(())
+    }
+
+    /// Ensures imported helper names do not collide.
+    ///
+    /// While settings are namespaced in the templates (`settings.extension.key_of_interest`), helpers cannot be
+    /// similarly namespaced due to a bug in the `handlebars` crate which fails to parse helpers containing a `.`
+    /// character if they are called with arguments. (https://github.com/sunng87/handlebars-rust/issues/595)
+    ///
+    /// Instead, helpers are added to the global namespace, but we ensure that there are no collisions at parse time.
+    fn ensure_no_helper_names_collide(&self) -> Result<()> {
+        let mut used_helper_names = HashSet::new();
+        let mut collisions = HashSet::new();
+
+        let helper_names = self
+            .extension_requirements()
+            .flat_map(|requirement| requirement.helpers);
+
+        helper_names.for_each(|helper_name| {
+            if used_helper_names.contains(&helper_name) {
+                collisions.insert(helper_name.clone());
+            }
+            used_helper_names.insert(helper_name);
+        });
+
+        ensure!(
+            collisions.is_empty(),
+            error::HelperNameCollisionSnafu {
+                helper_names: collisions.into_iter().collect::<Vec<_>>()
+            }
+        );
+        Ok(())
     }
 }
 
@@ -135,10 +179,14 @@ impl FromStr for Template {
             })?
             .as_str();
 
-        Ok(Self {
+        let template = Self {
             frontmatter: frontmatter_document,
             body: template_body.to_string(),
-        })
+        };
+
+        template.validate()?;
+
+        Ok(template)
     }
 }
 
@@ -150,11 +198,15 @@ pub mod error {
     pub enum Error {
         #[snafu(display("Error when parsing template grammar: '{}'\n\nThis is usually due to errors in frontmatter TOML formatting.", source))]
         GrammarParse {
-            source: pest::error::Error<super::Rule>,
+            #[snafu(source(from(pest::error::Error<super::Rule>, Box::new)))]
+            source: Box<pest::error::Error<super::Rule>>,
         },
 
         #[snafu(display("Error when parsing template frontmatter: '{}'", source))]
         FrontmatterParse { source: toml::de::Error },
+
+        #[snafu(display("Helper names cannot collide: '[{}]' imported multiple times.", helper_names.join(", ")))]
+        HelperNameCollision { helper_names: Vec<String> },
 
         #[snafu(display("Error in template parser: '{}'", message))]
         TemplateParserLogic { message: &'static str },
