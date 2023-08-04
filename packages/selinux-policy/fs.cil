@@ -51,6 +51,7 @@
 (filecon "/.*/usr/sbin/chronyd" file clock_exec)
 (filecon "/.*/usr/sbin/wicked.*" file network_exec)
 (filecon "/.*/usr/libexec/wicked/bin/wicked.*" file network_exec)
+(filecon "/.*/usr/lib/systemd/systemd-networkd.*" file network_exec)
 (filecon "/.*/usr/bin/containerd.*" file runtime_exec)
 (filecon "/.*/usr/bin/docker.*" file runtime_exec)
 (filecon "/.*/usr/bin/host-ctr" file runtime_exec)
