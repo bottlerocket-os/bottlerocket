@@ -559,6 +559,7 @@ The following settings are optional and allow you to further configure your clus
 * `settings.kubernetes.provider-id`: This sets the unique ID of the instance that an external provider (i.e. cloudprovider) can use to identify a specific node.
 * `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.
 * `settings.kubernetes.registry-qps`: The registry pull QPS.
+* `settings.kubernetes.seccomp-default`: Enable RuntimeDefault as the default seccomp profile for all workloads via kubelet-configuration. This is disabled by default.
 * `settings.kubernetes.server-tls-bootstrap`: Enables or disables server certificate bootstrap. When enabled, the kubelet will request a certificate from the certificates.k8s.io API. This requires an approver to approve the certificate signing requests (CSR). Defaults to `true`.
 * `settings.kubernetes.shutdown-grace-period`: Delay the node should wait for pod termination before shutdown. Default is `0s`.
 * `settings.kubernetes.shutdown-grace-period-for-critical-pods`: The portion of the shutdown delay that should be dedicated to critical pod shutdown. Default is `0s`.
