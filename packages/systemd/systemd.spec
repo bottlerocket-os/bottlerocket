@@ -137,7 +137,7 @@ CONFIGURE_OPTS=(
  -Dcoredump=false
  -Dpstore=true
  -Doomd=false
- -Dlogind=false
+ -Dlogind=true
  -Dhostnamed=false
  -Dlocaled=false
  -Dmachined=false
@@ -301,6 +301,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_bindir}/systemd-detect-virt
 %{_cross_bindir}/systemd-escape
 %{_cross_bindir}/systemd-id128
+%{_cross_bindir}/systemd-inhibit
 %{_cross_bindir}/systemd-machine-id-setup
 %{_cross_bindir}/systemd-mount
 %{_cross_bindir}/systemd-notify
@@ -315,6 +316,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_bindir}/systemd-tty-ask-password-agent
 %{_cross_bindir}/systemd-umount
 %{_cross_bindir}/udevadm
+%{_cross_bindir}/loginctl
 
 %{_cross_sbindir}/halt
 %{_cross_sbindir}/init
@@ -338,11 +340,17 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_libdir}/udev/*
 %exclude %{_cross_libdir}/tmpfiles.d/systemd-network.conf
 %exclude %{_cross_libdir}/sysusers.d/systemd-network.conf
+%exclude %{_cross_libdir}/systemd/system/dbus-org.freedesktop.login1.service
 %exclude %{_cross_libdir}/systemd/systemd-networkd
 %exclude %{_cross_libdir}/systemd/systemd-networkd-wait-online
+%exclude %{_cross_libdir}/systemd/systemd-user-runtime-dir
 %exclude %{_cross_libdir}/systemd/system/systemd-networkd.service
 %exclude %{_cross_libdir}/systemd/system/systemd-networkd-wait-online.service
 %exclude %{_cross_libdir}/systemd/system/systemd-networkd.socket
+%exclude %{_cross_libdir}/pam.d/systemd-user
+%exclude %{_cross_libdir}/udev/rules.d/70-uaccess.rules
+%exclude %{_cross_libdir}/udev/rules.d/71-seat.rules
+%exclude %{_cross_libdir}/udev/rules.d/73-seat-late.rules
 
 %{_cross_tmpfilesdir}/*
 %exclude %{_cross_tmpfilesdir}/x11.conf
@@ -355,6 +363,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_datadir}/dbus-1/*
 %exclude %{_cross_datadir}/polkit-1
 %exclude %{_cross_datadir}/dbus-1/system-services/org.freedesktop.network1.service
+%exclude %{_cross_datadir}/dbus-1/system-services/org.freedesktop.login1.service
 %exclude %{_cross_datadir}/dbus-1/system.d/org.freedesktop.network1.conf
 
 %dir %{_cross_factorydir}
@@ -364,6 +373,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d/other
 %exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d/system-auth
+%exclude %{_cross_factorydir}%{_cross_sysconfdir}/pam.d/systemd-user
 
 %exclude %{_cross_docdir}
 
