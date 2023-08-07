@@ -1,0 +1,5 @@
+[NetDev]
+Name=vlancfgdev
+Kind=vlan
+[VLAN]
+Id=1

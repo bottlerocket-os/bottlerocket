@@ -1,0 +1,5 @@
+[Match]
+Name=eno54
+[Network]
+Bond=bond1
+LinkLocalAddressing=no

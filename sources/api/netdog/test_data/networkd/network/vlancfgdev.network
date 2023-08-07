@@ -1,5 +1,5 @@
 [Match]
-Name=bond1
+Name=vlancfgdev
 [Link]
 RequiredForOnline=true
 [Network]

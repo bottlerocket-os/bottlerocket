@@ -1,10 +1,10 @@
 [Match]
-Name=bond1
+Name=eno2
 [Link]
 RequiredForOnline=true
 [Network]
-ConfigureWithoutCarrier=true
-DHCP=ipv4
-[DHCPv4]
+DHCP=ipv6
+IPv6AcceptRA=true
+[DHCPv6]
 UseDNS=true
 UseDomains=true

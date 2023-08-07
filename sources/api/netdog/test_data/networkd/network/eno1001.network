@@ -1,10 +1,10 @@
 [Match]
-Name=bond1
+Name=eno1001
 [Link]
 RequiredForOnline=true
 [Network]
-ConfigureWithoutCarrier=true
 DHCP=ipv4
+VLAN=vlancfgdev
 [DHCPv4]
 UseDNS=true
 UseDomains=true

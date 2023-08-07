@@ -1,5 +1,5 @@
 use super::private::{Bond, Device, Vlan};
-use super::{CONFIG_FILE_PREFIX, NETWORKD_CONFIG_DIR};
+use super::CONFIG_FILE_PREFIX;
 use crate::bonding::{ArpMonitoringConfigV1, ArpValidateV1, BondModeV1, MiiMonitoringConfigV1};
 use crate::interface_id::InterfaceName;
 use crate::networkd::{error, Result};
@@ -105,8 +105,10 @@ impl Display for ArpValidate {
     }
 }
 
+// The `All` variant isn't currently used, but is valid
 #[derive(Debug)]
 enum ArpAllTargets {
+    #[allow(dead_code)]
     All,
     Any,
 }

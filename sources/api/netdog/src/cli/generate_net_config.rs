@@ -1,6 +1,6 @@
 use super::{error, Result};
 use crate::interface_id::InterfaceId;
-use crate::net_config;
+use crate::net_config::{self, Interfaces};
 use crate::{
     DEFAULT_NET_CONFIG_FILE, KERNEL_CMDLINE, OVERRIDE_NET_CONFIG_FILE, PRIMARY_INTERFACE,
     PRIMARY_MAC_ADDRESS,
@@ -50,20 +50,7 @@ pub(crate) fn run() -> Result<()> {
     remove_old_primary_interface()?;
     write_primary_interface(&primary_interface)?;
 
-    let mut wicked_interfaces = net_config.as_wicked_interfaces();
-    for interface in &mut wicked_interfaces {
-        // The kernel command line is too limited to fully specify an interface's configuration;
-        // fix some defaults to match legacy behavior.
-        // Note: we only allow 1 interface to be listed via kernel command line, so this will only
-        // be added to a single interface
-        if from_cmd_line {
-            interface.accept_ra();
-        }
-
-        interface
-            .write_config_file()
-            .context(error::InterfaceConfigWriteSnafu)?;
-    }
+    write_network_config_files(net_config, from_cmd_line)?;
     Ok(())
 }
 
@@ -86,4 +73,47 @@ fn write_primary_interface(interface_id: &InterfaceId) -> Result<()> {
     .context(error::PrimaryInterfaceWriteSnafu {
         path: PRIMARY_INTERFACE,
     })
+}
+
+#[cfg(net_backend = "wicked")]
+fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bool) -> Result<()> {
+    let mut wicked_interfaces = net_config.as_wicked_interfaces();
+    for interface in &mut wicked_interfaces {
+        // The kernel command line is too limited to fully specify an interface's configuration;
+        // fix some defaults to match legacy behavior.
+        // Note: we only allow 1 interface to be listed via kernel command line, so this will only
+        // be added to a single interface
+        if from_cmd_line {
+            interface.accept_ra();
+        }
+
+        interface
+            .write_config_file()
+            .context(error::InterfaceConfigWriteSnafu)?;
+    }
+    Ok(())
+}
+
+#[cfg(net_backend = "systemd-networkd")]
+fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bool) -> Result<()> {
+    use crate::networkd::config::NetworkDConfigFile;
+    let networkd_config = net_config
+        .as_networkd_config()
+        .context(error::NetworkDConfigCreateSnafu)?;
+    for mut config in networkd_config.create_files() {
+        // The kernel command line is too limited to fully specify an interface's configuration;
+        // fix some defaults to match legacy behavior.
+        // Note: we only allow 1 interface to be listed via kernel command line, so this will only
+        // be added to a single interface
+        if from_cmd_line {
+            if let NetworkDConfigFile::Network(ref mut n) = config {
+                n.accept_ra();
+            }
+        }
+
+        config
+            .write_config_file()
+            .context(error::NetworkDConfigWriteSnafu)?;
+    }
+    Ok(())
 }

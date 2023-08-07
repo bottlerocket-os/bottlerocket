@@ -1,0 +1,13 @@
+[Match]
+Name=eno8
+[Link]
+RequiredForOnline=false
+[Network]
+DHCP=yes
+IPv6AcceptRA=true
+[DHCPv4]
+UseDNS=true
+UseDomains=true
+[DHCPv6]
+UseDNS=true
+UseDomains=true

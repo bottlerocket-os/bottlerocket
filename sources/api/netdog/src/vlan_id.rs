@@ -5,7 +5,7 @@ use serde::{Deserialize, Deserializer};
 use std::fmt::Display;
 use std::ops::Deref;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct VlanId {
     inner: u16,
 }

@@ -1,0 +1,1 @@
+<interface><name>vlancfgdev</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv4:dhcp><enabled>true</enabled></ipv4:dhcp><vlan><device>eno1001</device><tag>1</tag></vlan></interface>

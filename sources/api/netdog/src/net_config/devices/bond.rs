@@ -8,7 +8,7 @@ use crate::net_config::devices::generate_addressing_validation;
 use serde::Deserialize;
 use snafu::ensure;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct NetBondV1 {
     pub(crate) primary: Option<bool>,
@@ -30,7 +30,7 @@ pub(crate) struct NetBondV1 {
 
 // Single variant enum only used to direct deserialization.  If the kind is not "Bond" or "bond",
 // deserialization will fail.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 enum BondKind {
     #[serde(alias = "bond")]
     Bond,

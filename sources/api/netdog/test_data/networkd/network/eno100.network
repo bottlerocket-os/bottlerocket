@@ -1,0 +1,6 @@
+[Match]
+Name=eno100
+[Network]
+IPv6AcceptRA=false
+LinkLocalAddressing=no
+VLAN=myvlan
