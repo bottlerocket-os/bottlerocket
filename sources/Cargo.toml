@@ -57,6 +57,8 @@ members = [
     "api/migration/migrations/v1.14.3/public-admin-container-v0-10-2",
     "api/migration/migrations/v1.14.3/aws-control-container-v0-7-3",
     "api/migration/migrations/v1.14.3/public-control-container-v0-7-3",
+    "api/migration/migrations/v1.15.0/oci-defaults-resource-setting",
+    "api/migration/migrations/v1.15.0/oci-defaults-max-open-files",
 
     "bloodhound",
 
