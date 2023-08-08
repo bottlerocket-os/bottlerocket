@@ -19,6 +19,9 @@ URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/cli-%{gover}.tar.gz
 Source1000: clarify.toml
 
+# Backport to fix host header issue when compiling with Go 1.20.6 or later
+Patch0001: 0001-non-tcp-host-header.patch
+
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 
