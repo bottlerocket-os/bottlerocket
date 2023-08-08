@@ -11,7 +11,16 @@ Name: %{_cross_os}linux-firmware
 Version: 20230625
 Release: 1%{?dist}
 Summary: Firmware files used by the Linux kernel
-License: GPL+ and GPLv2+ and MIT and Redistributable, no modification permitted
+# The following list of SPDX identifiers was constructed with help of scancode
+# tooling and has turned up the following licenses for different drivers by
+# checking the different LICENCE/LICENSE files and the licenses in WHENCE:
+# * BSD-Source-Code - myri10ge
+# * LicenseRef-scancode-chelsio-linux-firmware - cxgb4
+# * LicenseRef-scancode-qlogic-firmware - netxen_nic
+# * LicenseRef-scancode-intel - i915, ice
+# * LicenseRef-scancode-proprietary-license - bnx2x, qed
+# * LicenseRef-scancode-free-unknown - tg3
+License: GPL-1.0-or-later AND GPL-2.0-or-later AND BSD-Source-Code AND LicenseRef-scancode-chelsio-linux-firmware AND LicenseRef-scancode-qlogic-firmware AND LicenseRef-scancode-intel AND LicenseRef-scancode-proprietary-license AND LicenseRef-scancode-free-unknown
 URL: https://www.kernel.org/
 
 Source0: https://www.kernel.org/pub/linux/kernel/firmware/linux-firmware-%{version}.tar.xz
