@@ -17,10 +17,6 @@ pub(crate) fn migration_crd(
         .cluster_crd_name
         .as_ref()
         .expect("A cluster name is required for migrations");
-    let bottlerocket_resource_name = migration_input
-        .bottlerocket_crd_name
-        .as_ref()
-        .expect("A cluster name is required for migrations");
 
     let labels = migration_input.crd_input.labels(btreemap! {
         "testsys/type".to_string() => "migration".to_string(),
@@ -58,12 +54,22 @@ pub(crate) fn migration_crd(
     };
 
     migration_config
-        .instance_ids_template(bottlerocket_resource_name, instance_id_field_name)
+        .instance_ids_template(
+            migration_input
+                .bottlerocket_crd_name
+                .as_ref()
+                .unwrap_or(cluster_resource_name),
+            instance_id_field_name,
+        )
         .migrate_to_version(migration_version)
         .tuf_repo(migration_input.crd_input.tuf_repo_config())
         .assume_role(migration_input.crd_input.config.agent_role.clone())
-        .resources(bottlerocket_resource_name)
-        .resources(cluster_resource_name)
+        .set_resources(Some(
+            vec![cluster_resource_name.to_owned()]
+                .into_iter()
+                .chain(migration_input.bottlerocket_crd_name.iter().cloned())
+                .collect(),
+        ))
         .set_depends_on(Some(migration_input.prev_tests))
         .image(
             migration_input
