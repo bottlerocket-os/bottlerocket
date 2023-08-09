@@ -566,6 +566,7 @@ pub struct ExternalFile {
     pub path: Option<PathBuf>,
     pub sha512: String,
     pub url: String,
+    pub force_upstream: Option<bool>,
     pub bundle_modules: Option<Vec<BundleModule>>,
     pub bundle_root_path: Option<PathBuf>,
     pub bundle_output_path: Option<PathBuf>,
