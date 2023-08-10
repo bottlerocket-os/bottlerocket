@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-6.1
-Version: 6.1.29
+Version: 6.1.41
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/al2023/blobstore/fc78f9cacdcb6227481fd326c05429914f6b085d7abad49c0b1fd896ec02dd4b/kernel-6.1.29-50.88.amzn2023.src.rpm
+Source0: https://cdn.amazonlinux.com/al2023/blobstore/789848dec5baccf864b022af695a2a3ac1ba52392a2b6aa83f19dc07d050df0a/kernel-6.1.41-63.114.amzn2023.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
@@ -21,11 +21,6 @@ Patch1002: 1002-Revert-kbuild-hide-tools-build-targets-from-external.patch
 Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 # Increase default of sysctl net.unix.max_dgram_qlen to 512.
 Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
-
-# Cherry-picked fix for CVE-2023-20593 ("Zenbleed"). Can be dropped when moving
-# upstream to 6.1.41 or later.
-Patch5001: 5001-x86-cpu-amd-Move-the-errata-checking-functionality-u.patch
-Patch5002: 5002-x86-cpu-amd-Add-a-Zenbleed-fix.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
