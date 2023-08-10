@@ -1,0 +1,13 @@
+[package]
+name = "seccomp-default-setting"
+version = "0.1.0"
+edition = "2021"
+authors = ["Cartrius Phipps <cartrius@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}
+
