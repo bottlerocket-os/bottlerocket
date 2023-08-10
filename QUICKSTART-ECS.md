@@ -32,37 +32,6 @@ aws ecs --region us-west-2 create-cluster --cluster-name bottlerocket
 
 ## Finding an AMI
 
-Amazon provides official AMIs in the following AWS regions:
-
-```
-af-south-1
-ap-east-1
-ap-northeast-1
-ap-northeast-2
-ap-northeast-3
-ap-south-1
-ap-southeast-1
-ap-southeast-2
-ap-southeast-3
-ca-central-1
-cn-north-1
-cn-northwest-1
-eu-central-1
-eu-north-1
-eu-south-1
-eu-west-1
-eu-west-2
-eu-west-3
-me-south-1
-sa-east-1
-us-east-1
-us-east-2
-us-west-1
-us-west-2
-us-gov-east-1
-us-gov-west-1
-```
-
 The official AMI IDs are stored in [public SSM parameters](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-public-parameters.html).
 The parameter names look like this: `/aws/service/bottlerocket/aws-ecs-1/x86_64/latest/image_id`
 
