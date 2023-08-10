@@ -65,7 +65,9 @@ impl LookasideCache {
             }
 
             // next check with upstream, if permitted
-            if std::env::var("BUILDSYS_UPSTREAM_SOURCE_FALLBACK") == Ok("true".to_string()) {
+            if f.force_upstream.unwrap_or(false)
+                || std::env::var("BUILDSYS_UPSTREAM_SOURCE_FALLBACK") == Ok("true".to_string())
+            {
                 println!("Fetching {:?} from upstream source", url_file_name);
                 Self::fetch_file(&f.url, &tmp, hash)?;
                 fs::rename(&tmp, path).context(error::ExternalFileRenameSnafu { path: &tmp })?;

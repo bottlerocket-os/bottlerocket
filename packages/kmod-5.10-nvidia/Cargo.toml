@@ -15,10 +15,12 @@ releases-url = "https://docs.nvidia.com/datacenter/tesla/"
 [[package.metadata.build-package.external-files]]
 url = "https://us.download.nvidia.com/tesla/470.161.03/NVIDIA-Linux-x86_64-470.161.03.run"
 sha512 = "26b1640f9427847b68233ffacf5c4a07e75ed9923429dfc9e5de3d7e5c1f109dfaf0fe0a0639cbd47f056784ed3e00e2e741d5c84532df79590a0c9ffa5ba625"
+force-upstream = true
 
 [[package.metadata.build-package.external-files]]
 url = "https://us.download.nvidia.com/tesla/470.161.03/NVIDIA-Linux-aarch64-470.161.03.run"
 sha512 = "16e83c4d3ea66b2da07c43fca912c839e5feb9d42bee279b9de3476ffbd5e2314fddc83c1a38c198adb2d5ea6b4f2b00bb4a4c32d6fd0bfcdbccc392043f99ce"
+force-upstream = true
 
 [build-dependencies]
 glibc = { path = "../glibc" }
