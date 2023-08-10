@@ -1,0 +1,36 @@
+From e100d5345ad9104697ece66a4d638807df74e6b8 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Mon, 21 Jun 2021 20:53:47 +0000
+Subject: [PATCH] sysctl: do not set rp_filter via wildcard
+
+The wildcard matches existing interfaces when `systemd-sysctl` runs
+at startup, but also applies to new interfaces when it is invoked by
+a udev rule in `99-systemd.rules`.
+
+This effectively makes `net.ipv4.conf.default` useless for setting a
+default value for rp_filter, since the wildcard will also match and
+clobber the value.
+
+It also interferes with CNI plugins that attempt to configure the
+rp_filter value for newly created interfaces.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ sysctl.d/50-default.conf | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/sysctl.d/50-default.conf b/sysctl.d/50-default.conf
+index f41e24b..9a6ae96 100644
+--- a/sysctl.d/50-default.conf
++++ b/sysctl.d/50-default.conf
+@@ -23,7 +23,6 @@ kernel.core_uses_pid = 1
+ 
+ # Source route verification
+ net.ipv4.conf.default.rp_filter = 2
+-net.ipv4.conf.*.rp_filter = 2
+ -net.ipv4.conf.all.rp_filter
+ 
+ # Do not accept source routing
+-- 
+2.40.1
+

@@ -1,0 +1,7 @@
+   
+    [required-extensions]
+    a = { version = "3" }
+    # A bare string is treated as a version identifier
+    b = "4"
+        +++
+body

@@ -1,0 +1,219 @@
+version = {{version}}
+
+[eno1]
+dhcp4 = true
+
+[eno2]
+dhcp6 = true
+primary = true
+
+[eno3]
+dhcp4 = true
+dhcp6 = false
+
+[eno4]
+dhcp4 = false
+dhcp6 = true
+
+[eno5]
+dhcp4 = true
+dhcp6 = true
+
+[eno6.dhcp4]
+enabled = true
+route-metric = 100
+
+[eno6]
+dhcp6 = false
+
+[eno7]
+dhcp4 = true
+
+[eno7.dhcp6]
+enabled = true
+optional = true
+
+[eno8.dhcp4]
+enabled = true
+optional = true
+
+[eno8.dhcp6]
+enabled = true
+optional = true
+
+[eno9.dhcp4]
+enabled = true
+optional = true
+
+[eno10.dhcp6]
+enabled = true
+optional = true
+
+{{#if (eq version 2)}}
+# IPv4 static addresses/routes
+[eno11.static4]
+addresses = ["192.168.14.2/24"]
+
+[eno12.static4]
+addresses = ["10.0.0.9/24"]
+
+[[eno12.route]]
+to = "10.10.10.0/24"
+via = "10.0.0.1"
+
+[eno13.static4]
+addresses = ["192.168.14.2/24"]
+
+[[eno13.route]]
+to = "9.9.0.0/16"
+via = "192.168.1.1"
+
+[[eno13.route]]
+to = "10.10.10.0/24"
+via = "192.168.1.3"
+
+[eno14.static4]
+addresses = ["10.0.0.10/24", "11.0.0.11/24"]
+
+[[eno14.route]]
+to = "default"
+via = "10.0.0.1"
+route-metric = 100
+
+[[eno14.route]]
+to = "default"
+via = "11.0.0.1"
+route-metric = 200
+
+# IPv6 static addresses/routes
+[eno15.static6]
+addresses = ["2001:cafe:face:beef::dead:dead/64"]
+
+[eno16.static6]
+addresses = ["2001:dead:beef::2/64"]
+
+[[eno16.route]]
+to = "default"
+via = "2001:beef:beef::1"
+
+[eno17.static6]
+addresses = ["3001:f00f:f00f::2/64", "3001:f00f:f00f::3/64"]
+
+[[eno17.route]]
+to = "3001:dead:beef::2/64"
+via = "3001:beef:beef::1"
+route-metric = 100
+
+[[eno17.route]]
+to = "3001:dead:feed::2/64"
+via = "3001:beef:beef::2"
+route-metric = 200
+
+# DHCP4/6 and static addresses
+[eno18]
+dhcp4 = true
+
+[eno18.static4]
+addresses = ["10.0.0.10/24", "11.0.0.11/24"]
+
+[eno19]
+dhcp6 = true
+
+[eno19.static6]
+addresses = ["3001:f00f:f00f::2/64", "3001:f00f:f00f::3/64"]
+
+# Source IP
+[eno20.static4]
+addresses = ["192.168.14.5/24"]
+
+[[eno20.route]]
+to = "10.10.10.0/24"
+from = "192.168.14.5"
+via = "192.168.14.25"
+
+[eno21.static6]
+addresses = ["2001:dead:beef::2/64"]
+
+[[eno21.route]]
+to = "3001:dead:beef::2/64"
+from = "2001:dead:beef::2"
+via = "2001:beef:beef::1"
+{{/if}}
+
+{{#if (eq version 3)}}
+[myvlan]
+kind = "vlan"
+device = "eno100"
+id = 42
+dhcp4 = true
+
+[mystaticvlan]
+kind = "vlan"
+device = "eno1000"
+id = 42
+
+[mystaticvlan.static4]
+addresses = ["192.168.1.100/24"]
+
+# This interface is a member of a VLAN but also has its own addressing
+[eno1001]
+dhcp4 = true
+
+# This VLAN uses a device that also has its own addressing config
+[vlancfgdev]
+kind = "vlan"
+device = "eno1001"
+id = 1
+dhcp4 = true
+
+[bond0]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno51" , "eno52"]
+dhcp4 = true
+
+[bond0.monitoring]
+miimon-frequency-ms = 100
+miimon-updelay-ms = 200
+miimon-downdelay-ms = 200
+
+[bond1]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno53" , "eno54"]
+dhcp4 = true
+
+[bond1.monitoring]
+arpmon-interval-ms = 200
+arpmon-validate = "all"
+arpmon-targets = ["192.168.1.1", "10.0.0.2"]
+
+[bond2]
+kind = "bond"
+mode = "active-backup"
+interfaces = ["eno55", "eno56", "eno57"]
+min-links = 2
+dhcp6 = true
+
+[bond2.monitoring]
+miimon-frequency-ms = 100
+miimon-updelay-ms = 1000
+miimon-downdelay-ms = 1000
+
+["f8:74:a4:d5:32:64"]
+dhcp4 = true
+
+["f8-74-a4-d5-32-65"]
+dhcp4 = true
+
+["F8-74-A4-D5-32-66"]
+dhcp4 = true
+
+["c8:74:a4:d5:32:65".static4]
+addresses = ["192.168.14.5/24"]
+
+[["c8:74:a4:d5:32:65".route]]
+to = "10.10.10.0/24"
+from = "192.168.14.5"
+via = "192.168.14.25"
+{{/if}}

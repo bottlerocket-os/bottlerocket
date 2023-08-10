@@ -23,7 +23,6 @@ shell-words = "1"
 simplelog = "0.12"
 snafu = "0.7"
 tokio = { version = "1", default-features = false, features = ["macros", "rt-multi-thread"] }
-toml = "0.5"
 url = "2"
 
 [dev-dependencies]

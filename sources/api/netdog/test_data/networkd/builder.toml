@@ -182,7 +182,6 @@ name = "bond1"
 mode = "active-backup"
 interfaces = ["eno53" , "eno54"]
 dhcp4 = true
-dhcp6 = true
 [bond.monitoring_config]
 arpmon-interval-ms = 200
 arpmon-validate = "all"

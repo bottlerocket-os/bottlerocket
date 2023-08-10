@@ -1496,8 +1496,8 @@ fn oci_spec_resource_limits(value: &Value) -> Result<String, RenderError> {
             format!(
                 r#"{{ "type": "{}", "hard": {}, "soft": {} }}"#,
                 rlimit_type.to_linux_string(),
-                values.hard_limit,
-                values.soft_limit,
+                values.get_hard_limit(),
+                values.get_soft_limit(),
             )
         })
         .collect::<Vec<String>>()
@@ -2703,6 +2703,7 @@ mod test_any_enabled {
 mod test_oci_spec {
     use crate::helpers::*;
     use serde_json::json;
+    use OciDefaultsResourceLimitType::*;
 
     #[test]
     fn oci_spec_capabilities_test() {
@@ -2728,13 +2729,63 @@ mod test_oci_spec {
         );
     }
 
+    fn check_all_rlimits(
+        (cap, bottlerocket, hard_limit, soft_limit): (OciDefaultsResourceLimitType, &str, i64, i64),
+    ) {
+        let json = json!({bottlerocket: {"hard-limit": hard_limit, "soft-limit": soft_limit}});
+        let rendered = oci_spec_resource_limits(&json).unwrap();
+        let result = format!(
+            r#"{{ "type": "{}", "hard": {}, "soft": {} }}"#,
+            cap.to_linux_string(),
+            hard_limit,
+            soft_limit,
+        );
+        assert_eq!(rendered, result);
+    }
+
     #[test]
     fn oci_spec_resource_limits_test() {
-        let json = json!({"max-open-files": {"hard-limit": 1, "soft-limit": 2}});
+        let rlimits = [
+            (MaxAddressSpace, "max-address-space", 2, 1),
+            (MaxCoreFileSize, "max-core-file-size", 4, 3),
+            (MaxCpuTime, "max-cpu-time", 5, 4),
+            (MaxDataSize, "max-data-size", 6, 5),
+            (MaxFileLocks, "max-file-locks", 7, 6),
+            (MaxFileSize, "max-file-size", 8, 7),
+            (MaxLockedMemory, "max-locked-memory", 9, 8),
+            (MaxMsgqueueSize, "max-msgqueue-size", 10, 9),
+            (MaxNicePriority, "max-nice-priority", 11, 10),
+            (MaxOpenFiles, "max-open-files", 12, 11),
+            (MaxPendingSignals, "max-pending-signals", 17, 15),
+            (MaxProcesses, "max-processes", 13, 12),
+            (MaxRealtimePriority, "max-realtime-priority", 18, 23),
+            (MaxRealtimeTimeout, "max-realtime-timeout", 14, 13),
+            (MaxResidentSet, "max-resident-set", 15, 14),
+            (MaxStackSize, "max-stack-size", 16, 15),
+        ];
+
+        for rlimit in rlimits {
+            check_all_rlimits(rlimit);
+        }
+    }
+
+    #[test]
+    fn oci_spec_max_locked_memory_as_unlimited_resource_limit_test() {
+        let json = json!({"max-locked-memory": {"hard-limit": "unlimited", "soft-limit": 18}});
         let rendered = oci_spec_resource_limits(&json).unwrap();
         assert_eq!(
             rendered,
-            r#"{ "type": "RLIMIT_NOFILE", "hard": 1, "soft": 2 }"#
+            r#"{ "type": "RLIMIT_MEMLOCK", "hard": 18446744073709551615, "soft": 18 }"#
+        );
+    }
+
+    #[test]
+    fn oci_spec_max_locked_memory_as_minus_one_resource_limit_test() {
+        let json = json!({"max-locked-memory": {"hard-limit": -1, "soft-limit": 18}});
+        let rendered = oci_spec_resource_limits(&json).unwrap();
+        assert_eq!(
+            rendered,
+            r#"{ "type": "RLIMIT_MEMLOCK", "hard": 18446744073709551615, "soft": 18 }"#
         );
     }
 }

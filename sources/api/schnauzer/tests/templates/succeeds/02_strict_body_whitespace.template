@@ -1,0 +1,6 @@
+[required-extensions]
+kubernetes = { version = "v2" }
++++
+
+  body
+  

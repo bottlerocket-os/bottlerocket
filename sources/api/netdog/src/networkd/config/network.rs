@@ -1,5 +1,7 @@
-use super::private::{Bond, BondWorker, Device, Interface, NotBonded, Vlan};
-use super::{CONFIG_FILE_PREFIX, NETWORKD_CONFIG_DIR};
+use super::private::{
+    Bond, BondWorker, CanHaveVlans, Device, Interface, NotBonded, Vlan, VlanLink,
+};
+use super::CONFIG_FILE_PREFIX;
 use crate::addressing::{Dhcp4ConfigV1, Dhcp6ConfigV1, RouteTo, RouteV1, StaticConfigV1};
 use crate::interface_id::InterfaceId;
 use crate::interface_id::{InterfaceName, MacAddress};
@@ -101,6 +103,8 @@ struct Dhcp6Section {
     use_domains: Option<bool>,
 }
 
+// The `Any` variant isn't currently used, but is valid
+#[allow(dead_code)]
 #[derive(Debug)]
 enum RequiredFamily {
     Any,
@@ -162,6 +166,29 @@ impl NetworkConfig {
         }
     }
 
+    /// The name of the device that corresponds to this config
+    // This method is useful but is only used in tests so far
+    #[cfg(test)]
+    pub(crate) fn name(&self) -> Option<InterfaceId> {
+        let maybe_name = self.r#match.as_ref().and_then(|m| m.name.as_ref());
+        let maybe_mac = self
+            .r#match
+            .as_ref()
+            .and_then(|m| m.permanent_mac_address.first());
+
+        match (maybe_name, maybe_mac) {
+            (Some(name), _) => Some(InterfaceId::from(name.clone())),
+            (None, Some(mac)) => Some(InterfaceId::from(mac.clone())),
+            (None, None) => None,
+        }
+    }
+
+    /// Add config to accept IPv6 router advertisements
+    // TODO: expose a network config option for this
+    pub(crate) fn accept_ra(&mut self) {
+        self.network_mut().ipv6_accept_ra = Some(true)
+    }
+
     /// Write the config to the proper directory with the proper prefix and file extention
     pub(crate) fn write_config_file<P: AsRef<Path>>(&self, config_dir: P) -> Result<()> {
         let cfg_path = self.config_path(config_dir)?;
@@ -206,10 +233,6 @@ impl NetworkConfig {
     // are convenience methods to access the referenced structs (which are `Option`s) since they
     // may need to be accessed in multiple places during the builder's construction process. (And
     // no one wants to call `get_or_insert_with()` everywhere)
-    fn match_mut(&mut self) -> &mut MatchSection {
-        self.r#match.get_or_insert_with(MatchSection::default)
-    }
-
     fn link_mut(&mut self) -> &mut LinkSection {
         self.link.get_or_insert_with(LinkSection::default)
     }
@@ -317,6 +340,44 @@ impl NetworkBuilder<Vlan> {
             network,
             spooky: PhantomData,
         }
+    }
+}
+
+impl NetworkBuilder<VlanLink> {
+    pub(crate) fn new_vlan_link<I>(id: I) -> Self
+    where
+        I: Into<InterfaceId>,
+    {
+        let mut network = match id.into() {
+            InterfaceId::Name(n) => NetworkConfig::new_with_name(n),
+            InterfaceId::MacAddress(m) => NetworkConfig::new_with_mac_address(m),
+        };
+        // Disable all address autoconfig for vlan links
+        network.network_mut().link_local_addressing = Some(DhcpBool::No);
+        network.network_mut().ipv6_accept_ra = Some(false);
+
+        Self {
+            network,
+            spooky: PhantomData,
+        }
+    }
+}
+
+// The following methods are meant only for devices able to be members of VLANs
+impl<T> NetworkBuilder<T>
+where
+    T: CanHaveVlans + Device,
+{
+    /// Add multiple VLANs
+    pub(crate) fn with_vlans(&mut self, vlans: Vec<InterfaceName>) {
+        for vlan in vlans {
+            self.with_vlan(vlan)
+        }
+    }
+
+    /// Add a single VLAN
+    pub(crate) fn with_vlan(&mut self, vlan: InterfaceName) {
+        self.network.network_mut().vlan.push(vlan)
     }
 }
 
@@ -455,18 +516,6 @@ where
         };
 
         self.network.route.push(route_section)
-    }
-
-    /// Add multiple VLANs
-    pub(crate) fn with_vlans(&mut self, vlans: Vec<InterfaceName>) {
-        for vlan in vlans {
-            self.with_vlan(vlan)
-        }
-    }
-
-    /// Add a single VLAN
-    pub(crate) fn with_vlan(&mut self, vlan: InterfaceName) {
-        self.network.network_mut().vlan.push(vlan)
     }
 
     // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=

@@ -1,0 +1,5 @@
+[required-extensions]
+helpful = { version = "v1", helpers = ["helpful_helper"] }
+overly-helpul = { version = "v1", helpers = ["helpful_helper" ] }
++++
+{{ helpful_helper "please help" }}

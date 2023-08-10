@@ -77,7 +77,7 @@ publish = false
 build = "../build.rs"
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 [[package.metadata.build-package.external-files]]
 url = "http://downloads.sourceforge.net/libwoof/libwoof-1.0.0.tar.xz"

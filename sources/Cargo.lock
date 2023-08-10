@@ -502,6 +502,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-admin-container-v0-10-2"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-admin-container-v0-9-4"
 version = "0.1.0"
 dependencies = [
@@ -553,6 +560,13 @@ dependencies = [
 
 [[package]]
 name = "aws-control-container-v0-7-2"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "aws-control-container-v0-7-3"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
@@ -1099,6 +1113,42 @@ checksum = "238e4886760d98c4f899360c834fa93e62cf7f721ac3c2da375cbdf4b8679aae"
 dependencies = [
  "bytes",
 ]
+
+[[package]]
+name = "cached"
+version = "0.44.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b195e4fbc4b6862bbd065b991a34750399c119797efff72492f28a5864de8700"
+dependencies = [
+ "async-trait",
+ "cached_proc_macro",
+ "cached_proc_macro_types",
+ "futures",
+ "hashbrown 0.13.2",
+ "instant",
+ "once_cell",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "cached_proc_macro"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b48814962d2fd604c50d2b9433c2a41a0ab567779ee2c02f7fba6eca1221f082"
+dependencies = [
+ "cached_proc_macro_types",
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "cached_proc_macro_types"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a4f925191b4367301851c6d99b09890311d74b0d43f274c0b34c86d308a3663"
 
 [[package]]
 name = "cargo-readme"
@@ -1875,6 +1925,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
+name = "hashbrown"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
+
+[[package]]
 name = "headers"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2174,7 +2230,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
 dependencies = [
  "autocfg",
- "hashbrown",
+ "hashbrown 0.12.3",
  "serde",
 ]
 
@@ -2709,6 +2765,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "oci-defaults-max-open-files"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+ "serde_json",
+]
+
+[[package]]
+name = "oci-defaults-resource-setting"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
 name = "oci-defaults-setting"
 version = "0.1.0"
 dependencies = [
@@ -2999,6 +3072,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "public-admin-container-v0-10-2"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "public-admin-container-v0-9-4"
 version = "0.1.0"
 dependencies = [
@@ -3021,6 +3101,13 @@ dependencies = [
 
 [[package]]
 name = "public-control-container-v0-7-2"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "public-control-container-v0-7-3"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
@@ -3316,8 +3403,10 @@ name = "schnauzer"
 version = "0.1.0"
 dependencies = [
  "apiclient",
+ "async-trait",
  "base64 0.13.1",
  "bottlerocket-release",
+ "cached",
  "constants",
  "dns-lookup",
  "generate-readme",
@@ -3325,14 +3414,19 @@ dependencies = [
  "http",
  "lazy_static",
  "log",
+ "maplit",
  "models",
  "num_cpus",
  "percent-encoding",
+ "pest",
+ "pest_derive",
+ "schnauzer",
  "serde",
  "serde_json",
  "serde_plain",
  "snafu",
  "tokio",
+ "toml",
  "url",
 ]
 

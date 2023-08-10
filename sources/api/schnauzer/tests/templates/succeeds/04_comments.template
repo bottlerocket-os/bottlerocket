@@ -1,0 +1,6 @@
+# comments are ignored in toml
+[required-extensions]
+labrador = { version = "v1", helpers = [ "woof" ] }
++++
+# comments are included in template
+{{ woof }}

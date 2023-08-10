@@ -39,7 +39,11 @@ mod private {
     pub enum Bond {}
     pub enum Interface {}
     pub enum Vlan {}
-    pub enum BondWorker {} // interfaces that are bound to a bond
+    // Interfaces that are bound to a bond
+    pub enum BondWorker {}
+    // Interfaces without config, used as the link for a VLAN: typically
+    // "tagged-only" setups
+    pub enum VlanLink {}
 
     // The devices for which we are generating a configuration file.  All device types should
     // implement this trait.
@@ -48,20 +52,26 @@ mod private {
     impl Device for Interface {}
     impl Device for Vlan {}
     impl Device for BondWorker {}
+    impl Device for VlanLink {}
 
     // Devices not bound to a bond, i.e. everything EXCEPT BondWorker(s)
     pub trait NotBonded {}
     impl NotBonded for Bond {}
     impl NotBonded for Interface {}
     impl NotBonded for Vlan {}
+
+    // Devices able to be members of VLANs
+    pub trait CanHaveVlans {}
+    impl CanHaveVlans for Bond {}
+    impl CanHaveVlans for Interface {}
+    impl CanHaveVlans for VlanLink {}
 }
 
 #[cfg(test)]
 mod tests {
     use crate::networkd::devices::{NetworkDBond, NetworkDInterface, NetworkDVlan};
     use serde::Deserialize;
-    use std::fs;
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     pub(super) const BUILDER_DATA: &str = include_str!("../../../test_data/networkd/builder.toml");
 

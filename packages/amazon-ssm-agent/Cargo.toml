@@ -6,7 +6,7 @@ publish = false
 build = "../build.rs"
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/aws/amazon-ssm-agent/archive/3.2.815.0/amazon-ssm-agent-3.2.815.0.tar.gz"

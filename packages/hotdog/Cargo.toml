@@ -6,7 +6,7 @@ publish = false
 build = "../build.rs"
 
 [lib]
-path = "/dev/null"
+path = "../packages.rs"
 
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/bottlerocket-os/hotdog/archive/v1.0.6/hotdog-1.0.6.tar.gz"

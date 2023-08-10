@@ -2,13 +2,9 @@
 Name=bond1
 [Link]
 RequiredForOnline=true
-RequiredFamilyForOnline=both
 [Network]
 ConfigureWithoutCarrier=true
-DHCP=yes
+DHCP=ipv4
 [DHCPv4]
-UseDNS=true
-UseDomains=true
-[DHCPv6]
 UseDNS=true
 UseDomains=true

@@ -1,0 +1,121 @@
+From 1539259546fe7f686d07e256d700ee2929b78064 Mon Sep 17 00:00:00 2001
+From: Zac Mrowicki <mrowicki@amazon.com>
+Date: Thu, 6 Jul 2023 17:50:28 +0000
+Subject: [PATCH] systemd-networkd: Conditionalize hostnamed/timezoned DBUS
+ calls
+
+systemd-networkd registers a function to call when first connecting to
+DBUS.  This function makes three calls to other DBUS services (hostnamed
+and timedated) which aren't used in Bottlerocket.  Calls to the same
+DBUS services are made in the DHCP clients.  This change makes a patch
+to systemd-networkd that conditionalizes these calls based on the
+underlying services being built, returning 0 if the service isn't built.
+
+Removing the calls to non-existent services cleans up some confusing and
+inconsequential messages in the journal on boot.
+---
+ src/network/networkd-dhcp-common.c |  2 ++
+ src/network/networkd-dhcp-common.h |  6 ++++++
+ src/network/networkd-manager.c     |  4 ++++
+ src/network/networkd-manager.h     | 13 +++++++++++++
+ 4 files changed, 25 insertions(+)
+
+diff --git a/src/network/networkd-dhcp-common.c b/src/network/networkd-dhcp-common.c
+index 7b0b2de..43cf30d 100644
+--- a/src/network/networkd-dhcp-common.c
++++ b/src/network/networkd-dhcp-common.c
+@@ -171,6 +171,7 @@ static int get_product_uuid_handler(sd_bus_message *m, void *userdata, sd_bus_er
+         return 0;
+ }
+ 
++#if ENABLE_HOSTNAMED
+ int manager_request_product_uuid(Manager *m) {
+         static bool bus_method_is_called = false;
+         int r;
+@@ -206,6 +207,7 @@ int manager_request_product_uuid(Manager *m) {
+ 
+         return 0;
+ }
++#endif
+ 
+ int dhcp_configure_duid(Link *link, const DUID *duid) {
+         Manager *m;
+diff --git a/src/network/networkd-dhcp-common.h b/src/network/networkd-dhcp-common.h
+index c19bc10..9d13cde 100644
+--- a/src/network/networkd-dhcp-common.h
++++ b/src/network/networkd-dhcp-common.h
+@@ -72,7 +72,13 @@ static inline const DUID *link_get_dhcp6_duid(Link *link) {
+ }
+ 
+ int dhcp_configure_duid(Link *link, const DUID *duid);
++#if ENABLE_HOSTNAMED
+ int manager_request_product_uuid(Manager *m);
++#else
++static inline int manager_request_product_uuid(_unused_ Manager *m) {
++        return 0;
++}
++#endif
+ 
+ bool address_is_filtered(int family, const union in_addr_union *address, uint8_t prefixlen, Set *allow_list, Set *deny_list);
+ static inline bool in4_address_is_filtered(const struct in_addr *address, Set *allow_list, Set *deny_list) {
+diff --git a/src/network/networkd-manager.c b/src/network/networkd-manager.c
+index cdfd29b..d226b1f 100644
+--- a/src/network/networkd-manager.c
++++ b/src/network/networkd-manager.c
+@@ -1002,6 +1002,7 @@ static int set_hostname_handler(sd_bus_message *m, void *userdata, sd_bus_error
+         return 1;
+ }
+ 
++#if ENABLE_HOSTNAMED
+ int manager_set_hostname(Manager *m, const char *hostname) {
+         int r;
+ 
+@@ -1031,6 +1032,7 @@ int manager_set_hostname(Manager *m, const char *hostname) {
+ 
+         return 0;
+ }
++#endif
+ 
+ static int set_timezone_handler(sd_bus_message *m, void *userdata, sd_bus_error *ret_error) {
+         const sd_bus_error *e;
+@@ -1047,6 +1049,7 @@ static int set_timezone_handler(sd_bus_message *m, void *userdata, sd_bus_error
+         return 1;
+ }
+ 
++#if ENABLE_TIMEDATED
+ int manager_set_timezone(Manager *m, const char *tz) {
+         int r;
+ 
+@@ -1078,3 +1081,4 @@ int manager_set_timezone(Manager *m, const char *tz) {
+ 
+         return 0;
+ }
++#endif
+diff --git a/src/network/networkd-manager.h b/src/network/networkd-manager.h
+index 40e6092..cab2a6a 100644
+--- a/src/network/networkd-manager.h
++++ b/src/network/networkd-manager.h
+@@ -112,7 +112,20 @@ int manager_load_config(Manager *m);
+ 
+ int manager_enumerate(Manager *m);
+ 
++#if ENABLE_HOSTNAMED
+ int manager_set_hostname(Manager *m, const char *hostname);
++#else
++static inline int manager_set_hostname(_unused_ Manager *m, _unused_ const char *hostname) {
++        return 0;
++}
++#endif /* ENABLE_HOSTNAMED */
++
++#if ENABLE_TIMEDATED
+ int manager_set_timezone(Manager *m, const char *timezone);
++#else
++static inline int manager_set_timezone(_unused_ Manager *m, _unused_ const char *timezone) {
++        return 0;
++}
++#endif /* ENABLE_TIMEDATED */
+ 
+ DEFINE_TRIVIAL_CLEANUP_FUNC(Manager*, manager_free);
+-- 
+2.40.1
+

@@ -12,7 +12,6 @@ mod v3;
 
 use crate::addressing::StaticConfigV1;
 use crate::interface_id::InterfaceId;
-use crate::wicked::WickedInterface;
 pub(crate) use error::{Error, Result};
 use ipnet::IpNet;
 use serde::Deserialize;
@@ -21,6 +20,14 @@ use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 pub(crate) use v1::NetConfigV1;
+
+#[cfg(net_backend = "wicked")]
+use crate::wicked::WickedInterface;
+
+#[cfg(net_backend = "systemd-networkd")]
+use crate::networkd;
+#[cfg(net_backend = "systemd-networkd")]
+pub(crate) use v1::NetInterfaceV1;
 
 static DEFAULT_INTERFACE_PREFIX: &str = "netdog.default-interface=";
 
@@ -34,7 +41,11 @@ pub(crate) trait Interfaces {
 
     /// Converts the network config into a list of `WickedInterface` structs, suitable for writing
     /// to file
+    #[cfg(net_backend = "wicked")]
     fn as_wicked_interfaces(&self) -> Vec<WickedInterface>;
+
+    #[cfg(net_backend = "systemd-networkd")]
+    fn as_networkd_config(&self) -> Result<networkd::NetworkDConfig>;
 }
 
 impl<I: Interfaces> Interfaces for Box<I> {
@@ -46,8 +57,14 @@ impl<I: Interfaces> Interfaces for Box<I> {
         (**self).has_interfaces()
     }
 
+    #[cfg(net_backend = "wicked")]
     fn as_wicked_interfaces(&self) -> Vec<WickedInterface> {
         (**self).as_wicked_interfaces()
+    }
+
+    #[cfg(net_backend = "systemd-networkd")]
+    fn as_networkd_config(&self) -> Result<networkd::NetworkDConfig> {
+        (**self).as_networkd_config()
     }
 }
 

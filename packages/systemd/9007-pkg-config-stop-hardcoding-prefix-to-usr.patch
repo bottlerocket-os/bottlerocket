@@ -1,0 +1,28 @@
+From 692205df10b9a803d5324c5284605481722b27a1 Mon Sep 17 00:00:00 2001
+From: Erikson Tung <etung@amazon.com>
+Date: Mon, 3 Jan 2022 22:07:25 +0000
+Subject: [PATCH] pkg-config: stop hardcoding prefix to /usr
+
+While we ensure /usr points to the sys-root at runtime, for Bottlerocket's
+packaging we need to be careful to avoid dependencies on the host OS so
+the prefix needs to be configurable.
+---
+ src/core/systemd.pc.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/core/systemd.pc.in b/src/core/systemd.pc.in
+index 693433b..c5ba688 100644
+--- a/src/core/systemd.pc.in
++++ b/src/core/systemd.pc.in
+@@ -11,7 +11,7 @@
+ # considered deprecated (though there is no plan to remove them). New names
+ # shall have underscores.
+ 
+-prefix=/usr
++prefix={{PREFIX}}
+ root_prefix={{ROOTPREFIX_NOSLASH}}
+ rootprefix=${root_prefix}
+ sysconf_dir={{SYSCONF_DIR}}
+-- 
+2.40.1
+

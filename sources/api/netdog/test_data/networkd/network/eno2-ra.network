@@ -1,0 +1,10 @@
+[Match]
+Name=eno2
+[Link]
+RequiredForOnline=true
+[Network]
+DHCP=ipv6
+IPv6AcceptRA=true
+[DHCPv6]
+UseDNS=true
+UseDomains=true

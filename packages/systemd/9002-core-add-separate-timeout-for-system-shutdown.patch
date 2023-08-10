@@ -1,7 +1,7 @@
-From 71a774ad3c3dfd5f9ddb96f7b08a957144e93323 Mon Sep 17 00:00:00 2001
+From e66920d0a95a3e53b24a2f270420a85d0f2395ea Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Tue, 10 Mar 2020 20:30:10 +0000
-Subject: [PATCH 9002/9011] core: add separate timeout for system shutdown
+Subject: [PATCH] core: add separate timeout for system shutdown
 
 There is an existing setting for this (DefaultTimeoutStopUSec), but
 changing it has no effect because `reset_arguments()` is called just
@@ -13,16 +13,17 @@ services, and for cleaning up stray processes after most of userspace
 has gone away.
 
 Signed-off-by: Ben Cressey <bcressey@amazon.com>
+Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
 ---
  src/basic/def.h | 3 +++
  src/core/main.c | 4 +++-
  2 files changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/src/basic/def.h b/src/basic/def.h
-index eccee3d..3f5bef5 100644
+index 2b4de29..22034c7 100644
 --- a/src/basic/def.h
 +++ b/src/basic/def.h
-@@ -13,6 +13,9 @@
+@@ -18,6 +18,9 @@
   * the watchdog pings will keep the loop busy. */
  #define DEFAULT_EXIT_USEC (30*USEC_PER_SEC)
  
@@ -33,34 +34,34 @@ index eccee3d..3f5bef5 100644
  #define DEFAULT_UNIX_MAX_DGRAM_QLEN 512UL
  
 diff --git a/src/core/main.c b/src/core/main.c
-index 57aedb9..45fc78c 100644
+index a84fafa..0981742 100644
 --- a/src/core/main.c
 +++ b/src/core/main.c
-@@ -131,6 +131,7 @@ static ExecOutput arg_default_std_error;
+@@ -133,6 +133,7 @@ static ExecOutput arg_default_std_error;
  static usec_t arg_default_restart_usec;
  static usec_t arg_default_timeout_start_usec;
  static usec_t arg_default_timeout_stop_usec;
 +static usec_t arg_default_timeout_shutdown_usec;
  static usec_t arg_default_timeout_abort_usec;
+ static usec_t arg_default_device_timeout_usec;
  static bool arg_default_timeout_abort_set;
- static usec_t arg_default_start_limit_interval;
-@@ -1552,7 +1553,7 @@ static int become_shutdown(
+@@ -1492,7 +1493,7 @@ static int become_shutdown(
          env_block = strv_copy(environ);
  
-         xsprintf(log_level, "%d", log_get_max_level());
--        xsprintf(timeout, "%" PRI_USEC "us", arg_default_timeout_stop_usec);
-+        xsprintf(timeout, "%" PRI_USEC "us", arg_default_timeout_shutdown_usec);
+         xsprintf(log_level, "--log-level=%d", log_get_max_level());
+-        xsprintf(timeout, "--timeout=%" PRI_USEC "us", arg_default_timeout_stop_usec);
++        xsprintf(timeout, "--timeout=%" PRI_USEC "us", arg_default_timeout_shutdown_usec);
  
          switch (log_get_target()) {
  
-@@ -2443,6 +2444,7 @@ static void reset_arguments(void) {
+@@ -2410,6 +2411,7 @@ static void reset_arguments(void) {
          arg_default_restart_usec = DEFAULT_RESTART_USEC;
          arg_default_timeout_start_usec = DEFAULT_TIMEOUT_USEC;
          arg_default_timeout_stop_usec = DEFAULT_TIMEOUT_USEC;
 +        arg_default_timeout_shutdown_usec = DEFAULT_TIMEOUT_SHUTDOWN_USEC;
          arg_default_timeout_abort_usec = DEFAULT_TIMEOUT_USEC;
          arg_default_timeout_abort_set = false;
-         arg_default_start_limit_interval = DEFAULT_START_LIMIT_INTERVAL;
+         arg_default_device_timeout_usec = DEFAULT_TIMEOUT_USEC;
 -- 
-2.36.1
+2.40.1
 
