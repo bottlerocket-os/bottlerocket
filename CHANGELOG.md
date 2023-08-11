@@ -1,3 +1,22 @@
+# v1.14.3 (2023-08-10)
+
+## OS Changes
+
+* Apply patches to 5.10 and 5.15 kernels to address CVE-2023-20593 ([#3300])
+* Update admin and control containers ([#3307])
+* Update eni-max-pods with new instance types ([#3324])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Update Kubernetes v1.23.17 to include latest EKS-D patches ([#3323])
+
+[#3300]: https://github.com/bottlerocket-os/bottlerocket/pull/3300
+[#3307]: https://github.com/bottlerocket-os/bottlerocket/pull/3307
+[#3323]: https://github.com/bottlerocket-os/bottlerocket/pull/3323
+[#3324]: https://github.com/bottlerocket-os/bottlerocket/pull/3324
+
 # v1.14.2 (2023-07-06)
 
 ## OS Changes
