@@ -3,8 +3,8 @@
 
 # These are specific to the upstream source RPM, and will likely need to be
 # updated for each new version.
-%global amd_ucode_archive linux-firmware-20200421.tar.gz
-%global intel_ucode_archive microcode-20210608-1-amzn.tgz
+%global amd_ucode_version 20230804
+%global intel_ucode_version 20230808
 
 Name: %{_cross_os}microcode
 Version: 0.0
@@ -18,9 +18,8 @@ License: LicenseRef-scancode-amd-linux-firmware-export AND LicenseRef-scancode-i
 # the subpackage definitions.
 URL: https://github.com/bottlerocket-os/bottlerocket/tree/develop/packages/microcode
 
-# We use Amazon Linux 2 as our upstream for microcode updates.
-Source0: https://cdn.amazonlinux.com/blobstore/6d7f707779f6aff41c89bad00f7abe69dc70919cee29a8d3e5060f8070efe71d/linux-firmware-20200421-79.git78c0348.amzn2.src.rpm
-Source1: https://cdn.amazonlinux.com/blobstore/76e8f9f15ec2b27c70aff3ca15a28df51790b25c73fc8dc1bf1f28a9069b15e8/microcode_ctl-2.1-47.amzn2.0.9.src.rpm
+Source0: https://www.kernel.org/pub/linux/kernel/firmware/linux-firmware-%{amd_ucode_version}.tar.xz
+Source1: https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/archive/refs/tags/microcode-%{intel_ucode_version}.tar.gz
 
 # Lets us install "microcode" to pull in the AMD and Intel updates.
 Requires: %{_cross_os}microcode-amd
@@ -75,11 +74,9 @@ Requires: %{_cross_os}microcode-intel-license
 %{summary}.
 
 %prep
-rpm2cpio %{SOURCE0} | cpio -iu %{amd_ucode_archive}
-rpm2cpio %{SOURCE1} | cpio -iu %{intel_ucode_archive}
 mkdir amd intel
-tar -C amd -xof %{amd_ucode_archive}
-tar -C intel -xof %{intel_ucode_archive}
+tar -C amd --strip-components=1 -xof %{SOURCE0}
+tar -C intel --strip-components=1 -xof %{SOURCE1}
 cp {amd/,}LICENSE.amd-ucode
 cp intel/intel-ucode-with-caveats/* intel/intel-ucode
 cp intel/license LICENSE.intel-ucode
@@ -110,6 +107,7 @@ install -p -m 0644 intel/intel-ucode/* %{buildroot}%{_cross_libdir}/firmware/int
 %dir %{_cross_libdir}/firmware
 %dir %{_cross_libdir}/firmware/intel-ucode
 %{_cross_libdir}/firmware/intel-ucode/??-??-??
+%exclude %{_cross_libdir}/firmware/intel-ucode/??-??-??_DUPLICATE
 
 %files intel-license
 %license LICENSE.intel-ucode LicenseRef-scancode-intel-mcu-2018

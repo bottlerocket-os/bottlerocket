@@ -11,9 +11,9 @@ path = "../packages.rs"
 # Use latest-srpm-urls.sh to get these.
 
 [[package.metadata.build-package.external-files]]
-url = "https://cdn.amazonlinux.com/blobstore/6d7f707779f6aff41c89bad00f7abe69dc70919cee29a8d3e5060f8070efe71d/linux-firmware-20200421-79.git78c0348.amzn2.src.rpm"
-sha512 = "d5a62eca6ddd7ff322574f17359681d03a733acc51c334127f291af5d5e39fcdf821c073ddcd977b2ca088cd95d35dc31db2001ca4c312a62dcbd4ea935434fd"
+url = "https://www.kernel.org/pub/linux/kernel/firmware/linux-firmware-20230804.tar.xz"
+sha512 = "b7fdffd49530223394a0896608a746395cbe9d1a3ca7e4e744bc8381e937845e085f08e2b56854a233426164072f4c365b281db2f0dbb47192a97a94ada8fae6"
 
 [[package.metadata.build-package.external-files]]
-url = "https://cdn.amazonlinux.com/blobstore/76e8f9f15ec2b27c70aff3ca15a28df51790b25c73fc8dc1bf1f28a9069b15e8/microcode_ctl-2.1-47.amzn2.0.9.src.rpm"
-sha512 = "e1347139d1edbd52d2619d970ba0f03500ba7367d071bb30ab3d209e44b3ff63000fcaa681f7352c79f7d5d2f0753130161b42b0eab7aab97b5b4fc4bfaa1b3b"
+url = "https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/archive/refs/tags/microcode-20230808.tar.gz"
+sha512 = "8316eb9d35b315e630c6c9fab1ba601b91e72cc42926ef14e7c2b77e7025d276ae06c143060f44cd1a873d3879c067d11ad82e1886c796e6be6bf466243ad85b"
