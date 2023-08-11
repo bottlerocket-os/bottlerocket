@@ -21,6 +21,9 @@ Patch1002: 1002-Revert-kbuild-hide-tools-build-targets-from-external.patch
 Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 # Increase default of sysctl net.unix.max_dgram_qlen to 512.
 Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
+# Drop AL revert of upstream patch to minimize delta. The necessary dependency
+# options for nvidia are instead included through DRM_SIMPLE
+Patch1005: 1005-Revert-Revert-drm-fb_helper-improve-CONFIG_FB-depend.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
