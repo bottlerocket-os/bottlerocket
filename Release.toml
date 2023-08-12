@@ -224,4 +224,5 @@ version = "1.15.0"
 "(1.14.3, 1.15.0)" = [
     "migrate_v1.15.0_oci-defaults-resource-setting.lz4",
     "migrate_v1.15.0_oci-defaults-max-open-files.lz4",
+    "migrate_v1.15.0_seccomp-default-setting.lz4",
 ]

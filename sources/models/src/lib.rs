@@ -292,6 +292,8 @@ struct KubernetesSettings {
     pod_infra_container_image: SingleLineString,
     // Generated in `aws-k8s-1.26*` variants only
     hostname_override: ValidLinuxHostname,
+    // Generated in `k8s-1.25+` variants only
+    seccomp_default: bool,
 }
 
 // ECS settings.

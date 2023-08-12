@@ -131,6 +131,7 @@ featureGates:
   CSIMigrationvSphere: true
 protectKernelDefaults: true
 serializeImagePulls: false
+seccompDefault: {{default false settings.kubernetes.seccomp-default}}
 {{#if (and (default "" settings.kubernetes.server-certificate) (default "" settings.kubernetes.server-key))}}
 tlsCertFile: "/etc/kubernetes/pki/kubelet-server.crt"
 tlsPrivateKeyFile: "/etc/kubernetes/pki/private/kubelet-server.key"
