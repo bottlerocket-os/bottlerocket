@@ -143,7 +143,8 @@ BUILDSYS_SDK_IMAGE = { script = [ "echo ${BUILDSYS_REGISTRY}/${BUILDSYS_SDK_NAME
 BUILDSYS_TOOLCHAIN = { script = [ "echo ${BUILDSYS_REGISTRY}/${BUILDSYS_SDK_NAME}-toolchain-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
 
 # Depends on ${BUILDSYS_JOBS}.
-CARGO_MAKE_CARGO_ARGS = "--jobs ${BUILDSYS_JOBS} --offline --locked"
+CARGO_MAKE_CARGO_LIMIT_JOBS = "--jobs ${BUILDSYS_JOBS}"
+CARGO_MAKE_CARGO_ARGS = "--offline --locked"
 
 # Depends on ${BUILDSYS_ARCH} and ${BUILDSYS_VARIANT}.
 BUILDSYS_OUTPUT_DIR = "${BUILDSYS_IMAGES_DIR}/${BUILDSYS_ARCH}-${BUILDSYS_VARIANT}"
@@ -838,6 +839,7 @@ export CARGO_TARGET_DIR=${BUILDSYS_ROOT_DIR}/variants/target/${BUILDSYS_ARCH}
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
+  ${CARGO_MAKE_CARGO_LIMIT_JOBS} \
   --manifest-path "variants/Cargo.toml" \
   --package "${PACKAGE}"
 '''
@@ -864,6 +866,7 @@ rm -rf "${BUILDSYS_OUTPUT_DIR}/latest"
 cargo build \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
+  ${CARGO_MAKE_CARGO_LIMIT_JOBS} \
   --manifest-path variants/${BUILDSYS_VARIANT}/Cargo.toml
 ln -snf "${BUILDSYS_VERSION_FULL}" "${BUILDSYS_OUTPUT_DIR}/latest"
 '''
@@ -940,7 +943,6 @@ dependencies = [
 script = [
 '''
 cargo install \
-  --jobs ${BUILDSYS_JOBS} \
   --locked \
   --root tools \
   --quiet \
