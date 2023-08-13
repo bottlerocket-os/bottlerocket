@@ -101,6 +101,12 @@ Summary: Files for networkd
 %description networkd
 %{summary}.
 
+%package resolved
+Summary: Files for resolved
+
+%description resolved
+%{summary}.
+
 %prep
 %autosetup -n systemd-stable-%{version} -p1
 
@@ -128,7 +134,7 @@ CONFIGURE_OPTS=(
  -Dutmp=false
  -Dhibernate=false
  -Dldconfig=true
- -Dresolve=false
+ -Dresolve=true
  -Defi=true
  -Dtpm=false
  -Denvironment-d=false
@@ -152,7 +158,7 @@ CONFIGURE_OPTS=(
  -Dremote=false
  -Dnss-myhostname=false
  -Dnss-mymachines=false
- -Dnss-resolve=false
+ -Dnss-resolve=true
  -Dnss-systemd=false
  -Dfirstboot=false
  -Drandomseed=true
@@ -186,8 +192,11 @@ CONFIGURE_OPTS=(
  -Dgshadow=true
 
  -Ddefault-dnssec=no
+ -Ddefault-dns-over-tls=no
  -Ddefault-mdns=no
  -Ddefault-llmnr=no
+ -Ddns-over-tls=false
+ -Ddns-servers=""
 
  -Dsupport-url="https://github.com/bottlerocket-os/bottlerocket/discussions"
 
@@ -383,14 +392,19 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %exclude %{_cross_bindir}/systemd-ask-password
 %exclude %{_cross_bindir}/systemd-tty-ask-password-agent
 %exclude %{_cross_datadir}/dbus-1/system.d/org.freedesktop.network1.conf
+%exclude %{_cross_datadir}/dbus-1/system.d/org.freedesktop.resolve1.conf
+%exclude %{_cross_libdir}/systemd/resolv.conf
 %exclude %{_cross_libdir}/systemd/systemd-networkd
 %exclude %{_cross_libdir}/systemd/systemd-networkd-wait-online
 %exclude %{_cross_libdir}/systemd/systemd-reply-password
+%exclude %{_cross_libdir}/systemd/systemd-resolved
 %exclude %{_cross_libdir}/systemd/systemd-sulogin-shell
 %exclude %{_cross_systemdgeneratordir}/systemd-debug-generator
 %exclude %{_cross_systemdgeneratordir}/systemd-getty-generator
 %exclude %{_cross_sysusersdir}/systemd-network.conf
+%exclude %{_cross_sysusersdir}/systemd-resolve.conf
 %exclude %{_cross_tmpfilesdir}/systemd-network.conf
+%exclude %{_cross_tmpfilesdir}/systemd-resolve.conf
 %exclude %{_cross_unitdir}/autovt@.service
 %exclude %{_cross_unitdir}/console-getty.service
 %exclude %{_cross_unitdir}/container-getty@.service
@@ -408,6 +422,7 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %exclude %{_cross_unitdir}/systemd-networkd-wait-online.service
 %exclude %{_cross_unitdir}/systemd-networkd-wait-online@.service
 %exclude %{_cross_unitdir}/systemd-networkd.socket
+%exclude %{_cross_unitdir}/systemd-resolved.service
 %exclude %{_cross_unitdir}/sysinit.target.wants/systemd-ask-password-console.path
 %exclude %{_cross_unitdir}/multi-user.target.wants/systemd-ask-password-wall.path
 
@@ -454,5 +469,17 @@ install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/i
 %{_cross_unitdir}/systemd-networkd-wait-online@.service
 %{_cross_unitdir}/systemd-networkd.socket
 %{_cross_datadir}/dbus-1/system.d/org.freedesktop.network1.conf
+
+%files resolved
+%{_cross_bindir}/resolvectl
+%{_cross_libdir}/libnss_resolve.so.*
+%{_cross_libdir}/systemd/resolv.conf
+%{_cross_libdir}/systemd/systemd-resolved
+%{_cross_sysusersdir}/systemd-resolve.conf
+%{_cross_tmpfilesdir}/systemd-resolve.conf
+%{_cross_unitdir}/systemd-resolved.service
+%{_cross_datadir}/dbus-1/system.d/org.freedesktop.resolve1.conf
+%exclude %{_cross_bindir}/systemd-resolve
+%exclude %{_cross_sbindir}/resolvconf
 
 %changelog
