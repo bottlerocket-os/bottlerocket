@@ -470,6 +470,7 @@ BUILD_ID=${BUILD_ID}
 HOME_URL="https://github.com/bottlerocket-os/bottlerocket"
 SUPPORT_URL="https://github.com/bottlerocket-os/bottlerocket/discussions"
 BUG_REPORT_URL="https://github.com/bottlerocket-os/bottlerocket/issues"
+DOCUMENTATION_URL="https://bottlerocket.dev"
 EOF
 
 # Set the BOTTLEROCKET-DATA Filesystem for creating/mounting
