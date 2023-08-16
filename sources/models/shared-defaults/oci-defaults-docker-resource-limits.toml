@@ -1,0 +1,3 @@
+[settings.oci-defaults.resource-limits.max-open-files]
+hard-limit = 4096
+soft-limit = 1024

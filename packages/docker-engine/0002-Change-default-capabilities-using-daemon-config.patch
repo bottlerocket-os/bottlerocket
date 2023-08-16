@@ -1,0 +1,102 @@
+From ccb69c8fbcbe272d663ad1c97de91a993a609c96 Mon Sep 17 00:00:00 2001
+From: Shikha Vyaghra <vyaghras@amazon.com>
+Date: Thu, 6 Jul 2023 17:26:45 +0000
+Subject: [PATCH] Change default capabilities using daemon config
+
+Default capabilities in spec can be changed by reading from daemon
+configuration file using a parameter "default-capabilities". If
+the capabilities will not be provided, then default capabilities
+in Moby code will be used.
+
+Signed-off-by: Shikha Vyaghra <vyaghras@amazon.com>
+---
+ cmd/dockerd/config_unix.go   |  1 +
+ daemon/config/config.go      | 13 +++++++------
+ daemon/config/config_unix.go |  1 +
+ daemon/oci_linux.go          | 13 ++++++++++---
+ 4 files changed, 19 insertions(+), 9 deletions(-)
+
+diff --git a/cmd/dockerd/config_unix.go b/cmd/dockerd/config_unix.go
+index f463686..862feff 100644
+--- a/cmd/dockerd/config_unix.go
++++ b/cmd/dockerd/config_unix.go
+@@ -41,6 +41,7 @@ func installConfigFlags(conf *config.Config, flags *pflag.FlagSet) error {
+ 	flags.BoolVar(&conf.BridgeConfig.EnableIPv6, "ipv6", false, "Enable IPv6 networking")
+ 	flags.StringVar(&conf.BridgeConfig.FixedCIDRv6, "fixed-cidr-v6", "", "IPv6 subnet for fixed IPs")
+ 	flags.BoolVar(&conf.BridgeConfig.EnableUserlandProxy, "userland-proxy", true, "Use userland proxy for loopback traffic")
++	flags.Var(opts.NewNamedListOptsRef("default-capabilities", &conf.Capabilities, nil), "default-capabilities", "Default capabilities for containers")
+ 	defaultUserlandProxyPath := ""
+ 	if rootless.RunningWithRootlessKit() {
+ 		var err error
+diff --git a/daemon/config/config.go b/daemon/config/config.go
+index 4990727..d4909be 100644
+--- a/daemon/config/config.go
++++ b/daemon/config/config.go
+@@ -67,12 +67,13 @@ var builtinRuntimes = map[string]bool{
+ // Use this to differentiate these options
+ // with others like the ones in CommonTLSOptions.
+ var flatOptions = map[string]bool{
+-	"cluster-store-opts": true,
+-	"log-opts":           true,
+-	"runtimes":           true,
+-	"default-ulimits":    true,
+-	"features":           true,
+-	"builder":            true,
++	"cluster-store-opts":    true,
++	"log-opts":              true,
++	"runtimes":              true,
++	"default-ulimits":       true,
++	"features":              true,
++	"builder":               true,
++	"default-capabilities":  true,
+ }
+ 
+ // skipValidateOptions contains configuration keys
+diff --git a/daemon/config/config_unix.go b/daemon/config/config_unix.go
+index 96805d3..cd187a2 100644
+--- a/daemon/config/config_unix.go
++++ b/daemon/config/config_unix.go
+@@ -39,6 +39,7 @@ type Config struct {
+ 	NoNewPrivileges      bool                     `json:"no-new-privileges,omitempty"`
+ 	IpcMode              string                   `json:"default-ipc-mode,omitempty"`
+ 	CgroupNamespaceMode  string                   `json:"default-cgroupns-mode,omitempty"`
++	Capabilities         []string                 `json:"default-capabilities,omitempty"`
+ 	// ResolvConf is the path to the configuration of the host resolver
+ 	ResolvConf string `json:"resolv-conf,omitempty"`
+ 	Rootless   bool   `json:"rootless,omitempty"`
+diff --git a/daemon/oci_linux.go b/daemon/oci_linux.go
+index a5a5acf..d3d4acc 100644
+--- a/daemon/oci_linux.go
++++ b/daemon/oci_linux.go
+@@ -156,10 +156,17 @@ func WithApparmor(c *container.Container) coci.SpecOpts {
+ }
+ 
+ // WithCapabilities sets the container's capabilties
+-func WithCapabilities(c *container.Container) coci.SpecOpts {
++func WithCapabilities(daemon *Daemon, c *container.Container) coci.SpecOpts {
+ 	return func(ctx context.Context, _ coci.Client, _ *containers.Container, s *coci.Spec) error {
++		var defCaps []string
++		if len(daemon.configStore.Capabilities) != 0 {
++			defCaps = daemon.configStore.Capabilities
++		} else {
++			defCaps = caps.DefaultCapabilities()
++		}
++
+ 		capabilities, err := caps.TweakCapabilities(
+-			caps.DefaultCapabilities(),
++			defCaps,
+ 			c.HostConfig.CapAdd,
+ 			c.HostConfig.CapDrop,
+ 			c.HostConfig.Privileged,
+@@ -1023,7 +1030,7 @@ func (daemon *Daemon) createSpec(c *container.Container) (retSpec *specs.Spec, e
+ 		WithUser(c),
+ 		WithRlimits(daemon, c),
+ 		WithNamespaces(daemon, c),
+-		WithCapabilities(c),
++		WithCapabilities(daemon, c),
+ 		WithSeccomp(daemon, c),
+ 		WithMounts(daemon, c),
+ 		WithLibnetwork(daemon, c),
+-- 
+2.40.1
+
