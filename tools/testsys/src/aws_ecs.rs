@@ -222,6 +222,7 @@ pub(crate) fn workload_crd(region: &str, test_input: TestInput) -> Result<Test> 
         "testsys/type".to_string() => test_input.test_type.to_string(),
         "testsys/cluster".to_string() => cluster_resource_name.to_string(),
     });
+    let gpu = test_input.crd_input.variant.variant_flavor() == Some("nvidia");
     let plugins: Vec<_> = test_input
         .crd_input
         .config
@@ -230,7 +231,7 @@ pub(crate) fn workload_crd(region: &str, test_input: TestInput) -> Result<Test> 
         .map(|(name, image)| WorkloadTest {
             name: name.to_string(),
             image: image.to_string(),
-            ..Default::default()
+            gpu,
         })
         .collect();
     if plugins.is_empty() {
