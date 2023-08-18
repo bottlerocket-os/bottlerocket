@@ -85,7 +85,7 @@ docker run --rm \
   "${go_env[@]}" \
   "${proxy_env[@]}" \
   --user "$(id -u):$(id -g)" \
-  --security-opt label:disable \
+  --security-opt="label=disable" \
   ${DOCKER_RUN_ARGS} \
   -v "${GOPATH}":"${GOPATH}" \
   -v "${GO_MODULE_PATH}":"${GO_MODULE_PATH}" \

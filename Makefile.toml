@@ -506,7 +506,7 @@ rc=0
 if ! docker run --rm \
   --network=none \
   --user "$(id -u):$(id -g)" \
-  --security-opt label:disable \
+  --security-opt="label=disable" \
   -v "${BUILDSYS_TOOLS_DIR}":/tmp/tools \
   "${BUILDSYS_SDK_IMAGE}" \
   bash -c \
@@ -782,7 +782,7 @@ fi
 docker run --rm \
    --network=none \
    --user "$(id -u):$(id -g)" \
-   --security-opt label:disable \
+   --security-opt="label=disable" \
    -v "${BOOT_CONFIG_INPUT}":/tmp/bootconfig-input \
    -v "${boot_config}":/tmp/bootconfig.data \
    "${BUILDSYS_SDK_IMAGE}" \
@@ -803,7 +803,7 @@ script = [
 docker run --rm \
    --network=none \
    --user "$(id -u):$(id -g)" \
-   --security-opt label:disable \
+   --security-opt="label=disable" \
    -v "${BOOT_CONFIG}":/tmp/bootconfig.data \
    "${BUILDSYS_SDK_IMAGE}" \
    bootconfig -l /tmp/bootconfig.data
@@ -884,7 +884,7 @@ set +e
 docker run --rm \
   --network=none \
   --user "$(id -u):$(id -g)" \
-  --security-opt label:disable \
+  --security-opt="label=disable" \
   -e CARGO_HOME="/tmp/.cargo" \
   -v "${CARGO_HOME}":/tmp/.cargo \
   -v "${BUILDSYS_ROOT_DIR}/sources":/tmp/sources \
@@ -922,7 +922,7 @@ set +e
 
 docker run --rm \
   --user "$(id -u):$(id -g)" \
-  --security-opt label:disable \
+  --security-opt="label=disable" \
   -e CARGO_HOME="/tmp/.cargo" \
   -v "${CARGO_HOME}":/tmp/.cargo \
   -v "${BUILDSYS_ROOT_DIR}/licenses:/tmp/licenses" \
