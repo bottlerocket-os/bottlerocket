@@ -192,6 +192,13 @@ CONFIG_EXT4_USE_FOR_EXT2=y
 #   - sch_cake targets home routers and residential links
 # CONFIG_NET_SCH_CAKE is not set
 
+# Disable specific SCSI drivers for the generic case. We have enabled necessary
+# drivers on metal specifically
+# CONFIG_SCSI_MPI3MR is not set
+# CONFIG_SCSI_MPT3SAS is not set
+# CONFIG_SCSI_SMARTPQI is not set
+# CONFIG_SCSI_SAS_ATTRS is not set
+
 # Provide minimal iSCSI via TCP support for initiator and target mode
 # initiator side
 CONFIG_ISCSI_TCP=m

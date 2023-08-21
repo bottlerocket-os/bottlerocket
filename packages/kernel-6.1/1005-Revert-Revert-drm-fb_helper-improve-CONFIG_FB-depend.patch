@@ -1,0 +1,36 @@
+From 97942a7563e670dbc481a322b34f29010a1ed9ec Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Fri, 11 Aug 2023 06:41:44 +0000
+Subject: [PATCH] Revert "Revert "drm: fb_helper: improve CONFIG_FB
+ dependency""
+
+This reverts commit 9200a3864170e49e8d076870ee18fad6de4fd356.
+
+Amazon Linux has reverted this upstream commit in order to have
+certain DRM options set to allow building nvidia DKMS. Instead
+of reverting an upstream commit, we added DRM_SIMPLEDRM with
+Bottlerocket commit fd73bff24a78 in order to supply the necessary
+dependecies for nvidia drivers.
+---
+ drivers/gpu/drm/Kconfig | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/Kconfig b/drivers/gpu/drm/Kconfig
+index e0264211ca84..f30f99166531 100644
+--- a/drivers/gpu/drm/Kconfig
++++ b/drivers/gpu/drm/Kconfig
+@@ -124,9 +124,8 @@ config DRM_DEBUG_MODESET_LOCK
+ 
+ config DRM_FBDEV_EMULATION
+ 	bool "Enable legacy fbdev support for your modesetting driver"
+-	depends on DRM
+-	depends on FB=y || FB=DRM
+-	select DRM_KMS_HELPER
++	depends on DRM_KMS_HELPER
++	depends on FB=y || FB=DRM_KMS_HELPER
+ 	select FB_CFB_FILLRECT
+ 	select FB_CFB_COPYAREA
+ 	select FB_CFB_IMAGEBLIT
+-- 
+2.40.1
+
