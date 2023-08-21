@@ -8,7 +8,7 @@ build = "../build.rs"
 [lib]
 path = "../packages.rs"
 
-# Use latest-srpm-urls.sh to get these.
+# Check the two upstream repositories for the latest releases
 
 [[package.metadata.build-package.external-files]]
 url = "https://www.kernel.org/pub/linux/kernel/firmware/linux-firmware-20230804.tar.xz"
