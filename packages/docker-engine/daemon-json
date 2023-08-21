@@ -6,20 +6,20 @@
   "data-root": "/var/lib/docker",
   "default-runtime": "shimpei",
   "runtimes": { "shimpei": { "path": "shimpei" } },
-  "selinux-enabled": true,
-  {{~#if settings.oci-defaults.capabilities~}}
-  "default-capabilities": {{~oci_defaults "docker" settings.oci-defaults.capabilities~}}
-  {{~/if~}}
-  {{~#if settings.oci-defaults.resource-limits~}}
+  {{#if settings.oci-defaults.capabilities}}
+  "default-capabilities": {{oci_defaults "docker" settings.oci-defaults.capabilities}},
+  {{/if}}
+  {{#if settings.oci-defaults.resource-limits}}
   "default-ulimits": {
-    {{~oci_defaults "docker" settings.oci-defaults.resource-limits~}}
-  }
-  {{~/if~}}
+    {{oci_defaults "docker" settings.oci-defaults.resource-limits}}
+  },
+  {{/if}}
   {{#if settings.container-registry.mirrors}}
   {{#each settings.container-registry.mirrors}}
-  {{#if (eq registry "docker.io" )}},
-  "registry-mirrors": [{{join_array ", " endpoint}}]
+  {{#if (eq registry "docker.io" )}}
+  "registry-mirrors": [{{join_array ", " endpoint}}],
   {{/if}}
   {{/each}}
   {{/if}}
+  "selinux-enabled": true
 }
