@@ -17,7 +17,8 @@ ExecStart=/usr/lib/systemd/systemd-makefs ${DATA_PARTITION_FILESYSTEM} /dev/disk
 # Stop and mask the repart-data-* oneshots in case they're waiting on non-existent data partitions.
 # 'BOTTLEROCKET-DATA' already exists so we can move on.
 ExecStart=/usr/bin/systemctl stop repart-data-preferred repart-data-fallback --no-block
-ExecStart=/usr/bin/systemctl mask repart-data-preferred repart-data-fallback --no-block
+ExecStart=/usr/bin/ln -s /dev/null /etc/systemd/system/repart-data-preferred.service
+ExecStart=/usr/bin/ln -s /dev/null /etc/systemd/system/repart-data-fallback.service
 
 RemainAfterExit=true
 StandardError=journal+console
