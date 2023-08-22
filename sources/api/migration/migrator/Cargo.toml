@@ -19,7 +19,7 @@ rand = { version = "0.8", default-features = false, features = ["std", "std_rng"
 semver = "1"
 simplelog = "0.12"
 snafu = "0.7"
-tough = "0.13"
+tough = "0.14"
 update_metadata = { path = "../../../updater/update_metadata", version = "0.1" }
 url = "2"
 
