@@ -17,7 +17,7 @@ http = "0.2"
 itertools = "0.10"
 log = "0.4"
 models = { path = "../../models", version = "0.1" }
-nix = "0.24"
+nix = "0.26"
 schnauzer = { path = "../schnauzer", version = "0.1" }
 serde_json = "1"
 simplelog = "0.12"
