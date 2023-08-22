@@ -1,4 +1,4 @@
-use aws_sdk_cloudformation::{Client as CloudFormationClient, Region};
+use aws_sdk_cloudformation::{config::Region, Client as CloudFormationClient};
 use aws_sdk_s3::Client as S3Client;
 use snafu::{OptionExt, ResultExt};
 use std::fs;
@@ -200,7 +200,7 @@ pub async fn upload_file(
         .put_object()
         .bucket(format!("{}{}", bucket_name, prefix))
         .key("root.json".to_string())
-        .body(aws_sdk_s3::types::ByteStream::from(buffer))
+        .body(aws_sdk_s3::primitives::ByteStream::from(buffer))
         .send()
         .await
         .context(error::PutObjectSnafu { bucket_name })?;

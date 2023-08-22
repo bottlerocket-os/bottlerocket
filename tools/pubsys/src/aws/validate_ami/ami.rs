@@ -1,7 +1,6 @@
 //! The ami module owns the describing of images in EC2.
 
-use aws_sdk_ec2::model::Image;
-use aws_sdk_ec2::{Client as Ec2Client, Region};
+use aws_sdk_ec2::{config::Region, types::Image, Client as Ec2Client};
 use futures::future::{join, ready};
 use futures::stream::{FuturesUnordered, StreamExt};
 use log::{info, trace};
@@ -182,8 +181,8 @@ pub(crate) async fn describe_images_in_region(
 }
 
 pub(crate) mod error {
-    use aws_sdk_ec2::error::DescribeImagesError;
-    use aws_sdk_ssm::types::SdkError;
+    use aws_sdk_ec2::operation::describe_images::DescribeImagesError;
+    use aws_sdk_ssm::error::SdkError;
     use aws_smithy_types::error::display::DisplayErrorContext;
     use snafu::Snafu;
 

@@ -7,13 +7,15 @@ use crate::aws::ami::Image;
 use crate::aws::client::build_client_config;
 use crate::aws::region_from_string;
 use crate::Args;
-use aws_sdk_ec2::error::{ModifyImageAttributeError, ModifySnapshotAttributeError};
-use aws_sdk_ec2::model::{
+use aws_sdk_ec2::error::{ProvideErrorMetadata, SdkError};
+use aws_sdk_ec2::operation::{
+    modify_image_attribute::{ModifyImageAttributeError, ModifyImageAttributeOutput},
+    modify_snapshot_attribute::{ModifySnapshotAttributeError, ModifySnapshotAttributeOutput},
+};
+use aws_sdk_ec2::types::{
     ImageAttributeName, OperationType, PermissionGroup, SnapshotAttributeName,
 };
-use aws_sdk_ec2::output::{ModifyImageAttributeOutput, ModifySnapshotAttributeOutput};
-use aws_sdk_ec2::types::SdkError;
-use aws_sdk_ec2::{Client as Ec2Client, Region};
+use aws_sdk_ec2::{config::Region, Client as Ec2Client};
 use clap::{Args as ClapArgs, Parser};
 use futures::future::{join, ready};
 use futures::stream::{self, StreamExt};
@@ -561,10 +563,11 @@ pub(crate) async fn modify_regional_images(
 
 mod error {
     use crate::aws::ami;
-    use aws_sdk_ec2::error::{
-        DescribeImagesError, ModifyImageAttributeError, ModifySnapshotAttributeError,
+    use aws_sdk_ec2::error::SdkError;
+    use aws_sdk_ec2::operation::{
+        describe_images::DescribeImagesError, modify_image_attribute::ModifyImageAttributeError,
+        modify_snapshot_attribute::ModifySnapshotAttributeError,
     };
-    use aws_sdk_ec2::types::SdkError;
     use snafu::Snafu;
     use std::io;
     use std::path::PathBuf;

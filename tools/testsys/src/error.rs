@@ -1,5 +1,5 @@
-use aws_sdk_ec2::error::DescribeImagesError;
-use aws_sdk_ec2::types::SdkError;
+use aws_sdk_ec2::error::SdkError;
+use aws_sdk_ec2::operation::describe_images::DescribeImagesError;
 use snafu::Snafu;
 use std::path::PathBuf;
 

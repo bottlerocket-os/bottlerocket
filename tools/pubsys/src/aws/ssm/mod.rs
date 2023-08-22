@@ -13,8 +13,8 @@ use crate::aws::{
 };
 use crate::Args;
 use aws_config::SdkConfig;
-use aws_sdk_ec2::{model::ArchitectureValues, Client as Ec2Client};
-use aws_sdk_ssm::{Client as SsmClient, Region};
+use aws_sdk_ec2::{types::ArchitectureValues, Client as Ec2Client};
+use aws_sdk_ssm::{config::Region, Client as SsmClient};
 use clap::Parser;
 use futures::stream::{StreamExt, TryStreamExt};
 use governor::{prelude::*, Quota, RateLimiter};

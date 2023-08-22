@@ -13,13 +13,13 @@ use crate::aws::publish_ami::{get_snapshots, modify_image, modify_snapshots, Mod
 use crate::aws::{client::build_client_config, parse_arch, region_from_string};
 use crate::Args;
 use aws_sdk_ebs::Client as EbsClient;
-use aws_sdk_ec2::error::CopyImageError;
-use aws_sdk_ec2::model::{ArchitectureValues, OperationType};
-use aws_sdk_ec2::output::CopyImageOutput;
-use aws_sdk_ec2::types::SdkError;
-use aws_sdk_ec2::{Client as Ec2Client, Region};
-use aws_sdk_sts::error::GetCallerIdentityError;
-use aws_sdk_sts::output::GetCallerIdentityOutput;
+use aws_sdk_ec2::error::{ProvideErrorMetadata, SdkError};
+use aws_sdk_ec2::operation::copy_image::{CopyImageError, CopyImageOutput};
+use aws_sdk_ec2::types::{ArchitectureValues, OperationType};
+use aws_sdk_ec2::{config::Region, Client as Ec2Client};
+use aws_sdk_sts::operation::get_caller_identity::{
+    GetCallerIdentityError, GetCallerIdentityOutput,
+};
 use aws_sdk_sts::Client as StsClient;
 use clap::Parser;
 use futures::future::{join, lazy, ready, FutureExt};
@@ -497,10 +497,10 @@ async fn get_account_ids(
 
 mod error {
     use crate::aws::{ami, publish_ami};
-    use aws_sdk_ec2::error::ModifyImageAttributeError;
-    use aws_sdk_ec2::model::LaunchPermission;
-    use aws_sdk_ec2::types::SdkError;
-    use aws_sdk_sts::error::GetCallerIdentityError;
+    use aws_sdk_ec2::error::SdkError;
+    use aws_sdk_ec2::operation::modify_image_attribute::ModifyImageAttributeError;
+    use aws_sdk_ec2::types::LaunchPermission;
+    use aws_sdk_sts::operation::get_caller_identity::GetCallerIdentityError;
     use snafu::Snafu;
     use std::path::PathBuf;
 

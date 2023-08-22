@@ -1,7 +1,7 @@
 //! The results module owns the reporting of SSM validation results.
 
 use crate::aws::validate_ssm::Result;
-use aws_sdk_ssm::Region;
+use aws_sdk_ssm::config::Region;
 use serde::{Deserialize, Serialize};
 use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use std::collections::{HashMap, HashSet};
@@ -206,7 +206,7 @@ mod test {
     use crate::aws::validate_ssm::results::{
         SsmValidationResult, SsmValidationResultStatus, SsmValidationResults,
     };
-    use aws_sdk_ssm::Region;
+    use aws_sdk_ssm::config::Region;
 
     // These tests assert that the `get_results_for_status` function returns the correct values.
 
