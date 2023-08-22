@@ -100,6 +100,7 @@ impl CrdCreator for AwsEcsCreator {
                     .testsys_agent_pull_secret
                     .to_owned(),
             )
+            .set_labels(Some(labels))
             .set_secrets(Some(cluster_input.crd_input.config.secrets.clone()))
             .build(cluster_input.cluster_name)
             .context(error::BuildSnafu {
