@@ -898,6 +898,7 @@ dependencies = [
 name = "metal-k8s-1_23"
 version = "0.1.0"
 dependencies = [
+ "aws-iam-authenticator",
  "cni",
  "cni-plugins",
  "kernel-5_10",
@@ -909,6 +910,7 @@ dependencies = [
 name = "metal-k8s-1_24"
 version = "0.1.0"
 dependencies = [
+ "aws-iam-authenticator",
  "cni",
  "cni-plugins",
  "kernel-5_15",
@@ -920,6 +922,7 @@ dependencies = [
 name = "metal-k8s-1_25"
 version = "0.1.0"
 dependencies = [
+ "aws-iam-authenticator",
  "cni",
  "cni-plugins",
  "kernel-5_15",
@@ -931,6 +934,7 @@ dependencies = [
 name = "metal-k8s-1_26"
 version = "0.1.0"
 dependencies = [
+ "aws-iam-authenticator",
  "cni",
  "cni-plugins",
  "kernel-5_15",
@@ -942,6 +946,7 @@ dependencies = [
 name = "metal-k8s-1_27"
 version = "0.1.0"
 dependencies = [
+ "aws-iam-authenticator",
  "cni",
  "cni-plugins",
  "kernel-5_15",
