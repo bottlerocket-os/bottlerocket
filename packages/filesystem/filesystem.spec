@@ -34,11 +34,13 @@ mkdir -p %{buildroot}/media/cdrom
 mkdir -p %{buildroot}/root/.aws
 
 ln -s .%{_cross_prefix} %{buildroot}%{_prefix}
-ln -s .%{_cross_bindir} %{buildroot}/bin
-ln -s .%{_cross_sbindir} %{buildroot}/sbin
 ln -s .%{_cross_libdir} %{buildroot}/lib
 ln -s .%{_cross_libdir} %{buildroot}/lib64
 ln -s lib %{buildroot}%{_cross_prefix}/lib64
+
+# Avoid "unmerged-usr" taint by linking to sys-root via `/usr`.
+ln -s .%{_bindir} %{buildroot}/bin
+ln -s .%{_sbindir} %{buildroot}/sbin
 
 %files
 %dir %{_cross_rootdir}
