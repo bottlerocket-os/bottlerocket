@@ -1,0 +1,16 @@
+[Unit]
+Description=Ephemeral netdog configuration directory
+DefaultDependencies=no
+Conflicts=umount.target
+Before=local-fs.target umount.target
+After=selinux-policy-files.service
+Wants=selinux-policy-files.service
+
+[Mount]
+What=tmpfs
+Where=/run/netdog
+Type=tmpfs
+Options=nosuid,nodev,noexec,noatime,context=system_u:object_r:lease_t:s0,mode=0755
+
+[Install]
+WantedBy=network-pre.target
