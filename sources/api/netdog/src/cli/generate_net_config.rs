@@ -10,6 +10,9 @@ use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::path::Path;
 
+#[cfg(net_backend = "systemd-networkd")]
+use crate::networkd::config::{NetworkDConfigFile, NETWORKD_CONFIG_DIR};
+
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "generate-net-config")]
 /// Generate wicked network configuration
@@ -96,7 +99,10 @@ fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bo
 
 #[cfg(net_backend = "systemd-networkd")]
 fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bool) -> Result<()> {
-    use crate::networkd::config::NetworkDConfigFile;
+    fs::create_dir_all(NETWORKD_CONFIG_DIR).context(error::CreateDirSnafu {
+        path: NETWORKD_CONFIG_DIR,
+    })?;
+
     let networkd_config = net_config
         .as_networkd_config()
         .context(error::NetworkDConfigCreateSnafu)?;

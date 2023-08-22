@@ -50,10 +50,6 @@ Source119: reboot-if-required.service
 Source120: warm-pool-wait.service
 Source121: disable-udp-offload.service
 Source122: has-boot-ever-succeeded.service
-Source123: etc-systemd-network.mount
-
-# Drop-ins
-Source150: requires-mounts-network-config.conf
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -444,9 +440,6 @@ install -p -m 0644 \
   %{buildroot}%{_cross_unitdir}
 
 %if %{with systemd_networkd}
-install -d %{buildroot}%{_cross_unitdir}/generate-network-config.service.d
-install -p -m 0644 %{S:150} %{buildroot}%{_cross_unitdir}/generate-network-config.service.d
-install -p -m 0644 %{S:123} %{buildroot}%{_cross_unitdir}
 install -d %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
 install -p -m 0644 %{S:12} %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
 %endif

@@ -197,6 +197,10 @@ mod error {
     #[snafu(visibility(pub(crate)))]
     #[allow(clippy::enum_variant_names)]
     pub(crate) enum Error {
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Unable to create directory '{}': {}", path.display(),source))]
+        CreateDir { path: PathBuf, source: io::Error },
+
         #[snafu(display("Failed to write current IP to '{}': {}", path.display(), source))]
         CurrentIpWriteFailed { path: PathBuf, source: io::Error },
 
