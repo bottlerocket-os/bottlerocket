@@ -25,9 +25,10 @@ use serde::{Deserialize, Serialize};
 pub(crate) use set_hostname::SetHostnameArgs;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fmt::Write;
-use std::fs;
+use std::os::unix::fs::symlink;
 use std::path::Path;
 use std::process::Command;
+use std::{fs, io};
 pub(crate) use write_resolv_conf::WriteResolvConfArgs;
 
 #[cfg(net_backend = "wicked")]
@@ -163,6 +164,24 @@ where
 
     fs::write(path, output).context(error::SysctlConfWriteSnafu { path })?;
     Ok(())
+}
+
+fn force_symlink<P1, P2>(target: P1, link: P2) -> Result<()>
+where
+    P1: AsRef<Path>,
+    P2: AsRef<Path>,
+{
+    let target = target.as_ref();
+    let link = link.as_ref();
+
+    // Remove link if it already exists
+    if let Err(e) = fs::remove_file(link) {
+        if e.kind() != io::ErrorKind::NotFound {
+            Err(e).context(error::SymlinkSnafu { target, link })?;
+        }
+    }
+    // Link to requested target
+    symlink(target, link).context(error::SymlinkSnafu { target, link })
 }
 
 #[cfg(test)]
@@ -314,6 +333,13 @@ mod error {
         #[snafu(display("Unable to determine primary interface IP Address: {}", source))]
         PrimaryInterfaceAddress {
             source: networkd_status::NetworkDStatusError,
+        },
+
+        #[snafu(display("Unable to symlink '{}' to '{}': {}", link.display(), target.display(), source))]
+        Symlink {
+            target: PathBuf,
+            link: PathBuf,
+            source: io::Error,
         },
     }
 }

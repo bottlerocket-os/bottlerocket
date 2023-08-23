@@ -50,7 +50,6 @@ mod networkd_status;
 use argh::FromArgs;
 use std::process;
 
-static RESOLV_CONF: &str = "/etc/resolv.conf";
 static KERNEL_HOSTNAME: &str = "/proc/sys/kernel/hostname";
 static CURRENT_IP: &str = "/var/lib/netdog/current_ip";
 static KERNEL_CMDLINE: &str = "/proc/cmdline";
@@ -64,6 +63,10 @@ static SYSCTL_MARKER_FILE: &str = "/run/netdog/primary_sysctls_set";
 static LEASE_DIR: &str = "/run/wicked";
 static SYS_CLASS_NET: &str = "/sys/class/net";
 static SYSTEMD_SYSCTL: &str = "/usr/lib/systemd/systemd-sysctl";
+static NETDOG_RESOLV_CONF: &str = "/run/netdog/resolv.conf";
+
+#[cfg(net_backend = "wicked")]
+static REAL_RESOLV_CONF: &str = "/etc/resolv.conf";
 #[cfg(net_backend = "systemd-networkd")]
 static NETWORKCTL: &str = "/usr/bin/networkctl";
 

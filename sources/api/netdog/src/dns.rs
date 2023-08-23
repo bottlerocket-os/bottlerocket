@@ -1,7 +1,7 @@
 //! The dns module contains the code necessary to gather DNS settings from config file,
 //! supplementing with DHCP lease if it exists.  It also contains the code necessary to write a
 //! properly formatted `resolv.conf`.
-use crate::RESOLV_CONF;
+use crate::NETDOG_RESOLV_CONF;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 use serde::Deserialize;
@@ -114,7 +114,7 @@ impl DnsSettings {
 
     /// Write resolver configuration for libc.
     pub(crate) fn write_resolv_conf(&self) -> Result<()> {
-        Self::write_resolv_conf_impl(self, RESOLV_CONF)
+        Self::write_resolv_conf_impl(self, NETDOG_RESOLV_CONF)
     }
 
     fn write_resolv_conf_impl<P>(&self, path: P) -> Result<()>
