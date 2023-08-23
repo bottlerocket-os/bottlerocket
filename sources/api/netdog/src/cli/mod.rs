@@ -12,7 +12,7 @@ pub(crate) mod remove;
 #[cfg(net_backend = "systemd-networkd")]
 pub(crate) mod primary_interface;
 #[cfg(net_backend = "systemd-networkd")]
-pub(crate) mod write_primary_interface_status;
+pub(crate) mod write_network_status;
 
 use crate::{
     PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS, PRIMARY_SYSCTL_CONF, SYSCTL_MARKER_FILE,
@@ -39,7 +39,7 @@ pub(crate) use remove::RemoveArgs;
 #[cfg(net_backend = "systemd-networkd")]
 pub(crate) use primary_interface::PrimaryInterfaceArgs;
 #[cfg(net_backend = "systemd-networkd")]
-pub(crate) use write_primary_interface_status::WritePrimaryInterfaceStatusArgs;
+pub(crate) use write_network_status::WriteNetworkStatusArgs;
 
 #[derive(Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "kebab-case")]

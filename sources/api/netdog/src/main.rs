@@ -67,6 +67,12 @@ static NETDOG_RESOLV_CONF: &str = "/run/netdog/resolv.conf";
 
 #[cfg(net_backend = "wicked")]
 static REAL_RESOLV_CONF: &str = "/etc/resolv.conf";
+
+// This is the path to systemd-resolved's generated simple resolv.conf; see
+// https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/#known-issues for
+// the reasoning behind using this path.
+#[cfg(net_backend = "systemd-networkd")]
+static REAL_RESOLV_CONF: &str = "/run/systemd/resolve/resolv.conf";
 #[cfg(net_backend = "systemd-networkd")]
 static NETWORKCTL: &str = "/usr/bin/networkctl";
 
@@ -90,7 +96,7 @@ enum SubCommand {
     SetHostname(cli::SetHostnameArgs),
     WriteResolvConf(cli::WriteResolvConfArgs),
     #[cfg(net_backend = "systemd-networkd")]
-    WritePrimaryInterfaceStatus(cli::WritePrimaryInterfaceStatusArgs),
+    WriteNetworkStatus(cli::WriteNetworkStatusArgs),
     #[cfg(net_backend = "systemd-networkd")]
     PrimaryInterface(cli::PrimaryInterfaceArgs),
 }
@@ -108,7 +114,7 @@ async fn run() -> cli::Result<()> {
         SubCommand::SetHostname(args) => cli::set_hostname::run(args)?,
         SubCommand::WriteResolvConf(_) => cli::write_resolv_conf::run()?,
         #[cfg(net_backend = "systemd-networkd")]
-        SubCommand::WritePrimaryInterfaceStatus(_) => cli::write_primary_interface_status::run()?,
+        SubCommand::WriteNetworkStatus(_) => cli::write_network_status::run()?,
         #[cfg(net_backend = "systemd-networkd")]
         SubCommand::PrimaryInterface(_) => cli::primary_interface::run()?,
     }
