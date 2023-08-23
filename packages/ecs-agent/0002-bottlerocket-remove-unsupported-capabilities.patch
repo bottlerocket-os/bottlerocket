@@ -1,6 +1,6 @@
-From b84708cfb634e84ca0ef2ac95292ddc1b370b41f Mon Sep 17 00:00:00 2001
-From: Sean McGinnis <stmcg@amazon.com>
-Date: Tue, 21 Feb 2023 19:06:43 +0000
+From b681439606e39ff21d14742ba58f1ecaf8e7f73d Mon Sep 17 00:00:00 2001
+From: Shikha Vyaghra <vyaghras@amazon.com>
+Date: Wed, 23 Aug 2023 22:16:58 +0000
 Subject: [PATCH] bottlerocket: remove unsupported capabilities
 
 Signed-off-by: Sean McGinnis <stmcg@amazon.com>
@@ -10,10 +10,10 @@ Signed-off-by: Arnaldo Garcia Rincon <agarrcia@amazon.com>
  1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/agent/app/agent_capability.go b/agent/app/agent_capability.go
-index 0f78c00..746d87a 100644
+index e02e612..7ff5993 100644
 --- a/agent/app/agent_capability.go
 +++ b/agent/app/agent_capability.go
-@@ -248,7 +248,7 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
+@@ -250,7 +250,7 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
  	capabilities = agent.appendAppMeshCapabilities(capabilities)
  
  	// support elastic inference in agent
@@ -22,15 +22,15 @@ index 0f78c00..746d87a 100644
  
  	// support aws router capabilities for fluentd
  	capabilities = agent.appendFirelensFluentdCapabilities(capabilities)
-@@ -272,9 +272,9 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
- 	capabilities = agent.appendGMSACapabilities(capabilities)
+@@ -277,9 +277,9 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
+ 	capabilities = agent.appendGMSADomainlessCapabilities(capabilities)
  
  	// support efs auth on ecs capabilities
 -	for _, cap := range agent.cfg.VolumePluginCapabilities {
 -		capabilities = agent.appendEFSVolumePluginCapabilities(capabilities, cap)
 -	}
 +	// for _, cap := range agent.cfg.VolumePluginCapabilities {
-+	// 	capabilities = agent.appendEFSVolumePluginCapabilities(capabilities, cap)
++	//      capabilities = agent.appendEFSVolumePluginCapabilities(capabilities, cap)
 +	// }
  
  	// support fsxWindowsFileServer on ecs capabilities

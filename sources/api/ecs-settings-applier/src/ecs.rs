@@ -82,6 +82,13 @@ struct ECSConfig {
     image_cleanup_delete_per_cycle: Option<i64>,
 
     image_cleanup_disabled: bool,
+
+    #[serde(rename = "CNIPluginsPath")]
+    cni_plugins_path: String,
+
+    credentials_audit_log_file: String,
+
+    data_dir: String,
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
@@ -151,6 +158,9 @@ async fn run() -> Result<()> {
         metadata_service_burst: ecs.metadata_service_burst,
         image_cleanup_delete_per_cycle: ecs.image_cleanup_delete_per_cycle,
         image_cleanup_disabled: !ecs.image_cleanup_enabled.unwrap_or(true),
+        cni_plugins_path: "/usr/libexec/amazon-ecs-agent".to_string(),
+        credentials_audit_log_file: "/var/log/ecs/audit.log".to_string(),
+        data_dir: "/var/lib/ecs/data".to_string(),
         ..Default::default()
     };
     if let Some(os) = settings.os {
