@@ -36,6 +36,10 @@ impl Interfaces for NetConfigV3 {
         !self.net_devices.is_empty()
     }
 
+    fn interfaces(&self) -> Vec<InterfaceId> {
+        self.net_devices.keys().cloned().collect()
+    }
+
     #[cfg(net_backend = "wicked")]
     fn as_wicked_interfaces(&self) -> Vec<WickedInterface> {
         let mut wicked_interfaces = Vec::new();
