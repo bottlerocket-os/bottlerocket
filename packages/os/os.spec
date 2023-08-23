@@ -27,6 +27,7 @@ Source8: oci-default-hooks-json
 Source9: cfsignal-toml
 Source10: warm-pool-wait-toml
 Source11: bottlerocket-cis-checks-metadata-json
+Source12: 00-resolved.conf
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -135,6 +136,7 @@ Summary: Bottlerocket userdata configuration system
 Summary: Bottlerocket network configuration helper
 %if %{with systemd_networkd}
 Requires: %{_cross_os}systemd-networkd
+Requires: %{_cross_os}systemd-resolved
 %else
 Requires: %{_cross_os}wicked
 %endif
@@ -445,6 +447,8 @@ install -p -m 0644 \
 install -d %{buildroot}%{_cross_unitdir}/generate-network-config.service.d
 install -p -m 0644 %{S:150} %{buildroot}%{_cross_unitdir}/generate-network-config.service.d
 install -p -m 0644 %{S:123} %{buildroot}%{_cross_unitdir}
+install -d %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
+install -p -m 0644 %{S:12} %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
 %endif
 
 %if %{with nvidia_flavor}
@@ -513,7 +517,10 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %if %{with vmware_platform}
 %{_cross_unitdir}/disable-udp-offload.service
 %endif
-
+%if %{with systemd_networkd}
+%dir %{_cross_libdir}/systemd/resolved.conf.d
+%{_cross_libdir}/systemd/resolved.conf.d/00-resolved.conf
+%endif
 
 %files -n %{_cross_os}corndog
 %{_cross_bindir}/corndog
