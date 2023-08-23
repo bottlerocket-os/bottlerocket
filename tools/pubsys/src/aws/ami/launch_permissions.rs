@@ -1,4 +1,7 @@
-use aws_sdk_ec2::{model::LaunchPermission, Client as Ec2Client};
+use aws_sdk_ec2::{
+    types::{ImageAttributeName, LaunchPermission},
+    Client as Ec2Client,
+};
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
@@ -11,7 +14,7 @@ pub(crate) async fn get_launch_permissions(
     let ec2_response = ec2_client
         .describe_image_attribute()
         .image_id(ami_id)
-        .attribute(aws_sdk_ec2::model::ImageAttributeName::LaunchPermission)
+        .attribute(ImageAttributeName::LaunchPermission)
         .send()
         .await
         .context(error::DescribeImageAttributeSnafu {
@@ -73,9 +76,9 @@ impl TryFrom<LaunchPermission> for LaunchPermissionDef {
 }
 
 mod error {
-    use aws_sdk_ec2::error::DescribeImageAttributeError;
-    use aws_sdk_ec2::model::LaunchPermission;
-    use aws_sdk_ec2::types::SdkError;
+    use aws_sdk_ec2::error::SdkError;
+    use aws_sdk_ec2::operation::describe_image_attribute::DescribeImageAttributeError;
+    use aws_sdk_ec2::types::LaunchPermission;
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]

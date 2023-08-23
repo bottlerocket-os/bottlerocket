@@ -7,19 +7,19 @@ edition = "2021"
 publish = false
 
 [dependencies]
-aws-config = "0.54"
-aws-credential-types = "0.54"
-aws-sdk-ebs = "0.24"
-aws-sdk-ec2 = "0.24"
-aws-sdk-kms = "0.24"
-aws-sdk-ssm = "0.24"
-aws-sdk-sts = "0.24"
-aws-smithy-types = "0.54"
-aws-types = "0.54"
+aws-config = "0.55"
+aws-credential-types = "0.55"
+aws-sdk-ebs = "0.28"
+aws-sdk-ec2 = "0.28"
+aws-sdk-kms = "0.28"
+aws-sdk-ssm = "0.28"
+aws-sdk-sts = "0.28"
+aws-smithy-types = "0.55"
+aws-types = "0.55"
 buildsys = { path = "../buildsys", version = "0.1" }
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 clap = { version = "4", features = ["derive"] }
-coldsnap = { version = "0.5", default-features = false, features = ["aws-sdk-rust-rustls"] }
+coldsnap = { version = "0.6", default-features = false, features = ["aws-sdk-rust-rustls"] }
 duct = "0.13"
 futures = "0.3"
 governor = "0.5"
@@ -45,8 +45,8 @@ tinytemplate = "1"
 tokio = { version = "1", features = ["full"] }  # LTS
 tokio-stream = { version = "0.1", features = ["time"] }
 toml = "0.5"
-tough = { version = "0.13", features = ["http"] }
-tough-kms = "0.5"
-tough-ssm = "0.8"
+tough = { version = "0.14", features = ["http"] }
+tough-kms = "0.6"
+tough-ssm = "0.9"
 update_metadata = { path = "../../sources/updater/update_metadata/", version = "0.1" }
 url = { version = "2", features = ["serde"] }

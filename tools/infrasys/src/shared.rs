@@ -1,4 +1,4 @@
-use aws_sdk_cloudformation::model::{Output, Parameter};
+use aws_sdk_cloudformation::types::{Output, Parameter};
 use aws_sdk_cloudformation::Client as CloudFormationClient;
 use clap::Parser;
 use log::info;

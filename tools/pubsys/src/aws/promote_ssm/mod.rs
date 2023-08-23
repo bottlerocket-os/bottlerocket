@@ -7,8 +7,8 @@ use crate::aws::ssm::{key_difference, ssm, template, BuildContext, SsmKey};
 use crate::aws::validate_ssm::parse_parameters;
 use crate::aws::{parse_arch, region_from_string};
 use crate::Args;
-use aws_sdk_ec2::model::ArchitectureValues;
-use aws_sdk_ssm::{Client as SsmClient, Region};
+use aws_sdk_ec2::types::ArchitectureValues;
+use aws_sdk_ssm::{config::Region, Client as SsmClient};
 use clap::Parser;
 use log::{info, trace};
 use pubsys_config::InfraConfig;
@@ -376,7 +376,7 @@ mod test {
     use std::collections::HashMap;
 
     use crate::aws::{promote_ssm::merge_parameters, ssm::SsmKey};
-    use aws_sdk_ssm::Region;
+    use aws_sdk_ssm::config::Region;
 
     #[test]
     fn combined_parameters() {

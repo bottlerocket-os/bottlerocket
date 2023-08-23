@@ -5,7 +5,7 @@ pub(crate) mod refresh_repo;
 pub(crate) mod validate_repo;
 
 use crate::{friendly_version, Args};
-use aws_sdk_kms::{Client as KmsClient, Region};
+use aws_sdk_kms::{config::Region, Client as KmsClient};
 use chrono::{DateTime, Utc};
 use clap::Parser;
 use lazy_static::lazy_static;

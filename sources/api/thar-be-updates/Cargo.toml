@@ -18,7 +18,7 @@ fs2 = "0.4"
 http = "0.2"
 log = "0.4"
 models = { path = "../../models", version = "0.1" }
-nix = "0.24"
+nix = "0.26"
 num-derive = "0.3"
 num-traits = "0.2"
 semver = { version = "1", features = [ "serde" ] }

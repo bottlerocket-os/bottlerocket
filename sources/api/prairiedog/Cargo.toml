@@ -13,7 +13,7 @@ argh = "0.1"
 bytes = "1"
 constants = { path = "../../constants", version = "0.1" }
 log = "0.4"
-nix = "0.24"
+nix = "0.26"
 models =  { path = "../../models", version = "0.1" }
 schnauzer = { path = "../schnauzer", version = "0.1" }
 signpost = { path = "../../updater/signpost", version = "0.1" }

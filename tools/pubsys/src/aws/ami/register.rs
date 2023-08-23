@@ -1,9 +1,9 @@
 use super::{snapshot::snapshot_from_image, AmiArgs};
 use aws_sdk_ebs::Client as EbsClient;
-use aws_sdk_ec2::model::{
+use aws_sdk_ec2::types::{
     ArchitectureValues, BlockDeviceMapping, EbsBlockDevice, Filter, VolumeType,
 };
-use aws_sdk_ec2::{Client as Ec2Client, Region};
+use aws_sdk_ec2::{config::Region, Client as Ec2Client};
 use buildsys::manifest::{self, ImageFeature};
 use coldsnap::{SnapshotUploader, SnapshotWaiter};
 use log::{debug, info, warn};
@@ -270,8 +270,10 @@ where
 
 mod error {
     use crate::aws::ami;
-    use aws_sdk_ec2::error::{DescribeImagesError, RegisterImageError};
-    use aws_sdk_ec2::types::SdkError;
+    use aws_sdk_ec2::error::SdkError;
+    use aws_sdk_ec2::operation::{
+        describe_images::DescribeImagesError, register_image::RegisterImageError,
+    };
     use snafu::Snafu;
     use std::path::PathBuf;
 

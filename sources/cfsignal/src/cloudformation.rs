@@ -32,7 +32,7 @@ pub async fn signal_resource(
         .stack_name(stack_name)
         .logical_resource_id(logical_resource_id)
         .status(
-            aws_sdk_cloudformation::model::ResourceSignalStatus::from_str(&status)
+            aws_sdk_cloudformation::types::ResourceSignalStatus::from_str(&status)
                 .expect("infallible"),
         )
         .unique_id(instance_id)

@@ -1,7 +1,7 @@
 use crate::crds::BottlerocketInput;
 use crate::error::{self, Result};
-use aws_sdk_ec2::model::{Filter, Image};
-use aws_sdk_ec2::Region;
+use aws_sdk_ec2::config::Region;
+use aws_sdk_ec2::types::{Filter, Image};
 use bottlerocket_types::agent_config::{
     ClusterType, CustomUserData, Ec2Config, Ec2KarpenterConfig, KarpenterDeviceMapping,
 };

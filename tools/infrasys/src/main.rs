@@ -4,7 +4,7 @@ mod root;
 mod s3;
 mod shared;
 
-use aws_sdk_cloudformation::Region;
+use aws_sdk_cloudformation::config::Region;
 use clap::Parser;
 use error::Result;
 use log::{error, info};

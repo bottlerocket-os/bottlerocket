@@ -9,7 +9,7 @@ use self::results::{AmiValidationResult, AmiValidationResultStatus, AmiValidatio
 use crate::aws::client::build_client_config;
 use crate::aws::validate_ami::ami::describe_images;
 use crate::Args;
-use aws_sdk_ec2::{Client as AmiClient, Region};
+use aws_sdk_ec2::{config::Region, Client as AmiClient};
 use clap::Parser;
 use log::{error, info, trace};
 use pubsys_config::InfraConfig;
@@ -282,7 +282,7 @@ mod test {
         ami::launch_permissions::LaunchPermissionDef,
         validate_ami::results::{AmiValidationResult, AmiValidationResultStatus},
     };
-    use aws_sdk_ec2::Region;
+    use aws_sdk_ec2::config::Region;
     use std::collections::{HashMap, HashSet};
 
     // These tests assert that the images can be validated correctly.
