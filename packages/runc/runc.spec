@@ -2,7 +2,7 @@
 %global gorepo runc
 %global goimport %{goproject}/%{gorepo}
 %global commit 0f48801a0e21e3f0bc4e74643ead2a502df4818d
-%global gover 1.1.6
+%global gover 1.1.9
 
 %global _dwz_low_mem_die_limit 0
 
