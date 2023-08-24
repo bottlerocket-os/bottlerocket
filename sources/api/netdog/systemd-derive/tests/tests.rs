@@ -30,6 +30,22 @@ struct RouteSection {
     destination: Option<String>,
 }
 
+#[derive(Debug, Default, SystemdUnit)]
+struct ResolvedConfig {
+    resolve: Option<ResolveSection>,
+}
+
+#[derive(Debug, Default, SystemdUnitSection)]
+#[systemd(section = "Resolve")]
+struct ResolveSection {
+    #[systemd(entry = "DNS", space_separated)]
+    dns: Vec<String>,
+    #[systemd(entry = "Domains", space_separated)]
+    domains: Vec<String>,
+    #[systemd(entry = "OptionField", space_separated)]
+    optional: Option<String>,
+}
+
 #[test]
 fn empty() {
     let n = NetworkConfig {
@@ -74,5 +90,40 @@ Destination=10.0.0.1
 Destination=11.0.0.1
 ";
 
+    assert_eq!(n.to_string(), expected)
+}
+
+// Ensure empty fields aren't displayed
+#[test]
+fn space_separated_empty() {
+    let n = ResolvedConfig {
+        resolve: Some(ResolveSection {
+            dns: vec!["1.2.3.4".to_string(), "5.6.7.8".to_string()],
+            domains: vec![],
+            optional: None,
+        }),
+    };
+
+    let expected = "[Resolve]
+DNS=1.2.3.4 5.6.7.8
+";
+    assert_eq!(n.to_string(), expected)
+}
+
+#[test]
+fn space_separated() {
+    let n = ResolvedConfig {
+        resolve: Some(ResolveSection {
+            dns: vec!["1.2.3.4".to_string(), "5.6.7.8".to_string()],
+            domains: vec!["foo.bar.baz".to_string(), "baz.foo".to_string()],
+            optional: Some("foo.bar".to_string()),
+        }),
+    };
+
+    let expected = "[Resolve]
+DNS=1.2.3.4 5.6.7.8
+Domains=foo.bar.baz baz.foo
+OptionField=foo.bar
+";
     assert_eq!(n.to_string(), expected)
 }
