@@ -1,10 +1,7 @@
-use super::{error, Result};
+use super::{error, fetch_net_config, Result};
 use crate::interface_id::InterfaceId;
-use crate::net_config::{self, Interfaces};
-use crate::{
-    DEFAULT_NET_CONFIG_FILE, KERNEL_CMDLINE, OVERRIDE_NET_CONFIG_FILE, PRIMARY_INTERFACE,
-    PRIMARY_MAC_ADDRESS,
-};
+use crate::net_config::Interfaces;
+use crate::{KERNEL_CMDLINE, PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS};
 use argh::FromArgs;
 use snafu::{OptionExt, ResultExt};
 use std::fs;
@@ -21,20 +18,11 @@ pub(crate) struct GenerateNetConfigArgs {}
 /// Generate configuration for network interfaces.
 pub(crate) fn run() -> Result<()> {
     let mut from_cmd_line = false;
-    let maybe_net_config = if Path::exists(Path::new(OVERRIDE_NET_CONFIG_FILE)) {
-        net_config::from_path(OVERRIDE_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
-            path: OVERRIDE_NET_CONFIG_FILE,
-        })?
-    } else if Path::exists(Path::new(DEFAULT_NET_CONFIG_FILE)) {
-        net_config::from_path(DEFAULT_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
-            path: DEFAULT_NET_CONFIG_FILE,
-        })?
-    } else {
+
+    let (maybe_net_config, source) = fetch_net_config()?;
+    if source == Path::new(KERNEL_CMDLINE) {
         from_cmd_line = true;
-        net_config::from_command_line(KERNEL_CMDLINE).context(error::NetConfigParseSnafu {
-            path: KERNEL_CMDLINE,
-        })?
-    };
+    }
 
     // `maybe_net_config` could be `None` if no interfaces were defined
     let net_config = match maybe_net_config {

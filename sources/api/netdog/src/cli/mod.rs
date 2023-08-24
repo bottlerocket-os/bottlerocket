@@ -14,9 +14,10 @@ pub(crate) mod primary_interface;
 #[cfg(net_backend = "systemd-networkd")]
 pub(crate) mod write_network_status;
 
+use crate::net_config::{self, Interfaces};
 use crate::{
-    PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS, PRIMARY_SYSCTL_CONF, SYSCTL_MARKER_FILE,
-    SYSTEMD_SYSCTL, SYS_CLASS_NET,
+    DEFAULT_NET_CONFIG_FILE, KERNEL_CMDLINE, OVERRIDE_NET_CONFIG_FILE, PRIMARY_INTERFACE,
+    PRIMARY_MAC_ADDRESS, PRIMARY_SYSCTL_CONF, SYSCTL_MARKER_FILE, SYSTEMD_SYSCTL, SYS_CLASS_NET,
 };
 pub(crate) use generate_hostname::GenerateHostnameArgs;
 pub(crate) use generate_net_config::GenerateNetConfigArgs;
@@ -26,7 +27,7 @@ pub(crate) use set_hostname::SetHostnameArgs;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fmt::Write;
 use std::os::unix::fs::symlink;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{fs, io};
 pub(crate) use write_resolv_conf::WriteResolvConfArgs;
@@ -164,6 +165,28 @@ where
 
     fs::write(path, output).context(error::SysctlConfWriteSnafu { path })?;
     Ok(())
+}
+
+// Gather net config from possible sources, returning both the config and the source
+fn fetch_net_config() -> Result<(Option<Box<dyn Interfaces>>, PathBuf)> {
+    let override_path = PathBuf::from(OVERRIDE_NET_CONFIG_FILE);
+    let default_path = PathBuf::from(DEFAULT_NET_CONFIG_FILE);
+    let cmdline = PathBuf::from(KERNEL_CMDLINE);
+
+    for path in [override_path, default_path] {
+        if Path::exists(&path) {
+            return Ok((
+                net_config::from_path(&path).context(error::NetConfigParseSnafu { path: &path })?,
+                path,
+            ));
+        }
+    }
+
+    Ok((
+        net_config::from_command_line(&cmdline)
+            .context(error::NetConfigParseSnafu { path: &cmdline })?,
+        cmdline,
+    ))
 }
 
 fn force_symlink<P1, P2>(target: P1, link: P2) -> Result<()>
