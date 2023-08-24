@@ -255,8 +255,20 @@ mod error {
         #[snafu(display("Failed to read/parse DNS settings from DHCP lease: {}", source))]
         DnsFromLease { source: dns::Error },
 
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Unable to create interface drop-in directory '{}': {}", path.display(), source))]
+        DropInDirCreate { path: PathBuf, source: io::Error },
+
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Unable to write interface drop-in '{}': {}", path.display(), source))]
+        DropInFileWrite { path: PathBuf, source: io::Error },
+
         #[snafu(display("'systemd-sysctl' failed: {}", stderr))]
         FailedSystemdSysctl { stderr: String },
+
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("'systemctl' failed: {}", stderr))]
+        FailedSystemctl { stderr: String },
 
         #[snafu(display("Failed to remove '{}': {}", path.display(), source))]
         FileRemove { path: PathBuf, source: io::Error },
@@ -342,6 +354,10 @@ mod error {
 
         #[snafu(display("Failed to run 'systemd-sysctl': {}", source))]
         SystemdSysctlExecution { source: io::Error },
+
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Failed to run 'systemctl': {}", source))]
+        SystemctlExecution { source: io::Error },
 
         #[snafu(display("Failed to parse networkctl status for interface: {}", source))]
         NetworkctlParse { source: io::Error },
