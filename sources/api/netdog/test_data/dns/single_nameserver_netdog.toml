@@ -1,0 +1,2 @@
+name-servers = ["1.2.3.4"]
+search-list = ["us-west-2.compute.internal"]

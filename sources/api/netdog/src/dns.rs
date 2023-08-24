@@ -1,21 +1,28 @@
 //! The dns module contains the code necessary to gather DNS settings from config file,
 //! supplementing with DHCP lease if it exists.  It also contains the code necessary to write a
 //! properly formatted `resolv.conf`.
-use crate::NETDOG_RESOLV_CONF;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 use serde::Deserialize;
 use snafu::ResultExt;
 use std::collections::BTreeSet;
-use std::fmt::Write;
 use std::fs;
 use std::net::IpAddr;
 use std::path::Path;
 
 #[cfg(net_backend = "wicked")]
 use crate::lease::LeaseInfo;
+#[cfg(net_backend = "wicked")]
+use crate::REAL_RESOLV_CONF;
+#[cfg(net_backend = "wicked")]
+use std::fmt::Write;
+
 #[cfg(net_backend = "systemd-networkd")]
-use crate::networkd_status::NetworkDInterfaceStatus;
+use systemd_derive::{SystemdUnit, SystemdUnitSection};
+#[cfg(net_backend = "systemd-networkd")]
+static RESOLVED_CONF_DROPIN_DIR: &str = "/etc/systemd/resolved.conf.d";
+#[cfg(net_backend = "systemd-networkd")]
+static RESOLVED_CONF_DROPIN_FILE: &str = "10-resolv.conf";
 
 static DNS_CONFIG: &str = "/etc/netdog.toml";
 
@@ -51,32 +58,8 @@ impl DnsSettings {
         }
     }
 
-    /// Create a DnsSettings from TOML config file, supplementing missing settings from data in
-    /// the NetworkDInterfaceStatus.
-    #[cfg(net_backend = "systemd-networkd")]
-    pub(crate) fn from_config_or_status(status: &NetworkDInterfaceStatus) -> Result<Self> {
-        let mut settings = Self::from_config()?;
-        settings.merge_status(status);
-        Ok(settings)
-    }
-
-    #[cfg(net_backend = "systemd-networkd")]
-    fn merge_status(&mut self, status: &NetworkDInterfaceStatus) {
-        if self.nameservers.is_none() {
-            if let Some(dns_nameservers) = &status.dns {
-                self.nameservers = Some(dns_nameservers.iter().map(|n| n.address).collect());
-            }
-        }
-
-        if self.search.is_none() {
-            if let Some(search_domains) = &status.search_domains {
-                self.search = Some(search_domains.iter().map(|d| d.domain.clone()).collect());
-            }
-        }
-    }
-
     /// Create a DnsSettings from TOML config file
-    fn from_config() -> Result<Self> {
+    pub(crate) fn from_config() -> Result<Self> {
         Self::from_config_impl(DNS_CONFIG)
     }
 
@@ -113,10 +96,12 @@ impl DnsSettings {
     }
 
     /// Write resolver configuration for libc.
+    #[cfg(net_backend = "wicked")]
     pub(crate) fn write_resolv_conf(&self) -> Result<()> {
-        Self::write_resolv_conf_impl(self, NETDOG_RESOLV_CONF)
+        Self::write_resolv_conf_impl(self, REAL_RESOLV_CONF)
     }
 
+    #[cfg(net_backend = "wicked")]
     fn write_resolv_conf_impl<P>(&self, path: P) -> Result<()>
     where
         P: AsRef<Path>,
@@ -141,6 +126,80 @@ impl DnsSettings {
 
         fs::write(path, output).context(error::ResolvConfWriteFailedSnafu { path })
     }
+
+    /// Write a drop-in file for systemd-resolved
+    #[cfg(net_backend = "systemd-networkd")]
+    pub(crate) fn write_resolved_dropin(&self) -> Result<()> {
+        fs::create_dir_all(RESOLVED_CONF_DROPIN_DIR).context(error::CreateDirSnafu {
+            path: RESOLVED_CONF_DROPIN_DIR,
+        })?;
+
+        let dropin_path = Path::new(RESOLVED_CONF_DROPIN_DIR).join(RESOLVED_CONF_DROPIN_FILE);
+        Self::write_resolved_dropin_impl(self, dropin_path)
+    }
+
+    #[cfg(net_backend = "systemd-networkd")]
+    fn write_resolved_dropin_impl<P>(&self, path: P) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        let path = path.as_ref();
+        let resolved_dropin = ResolvedConfDropin::from_dns_settings(self);
+
+        fs::write(path, resolved_dropin.to_string())
+            .context(error::ResolvConfWriteFailedSnafu { path })
+    }
+
+    #[cfg(net_backend = "systemd-networkd")]
+    pub(crate) fn has_name_servers(&self) -> bool {
+        self.nameservers.is_some()
+    }
+
+    #[cfg(net_backend = "systemd-networkd")]
+    pub(crate) fn has_search_domains(&self) -> bool {
+        self.search.is_some()
+    }
+}
+
+#[cfg(net_backend = "systemd-networkd")]
+#[derive(Debug, SystemdUnit)]
+struct ResolvedConfDropin {
+    resolve: Option<ResolveSection>,
+}
+
+#[cfg(net_backend = "systemd-networkd")]
+#[derive(Debug, SystemdUnitSection)]
+#[systemd(section = "Resolve")]
+struct ResolveSection {
+    #[systemd(entry = "DNS", space_separated)]
+    dns: Vec<IpAddr>,
+    #[systemd(entry = "Domains", space_separated)]
+    domains: Vec<String>,
+}
+
+#[cfg(net_backend = "systemd-networkd")]
+impl ResolvedConfDropin {
+    fn from_dns_settings(dns: &DnsSettings) -> Self {
+        let domains = if let Some(domains) = &dns.search {
+            domains.clone()
+        } else {
+            Vec::new()
+        };
+
+        let dns = if let Some(nameservers) = &dns.nameservers {
+            // Randomize name server order, for libc implementations like musl that send
+            // queries to the first N servers.
+            let mut dns_servers: Vec<IpAddr> = nameservers.clone().into_iter().collect();
+            dns_servers.shuffle(&mut thread_rng());
+            dns_servers
+        } else {
+            Vec::new()
+        };
+
+        Self {
+            resolve: Some(ResolveSection { dns, domains }),
+        }
+    }
 }
 
 mod error {
@@ -151,6 +210,10 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(crate)))]
     pub(crate) enum Error {
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Unable to create directory '{}': {}", path.display(),source))]
+        CreateDir { path: PathBuf, source: io::Error },
+
         #[snafu(display("Failed to read DNS settings from '{}': {}", path.display(), source))]
         DnsConfReadFailed { path: PathBuf, source: io::Error },
 
@@ -186,48 +249,6 @@ mod tests {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("test_data")
             .join("dns")
-    }
-
-    #[cfg(net_backend = "systemd-networkd")]
-    use crate::interface_id::InterfaceName;
-    #[cfg(net_backend = "systemd-networkd")]
-    use crate::networkd_status::{NetworkDDnsConfig, NetworkDInterfaceStatus, SearchDomain};
-
-    #[cfg(net_backend = "systemd-networkd")]
-    fn generate_networkd_interface_status_single_nameserver() -> NetworkDInterfaceStatus {
-        let addrs = vec!["192.168.0.20".parse::<IpAddr>().unwrap()];
-        NetworkDInterfaceStatus {
-            name: InterfaceName::try_from("eth0".to_string()).unwrap(),
-            dns: Some(vec![NetworkDDnsConfig {
-                address: "192.168.0.2".parse::<IpAddr>().unwrap(),
-            }]),
-            search_domains: Some(vec![SearchDomain {
-                domain: "us-west-2.compute.internal".to_string(),
-            }]),
-            addresses: addrs,
-        }
-    }
-
-    #[cfg(net_backend = "systemd-networkd")]
-    fn generate_networkd_interface_status_multiple_nameservers() -> NetworkDInterfaceStatus {
-        let addrs = vec!["192.168.0.20".parse::<IpAddr>().unwrap()];
-        let nameservers = vec![
-            NetworkDDnsConfig {
-                address: "192.168.0.2".parse::<IpAddr>().unwrap(),
-            },
-            NetworkDDnsConfig {
-                address: "1.2.3.4".parse::<IpAddr>().unwrap(),
-            },
-        ];
-
-        NetworkDInterfaceStatus {
-            name: InterfaceName::try_from("eth0".to_string()).unwrap(),
-            dns: Some(nameservers),
-            search_domains: Some(vec![SearchDomain {
-                domain: "us-west-2.compute.internal".to_string(),
-            }]),
-            addresses: addrs,
-        }
     }
 
     #[test]
@@ -312,6 +333,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(net_backend = "wicked")]
     fn write_resolv_conf_from_config_multiple_nameservers() {
         let fake_file = tempfile::NamedTempFile::new().unwrap();
         let config = test_data().join("netdog.toml");
@@ -330,52 +352,45 @@ mod tests {
 
     #[test]
     #[cfg(net_backend = "systemd-networkd")]
-    fn dns_from_status() {
-        let networkd_status = generate_networkd_interface_status_single_nameserver();
-        let mut got = DnsSettings::default();
-        got.merge_status(&networkd_status);
-
-        let mut nameservers = BTreeSet::new();
-        nameservers.insert("192.168.0.2".parse::<IpAddr>().unwrap());
-        let search = Some(vec!["us-west-2.compute.internal".to_string()]);
-        let expected = DnsSettings {
-            nameservers: Some(nameservers),
-            search,
-        };
-        assert_eq!(got, expected)
-    }
-
-    #[test]
-    #[cfg(net_backend = "systemd-networkd")]
-    fn write_resolv_conf_from_status_single_nameserver() {
-        let networkd_status = generate_networkd_interface_status_single_nameserver();
-
+    fn write_resolved_dropin_single_nameserver() {
         let fake_file = tempfile::NamedTempFile::new().unwrap();
-        let mut settings = DnsSettings::default();
-        settings.merge_status(&networkd_status);
+        let config = test_data().join("single_nameserver_netdog.toml");
 
-        settings.write_resolv_conf_impl(&fake_file).unwrap();
+        let settings = DnsSettings::from_config_impl(config).unwrap();
+        settings.write_resolved_dropin_impl(&fake_file).unwrap();
 
-        let expected = "search us-west-2.compute.internal\nnameserver 192.168.0.2\n";
+        let expected = "[Resolve]\nDNS=1.2.3.4\nDomains=us-west-2.compute.internal\n";
         assert_eq!(std::fs::read_to_string(&fake_file).unwrap(), expected);
     }
 
     #[test]
     #[cfg(net_backend = "systemd-networkd")]
-    fn write_resolv_conf_from_status_multiple_nameservers() {
-        let networkd_status = generate_networkd_interface_status_multiple_nameservers();
-
+    fn write_resolved_dropin_multiple_domains() {
         let fake_file = tempfile::NamedTempFile::new().unwrap();
-        let mut settings = DnsSettings::default();
-        settings.merge_status(&networkd_status);
-        settings.write_resolv_conf_impl(&fake_file).unwrap();
+        let config = test_data().join("multiple_domains_netdog.toml");
+
+        let settings = DnsSettings::from_config_impl(config).unwrap();
+        settings.write_resolved_dropin_impl(&fake_file).unwrap();
+
+        let expected = "[Resolve]\nDNS=1.2.3.4\nDomains=us-west-2.compute.internal foo.bar.baz\n";
+        assert_eq!(std::fs::read_to_string(&fake_file).unwrap(), expected);
+    }
+
+    #[test]
+    #[cfg(net_backend = "systemd-networkd")]
+    fn write_resolved_dropin_multiple_domains_nameservers() {
+        let fake_file = tempfile::NamedTempFile::new().unwrap();
+        let config = test_data().join("netdog.toml");
+
+        let settings = DnsSettings::from_config_impl(config).unwrap();
+        settings.write_resolved_dropin_impl(&fake_file).unwrap();
 
         // Since we shuffle the nameservers, it's possible for the resulting file to be either of
         // the following
         let format1 =
-            "search us-west-2.compute.internal\nnameserver 192.168.0.2\nnameserver 1.2.3.4\n";
+            "[Resolve]\nDNS=2.3.4.5 1.2.3.4\nDomains=us-west-2.compute.internal foo.bar.baz\n";
         let format2 =
-            "search us-west-2.compute.internal\nnameserver 1.2.3.4\nnameserver 192.168.0.2\n";
+            "[Resolve]\nDNS=1.2.3.4 2.3.4.5\nDomains=us-west-2.compute.internal foo.bar.baz\n";
 
         // The resulting file must be either format 1 or 2
         let resolv_conf = std::fs::read_to_string(&fake_file).unwrap();
