@@ -1,7 +1,7 @@
-%global buildver 21223074
+%global buildver 21855600
 
 Name: %{_cross_os}open-vm-tools
-Version: 12.2.0
+Version: 12.2.5
 Release: 1%{?dist}
 Summary: Tools for VMware
 License: LGPL-2.1-or-later
