@@ -281,7 +281,7 @@ fn merge_parameters(
     source_parameters
         .into_iter()
         // Process the `set_parameters` second so that they overwrite existing values.
-        .chain(set_parameters.clone().into_iter())
+        .chain(set_parameters.clone())
         .for_each(|(ssm_key, ssm_value)| {
             combined_parameters
                 // The `entry()` API demands that we clone

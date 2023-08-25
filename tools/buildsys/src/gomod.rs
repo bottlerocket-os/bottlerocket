@@ -48,7 +48,7 @@ const GO_MOD_DOCKER_SCRIPT_NAME: &str = "docker-go-script.sh";
 // buildsys is executed from the context of many different package directories,
 // managing a temporary file via this Rust module prevents having to acquire the
 // path of some static script file on the host system.
-const GO_MOD_SCRIPT_TMPL: &str = r###"#!/bin/bash
+const GO_MOD_SCRIPT_TMPL: &str = r#".#!/bin/bash
 
 set -e
 
@@ -68,7 +68,7 @@ popd
 tar czf __OUTPUT__ "${targetdir}"/vendor
 rm -rf "${targetdir}"
 touch -r __LOCAL_FILE_NAME__ __OUTPUT__
-"###;
+"#;
 
 impl GoMod {
     pub(crate) fn vendor(
