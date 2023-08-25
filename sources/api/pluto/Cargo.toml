@@ -26,6 +26,7 @@ aws-smithy-types = "0.55"
 serde_json = "1"
 snafu = "0.7"
 tokio = { version = "~1.25", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
+tokio-retry = "0.3"
 
 [build-dependencies]
 bottlerocket-variant = { version = "0.1", path = "../../bottlerocket-variant" }
