@@ -1,6 +1,6 @@
 [required-extensions]
-kubernetes = { version = "v1", helpers = ["any_enabled"] }
-std = { version = "v1", helpers = ["default"] }
+kubernetes = "v1"
+std = { version = "v1", helpers = ["any_enabled", "default"] }
 +++
 [Service]
 ExecStart=
