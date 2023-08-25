@@ -1412,10 +1412,7 @@ struct Containerd;
 impl Docker {
     /// Formats capabilities for Docker
     fn get_capabilities(caps: String) -> String {
-        format!(
-            concat!(r#"["#, "{capabilities}", "],\n",),
-            capabilities = caps,
-        )
+        format!(concat!(r#"["#, "{capabilities}", "]",), capabilities = caps)
     }
 
     /// Formats resource limits for Docker
@@ -2918,8 +2915,7 @@ mod test_oci_spec {
             rendered,
             r#"["CAP_KILL",
 "CAP_MAC_ADMIN",
-"CAP_MKNOD"],
-"#
+"CAP_MKNOD"]"#
         );
     }
 
