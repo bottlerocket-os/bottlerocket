@@ -1,6 +1,6 @@
 [required-extensions]
-kubernetes = { version = "v1", helpers = ["any_enabled", "kube_reserve_cpu", "kube_reserve_memory"] }
-std = { version = "v1", helpers = ["default"] }
+kubernetes = { version = "v1", helpers = ["kube_reserve_cpu", "kube_reserve_memory"] }
+std = { version = "v1", helpers = ["any_enabled", "default"] }
 +++
 ---
 kind: KubeletConfiguration
