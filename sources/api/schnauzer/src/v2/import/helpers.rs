@@ -5,7 +5,7 @@
 use super::as_std_err;
 use crate::{helpers as handlebars_helpers, v2::ExtensionRequirement};
 use async_trait::async_trait;
-use handlebars::{Handlebars, HelperDef};
+use handlebars::{Handlebars, HelperDef, ScopedJson};
 use maplit::hashmap;
 use snafu::{ensure, OptionExt};
 use std::collections::{HashMap, HashSet};
@@ -187,11 +187,39 @@ impl SettingExtensionTemplateHelper {
             helper_name,
         }
     }
+
+    fn get_helper(&self) -> std::result::Result<Box<dyn HelperDef>, handlebars::RenderError> {
+        let mut available_helpers = all_helpers();
+        let referenced_helper = available_helpers
+            .get_mut(self.setting_extension.as_str())
+            .ok_or(handlebars::RenderError::new(format!(
+                "Requested setting extension '{}' not found",
+                self.setting_extension
+            )))?
+            .remove(self.helper_name.as_str())
+            .ok_or(handlebars::RenderError::new(format!(
+                "Requested helper '{}' not found",
+                self.helper_name
+            )))?;
+        Ok(referenced_helper)
+    }
 }
 
 // The `HelperDef` implementation for `SettingExtensionTemplateHelper` currently just invokes the already-defined
 // global helper. This is a temporary workaround until settings extensions are merged into Bottlerocket.
 impl HelperDef for SettingExtensionTemplateHelper {
+    // `call_inner` is used in cases where `handlebars` tries to compose helpers
+    fn call_inner<'reg: 'rc, 'rc>(
+        &self,
+        h: &handlebars::Helper<'reg, 'rc>,
+        r: &'reg Handlebars<'reg>,
+        ctx: &'rc handlebars::Context,
+        rc: &mut handlebars::RenderContext<'reg, 'rc>,
+    ) -> std::result::Result<ScopedJson<'reg, 'rc>, handlebars::RenderError> {
+        self.get_helper()?.call_inner(h, r, ctx, rc)
+    }
+
+    // `call` is used in cases where `handlebars` tries to render helper output
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &handlebars::Helper<'reg, 'rc>,
@@ -200,19 +228,7 @@ impl HelperDef for SettingExtensionTemplateHelper {
         rc: &mut handlebars::RenderContext<'reg, 'rc>,
         out: &mut dyn handlebars::Output,
     ) -> handlebars::HelperResult {
-        let available_helpers = all_helpers();
-        let referenced_helper = available_helpers
-            .get(self.setting_extension.as_str())
-            .ok_or(handlebars::RenderError::new(format!(
-                "Requested setting extension '{}' not found",
-                self.setting_extension
-            )))?
-            .get(self.helper_name.as_str())
-            .ok_or(handlebars::RenderError::new(format!(
-                "Requested helper '{}' not found",
-                self.helper_name
-            )))?;
-        referenced_helper.call(h, r, ctx, rc, out)
+        self.get_helper()?.call(h, r, ctx, rc, out)
     }
 }
 
