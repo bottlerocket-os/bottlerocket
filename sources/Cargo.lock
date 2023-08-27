@@ -599,6 +599,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-control-container-v0-7-4"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-credential-types"
 version = "0.55.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3098,6 +3105,13 @@ dependencies = [
 
 [[package]]
 name = "public-control-container-v0-7-3"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "public-control-container-v0-7-4"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
