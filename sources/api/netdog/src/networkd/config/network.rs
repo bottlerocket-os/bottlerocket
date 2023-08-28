@@ -29,6 +29,7 @@ pub(crate) struct NetworkConfig {
     route: Vec<RouteSection>,
     dhcp4: Option<Dhcp4Section>,
     dhcp6: Option<Dhcp6Section>,
+    ipv6_accept_ra: Option<Ipv6AcceptRaSection>,
 }
 
 #[derive(Debug, Default, SystemdUnitSection)]
@@ -94,6 +95,8 @@ struct Dhcp4Section {
     use_dns: Option<bool>,
     #[systemd(entry = "UseDomains")]
     use_domains: Option<bool>,
+    #[systemd(entry = "UseMTU")]
+    use_mtu: Option<bool>,
 }
 
 #[derive(Debug, Default, SystemdUnitSection)]
@@ -105,6 +108,13 @@ struct Dhcp6Section {
     use_domains: Option<bool>,
     #[systemd(entry = "WithoutRA")]
     without_ra: Option<WithoutRa>,
+}
+
+#[derive(Debug, Default, SystemdUnitSection)]
+#[systemd(section = "IPv6AcceptRA")]
+struct Ipv6AcceptRaSection {
+    #[systemd(entry = "UseMTU")]
+    use_mtu: Option<bool>,
 }
 
 // The `Any` variant isn't currently used, but is valid
@@ -277,6 +287,11 @@ impl NetworkConfig {
 
     fn dhcp6_mut(&mut self) -> &mut Dhcp6Section {
         self.dhcp6.get_or_insert_with(Dhcp6Section::default)
+    }
+
+    fn ipv6_accept_ra_mut(&mut self) -> &mut Ipv6AcceptRaSection {
+        self.ipv6_accept_ra
+            .get_or_insert_with(Ipv6AcceptRaSection::default)
     }
 }
 
@@ -465,6 +480,7 @@ where
             // The following ensure DNS comes back with the lease
             dhcp4_s.use_dns = Some(true);
             dhcp4_s.use_domains = Some(true);
+            dhcp4_s.use_mtu = Some(true);
         }
 
         if Self::dhcp6_enabled(&dhcp6) {
@@ -472,6 +488,8 @@ where
             // The following ensure DNS comes back with the lease
             dhcp6_s.use_dns = Some(true);
             dhcp6_s.use_domains = Some(true);
+            let ipv6_accept_ra_s = self.network.ipv6_accept_ra_mut();
+            ipv6_accept_ra_s.use_mtu = Some(true);
         }
     }
 
@@ -490,6 +508,7 @@ where
             // The following ensure DNS comes back with the lease
             dhcp.use_dns = Some(true);
             dhcp.use_domains = Some(true);
+            dhcp.use_mtu = Some(true);
         }
     }
 
@@ -507,6 +526,8 @@ where
             // The following ensure DNS comes back with the lease
             dhcp.use_dns = Some(true);
             dhcp.use_domains = Some(true);
+            let accept_ra = self.network.ipv6_accept_ra_mut();
+            accept_ra.use_mtu = Some(true);
         }
     }
 

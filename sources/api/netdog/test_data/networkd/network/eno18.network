@@ -9,3 +9,4 @@ DHCP=ipv4
 [DHCPv4]
 UseDNS=true
 UseDomains=true
+UseMTU=true
