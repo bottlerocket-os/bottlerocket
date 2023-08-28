@@ -113,6 +113,10 @@ struct Dhcp6Section {
 #[derive(Debug, Default, SystemdUnitSection)]
 #[systemd(section = "IPv6AcceptRA")]
 struct Ipv6AcceptRaSection {
+    #[systemd(entry = "UseDNS")]
+    use_dns: Option<bool>,
+    #[systemd(entry = "UseDomains")]
+    use_domains: Option<bool>,
     #[systemd(entry = "UseMTU")]
     use_mtu: Option<bool>,
 }
