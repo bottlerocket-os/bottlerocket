@@ -62,6 +62,8 @@ struct NetworkSection {
     dhcp: Option<DhcpBool>,
     #[systemd(entry = "IPv6AcceptRA")]
     ipv6_accept_ra: Option<bool>,
+    #[systemd(entry = "IPv6DuplicateAddressDetection")]
+    ipv6_duplicate_address_detection: Option<i32>,
     #[systemd(entry = "LinkLocalAddressing")]
     link_local_addressing: Option<DhcpBool>,
     #[systemd(entry = "PrimarySlave")]
@@ -187,6 +189,12 @@ impl NetworkConfig {
     // TODO: expose a network config option for this
     pub(crate) fn accept_ra(&mut self) {
         self.network_mut().ipv6_accept_ra = Some(true)
+    }
+
+    /// Add config to disable IPv6 duplicate address detection
+    // TODO: expose a network config option for this
+    pub(crate) fn disable_dad(&mut self) {
+        self.network_mut().ipv6_duplicate_address_detection = Some(0)
     }
 
     /// Write the config to the proper directory with the proper prefix and file extention

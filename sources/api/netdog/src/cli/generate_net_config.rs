@@ -102,6 +102,7 @@ fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bo
         if from_cmd_line {
             if let NetworkDConfigFile::Network(ref mut n) = config {
                 n.accept_ra();
+                n.disable_dad();
             }
         }
 
