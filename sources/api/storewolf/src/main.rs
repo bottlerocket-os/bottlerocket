@@ -170,8 +170,7 @@ fn parse_metadata_toml(md_toml_val: toml::Value) -> Result<Vec<model::Metadata>>
     // Start at the root of the tree.
     let mut to_process = vec![(Vec::new(), md_toml_val)];
 
-    while !to_process.is_empty() {
-        let (mut path, toml_value) = to_process.pop().unwrap();
+    while let Some((mut path, toml_value)) = to_process.pop() {
         trace!("Current metadata table path: {:#?}", &path);
 
         match toml_value {

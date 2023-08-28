@@ -437,7 +437,7 @@ impl StructInfo {
             }
         );
 
-        stream.append_all(impls.into_iter());
+        stream.append_all(impls);
 
         // Generate code that is only applicable if the inner type can be treated like a String.
         if self.as_ref_str {
@@ -481,7 +481,7 @@ impl StructInfo {
                     }
                 }
             );
-            stream.append_all(code.into_iter());
+            stream.append_all(code);
         }
 
         // If the inner type is String, then we already have this implemented. If not, we can add
@@ -494,7 +494,7 @@ impl StructInfo {
                     }
                 }
             );
-            stream.append_all(code.into_iter());
+            stream.append_all(code);
         }
     }
 }
@@ -594,7 +594,7 @@ fn write_string_impls_for_enum(name: &str, ast: &mut TokenStream2) {
         }
     );
 
-    ast.append_all(impls.into_iter());
+    ast.append_all(impls);
 }
 
 /// Make sure all variants of the enum are empty of data. Otherwise we can't represent this enum

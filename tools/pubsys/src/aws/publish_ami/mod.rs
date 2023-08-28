@@ -514,7 +514,7 @@ pub(crate) async fn modify_regional_images(
                 info!("Modified permissions of image {} in {}", image_id, region);
 
                 // Set the `public` and `launch_permissions` fields for the Image object
-                let mut image = images.get_mut(&Region::new(region.clone())).ok_or(
+                let image = images.get_mut(&Region::new(region.clone())).ok_or(
                     error::Error::MissingRegion {
                         region: region.clone(),
                     },
