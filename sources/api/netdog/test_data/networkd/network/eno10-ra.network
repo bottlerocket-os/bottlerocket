@@ -8,3 +8,4 @@ IPv6AcceptRA=true
 [DHCPv6]
 UseDNS=true
 UseDomains=true
+WithoutRA=solicit

@@ -103,6 +103,8 @@ struct Dhcp6Section {
     use_dns: Option<bool>,
     #[systemd(entry = "UseDomains")]
     use_domains: Option<bool>,
+    #[systemd(entry = "WithoutRA")]
+    without_ra: Option<WithoutRa>,
 }
 
 // The `Any` variant isn't currently used, but is valid
@@ -141,6 +143,25 @@ impl Display for DhcpBool {
             DhcpBool::Ipv6 => write!(f, "ipv6"),
             DhcpBool::No => write!(f, "no"),
             DhcpBool::Yes => write!(f, "yes"),
+        }
+    }
+}
+
+// Only the `Solicit` variant is currently used.
+#[allow(dead_code)]
+#[derive(Debug)]
+enum WithoutRa {
+    No,
+    Solicit,
+    InformationRequest,
+}
+
+impl Display for WithoutRa {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WithoutRa::No => write!(f, "no"),
+            WithoutRa::Solicit => write!(f, "solicit"),
+            WithoutRa::InformationRequest => write!(f, "information-request"),
         }
     }
 }
@@ -188,7 +209,8 @@ impl NetworkConfig {
     /// Add config to accept IPv6 router advertisements
     // TODO: expose a network config option for this
     pub(crate) fn accept_ra(&mut self) {
-        self.network_mut().ipv6_accept_ra = Some(true)
+        self.network_mut().ipv6_accept_ra = Some(true);
+        self.dhcp6_mut().without_ra = Some(WithoutRa::Solicit);
     }
 
     /// Add config to disable IPv6 duplicate address detection
