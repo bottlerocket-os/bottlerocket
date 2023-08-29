@@ -1,0 +1,3657 @@
+From 8330b130d288943c11658a69c033e97f02a69591 Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Tue, 25 Jul 2023 10:29:08 +0000
+Subject: [PATCH] linux-firmware: bt/wifi: Remove firmware for Bluetooth/WiFi
+ devices
+
+Bottlerocket does not configure any drivers for Bluetooth or WiFi
+devices. Without the drivers the firmware is useless and does not need
+to be shipped. The following list matches driver names as listed in
+WHENCE to the kernel config options enabling those driver in case we do
+add drivers in the future we can easily check if we need to add firmware
+binaries.
+
+* ar9170 - CONFIG_CARL9170
+* carl9170 - CONFIG_CARL9170
+* ath9k_htc - CONFIG_ATH9K_HTC
+* ath3k - CONFIG_BT_ATH3K
+* DFU Driver [...] AR3012 - CONFIG_BT_ATH3K
+* Atheros AR300x UART [...] - CONFIG_BT_HCIUART_ATH3K
+* ath6kl - CONFIG_ATH6KL
+* ath10k - CONFIG_ATH10K
+* ath11k - CONFIG_ATH11K
+* ar5523 - CONFIG_AR5523
+* btqca - CONFIG_BT_QCA
+* qca - CONFIG_QCA7000
+* mt7601u - CONFIG_MT7601U
+* btmtk_usb - CONFIG_BT_HCIBTUSB_MTK
+* btmtk - CONFIG_BT_MTK
+* mt76x0 - CONFIG_MT76x0U && CONFIG_MT76x0E
+* mt76x2e - CONFIG_MT76x2E
+* mt76x2u - CONFIG_MT76x2U
+* mt7615e - CONFIG_MT7615E
+* mt7622 - CONFIG_MT7622WMAC
+* mt7663 - CONFIG_MT7663U && CONFIG_MT7663S
+* mt7915e - CONFIG_MT7915E
+* mt7921 - CONFIG_MT7921U && CONFIG_MT7921S && CONFIG_MT7921E
+* mt7922 - CONFIG_MT7921U && CONFIG_MT7921S && CONFIG_MT7921E
+* brcmsmac - CONFIG_BRCMSMAC
+* brcmfmac - CONFIG_BRCMFMAC
+* BCM-0bb4-0306 - CONFIG_BT_BCM
+* wl1251 - CONFIG_WL1251
+* wl12xx - CONFIG_WL12XX
+* wl18xx - CONFIG_WL18XX
+* TI_ST - CONFIG_TI_ST
+* r8152 - CONFIG_USB_RTL8152
+* r8169 - CONFIG_R8169
+* r8712u - CONFIG_R8712U
+* rtl8188ee - CONFIG_RTL8188EE
+* rtl8192e - CONFIG_RTL8192E
+* rtl8192ce - CONFIG_RTL8192CE
+* rtl8192cu - CONFIG_RTL8192CU
+* rtl8192de - CONFIG_RTL8192DE
+* rtl8192ee - CONFIG_RTL8192EE
+* rtl8192se - CONFIG_RTL8192SE
+* rtl8723be - CONFIG_RTL8723BE
+* rtl8723bs - CONFIG_RTL8723BS
+* rtl8723de - CONFIG_RTL8723_COMMON
+* rtl8723e - CONFIG_RTL8723_COMMON
+* rtl8821ae - CONFIG_RTL8821AE
+* rtl8822be - CONFIG_RTW88_8822BE
+* rtl8xxxu - CONFIG_RTL8XXXU
+* rtw88 - CONFIG_RTW88
+* rtw89 - CONFIG_RTW89
+* btusb - CONFIG_BT_HCIBTUSB
+* nxp-sr1xx - CONFIG_NXP_UWB (driver has yet to be accepted upstream)
+* btnxpuart - CONFIG_BT_NXPUART
+* cw1200 - CONFIG_CW1200
+* rsi - CONFIG_RSI_91X
+* wilc1000 - CONFIG_WILC1000
+* qcom_q6v5_pas - CONFIG_QCOM_Q6V5_PAS
+* qcom_q6v5_mss - CONFIG_QCOM_Q6V5_MSS
+* iwlwifi - CONFIG_IWLWIFI
+* rt2800pci - CONFIG_RT2800PCI
+* rt2800usb - CONFIG_RT2800USB
+* rt2860sta - CONFIG_RT2800PCI && CONFIG_RT2800USB
+* rt2870sta - CONFIG_RT2800PCI && CONFIG_RT2800USB
+* rt61pci - CONFIG_RT61PCI
+* rt73usb - CONFIG_RT73USB
+* wfx - CONFIG_WFX
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENCE.NXP                                |   22 -
+ LICENCE.OLPC                               |   33 -
+ LICENCE.atheros_firmware                   |   38 -
+ LICENCE.broadcom_bcm43xx                   |   65 -
+ LICENCE.cw1200                             |   35 -
+ LICENCE.cypress                            |  138 --
+ LICENCE.ibt_firmware                       |   39 -
+ LICENCE.iwlwifi_firmware                   |   39 -
+ LICENCE.open-ath9k-htc-firmware            |  206 --
+ LICENCE.ralink-firmware.txt                |   39 -
+ LICENCE.ralink_a_mediatek_company_firmware |   39 -
+ LICENCE.rtlwifi_firmware.txt               |   39 -
+ LICENCE.ti-connectivity                    |   61 -
+ LICENCE.wl1251                             |   59 -
+ LICENSE.QualcommAtheros_ar3k               |   47 -
+ LICENSE.QualcommAtheros_ath10k             |   47 -
+ LICENSE.atmel                              |   36 -
+ LICENSE.nxp                                |   26 -
+ WHENCE                                     | 2279 +-------------------
+ 19 files changed, 27 insertions(+), 3260 deletions(-)
+ delete mode 100644 LICENCE.NXP
+ delete mode 100644 LICENCE.OLPC
+ delete mode 100644 LICENCE.atheros_firmware
+ delete mode 100644 LICENCE.broadcom_bcm43xx
+ delete mode 100644 LICENCE.cw1200
+ delete mode 100644 LICENCE.cypress
+ delete mode 100644 LICENCE.ibt_firmware
+ delete mode 100644 LICENCE.iwlwifi_firmware
+ delete mode 100644 LICENCE.open-ath9k-htc-firmware
+ delete mode 100644 LICENCE.ralink-firmware.txt
+ delete mode 100644 LICENCE.ralink_a_mediatek_company_firmware
+ delete mode 100644 LICENCE.rtlwifi_firmware.txt
+ delete mode 100644 LICENCE.ti-connectivity
+ delete mode 100644 LICENCE.wl1251
+ delete mode 100644 LICENSE.QualcommAtheros_ar3k
+ delete mode 100644 LICENSE.QualcommAtheros_ath10k
+ delete mode 100644 LICENSE.atmel
+ delete mode 100644 LICENSE.nxp
+
+diff --git a/LICENCE.NXP b/LICENCE.NXP
+deleted file mode 100644
+index 96215f1..0000000
+--- a/LICENCE.NXP
++++ /dev/null
+@@ -1,22 +0,0 @@
+-Copyright � 2019.  NXP B.V.  All rights reserved.
+-
+-Redistribution and use in binary form is permitted provided that the following
+-conditions are met:
+-
+-1. Redistributions must reproduce the above copyright notice, this list of
+-conditions and the following disclaimer in the documentation and/or other
+-materials provided with the distribution.
+-
+-2. Redistribution and use shall be used only with NXP B.V. silicon products.
+-Any other use, reproduction, modification, translation, or compilation of the
+-Software is prohibited.
+-
+-3. No reverse engineering, decompilation, or disassembly is permitted.
+-
+-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THIS SOFTWARE IS PROVIDED
+-"AS IS" WITHOUT WARRANTY OF ANY KIND, INCLUDING, WITHOUT LIMITATION, ANY EXPRESS
+-OR IMPLIED WARRANTIES OF MERCHANTABILITY, ACCURACY, FITNESS OR SUFFICIENCY FOR A
+-PARTICULAR PURPOSE, SATISFACTORY QUALITY, CORRESPONDENCE WITH DESCRIPTION, QUIET
+-ENJOYMENT OR NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY RIGHTS.
+-NXP B.V., ITS AFFILIATES AND THEIR SUPPLIERS DISCLAIM ANY WARRANTY THAT THE
+-DELIVERABLES WILL OPERATE WITHOUT INTERRUPTION OR BE ERROR-FREE.
+diff --git a/LICENCE.OLPC b/LICENCE.OLPC
+deleted file mode 100644
+index a740952..0000000
+--- a/LICENCE.OLPC
++++ /dev/null
+@@ -1,33 +0,0 @@
+-Copyright (c) 2006, One Laptop per Child and Marvell Corporation.
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without 
+-modification, are permitted provided that the following conditions are 
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the 
+-  following disclaimer in the documentation and/or other materials 
+-  provided with the distribution.
+-* Neither the name of Marvell Corporation nor the names of its suppliers 
+-  may be used to endorse or promote products derived from this software 
+-  without specific prior written permission.
+-* No reverse engineering, decompilation, or disassembly of this software 
+-  is permitted.
+-* You may not use or attempt to use this software in conjunction with
+-  any product that is offered by a third party as a replacement,
+-  substitute or alternative to a Marvell Product where a Marvell Product
+-  is defined as a proprietary wireless LAN embedded client solution of
+-  Marvell or a Marvell Affiliate.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, 
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS 
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
+-DAMAGE.
+diff --git a/LICENCE.atheros_firmware b/LICENCE.atheros_firmware
+deleted file mode 100644
+index e0ebdac..0000000
+--- a/LICENCE.atheros_firmware
++++ /dev/null
+@@ -1,38 +0,0 @@
+-Copyright (c) 2008-2010, Atheros Communications, Inc.
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-  following disclaimer in the documentation and/or other materials
+-  provided with the distribution.
+-
+-* Neither the name of Atheros Communications, Inc. nor the names of
+-  its suppliers may be used to endorse or promote products derived
+-  from this software without specific prior written permission.
+-
+-* No reverse engineering, decompilation, or disassembly of this
+-  software is permitted.
+-
+-Limited patent license.  Atheros Communications, Inc. grants a
+-world-wide, royalty-free, non-exclusive license under patents it
+-now or hereafter owns or controls to make, have made, use, import,
+-offer to sell and sell ("Utilize") this software, but solely to
+-the extent that any such patent is necessary to Utilize the software
+-in conjunction with an Atheros Chipset. The patent license shall not
+-apply to any other combinations which include this software. No
+-hardware per se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+-THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENCE.broadcom_bcm43xx b/LICENCE.broadcom_bcm43xx
+deleted file mode 100644
+index ff26fdd..0000000
+--- a/LICENCE.broadcom_bcm43xx
++++ /dev/null
+@@ -1,65 +0,0 @@
+-SOFTWARE LICENSE AGREEMENT
+-
+-The accompanying software in binary code form (“Software”), is licensed to you,
+-or, if you are accepting on behalf of an entity, the entity and its affiliates
+-exercising rights hereunder (“Licensee”) subject to the terms of this software
+-license agreement (“Agreement”), unless Licensee and Broadcom Corporation
+-(“Broadcom”) execute a separate written software license agreement governing
+-use of the Software. ANY USE, REPRODUCTION, OR DISTRIBUTION OF THE SOFTWARE
+-CONSTITUTES LICENSEE’S ACCEPTANCE OF THIS AGREEMENT.
+-
+-1.	License. Subject to the terms and conditions of this Agreement,
+-Broadcom hereby grants to Licensee a limited, non-exclusive, non-transferable,
+-royalty-free license: (i) to use and integrate the Software with any other
+-software; and (ii) to reproduce and distribute the Software complete,
+-unmodified, and as provided by Broadcom, solely for use with Broadcom
+-proprietary integrated circuit product(s) sold by Broadcom with which the
+-Software was designed to be used, or their successors.
+-
+-2.	Restrictions. Licensee shall distribute Software with a copy of this
+-Agreement. Licensee shall not remove, efface or obscure any copyright or
+-trademark notices from the Software. Reproductions of the Broadcom copyright
+-notice shall be included with each copy of the Software, except where such
+-Software is embedded in a manner not readily accessible to the end user.
+-Licensee shall not: (i) use, license, sell or otherwise distribute the Software
+-except as provided in this Agreement; (ii) attempt to modify in any way,
+-reverse engineer, decompile or disassemble any portion of the Software; or
+-(iii) use the Software or other material in violation of any applicable law or
+-regulation, including but not limited to any regulatory agency. This Agreement
+-shall automatically terminate upon Licensee’s failure to comply with any of the
+-terms of this Agreement. In such event, Licensee will destroy all copies of the
+-Software and its component parts.
+-
+-3.	Ownership. The Software is licensed and not sold.  Title to and
+-ownership of the Software, including all intellectual property rights thereto,
+-and any portion thereof remain with Broadcom or its licensors. Licensee hereby
+-covenants that it will not assert any claim that the Software created by or for
+-Broadcom infringe any intellectual property right owned or controlled by
+-Licensee.
+-
+-4.     	Disclaimer. THE SOFTWARE IS OFFERED “AS IS,” AND BROADCOM PROVIDES AND
+-GRANTS AND LICENSEE RECEIVES NO SUPPORT AND NO WARRANTIES OF ANY KIND, EXPRESS
+-OR IMPLIED, BY STATUTE, COMMUNICATION OR CONDUCT WITH LICENSEE, OR OTHERWISE.
+-BROADCOM SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTIES OF MERCHANTABILITY,
+-FITNESS FOR A SPECIFIC PURPOSE, OR NONINFRINGEMENT CONCERNING THE SOFTWARE OR
+-ANY UPGRADES TO OR DOCUMENTATION FOR THE SOFTWARE. WITHOUT LIMITATION OF THE
+-ABOVE, BROADCOM GRANTS NO WARRANTY THAT THE SOFTWARE IS ERROR-FREE OR WILL
+-OPERATE WITHOUT INTERRUPTION, AND GRANTS NO WARRANTY REGARDING ITS USE OR THE
+-RESULTS THEREFROM INCLUDING, WITHOUT LIMITATION, ITS CORRECTNESS, ACCURACY, OR
+-RELIABILITY. TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM
+-OR ANY OF ITS LICENSORS HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES, HOWEVER CAUSED AND ON ANY THEORY
+-OF LIABILITY, WHETHER FOR BREACH OF CONTRACT, TORT (INCLUDING NEGLIGENCE) OR
+-OTHERWISE, ARISING OUT OF THIS AGREEMENT OR USE, REPRODUCTION, OR DISTRIBUTION
+-OF THE SOFTWARE, INCLUDING BUT NOT LIMITED TO LOSS OF DATA AND LOSS OF PROFITS,
+-EVEN IF SUCH PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. THESE
+-LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF ANY
+-LIMITED REMEDY.
+-
+-5. 	Export Laws.  LICENSEE UNDERSTANDS AND AGREES THAT THE SOFTWARE IS
+-SUBJECT TO UNITED STATES AND OTHER APPLICABLE EXPORT-RELATED LAWS AND
+-REGULATIONS AND THAT LICENSEE MAY NOT EXPORT, RE-EXPORT OR TRANSFER THE
+-SOFTWARE OR ANY DIRECT PRODUCT OF THE SOFTWARE EXCEPT AS PERMITTED UNDER THOSE
+-LAWS. WITHOUT LIMITING THE FOREGOING, EXPORT, RE-EXPORT, OR TRANSFER OF THE
+-SOFTWARE TO CUBA, IRAN, NORTH KOREA, SUDAN, AND SYRIA IS PROHIBITED.
+-
+diff --git a/LICENCE.cw1200 b/LICENCE.cw1200
+deleted file mode 100644
+index 1016eca..0000000
+--- a/LICENCE.cw1200
++++ /dev/null
+@@ -1,35 +0,0 @@
+-Copyright (c) 2007-2013, ST Microelectronics NV.
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without modification, 
+-are permitted provided that the following conditions are met:
+-
+-* Redistributions must reproduce the above copyright notice and the following 
+-disclaimer in the documentation and/or other materials provided with the 
+-distribution.
+-
+-* Neither the name of ST Microelectronics NV.  nor the names of its suppliers 
+-may be used to endorse or promote products derived from this software without 
+-specific prior written permission.
+-
+-* No reverse engineering, decompilation, or disassembly of this software is 
+-permitted.
+-
+-Limited patent license.  ST Microelectronics NV. grants a world-wide, royalty-free,
+- non-exclusive license under patents it now or hereafter owns or controls to make, 
+- have made, use, import, offer to sell and sell ("Utilize") this software, but 
+- solely to the extent that any such patent is necessary to Utilize the software in 
+-conjunction with an ST Microelectronics chipset. The patent license shall not 
+-apply to any other combinations which include this software. No hardware per se 
+-is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ANDCONTRIBUTORS 
+-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON 
+-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
+-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENCE.cypress b/LICENCE.cypress
+deleted file mode 100644
+index 070ef66..0000000
+--- a/LICENCE.cypress
++++ /dev/null
+@@ -1,138 +0,0 @@
+-### CYPRESS WIRELESS CONNECTIVITY DEVICES
+-### DRIVER END USER LICENSE AGREEMENT (SOURCE AND BINARY DISTRIBUTION)
+-
+-PLEASE READ THIS END USER LICENSE AGREEMENT ("Agreement") CAREFULLY BEFORE
+-DOWNLOADING, INSTALLING, OR USING THIS SOFTWARE, ANY ACCOMPANYING
+-DOCUMENTATION, OR ANY UPDATES PROVIDED BY CYPRESS ("Software").  BY
+-DOWNLOADING, INSTALLING, OR USING THE SOFTWARE, YOU ARE AGREEING TO BE BOUND
+-BY THIS AGREEMENT.  IF YOU DO NOT AGREE TO ALL OF THE TERMS OF THIS
+-AGREEMENT, PROMPTLY RETURN AND DO NOT USE THE SOFTWARE.  IF YOU HAVE
+-PURCHASED THE SOFTWARE, YOUR RIGHT TO RETURN THE SOFTWARE EXPIRES 30 DAYS
+-AFTER YOUR PURCHASE AND APPLIES ONLY TO THE ORIGINAL PURCHASER.
+-
+-Software Provided in Binary Code Form.  This paragraph applies to any Software
+-provided in binary code form.  Subject to the terms and conditions of this
+-Agreement, Cypress Semiconductor Corporation ("Cypress") grants you a
+-non-exclusive, non-transferable license under its copyright rights in the
+-Software to reproduce and distribute the Software in object code form only,
+-solely for use in connection with Cypress integrated circuit products
+-("Purpose").
+-
+-Software Provided in Source Code Form.  This paragraph applies to any Software
+-provided in source code form ("Cypress Source Code").  Subject to the terms and
+-conditions of this Agreement, Cypress grants you a non-exclusive,
+-non-transferable license under its copyright rights in the Cypress Source Code
+-to reproduce, modify, compile, and distribute the Cypress Source Code (whether
+-in source code form or as compiled into binary code form) solely for the
+-Purpose.  Cypress retains ownership of the Cypress Source Code and any compiled
+-version thereof.  Subject to Cypress' ownership of the underlying Cypress
+-Source Code, you retain ownership of any modifications you make to the
+-Cypress Source Code.  You agree not to remove any Cypress copyright or other
+-notices from the Cypress Source Code and any modifications thereof.  Any
+-reproduction, modification, translation, compilation, or representation of
+-the Cypress Source Code except as permitted in this paragraph is prohibited
+-without the express written permission of Cypress.
+-
+-Free and Open Source Software.  Portions of the Software may be licensed under
+-free and/or open source licenses such as the GNU General Public License
+-("FOSS").  FOSS is subject to the applicable license agreement and not this
+-Agreement.  If you are entitled to receive the source code from Cypress for any
+-FOSS included with the Software, either the source code will  be included with
+-the Software or you may obtain the source code at no charge from
+-<http://www.cypress.com/go/opensource>.  The applicable license terms will
+-accompany each source code package.  To review the license terms applicable to
+-any FOSS for which Cypress is not required to provide you with source code,
+-please see the Software's installation directory on your computer.
+-
+-Proprietary Rights.  The Software, including all intellectual property rights
+-therein, is and will remain the sole and exclusive property of Cypress or its
+-suppliers.  Except as otherwise expressly provided in this Agreement, you may
+-not: (i) modify, adapt, or create derivative works based upon the Software;
+-(ii) copy the Software; (iii) except and only to the extent explicitly
+-permitted by applicable law despite this limitation, decompile, translate,
+-reverse engineer, disassemble or otherwise reduce the Software to
+-human-readable form; or (iv) use the Software other than for the Purpose.
+-
+-No Support.  Cypress may, but is not required to, provide technical support for
+-the Software.
+-
+-Term and Termination.  This Agreement is effective until terminated.  This
+-Agreement and Your license rights will terminate immediately without notice
+-from Cypress if you fail to comply with any provision of this Agreement.  Upon
+-termination, you must destroy all copies of Software in your possession or
+-control.  Termination of this Agreement will not affect any licenses validly
+-granted as of the termination date to any end users of the Software.  The
+-following paragraphs shall survive any termination of this Agreement: "Free and
+-Open Source Software," "Proprietary Rights," "Compliance With Law,"
+-"Disclaimer," "Limitation of Liability," and "General."
+-
+-Compliance With Law.  Each party agrees to comply with all applicable laws,
+-rules and regulations in connection with its activities under this Agreement.
+-Without limiting the foregoing, the Software may be subject to export control
+-laws and regulations of the United States and other countries.  You agree to
+-comply strictly with all such laws and regulations and acknowledge that you
+-have the responsibility to obtain licenses to export, re-export, or import
+-the Software.
+-
+-Disclaimer.  TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, CYPRESS MAKES
+-NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH REGARD TO THE SOFTWARE,
+-INCLUDING, BUT NOT LIMITED TO, INFRINGEMENT AND THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Cypress reserves the
+-right to make changes to the Software without notice. Cypress does not assume
+-any liability arising out of the application or use of Software or any
+-product or circuit described in the Software. Cypress does not authorize its
+-products for use as critical components in life-support systems where a
+-malfunction or failure may reasonably be expected to result in significant
+-injury to the user. The inclusion of Cypress' product in a life-support
+-system or application implies that the manufacturer of such system or
+-application assumes all risk of such use and in doing so indemnifies Cypress
+-against all charges.
+-
+-Limitation of Liability.  IN NO EVENT WILL CYPRESS OR ITS SUPPLIERS,
+-RESELLERS, OR DISTRIBUTORS BE LIABLE FOR ANY LOST REVENUE, PROFIT, OR DATA,
+-OR FOR SPECIAL, INDIRECT, CONSEQUENTIAL, INCIDENTAL, OR PUNITIVE DAMAGES
+-HOWEVER CAUSED AND REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF THE
+-USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF CYPRESS OR ITS SUPPLIERS,
+-RESELLERS, OR DISTRIBUTORS HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGES.  IN NO EVENT SHALL CYPRESS' OR ITS SUPPLIERS' RESELLERS', OR
+-DISTRIBUTORS' TOTAL LIABILITY TO YOU, WHETHER IN CONTRACT, TORT (INCLUDING
+-NEGLIGENCE), OR OTHERWISE, EXCEED THE PRICE PAID BY YOU FOR THE SOFTWARE.
+-THE FOREGOING LIMITATIONS SHALL APPLY EVEN IF THE ABOVE-STATED WARRANTY FAILS
+-OF ITS ESSENTIAL PURPOSE.  BECAUSE SOME STATES OR JURISDICTIONS DO NOT ALLOW
+-LIMITATION OR EXCLUSION OF CONSEQUENTIAL OR INCIDENTAL DAMAGES, THE ABOVE
+-LIMITATION MAY NOT APPLY TO YOU.
+-
+-Restricted Rights.  The Software under this Agreement is commercial computer
+-software as that term is described in 48 C.F.R. 252.227-7014(a)(1).  If
+-acquired by or on behalf of a civilian agency, the U.S. Government acquires
+-this commercial computer software and/or commercial computer software
+-documentation subject to the terms of this Agreement as specified in 48
+-C.F.R. 12.212 (Computer Software) and 12.211 (Technical Data) of the Federal
+-Acquisition Regulations ("FAR") and its successors.  If acquired by or on
+-behalf of any agency within the Department of Defense ("DOD"), the U.S.
+-Government acquires this commercial computer software and/or commercial
+-computer software documentation subject to the terms of this Agreement as
+-specified in 48 C.F.R. 227.7202-3 of the DOD FAR Supplement ("DFAR") and its
+-successors.
+-
+-General.  This Agreement will bind and inure to the benefit of each party's
+-successors and assigns, provided that you may not assign or transfer this
+-Agreement, in whole or in part, without Cypress' written consent.  This
+-Agreement shall be governed by and construed in accordance with the laws of
+-the State of California, United States of America, as if performed wholly
+-within the state and without giving effect to the principles of conflict of
+-law.  The parties consent to personal and exclusive jurisdiction of and venue
+-in, the state and federal courts within Santa Clara County, California;
+-provided however, that nothing in this Agreement will limit Cypress' right to
+-bring legal action in any venue in order to protect or enforce its
+-intellectual property rights.  No failure of either party to exercise or
+-enforce any of its rights under this Agreement will act as a waiver of such
+-rights.  If any portion hereof is found to be void or unenforceable, the
+-remaining provisions of this Agreement shall remain in full force and
+-effect.  This Agreement is the complete and exclusive agreement between the
+-parties with respect to the subject matter hereof, superseding and replacing
+-any and all prior agreements, communications, and understandings (both
+-written and oral) regarding such subject matter.  Any notice to Cypress will
+-be deemed effective when actually received and must be sent to Cypress
+-Semiconductor Corporation, ATTN: Chief Legal Officer, 198 Champion Court, San
+-Jose, CA 95134 USA.
+diff --git a/LICENCE.ibt_firmware b/LICENCE.ibt_firmware
+deleted file mode 100644
+index f878c6a..0000000
+--- a/LICENCE.ibt_firmware
++++ /dev/null
+@@ -1,39 +0,0 @@
+-Copyright © 2014, Intel Corporation.
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-  following disclaimer in the documentation and/or other materials
+-  provided with the distribution.
+-* Neither the name of Intel Corporation nor the names of its suppliers
+-  may be used to endorse or promote products derived from this software
+-  without specific prior written permission.
+-* No reverse engineering, decompilation, or disassembly of this software
+-  is permitted.
+-
+-Limited patent license.  Intel Corporation grants a world-wide,
+-royalty-free, non-exclusive license under patents it now or hereafter
+-owns or controls to make, have made, use, import, offer to sell and
+-sell ("Utilize") this software, but solely to the extent that any
+-such patent is necessary to Utilize the software alone, or in
+-combination with an operating system licensed under an approved Open
+-Source license as listed by the Open Source Initiative at
+-http://opensource.org/licenses.  The patent license shall not apply to
+-any other combinations which include this software.  No hardware per
+-se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGE.
+diff --git a/LICENCE.iwlwifi_firmware b/LICENCE.iwlwifi_firmware
+deleted file mode 100644
+index 6bdd16d..0000000
+--- a/LICENCE.iwlwifi_firmware
++++ /dev/null
+@@ -1,39 +0,0 @@
+-Copyright (c) 2006-2021, Intel Corporation.
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-  following disclaimer in the documentation and/or other materials
+-  provided with the distribution.
+-* Neither the name of Intel Corporation nor the names of its suppliers
+-  may be used to endorse or promote products derived from this software
+-  without specific prior written permission.
+-* No reverse engineering, decompilation, or disassembly of this software
+-  is permitted.
+-
+-Limited patent license.  Intel Corporation grants a world-wide,
+-royalty-free, non-exclusive license under patents it now or hereafter
+-owns or controls to make, have made, use, import, offer to sell and
+-sell ("Utilize") this software, but solely to the extent that any
+-such patent is necessary to Utilize the software alone, or in
+-combination with an operating system licensed under an approved Open
+-Source license as listed by the Open Source Initiative at
+-http://opensource.org/licenses.  The patent license shall not apply to
+-any other combinations which include this software.  No hardware per
+-se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGE.
+diff --git a/LICENCE.open-ath9k-htc-firmware b/LICENCE.open-ath9k-htc-firmware
+deleted file mode 100644
+index 36655b7..0000000
+--- a/LICENCE.open-ath9k-htc-firmware
++++ /dev/null
+@@ -1,206 +0,0 @@
+-This is a concatenation of LICENCE.txt and NOTICE.txt from the
+-open-ath9k-htc-firmware repository describing licensing terms for the
+-firmware image and its sources.
+-
+-The source code repository is publicly available at
+-https://github.com/qca/open-ath9k-htc-firmware .
+-
+-
+-LICENCE.txt
+------------
+-
+-Files with a Qualcomm Atheros / Atheros licence fall under the following
+-licence.  Please see NOTICES.TXT for information about other files in this
+-repository.
+-
+-----
+-
+-Copyright (c) 2013 Qualcomm Atheros, Inc.
+-
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted (subject to the limitations in the
+-disclaimer below) provided that the following conditions are met:
+-
+- * Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-
+- * Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the
+-   distribution.
+-
+- * Neither the name of Qualcomm Atheros nor the names of its
+-   contributors may be used to endorse or promote products derived
+-   from this software without specific prior written permission.
+-
+-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+-GRANTED BY THIS LICENSE.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT
+-HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+-WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+-BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+-IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-----
+-
+-
+-NOTICE.TXT
+-----------
+-
+-This NOTICE.TXT file contains certain notices of software components included
+-with the software that QUALCOMM ATHEROS Incorporated ('Qualcomm Atheros') is
+-required to provide you. Notwithstanding anything in the notices in this file,
+-your use of these software components together with the Qualcomm Atheros
+-software (Qualcomm Atheros software hereinafter referred to as 'Software') is
+-subject to the terms of your license from Qualcomm Atheros.  Compliance with
+-all copyright laws and software license agreements included in the notice
+-section of this file are the responsibility of the user.  Except as may be
+-granted by separate express written agreement, this file provides no license
+-to any Qualcomm Atheros patents, trademarks, copyrights, or other intellectual
+-property.
+-
+-Copyright (c) 2013 QUALCOMM ATHEROS Incorporated.  All rights reserved.
+-
+-QUALCOMM ATHEROS� is a registered trademark and registered service mark of
+-QUALCOMM ATHEROS Incorporated.  All other trademarks and service marks are
+-the property of their respective owners.
+-
+-NOTICES:
+-
+-/*
+- * Copyright (c) 2005-2012 Atheros Communications Inc.
+- *
+- * Permission to use, copy, modify, and/or distribute this software for any
+- * purpose with or without fee is hereby granted, provided that the above
+- * copyright notice and this permission notice appear in all copies.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+- */
+-
+-/*
+- * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
+- * Copyright (c) 2002-2005 Atheros Communications, Inc.
+- * Copyright (c) 2008-2010, Atheros Communications Inc.
+- *
+- * Redistribution and use in source and binary forms are permitted
+- * provided that the following conditions are met:
+- * 1. The materials contained herein are unmodified and are used
+- *    unmodified.
+- * 2. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following NO
+- *    ''WARRANTY'' disclaimer below (''Disclaimer''), without
+- *    modification.
+- * 3. Redistributions in binary form must reproduce at minimum a
+- *    disclaimer similar to the Disclaimer below and any redistribution
+- *    must be conditioned upon including a substantially similar
+- *    Disclaimer requirement for further binary redistribution.
+- * 4. Neither the names of the above-listed copyright holders nor the
+- *    names of any contributors may be used to endorse or promote
+- *    product derived from this software without specific prior written
+- *    permission.
+- *
+- * NO WARRANTY
+- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+- * ''AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+- * LIMITED TO, THE IMPLIED WARRANTIES OF NONINFRINGEMENT,
+- * MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+- * IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE
+- * FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+- * SUCH DAMAGES.
+- */
+-
+-----
+-
+-The following files are from ECoS with a GPLv2 licence with modification
+-and linking caveats. Please see the licence below for more information:
+-
+-target_firmware/magpie_fw_dev/build/magpie_1_1/sboot/cmnos/printf/src/cmnos_printf.c
+-target_firmware/magpie_fw_dev/target/cmnos/cmnos_printf.c
+-target_firmware/magpie_fw_dev/target/cmnos/k2_fw_cmnos_printf.c
+-
+-//####ECOSGPLCOPYRIGHTBEGIN####
+-// -------------------------------------------
+-// This file is part of eCos, the Embedded Configurable Operating System.
+-// Copyright (C) 1998, 1999, 2000, 2001, 2002 Red Hat, Inc.
+-// Copyright (C) 2002 Gary Thomas
+-//
+-// eCos is free software; you can redistribute it and/or modify it under
+-// the terms of the GNU General Public License as published by the Free
+-// Software Foundation; either version 2 or (at your option) any later version.
+-//
+-// eCos is distributed in the hope that it will be useful, but WITHOUT ANY
+-// WARRANTY; without even the implied warranty of MERCHANTABILITY or
+-// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+-// for more details.
+-//
+-// You should have received a copy of the GNU General Public License along
+-// with eCos; if not, write to the Free Software Foundation, Inc.,
+-// 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+-//
+-// As a special exception, if other files instantiate templates or use macros
+-// or inline functions from this file, or you compile this file and link it
+-// with other works to produce a work based on this file, this file does not
+-// by itself cause the resulting work to be covered by the GNU General Public
+-// License. However the source code for this file must still be made available
+-// in accordance with section (3) of the GNU General Public License.
+-//
+-// This exception does not invalidate any other reasons why a work based on
+-// this file might be covered by the GNU General Public License.
+-//
+-// Alternative licenses for eCos may be arranged by contacting Red Hat, Inc.
+-// at http://sources.redhat.com/ecos/ecos-license/
+-// -------------------------------------------
+-//####ECOSGPLCOPYRIGHTEND####
+-
+-----
+-
+-Some of the source code is sourced from Tensilica, Inc.
+-
+-Although most of the files fall under the MIT licence, some of the source
+-files generated as part of the system development have a proprietary
+-Tensilica licence.
+-
+-With permission from Tensilica, Inc, these files have been relicenced
+-under the following licence:
+-
+-/*
+- * Copyright (c) 2013 Tensilica Inc.
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining
+- * a copy of this software and associated documentation files (the
+- * "Software"), to deal in the Software without restriction, including
+- * without limitation the rights to use, copy, modify, merge, publish,
+- * distribute, sublicense, and/or sell copies of the Software, and to
+- * permit persons to whom the Software is furnished to do so, subject to
+- * the following conditions:
+- *
+- * The above copyright notice and this permission notice shall be included
+- * in all copies or substantial portions of the Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- */
+diff --git a/LICENCE.ralink-firmware.txt b/LICENCE.ralink-firmware.txt
+deleted file mode 100644
+index 18dd038..0000000
+--- a/LICENCE.ralink-firmware.txt
++++ /dev/null
+@@ -1,39 +0,0 @@
+-Copyright (c) 2007, Ralink Technology Corporation 
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without 
+-modification, are permitted provided that the following conditions are 
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the 
+-  following disclaimer in the documentation and/or other materials 
+-  provided with the distribution. 
+-* Neither the name of Ralink Technology Corporation nor the names of its
+-  suppliers may be used to endorse or promote products derived from this
+-  software without specific prior written permission. 
+-* No reverse engineering, decompilation, or disassembly of this software 
+-  is permitted.
+-
+-Limited patent license. Ralink Technology Corporation grants a world-wide, 
+-royalty-free, non-exclusive license under patents it now or hereafter 
+-owns or controls to make, have made, use, import, offer to sell and 
+-sell ("Utilize") this software, but solely to the extent that any 
+-such patent is necessary to Utilize the software alone, or in 
+-combination with an operating system licensed under an approved Open 
+-Source license as listed by the Open Source Initiative at 
+-http://opensource.org/licenses.  The patent license shall not apply to 
+-any other combinations which include this software.  No hardware per 
+-se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, 
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS 
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
+-DAMAGE.
+diff --git a/LICENCE.ralink_a_mediatek_company_firmware b/LICENCE.ralink_a_mediatek_company_firmware
+deleted file mode 100644
+index fef16b6..0000000
+--- a/LICENCE.ralink_a_mediatek_company_firmware
++++ /dev/null
+@@ -1,39 +0,0 @@
+-Copyright (c) 2013, Ralink, A MediaTek Company 
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without 
+-modification, are permitted provided that the following conditions are 
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the 
+-  following disclaimer in the documentation and/or other materials 
+-  provided with the distribution. 
+-* Neither the name of Ralink Technology Corporation nor the names of its
+-  suppliers may be used to endorse or promote products derived from this
+-  software without specific prior written permission. 
+-* No reverse engineering, decompilation, or disassembly of this software 
+-  is permitted.
+-
+-Limited patent license. Ralink Technology Corporation grants a world-wide, 
+-royalty-free, non-exclusive license under patents it now or hereafter 
+-owns or controls to make, have made, use, import, offer to sell and 
+-sell ("Utilize") this software, but solely to the extent that any 
+-such patent is necessary to Utilize the software alone, or in 
+-combination with an operating system licensed under an approved Open 
+-Source license as listed by the Open Source Initiative at 
+-http://opensource.org/licenses.  The patent license shall not apply to 
+-any other combinations which include this software.  No hardware per 
+-se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, 
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS 
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
+-DAMAGE.
+diff --git a/LICENCE.rtlwifi_firmware.txt b/LICENCE.rtlwifi_firmware.txt
+deleted file mode 100644
+index d70921f..0000000
+--- a/LICENCE.rtlwifi_firmware.txt
++++ /dev/null
+@@ -1,39 +0,0 @@
+-Copyright (c) 2010, Realtek Semiconductor Corporation 
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without 
+-modification, are permitted provided that the following conditions are 
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the 
+-  following disclaimer in the documentation and/or other materials 
+-  provided with the distribution. 
+-* Neither the name of Realtek Semiconductor Corporation nor the names of its
+-  suppliers may be used to endorse or promote products derived from this
+-  software without specific prior written permission. 
+-* No reverse engineering, decompilation, or disassembly of this software 
+-  is permitted.
+-
+-Limited patent license. Realtek Semiconductor Corporation grants a world-wide, 
+-royalty-free, non-exclusive license under patents it now or hereafter 
+-owns or controls to make, have made, use, import, offer to sell and 
+-sell ("Utilize") this software, but solely to the extent that any 
+-such patent is necessary to Utilize the software alone, or in 
+-combination with an operating system licensed under an approved Open 
+-Source license as listed by the Open Source Initiative at 
+-http://opensource.org/licenses.  The patent license shall not apply to 
+-any other combinations which include this software.  No hardware per 
+-se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, 
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS 
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND 
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
+-DAMAGE.
+diff --git a/LICENCE.ti-connectivity b/LICENCE.ti-connectivity
+deleted file mode 100644
+index 22f617f..0000000
+--- a/LICENCE.ti-connectivity
++++ /dev/null
+@@ -1,61 +0,0 @@
+-Copyright (c) 2016 Texas Instruments Incorporated
+-
+-All rights reserved not granted herein.
+-
+-Limited License.
+-
+-Texas Instruments Incorporated grants a world-wide, royalty-free, non-exclusive
+-license under copyrights and patents it now or hereafter owns or controls to
+-make, have made, use, import, offer to sell and sell ("Utilize") this software
+-subject to the terms herein. With respect to the foregoing patent license, such
+-license is granted solely to the extent that any such patent is necessary to
+-Utilize the software alone. The patent license shall not apply to any
+-combinations which include this software, other than combinations with devices
+-manufactured by or for TI (“TI Devices”). No hardware patent is licensed
+-hereunder.
+-
+-Redistributions must preserve existing copyright notices and reproduce this
+-license (including the above copyright notice and the disclaimer and
+-(if applicable) source code license limitations below) in the documentation
+-and/or other materials provided with the distribution
+-
+-Redistribution and use in binary form, without modification, are permitted
+-provided that the following conditions are met:
+-
+-	* No reverse engineering, decompilation, or disassembly of this
+-	  software is permitted with respect to any software provided in binary
+-	  form.
+-
+-	* any redistribution and use are licensed by TI for use only with TI
+-	  Devices.
+-
+-	* Nothing shall obligate TI to provide you with source code for the
+-	  software licensed and provided to you in object code.
+-
+-If software source code is provided to you, modification and redistribution of
+-the source code are permitted provided that the following conditions are met:
+-
+-	* any redistribution and use of the source code, including any
+-	  resulting derivative works, are licensed by TI for use only with TI
+-	  Devices.
+-
+-	* any redistribution and use of any object code compiled from the
+-	  source code and any resulting derivative works, are licensed by TI
+-	  for use only with TI Devices.
+-
+-Neither the name of Texas Instruments Incorporated nor the names of its
+-suppliers may be used to endorse or promote products derived from this
+-software without specific prior written permission.
+-
+-DISCLAIMER.
+-
+-THIS SOFTWARE IS PROVIDED BY TI AND TI’S LICENSORS "AS IS" AND ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+-EVENT SHALL TI AND TI’S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENCE.wl1251 b/LICENCE.wl1251
+deleted file mode 100644
+index bd0f5f1..0000000
+--- a/LICENCE.wl1251
++++ /dev/null
+@@ -1,59 +0,0 @@
+-Copyright (c) 2000 – 2013 Texas Instruments Incorporated
+-
+-All rights reserved not granted herein.
+-
+-Limited License.
+-
+-Texas Instruments Incorporated grants a world-wide, royalty-free, non-exclusive
+-license under copyrights and patents it now or hereafter owns or controls to
+-make, have made, use, import, offer to sell and sell ("Utilize") this software
+-subject to the terms herein.  With respect to the foregoing patent license,
+-such license is granted  solely to the extent that any such patent is necessary
+-to Utilize the software alone.  The patent license shall not apply to any
+-combinations which include this software, other than combinations with devices
+-manufactured by or for TI (“TI Devices”).  No hardware patent is licensed
+-hereunder.
+-
+-Redistributions must preserve existing copyright notices and reproduce this
+-license (including the above copyright notice and the disclaimer and (if
+-applicable) source code license limitations below) in the documentation and/or
+-other materials provided with the distribution
+-
+-Redistribution and use in binary form, without modification, are permitted
+-provided that the following conditions are met:
+-
+-*	No reverse engineering, decompilation, or disassembly of this software
+-	is permitted with respect to any software provided in binary form.
+-
+-*	any redistribution and use are licensed by TI for use only with TI
+-	Devices.
+-
+-*	Nothing shall obligate TI to provide you with source code for the
+-	software licensed and provided to you in object code.
+-
+-If software source code is provided to you, modification and redistribution of
+-the source code are permitted provided that the following conditions are met:
+-
+-*	any redistribution and use of the source code, including any resulting
+-	derivative works, are licensed by TI for use only with TI Devices.
+-
+-*	any redistribution and use of any object code compiled from the source
+-	code and any resulting derivative works, are licensed by TI for use
+-	only with TI Devices.
+-
+-Neither the name of Texas Instruments Incorporated nor the names of its
+-suppliers may be used to endorse or promote products derived from this software
+-without specific prior written permission.
+-
+-DISCLAIMER.
+-
+-THIS SOFTWARE IS PROVIDED BY TI AND TI’S LICENSORS "AS IS" AND ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+-EVENT SHALL TI AND TI’S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENSE.QualcommAtheros_ar3k b/LICENSE.QualcommAtheros_ar3k
+deleted file mode 100644
+index 7fae632..0000000
+--- a/LICENSE.QualcommAtheros_ar3k
++++ /dev/null
+@@ -1,47 +0,0 @@
+-Copyright (c) 2015, Qualcomm Atheros, Inc.
+-All rights reserved.
+-
+-Redistribution. Reproduction and redistribution in binary form, without
+-modification, for use solely in conjunction with a Qualcomm Atheros, Inc.
+-chipset, is permitted provided that the following conditions are met:
+-
+-  • Redistributions must reproduce the above copyright notice and the following
+-    disclaimer in the documentation and/or other materials provided with the
+-    distribution.
+-
+-  • Neither the name of Qualcomm Atheros, Inc. nor the names of its suppliers
+-    may be used to endorse or promote products derived from this Software
+-    without specific prior written permission.
+-
+-  • No reverse engineering, decompilation, or disassembly of this Software is
+-    permitted.
+-
+-Limited patent license. Qualcomm Atheros, Inc. (“Licensor”) grants you
+-(“Licensee”) a limited, worldwide, royalty-free, non-exclusive license under
+-the Patents to make, have made, use, import, offer to sell and sell the
+-Software. No hardware per se is licensed hereunder.
+-The term “Patents” as used in this agreement means only those patents or patent
+-applications owned solely and exclusively by Licensor as of the date of
+-Licensor’s submission of the Software and any patents deriving priority (i.e.,
+-having a first effective filing date) therefrom. The term “Software” as used in
+-this agreement means the firmware image submitted by Licensor, under the terms
+-of this license, to git://git.kernel.org/pub/scm/linux/kernel/git/firmware/
+-linux-firmware.git.
+-Notwithstanding anything to the contrary herein, Licensor does not grant and
+-Licensee does not receive, by virtue of this agreement or the Licensor’s
+-submission of any Software, any license or other rights under any patent or
+-patent application owned by any affiliate of Licensor or any other entity
+-(other than Licensor), whether expressly, impliedly, by virtue of estoppel or
+-exhaustion, or otherwise.
+-
+-DISCLAIMER. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+-THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENSE.QualcommAtheros_ath10k b/LICENSE.QualcommAtheros_ath10k
+deleted file mode 100644
+index c68935c..0000000
+--- a/LICENSE.QualcommAtheros_ath10k
++++ /dev/null
+@@ -1,47 +0,0 @@
+-Copyright (c) 2015-2017, Qualcomm Atheros, Inc.
+-All rights reserved.
+-
+-Redistribution. Reproduction and redistribution in binary form, without
+-modification, for use solely in conjunction with a Qualcomm Atheros, Inc.
+-chipset, is permitted provided that the following conditions are met:
+-
+-  • Redistributions must reproduce the above copyright notice and the following
+-    disclaimer in the documentation and/or other materials provided with the
+-    distribution.
+-
+-  • Neither the name of Qualcomm Atheros, Inc. nor the names of its suppliers
+-    may be used to endorse or promote products derived from this Software
+-    without specific prior written permission.
+-
+-  • No reverse engineering, decompilation, or disassembly of this Software is
+-    permitted.
+-
+-Limited patent license. Qualcomm Atheros, Inc. (“Licensor”) grants you
+-(“Licensee”) a limited, worldwide, royalty-free, non-exclusive license under
+-the Patents to make, have made, use, import, offer to sell and sell the
+-Software. No hardware per se is licensed hereunder.
+-The term “Patents” as used in this agreement means only those patents or patent
+-applications owned solely and exclusively by Licensor as of the date of
+-Licensor’s submission of the Software and any patents deriving priority (i.e.,
+-having a first effective filing date) therefrom. The term “Software” as used in
+-this agreement means the firmware image submitted by Licensor, under the terms
+-of this license, to git://git.kernel.org/pub/scm/linux/kernel/git/firmware/
+-linux-firmware.git.
+-Notwithstanding anything to the contrary herein, Licensor does not grant and
+-Licensee does not receive, by virtue of this agreement or the Licensor’s
+-submission of any Software, any license or other rights under any patent or
+-patent application owned by any affiliate of Licensor or any other entity
+-(other than Licensor), whether expressly, impliedly, by virtue of estoppel or
+-exhaustion, or otherwise.
+-
+-DISCLAIMER. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+-THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENSE.atmel b/LICENSE.atmel
+deleted file mode 100644
+index 5feb313..0000000
+--- a/LICENSE.atmel
++++ /dev/null
+@@ -1,36 +0,0 @@
+-Copyright (C) 2015 Atmel Corporation. All rights reserved.
+-
+-REDISTRIBUTION: Permission is hereby granted by Atmel Corporation (Atmel), free
+-of any license fees, to any person obtaining a copy of this firmware (the
+-"Software"), to install, reproduce, copy and distribute copies, in binary form,
+-in hexadecimal or equivalent formats, of the Software and to permit persons to
+-whom the Software is provided to do the same, subject to the following
+-conditions:
+-
+-* Any redistribution of the Software must reproduce the above copyright notice,
+-  this license notice, and the following disclaimers and notices in the
+-  documentation and/or other materials provided with the Software.
+-
+-* Neither the name of Atmel Corporation, its products nor the names of its
+-  suppliers may be used to endorse or promote products derived from this
+-  Software without specific prior written permission.
+-
+-* All matters arising out of or in connection with this License and/or Software
+-  shall be governed by California law and the parties agree to the exclusive
+-  jurisdiction of the Californian courts to decide all disputes arising.
+-
+-* The licensee shall defend and indemnify Atmel against any and all claims,
+-  costs, losses and damages (including reasonable legal fees) incurred by tme
+-  arising out of any claim relating to the Software due to the licensee’s use or
+-  sub-licensing of the Software
+-
+-DISCLAIMER: THIS SOFTWARE IS PROVIDED BY ATMEL "AS IS" AND ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
+-DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENSE.nxp b/LICENSE.nxp
+deleted file mode 100644
+index bfd2c70..0000000
+--- a/LICENSE.nxp
++++ /dev/null
+@@ -1,26 +0,0 @@
+-LA_OPT_BINARY_FIRMWARE_ONLY rev2 June 2020
+-
+-Copyright © 2018 NXP. All rights reserved.
+-
+-Software License Agreement (“Agreement”)
+-
+-ANY USE, REPRODUCTION, OR DISTRIBUTION OF THE ACCOMPANYING BINARY SOFTWARE CONSTITUTES LICENSEE'S ACCEPTANCE OF THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+-
+-Licensed Software. “Binary Software” means the software in binary form supplied directly by NXP pursuant to this Agreement. Subject to the terms and conditions of this Agreement, NXP USA, Inc. ("Licensor"), grants to you (“Licensee”) a worldwide, non-exclusive, and royalty-free copyright license to reproduce and distribute the Binary Software in its complete and unmodified binary form as provided by Licensor, for use solely in conjunction with a programmable processing unit supplied directly or indirectly from Licensor.
+-
+-Restrictions. Licensee must reproduce the Licensor copyright notice above with each binary copy of the Binary Software or in the accompanying documentation. Licensee must not reverse engineer, decompile, disassemble or modify in any way the Binary Software. Licensee must not use the Binary Software in violation of any applicable law or regulation. This Agreement shall automatically terminate upon Licensee's breach of any term or condition of this Agreement in which case, Licensee shall destroy all copies of the Binary Software. Neither the name of Licensor nor the names of its suppliers may be used to endorse or promote products derived from this Binary Software without specific prior written permission.
+-Disclaimer.  TO THE MAXIMUM EXTENT PERMITTED BY LAW, LICENSOR EXPRESSLY DISCLAIMS ANY WARRANTY FOR THE BINARY SOFTWARE.  THE BINARY SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.  WITHOUT LIMITING THE GENERALITY OF THE FOREGOING, LICENSOR DOES NOT WARRANT THAT THE BINARY SOFTWARE IS ERROR-FREE OR WILL OPERATE WITHOUT INTERRUPTION, AND LICENSOR GRANTS NO WARRANTY REGARDING ITS USE OR THE RESULTS THEREFROM, INCLUDING ITS CORRECTNESS, ACCURACY, OR RELIABILITY.
+-
+-Limitation of Liability. IN NO EVENT WILL LICENSOR, OR ANY OF LICENSOR'S LICENSORS HAVE ANY LIABILITY HEREUNDER FOR ANY INDIRECT, SPECIAL, OR
+-CONSEQUENTIAL DAMAGES, HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER FOR BREACH OF CONTRACT, TORT (INCLUDING NEGLIGENCE), OR OTHERWISE, ARISING OUT OF THIS AGREEMENT, INCLUDING DAMAGES FOR LOSS OF PROFITS, OR THE COST OF PROCUREMENT OF SUBSTITUTE GOODS, EVEN IF SUCH PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. LICENSOR’S TOTAL LIABILITY FOR ALL COSTS, DAMAGES, CLAIMS, OR LOSSES WHATSOEVER ARISING OUT OF OR IN CONNECTION WITH THIS AGREEMENT OR THE BINARY SOFTWARE SUPPLIED UNDER THIS AGREEMENT IS LIMITED TO THE AGGREGATE AMOUNT PAID BY LICENSEE TO LICENSOR IN CONNECTION WITH THE BINARY SOFTWARE TO WHICH LOSSES OR DAMAGES ARE CLAIMED.
+-
+-Trade Compliance.  Licensee shall comply with all applicable export and import control laws and regulations including but not limited to the US Export Administration Regulation (including restrictions on certain military end uses and military end users as specified in Section 15 C.F.R. § 744.21 and prohibited party lists issued by other federal governments), Catch-all regulations and all national and international embargoes. Licensee further agrees that it will not knowingly transfer, divert, export or re-export, directly or indirectly, any product, software, including software source code, or technology restricted by such regulations or by other applicable national regulations, received from Licensor under this Agreement, or any direct product of such software or technical data to any person, firm, entity, country or destination to which such transfer, diversion, export or re-export is restricted or prohibited, without obtaining prior written authorization from the applicable competent government authorities to the extent required by those laws. Licensee acknowledge that the “restricted encryption software” that is subject to the US Export Administration Regulations (EAR), is not intended for use by a government end user, as defined in part 772 of the EAR. This provision shall survive termination or expiration of this Agreement. 
+-
+-Assignment.  Licensee may not assign this Agreement without the prior written consent of Licensor.  Licensor may assign this Agreement without Licensee’s consent.
+-
+-Governing Law.  This Agreement will be governed by, construed, and enforced in accordance with the laws of the State of Texas, USA, without regard to conflicts of laws principles, will apply to all matters relating to this Agreement or the Binary Software, and Licensee agrees that any litigation will be subject to the exclusive jurisdiction of the state or federal courts Texas, USA.  The United Nations Convention on Contracts for the International Sale of Goods will not apply to this Agreement.
+-Restrictions, Disclaimer, Limitation of Liability, Trade Compliance, Assignment, and Governing Law shall survive termination or expiration of this Agreement.
+-
+-
+-
+-
+diff --git a/WHENCE b/WHENCE
+index d78e45e..edf6f75 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -8,15 +8,6 @@ kernel.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: BCM-0bb4-0306 Cypress Bluetooth firmware for HTC Vive
+-
+-File: brcm/BCM-0bb4-0306.hcd
+-Link: brcm/BCM-0a5c-6410.hcd -> BCM-0bb4-0306.hcd
+-
+-Licence: Redistributable. See LICENCE.cypress for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: advansys - AdvanSys SCSI
+ 
+ File: advansys/mcode.bin
+@@ -306,36 +297,6 @@ Licence: Redistributable. See LICENCE.agere for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: ar9170 - Atheros 802.11n "otus" USB
+-
+-File: ar9170-1.fw
+-File: ar9170-2.fw
+-
+-Licence: Redistributable. See LICENCE.atheros_firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: ath9k_htc - Atheros HTC devices (USB)
+-
+-File: ar9271.fw
+-File: ar7010.fw
+-File: ar7010_1_1.fw
+-File: htc_9271.fw
+-Version: 1.3.1
+-File: htc_7010.fw
+-Version: 1.3.1
+-
+-Licence: Redistributable. See LICENCE.atheros_firmware for details
+-
+-File: ath9k_htc/htc_7010-1.4.0.fw
+-Version: 1.4.0
+-File: ath9k_htc/htc_9271-1.4.0.fw
+-Version: 1.4.0
+-
+-Licence: Free software. See LICENCE.open-ath9k-htc-firmware for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: cassini - Sun Cassini
+ 
+ File: sun/cassini.bin
+@@ -516,479 +477,6 @@ Found in hex form in kernel source, with the following notice:
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: libertas - Marvell Libertas fullmac-type 802.11b/g cards
+-
+-File: libertas/cf8381.bin
+-File: libertas/cf8381_helper.bin
+-File: libertas/cf8385.bin
+-File: libertas/cf8385_helper.bin
+-File: libertas/gspi8682.bin
+-File: libertas/gspi8682_helper.bin
+-File: libertas/gspi8686_v9.bin
+-File: libertas/gspi8686_v9_helper.bin
+-File: libertas/gspi8688.bin
+-File: libertas/gspi8688_helper.bin
+-File: libertas/sd8385.bin
+-File: libertas/sd8385_helper.bin
+-File: libertas/sd8682.bin
+-File: libertas/sd8682_helper.bin
+-File: libertas/sd8686_v8.bin
+-File: libertas/sd8686_v8_helper.bin
+-File: libertas/sd8686_v9.bin
+-File: libertas/sd8686_v9_helper.bin
+-File: libertas/usb8388_v5.bin
+-File: libertas/usb8388_v9.bin
+-File: libertas/usb8682.bin
+-File: mrvl/sd8688.bin
+-Link: libertas/sd8688.bin -> ../mrvl/sd8688.bin
+-File: mrvl/sd8688_helper.bin
+-Link: libertas/sd8688_helper.bin -> ../mrvl/sd8688_helper.bin
+-
+-Licence: Redistributable. See LICENCE.Marvell for details.  Extracted from
+-Linux driver tarballs downloaded from Marvell's "Extranet" with permission.
+-
+---------------------------------------------------------------------------
+-
+-Driver: libertas - Marvell Libertas 802.11b/g cards, OLPC firmware
+-
+-File: libertas/lbtf_sdio.bin
+-Version: 9.0.7.p4
+-
+-File: lbtf_usb.bin
+-Version: 5.132.3.p1
+-
+-File: libertas/usb8388_olpc.bin
+-Version: 5.110.22.p23
+-
+-Licence: Redistributable. See LICENCE.OLPC for details.
+-
+-Available from http://dev.laptop.org/pub/firmware/libertas/
+-
+---------------------------------------------------------------------------
+-
+-Driver: mwl8k - Marvell Libertas softmac-type 802.11b/g/n cards
+-
+-File: mwl8k/fmimage_8687.fw
+-File: mwl8k/helper_8687.fw
+-File: mwl8k/fmimage_8366.fw
+-File: mwl8k/fmimage_8366_ap-1.fw
+-File: mwl8k/fmimage_8366_ap-2.fw
+-File: mwl8k/fmimage_8366_ap-3.fw
+-Version: 5.2.8.16
+-File: mwl8k/helper_8366.fw
+-
+-File: mwl8k/fmimage_8764_ap-1.fw
+-Version: 7.4.0.9
+-
+-Licence: Redistributable. See LICENCE.Marvell for details.  8687 images
+-downloaded from Marvell's "Extranet" with permission.  8366 images contributed
+-directly by Marvell.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mwifiex - Marvell Wi-Fi fullmac-type 802.11n/ac cards
+-
+-File: mrvl/sd8787_uapsta.bin
+-Version: W14.68.35.p66
+-
+-File: mrvl/usb8766_uapsta.bin
+-Version: 14.68.22.p16
+-
+-File: mrvl/sd8797_uapsta.bin
+-Version: W14.68.29.p59
+-
+-File: mrvl/usb8797_uapsta.bin
+-Version: W14.68.29.p60
+-
+-File: mrvl/sd8897_uapsta.bin
+-Version: W15.68.19.17
+-
+-File: mrvl/usb8897_uapsta.bin
+-Version: 15.68.4.p103
+-
+-File: mrvl/pcie8897_uapsta.bin
+-Version: W15.68.19.p21
+-
+-File: mrvl/sd8887_uapsta.bin
+-Version: W15.68.7.p189
+-
+-File: mrvl/sd8801_uapsta.bin
+-Version: W14.68.36.p204
+-
+-File: mrvl/usb8801_uapsta.bin
+-Version: W14.68.36.p138
+-
+-File: mrvl/pcieuart8997_combo_v4.bin
+-Version: W16.68.1.p179
+-
+-File: mrvl/pcieusb8997_combo_v4.bin
+-Version: W16.68.1.p195
+-
+-File: mrvl/pcie8997_wlan_v4.bin
+-Version: W16.68.1.p195
+-
+-File: mrvl/usbusb8997_combo_v4.bin
+-Version: W16.68.1.p183
+-
+-File: mrvl/sdsd8997_combo_v4.bin
+-Version: W16.68.1.p179
+-
+-File: mrvl/sdsd8977_combo_v2.bin
+-Version: W16.68.1.p195
+-
+-Licence: Redistributable. See LICENCE.NXP for details.
+-Originates from https://github.com/NXP/mwifiex-firmware.git
+-
+---------------------------------------------------------------------------
+-
+-
+-Driver: iwlwifi - Intel Wireless Wifi
+-
+-File: iwlwifi-3945-2.ucode
+-Version: 15.32.2.9
+-
+-File: iwlwifi-4965-2.ucode
+-Version: 228.61.2.24
+-
+-File: iwlwifi-5000-5.ucode
+-Version: 8.83.5.1
+-
+-File: iwlwifi-5150-2.ucode
+-Version: 8.24.2.2
+-
+-File: iwlwifi-1000-5.ucode
+-Version: 39.31.5.1
+-
+-File: iwlwifi-6000-4.ucode
+-Version: 9.221.4.1
+-
+-File: iwlwifi-6050-5.ucode
+-Version: 41.28.5.1
+-
+-File: iwlwifi-6000g2a-6.ucode
+-Version: 18.168.6.1
+-
+-File: iwlwifi-6000g2b-6.ucode
+-Version: 18.168.6.1
+-
+-File: iwlwifi-135-6.ucode
+-Version: 18.168.6.1
+-
+-File: iwlwifi-100-5.ucode
+-Version: 39.31.5.1
+-
+-File: iwlwifi-105-6.ucode
+-Version: 18.168.6.1
+-
+-File: iwlwifi-2030-6.ucode
+-Version: 18.168.6.1
+-
+-File: iwlwifi-2000-6.ucode
+-Version: 18.168.6.1
+-
+-File: iwlwifi-7260-17.ucode
+-Version: 17.bfb58538.0
+-
+-File: iwlwifi-3160-17.ucode
+-Version: 17.bfb58538.0
+-
+-File: iwlwifi-7265-17.ucode
+-Version: 17.bfb58538.0
+-
+-File: iwlwifi-7265D-29.ucode
+-Version: 29.f2390aa8.0
+-
+-File: iwlwifi-3168-29.ucode
+-Version: 29.0bd893f3.0
+-
+-File: iwlwifi-8000C-34.ucode
+-Version: 34.610288.0
+-
+-File: iwlwifi-8000C-36.ucode
+-Version: 36.ca7b901d.0
+-
+-File: iwlwifi-8265-34.ucode
+-Version: 34.610288.0
+-
+-File: iwlwifi-8265-36.ucode
+-Version: 36.ca7b901d.0
+-
+-File: iwlwifi-9000-pu-b0-jf-b0-34.ucode
+-Version: 34.ba501b11.0
+-
+-File: iwlwifi-9000-pu-b0-jf-b0-38.ucode
+-Version: 38.755cfdd8.0
+-
+-File: iwlwifi-9000-pu-b0-jf-b0-46.ucode
+-Version: 46.ff18e32a.0
+-
+-File: iwlwifi-9260-th-b0-jf-b0-34.ucode
+-Version: 34.ba501b11.0
+-
+-File: iwlwifi-9260-th-b0-jf-b0-38.ucode
+-Version: 38.755cfdd8.0
+-
+-File: iwlwifi-9260-th-b0-jf-b0-46.ucode
+-Version: 46.ff18e32a.0
+-
+-File: iwlwifi-cc-a0-50.ucode
+-Version: 50.3e391d3e.0
+-
+-File: iwlwifi-Qu-b0-hr-b0-50.ucode
+-Version: 50.3e391d3e.0
+-
+-File: iwlwifi-Qu-b0-jf-b0-50.ucode
+-Version: 50.3e391d3e.0
+-
+-File: iwlwifi-Qu-c0-hr-b0-50.ucode
+-Version: 50.3e391d3e.0
+-
+-File: iwlwifi-Qu-c0-jf-b0-50.ucode
+-Version: 50.3e391d3e.0
+-
+-File: iwlwifi-QuZ-a0-hr-b0-50.ucode
+-Version: 50.3e391d3e.0
+-
+-File: iwlwifi-QuZ-a0-jf-b0-50.ucode
+-Version: 50.3e391d3e.0
+-
+-File: iwlwifi-cc-a0-59.ucode
+-Version: 59.601f3a66.0
+-
+-File: iwlwifi-Qu-b0-hr-b0-59.ucode
+-Version: 59.601f3a66.0
+-
+-File: iwlwifi-Qu-b0-jf-b0-59.ucode
+-Version: 59.601f3a66.0
+-
+-File: iwlwifi-Qu-c0-hr-b0-59.ucode
+-Version: 59.601f3a66.0
+-
+-File: iwlwifi-Qu-c0-jf-b0-59.ucode
+-Version: 59.601f3a66.0
+-
+-File: iwlwifi-QuZ-a0-hr-b0-59.ucode
+-Version: 59.601f3a66.0
+-
+-File: iwlwifi-QuZ-a0-jf-b0-59.ucode
+-Version: 59.601f3a66.0
+-
+-File: iwlwifi-so-a0-gf-a0.pnvm
+-
+-File: iwlwifi-so-a0-gf4-a0.pnvm
+-
+-File: iwlwifi-ty-a0-gf-a0-59.ucode
+-Version: 59.601f3a66.0
+-
+-File: iwlwifi-cc-a0-66.ucode
+-Version: 66.f1c864e0.0
+-
+-File: iwlwifi-Qu-b0-hr-b0-66.ucode
+-Version: 66.f1c864e0.0
+-
+-File: iwlwifi-Qu-b0-jf-b0-66.ucode
+-Version: 66.f1c864e0.0
+-
+-File: iwlwifi-Qu-c0-hr-b0-66.ucode
+-Version: 66.f1c864e0.0
+-
+-File: iwlwifi-Qu-c0-jf-b0-66.ucode
+-Version: 66.f1c864e0.0
+-
+-File: iwlwifi-QuZ-a0-hr-b0-66.ucode
+-Version: 66.f1c864e0.0
+-
+-File: iwlwifi-QuZ-a0-jf-b0-66.ucode
+-Version: 66.f1c864e0.0
+-
+-File: iwlwifi-ty-a0-gf-a0-66.ucode
+-Version: 66.f1c864e0.0
+-
+-File: iwlwifi-cc-a0-72.ucode
+-Version: 72.daa05125.0
+-
+-File: iwlwifi-Qu-b0-hr-b0-72.ucode
+-Version: 72.daa05125.0
+-
+-File: iwlwifi-Qu-b0-jf-b0-72.ucode
+-Version: 72.daa05125.0
+-
+-File: iwlwifi-Qu-c0-hr-b0-72.ucode
+-Version: 72.daa05125.0
+-
+-File: iwlwifi-Qu-c0-jf-b0-72.ucode
+-Version: 72.daa05125.0
+-
+-File: iwlwifi-QuZ-a0-hr-b0-72.ucode
+-Version: 72.daa05125.0
+-
+-File: iwlwifi-QuZ-a0-jf-b0-72.ucode
+-Version: 72.daa05125.0
+-
+-File: iwlwifi-ty-a0-gf-a0-72.ucode
+-Version: 72.a764baac.0
+-
+-File: iwlwifi-so-a0-gf4-a0-72.ucode
+-Version: 72.a764baac.0
+-
+-File: iwlwifi-so-a0-gf-a0-72.ucode
+-Version: 72.a764baac.0
+-
+-File: iwlwifi-so-a0-hr-b0-72.ucode
+-Version: 72.daa05125.0
+-
+-File: iwlwifi-so-a0-jf-b0-72.ucode
+-Version: 72.daa05125.0
+-
+-File: iwlwifi-cc-a0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-Qu-b0-hr-b0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-Qu-b0-jf-b0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-Qu-c0-hr-b0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-Qu-c0-jf-b0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-QuZ-a0-hr-b0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-QuZ-a0-jf-b0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-ty-a0-gf-a0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-so-a0-gf4-a0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-so-a0-gf-a0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-so-a0-hr-b0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-so-a0-jf-b0-73.ucode
+-Version: 73.35c0a2c6.0
+-
+-File: iwlwifi-cc-a0-74.ucode
+-Version: 74.a5e9588b.0
+-
+-File: iwlwifi-Qu-b0-hr-b0-74.ucode
+-Version: 74.a5e9588b.0
+-
+-File: iwlwifi-Qu-b0-jf-b0-74.ucode
+-Version: 74.a5e9588b.0
+-
+-File: iwlwifi-Qu-c0-hr-b0-74.ucode
+-Version: 74.a5e9588b.0
+-
+-File: iwlwifi-Qu-c0-jf-b0-74.ucode
+-Version: 74.a5e9588b.0
+-
+-File: iwlwifi-QuZ-a0-hr-b0-74.ucode
+-Version: 74.a5e9588b.0
+-
+-File: iwlwifi-QuZ-a0-jf-b0-74.ucode
+-Version: 74.a5e9588b.0
+-
+-File: iwlwifi-ty-a0-gf-a0-74.ucode
+-Version: 74.fe17486e.0
+-
+-File: iwlwifi-so-a0-gf4-a0-74.ucode
+-Version: 74.fe17486e.0
+-
+-File: iwlwifi-so-a0-gf-a0-74.ucode
+-Version: 74.fe17486e.0
+-
+-File: iwlwifi-so-a0-hr-b0-74.ucode
+-Version: 74.a5e9588b.0
+-
+-File: iwlwifi-so-a0-jf-b0-74.ucode
+-Version: 74.a5e9588b.0
+-
+-File: iwlwifi-cc-a0-77.ucode
+-Version: 74.206b0184.0
+-
+-File: iwlwifi-Qu-b0-hr-b0-77.ucode
+-Version: 74.206b0184.0
+-
+-File: iwlwifi-Qu-b0-jf-b0-77.ucode
+-Version: 74.206b0184.0
+-
+-File: iwlwifi-Qu-c0-hr-b0-77.ucode
+-Version: 74.206b0184.0
+-
+-File: iwlwifi-Qu-c0-jf-b0-77.ucode
+-Version: 74.206b0184.0
+-
+-File: iwlwifi-QuZ-a0-hr-b0-77.ucode
+-Version: 74.206b0184.0
+-
+-File: iwlwifi-QuZ-a0-jf-b0-77.ucode
+-Version: 74.206b0184.0
+-
+-File: iwlwifi-ty-a0-gf-a0-77.ucode
+-Version: 74.f92b5fed.0
+-
+-File: iwlwifi-ty-a0-gf-a0-78.ucode
+-Version: 75.3bfdc55f.0
+-
+-File: iwlwifi-ty-a0-gf-a0-79.ucode
+-Version: 76.27f1c37b.0
+-
+-File: iwlwifi-ty-a0-gf-a0-81.ucode
+-Version: 78.31fc9ae6.0
+-
+-File: iwlwifi-so-a0-gf4-a0-77.ucode
+-Version: 74.f92b5fed.0
+-
+-File: iwlwifi-so-a0-gf4-a0-78.ucode
+-Version: 75.3bfdc55f.0
+-
+-File: iwlwifi-so-a0-gf4-a0-79.ucode
+-Version: 76.27f1c37b.0
+-
+-File: iwlwifi-so-a0-gf4-a0-81.ucode
+-Version: 78.31fc9ae6.0
+-
+-File: iwlwifi-so-a0-gf-a0-77.ucode
+-Version: 74.f92b5fed.0
+-
+-File: iwlwifi-so-a0-gf-a0-78.ucode
+-Version: 74.3bfdc55f.0
+-
+-File: iwlwifi-so-a0-gf-a0-79.ucode
+-Version: 75.27f1c37b.0
+-
+-File: iwlwifi-so-a0-gf-a0-81.ucode
+-Version: 78.31fc9ae6.0
+-
+-File: iwlwifi-so-a0-hr-b0-77.ucode
+-Version: 74.f92b5fed.0
+-
+-File: iwlwifi-so-a0-hr-b0-79.ucode
+-Version: 75.27f1c37b.0
+-
+-File: iwlwifi-so-a0-hr-b0-81.ucode
+-Version: 78.31fc9ae6.0
+-
+-File: iwlwifi-so-a0-jf-b0-77.ucode
+-Version: 74.f92b5fed.0
+-
+-File: iwlwifi-ty-a0-gf-a0.pnvm
+-
+-Licence: Redistributable. See LICENCE.iwlwifi_firmware for details
+-
+-Also available from http://wireless.kernel.org/en/users/Drivers/iwlwifi#Firmware
+-
+---------------------------------------------------------------------------
+-
+ Driver: tehuti - Tehuti Networks 10G Ethernet
+ 
+ File: tehuti/bdx.bin
+@@ -1226,86 +714,6 @@ Available from http://ldriver.qlogic.com/firmware/netxen_nic/new/
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: rt61pci - Ralink RT2561, RT2561S, RT2661 wireless MACs
+-
+-File: rt2561.bin
+-File: rt2561s.bin
+-File: rt2661.bin
+-
+-Licence: Redistributable. See LICENCE.ralink-firmware.txt for details
+-
+-Downloaded from http://www.ralinktech.com/ralink/Home/Support/Linux.html
+-
+---------------------------------------------------------------------------
+-
+-Driver: rt73usb - Ralink RT2571W, RT2671 wireless MACs
+-
+-File: rt73.bin
+-
+-Licence: Redistributable. See LICENCE.ralink-firmware.txt for details
+-
+-Downloaded from http://www.ralinktech.com/ralink/Home/Support/Linux.html
+-
+----------------------------------------------------------------------------
+-
+-Driver: mt7601u - MediaTek MT7601U Wireless MACs
+-
+-File: mediatek/mt7601u.bin
+-Version: 34
+-Link: mt7601u.bin -> mediatek/mt7601u.bin
+-
+-Licence: Redistributable. See LICENCE.ralink_a_mediatek_company_firmware for details
+-
+-Downloaded from http://www.mediatek.com/en/downloads/
+-
+---------------------------------------------------------------------------
+-
+-Driver: rt2800pci - Ralink RT2860, RT2890, RT3090, RT3290, RT5390 wireless MACs
+-
+-File: rt2860.bin
+-Version: 40
+-
+-File: rt3290.bin
+-Version: 37
+-
+-Licence: Redistributable. See LICENCE.ralink-firmware.txt for details
+-
+-Binary file supplied originally by Shiang Tu <shiang_tu@ralinktech.com>, latest
+-from http://www.mediatek.com/en/downloads1/downloads/
+-
+---------------------------------------------------------------------------
+-
+-Driver: rt2860sta - Ralink RT3090 wireless MACs
+-
+-Link: rt3090.bin -> rt2860.bin
+-
+-Licence: Redistributable. See LICENCE.ralink-firmware.txt for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: rt2800usb - Ralink RT2870, RT3070, RT3071, RT3072, RT5370 wireless MACs
+-
+-File: rt2870.bin
+-Version: 36
+-
+-Licence: Redistributable. See LICENCE.ralink-firmware.txt for details
+-
+-Binary file supplied originally by Shiang Tu <shiang_tu@ralinktech.com>, latest
+-from http://www.mediatek.com/en/downloads1/downloads/
+-
+---------------------------------------------------------------------------
+-
+-Driver: rt2870sta - Ralink RT2870, RT3070, RT3071 wireless MACs
+-
+-Link: rt3070.bin -> rt2870.bin
+-File: rt3071.bin
+-
+-Licence: Redistributable. See LICENCE.ralink-firmware.txt for details
+-
+-rt3071.bin is a copy of bytes 4096-8191 of rt2870.bin for compatibility.
+-
+---------------------------------------------------------------------------
+-
+ Driver: usbdux/usbduxfast/usbduxsigma - usbdux data acquisition cards
+ 
+ File: usbdux_firmware.bin
+@@ -1319,17 +727,6 @@ Provided from the author, Bernd Porr <BerndPorr@f2s.com>
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: ath3k - DFU Driver for Atheros bluetooth chipset AR3011
+-
+-File: ath3k-1.fw
+-Version: 1.0
+-
+-Fix EEPROM radio table issue and change PID to 3005
+-
+-Licence: Redistributable. See LICENCE.atheros_firmware for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: mga - Matrox G200/G400/G550
+ 
+ File: matrox/g200_warp.fw
+@@ -2245,17 +1642,6 @@ Licence: Redistributable.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: rtl8192e - Realtek 8192 PCI wireless driver
+-
+-File: RTL8192E/boot.img
+-File: RTL8192E/data.img
+-File: RTL8192E/main.img
+-
+-Licence: Redistributable, provided by Realtek in their driver
+-         source download.
+-
+---------------------------------------------------------------------------
+-
+ Driver: ib_qib - QLogic Infiniband
+ 
+ File: qlogic/sd7220.fw
+@@ -2388,1167 +1774,51 @@ Licence:
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: brcmsmac - Broadcom 802.11n softmac wireless LAN driver.
++Driver: vt6656 - VIA VT6656 USB wireless driver
+ 
+-File: brcm/bcm43xx-0.fw
+-File: brcm/bcm43xx_hdr-0.fw
+-Version: 610.812
++File: vntwusb.fw
+ 
+-Licence: Redistributable. See LICENCE.broadcom_bcm43xx for details.
++Licence: Redistributable. See LICENCE.via_vt6656 for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: brcmfmac - Broadcom 802.11n fullmac wireless LAN driver.
+-
+-File: brcm/bcm4329-fullmac-4.bin
+-File: brcm/brcmfmac43236b.bin
+-File: brcm/brcmfmac4329-sdio.bin
+-File: brcm/brcmfmac4330-sdio.bin
+-File: brcm/brcmfmac4334-sdio.bin
+-File: brcm/brcmfmac4335-sdio.bin
+-File: brcm/brcmfmac43241b0-sdio.bin
+-File: brcm/brcmfmac43241b4-sdio.bin
+-File: brcm/brcmfmac43241b5-sdio.bin
+-File: brcm/brcmfmac43242a.bin
+-File: brcm/brcmfmac43143.bin
+-File: brcm/brcmfmac43143-sdio.bin
+-File: brcm/brcmfmac43430a0-sdio.bin
+-File: brcm/brcmfmac4350c2-pcie.bin
+-File: brcm/brcmfmac4350-pcie.bin
+-File: brcm/brcmfmac43569.bin
+-File: brcm/brcmfmac4358-pcie.bin
+-File: brcm/brcmfmac43602-pcie.bin
+-File: brcm/brcmfmac43602-pcie.ap.bin
+-File: brcm/brcmfmac4366b-pcie.bin
+-File: brcm/brcmfmac4366c-pcie.bin
+-File: brcm/brcmfmac4371-pcie.bin
+-
+-Licence: Redistributable. See LICENCE.broadcom_bcm43xx for details.
+-
+-File: brcm/brcmfmac4373.bin
+-File: cypress/cyfmac43012-sdio.bin
+-Link: brcm/brcmfmac43012-sdio.bin -> ../cypress/cyfmac43012-sdio.bin
+-File: cypress/cyfmac43012-sdio.clm_blob
+-Link: brcm/brcmfmac43012-sdio.clm_blob -> ../cypress/cyfmac43012-sdio.clm_blob
+-File: cypress/cyfmac43340-sdio.bin
+-Link: brcm/brcmfmac43340-sdio.bin -> ../cypress/cyfmac43340-sdio.bin
+-File: cypress/cyfmac43362-sdio.bin
+-Link: brcm/brcmfmac43362-sdio.bin -> ../cypress/cyfmac43362-sdio.bin
+-File: cypress/cyfmac4339-sdio.bin
+-Link: brcm/brcmfmac4339-sdio.bin -> ../cypress/cyfmac4339-sdio.bin
+-File: cypress/cyfmac43430-sdio.bin
+-Link: brcm/brcmfmac43430-sdio.bin -> ../cypress/cyfmac43430-sdio.bin
+-File: cypress/cyfmac43430-sdio.clm_blob
+-Link: brcm/brcmfmac43430-sdio.clm_blob -> ../cypress/cyfmac43430-sdio.clm_blob
+-File: cypress/cyfmac43455-sdio.bin
+-Link: brcm/brcmfmac43455-sdio.bin -> ../cypress/cyfmac43455-sdio.bin
+-File: cypress/cyfmac43455-sdio.clm_blob
+-Link: brcm/brcmfmac43455-sdio.clm_blob -> ../cypress/cyfmac43455-sdio.clm_blob
+-File: cypress/cyfmac4354-sdio.bin
+-Link: brcm/brcmfmac4354-sdio.bin -> ../cypress/cyfmac4354-sdio.bin
+-File: cypress/cyfmac4354-sdio.clm_blob
+-Link: brcm/brcmfmac4354-sdio.clm_blob -> ../cypress/cyfmac4354-sdio.clm_blob
+-File: cypress/cyfmac4356-pcie.bin
+-Link: brcm/brcmfmac4356-pcie.bin -> ../cypress/cyfmac4356-pcie.bin
+-File: cypress/cyfmac4356-pcie.clm_blob
+-Link: brcm/brcmfmac4356-pcie.clm_blob -> ../cypress/cyfmac4356-pcie.clm_blob
+-File: cypress/cyfmac4356-sdio.bin
+-Link: brcm/brcmfmac4356-sdio.bin -> ../cypress/cyfmac4356-sdio.bin
+-File: cypress/cyfmac4356-sdio.clm_blob
+-Link: brcm/brcmfmac4356-sdio.clm_blob -> ../cypress/cyfmac4356-sdio.clm_blob
+-File: cypress/cyfmac43570-pcie.bin
+-Link: brcm/brcmfmac43570-pcie.bin -> ../cypress/cyfmac43570-pcie.bin
+-File: cypress/cyfmac43570-pcie.clm_blob
+-Link: brcm/brcmfmac43570-pcie.clm_blob -> ../cypress/cyfmac43570-pcie.clm_blob
+-File: cypress/cyfmac4373-sdio.bin
+-Link: brcm/brcmfmac4373-sdio.bin -> ../cypress/cyfmac4373-sdio.bin
+-File: cypress/cyfmac4373-sdio.clm_blob
+-Link: brcm/brcmfmac4373-sdio.clm_blob -> ../cypress/cyfmac4373-sdio.clm_blob
+-File: cypress/cyfmac54591-pcie.bin
+-Link: brcm/brcmfmac54591-pcie.bin -> ../cypress/cyfmac54591-pcie.bin
+-File: cypress/cyfmac54591-pcie.clm_blob
+-Link: brcm/brcmfmac54591-pcie.clm_blob -> ../cypress/cyfmac54591-pcie.clm_blob
+-
+-Licence: Redistributable. See LICENCE.cypress for details.
+-
+-File: "brcm/brcmfmac43241b4-sdio.Advantech-MICA-071.txt"
+-File: "brcm/brcmfmac43241b4-sdio.Intel Corp.-VALLEYVIEW C0 PLATFORM.txt"
+-File: "brcm/brcmfmac4330-sdio.Prowise-PT301.txt"
+-File: "brcm/brcmfmac43340-sdio.ASUSTeK COMPUTER INC.-TF103CE.txt"
+-File: "brcm/brcmfmac43340-sdio.meegopad-t08.txt"
+-File: "brcm/brcmfmac43340-sdio.pov-tab-p1006w-data.txt"
+-File: "brcm/brcmfmac43340-sdio.predia-basic.txt"
+-File: "brcm/brcmfmac43362-sdio.WC121.txt"
+-File: "brcm/brcmfmac43362-sdio.cubietech,cubietruck.txt"
+-Link: brcm/brcmfmac43362-sdio.kobo,aura.txt -> brcmfmac43362-sdio.WC121.txt
+-Link: brcm/brcmfmac43362-sdio.kobo,tolino-shine2hd.txt -> brcmfmac43362-sdio.WC121.txt
+-Link: brcm/brcmfmac43362-sdio.lemaker,bananapro.txt -> brcmfmac43362-sdio.cubietech,cubietruck.txt
+-File: "brcm/brcmfmac43430a0-sdio.ilife-S806.txt"
+-File: "brcm/brcmfmac43430a0-sdio.jumper-ezpad-mini3.txt"
+-File: "brcm/brcmfmac43430a0-sdio.ONDA-V80 PLUS.txt"
+-File: "brcm/brcmfmac43430-sdio.AP6212.txt"
+-Link: brcm/brcmfmac43430-sdio.sinovoip,bpi-m2-plus.txt -> brcmfmac43430-sdio.AP6212.txt
+-Link: brcm/brcmfmac43430-sdio.sinovoip,bpi-m2-zero.txt -> brcmfmac43430-sdio.AP6212.txt
+-Link: brcm/brcmfmac43430-sdio.sinovoip,bpi-m2-ultra.txt -> brcmfmac43430-sdio.AP6212.txt
+-Link: brcm/brcmfmac43430-sdio.sinovoip,bpi-m3.txt -> brcmfmac43430-sdio.AP6212.txt
+-Link: brcm/brcmfmac43430-sdio.friendlyarm,nanopi-r1.txt -> brcmfmac43430-sdio.AP6212.txt
+-Link: brcm/brcmfmac43430-sdio.starfive,visionfive-v1.txt -> brcmfmac43430-sdio.AP6212.txt
+-Link: brcm/brcmfmac43430-sdio.beagle,beaglev-starlight-jh7100-a1.txt -> brcmfmac43430-sdio.AP6212.txt
+-Link: brcm/brcmfmac43430-sdio.beagle,beaglev-starlight-jh7100-r0.txt -> brcmfmac43430-sdio.AP6212.txt
+-File: "brcm/brcmfmac43430-sdio.Hampoo-D2D3_Vi8A1.txt"
+-File: "brcm/brcmfmac43430-sdio.MUR1DX.txt"
+-File: "brcm/brcmfmac43430-sdio.raspberrypi,3-model-b.txt"
+-Link: brcm/brcmfmac43430-sdio.raspberrypi,model-zero-w.txt -> brcmfmac43430-sdio.raspberrypi,3-model-b.txt
+-Link: brcm/brcmfmac43430-sdio.raspberrypi,model-zero-2-w.txt -> brcmfmac43430-sdio.raspberrypi,3-model-b.txt
+-File: "brcm/brcmfmac43455-sdio.acepc-t8.txt"
+-File: "brcm/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt"
+-Link: brcm/brcmfmac43455-sdio.raspberrypi,3-model-a-plus.txt -> brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt
+-File: "brcm/brcmfmac43455-sdio.raspberrypi,4-model-b.txt"
+-Link: brcm/brcmfmac43455-sdio.Raspberry\ Pi\ Foundation-Raspberry\ Pi\ 4\ Model\ B.txt -> brcmfmac43455-sdio.raspberrypi,4-model-b.txt
+-Link: brcm/brcmfmac43455-sdio.Raspberry\ Pi\ Foundation-Raspberry\ Pi\ Compute\ Module\ 4.txt -> brcmfmac43455-sdio.raspberrypi,4-model-b.txt
+-File: "brcm/brcmfmac43455-sdio.MINIX-NEO Z83-4.txt"
+-File: "brcm/brcmfmac4356-pcie.gpd-win-pocket.txt"
+-File: "brcm/brcmfmac4356-pcie.Intel Corporation-CHERRYVIEW D1 PLATFORM.txt"
+-File: "brcm/brcmfmac4356-pcie.Xiaomi Inc-Mipad2.txt"
+-File: brcm/brcmfmac4356-sdio.AP6356S.txt
+-Link: brcm/brcmfmac4356-sdio.firefly,firefly-rk3399.txt -> brcmfmac4356-sdio.AP6356S.txt
+-Link: brcm/brcmfmac4356-sdio.khadas,vim2.txt -> brcmfmac4356-sdio.AP6356S.txt
+-Link: brcm/brcmfmac4356-sdio.vamrs,rock960.txt -> brcmfmac4356-sdio.AP6356S.txt
+-File: brcm/brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.beagle,am5729-beagleboneai.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,pinebook-pro.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,pinenote-v1.1.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,pinenote-v1.2.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,pinephone-pro.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,quartz64-a.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,quartz64-b.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,rockpro64-v2.0.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,rockpro64-v2.1.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,soquartz-model-a.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,soquartz-cm4io.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
+-Link: brcm/brcmfmac43455-sdio.pine64,soquartz-blade.txt -> brcmfmac43455-sdio.AW-CM256SM.txt
++Driver: myri10ge - Myri10GE 10GbE NIC driver
+ 
+-Licence: GPLv2. See GPL-2 for details.
++File: myri10ge_eth_z8e.dat
++File: myri10ge_ethp_z8e.dat
++File: myri10ge_rss_eth_z8e.dat
++File: myri10ge_rss_ethp_z8e.dat
++File: myri10ge_eth_big_z8e.dat
++File: myri10ge_ethp_big_z8e.dat
++File: myri10ge_rss_eth_big_z8e.dat
++File: myri10ge_rss_ethp_big_z8e.dat
++Version: 1.4.57
++
++License: Redistributable.  See LICENCE.myri10ge_firmware for details.
+ 
+ --------------------------------------------------------------------------
++Driver: ene-ub6250 -- ENE UB6250 SD card reader driver
+ 
+-Driver: wl1251 - Texas Instruments 802.11 WLAN driver for WiLink4 chips
++File: ene-ub6250/sd_init1.bin
++File: ene-ub6250/sd_init2.bin
++File: ene-ub6250/sd_rdwr.bin
++File: ene-ub6250/ms_init.bin
++File: ene-ub6250/msp_rdwr.bin
++File: ene-ub6250/ms_rdwr.bin
+ 
+-File: ti-connectivity/wl1251-fw.bin
+-Version: 4.0.4.3.7
++Licence: Redistributable. See LICENCE.ene_firmware for details.
+ 
+-File: ti-connectivity/wl1251-nvs.bin
++--------------------------------------------------------------------------
+ 
+-Licence: Redistributable. See LICENCE.wl1251 for details.
++Driver: isci -- Intel C600 SAS controller driver
+ 
+-The published NVS files are for testing only.  Every device needs to
+-have a unique NVS which is properly calibrated for best results.
+-
+-The driver expects to find the firmwares under a ti-connectivity subdirectory.
+-So if your system looks for firmwares in /lib/firmware, the firmwares for
+-wl12xx chips must be located in /lib/firmware/ti-connectivity/.
+-
+---------------------------------------------------------------------------
+-
+-Driver: wl12xx - Texas Instruments 802.11 WLAN driver for WiLink6/7 chips
+-
+-File: ti-connectivity/wl1271-fw.bin
+-Version: 6.1.0.50.350 (STA-only)
+-File: ti-connectivity/wl1271-fw-2.bin
+-Version: 6.1.5.50.74 (STA-only)
+-File: ti-connectivity/wl1271-fw-ap.bin
+-Version: 6.2.1.0.54 (AP-only)
+-File: ti-connectivity/wl127x-fw-3.bin
+-Version: 6.3.0.0.77
+-File: ti-connectivity/wl127x-fw-plt-3.bin
+-Version: 6.3.0.0.77 (PLT-only)
+-File: ti-connectivity/wl127x-fw-4-sr.bin
+-Version: 6.3.5.0.98 (Single-role)
+-File: ti-connectivity/wl127x-fw-4-mr.bin
+-Version: 6.5.2.0.15 (Multi-role)
+-File: ti-connectivity/wl127x-fw-4-plt.bin
+-Version: 6.3.5.0.98 (PLT-only)
+-File: ti-connectivity/wl127x-fw-5-sr.bin
+-Version: 6.3.10.0.142 (Single-role)
+-File: ti-connectivity/wl127x-fw-5-mr.bin
+-Version: 6.5.7.0.50 (Multi-role)
+-File: ti-connectivity/wl127x-fw-5-plt.bin
+-Version: 6.3.10.0.142 (PLT-only)
+-
+-File: ti-connectivity/wl128x-fw.bin
+-Version: 7.1.5.50.74 (STA-only)
+-File: ti-connectivity/wl128x-fw-ap.bin
+-Version: 7.2.1.0.54 (AP-only)
+-File: ti-connectivity/wl128x-fw-3.bin
+-Version: 7.3.0.0.77
+-File: ti-connectivity/wl128x-fw-plt-3.bin
+-Version: 7.3.0.0.77
+-File: ti-connectivity/wl128x-fw-4-sr.bin
+-Version: 7.3.5.0.98 (Single-role)
+-File: ti-connectivity/wl128x-fw-4-mr.bin
+-Version: 7.5.2.0.15 (Multi-role)
+-File: ti-connectivity/wl128x-fw-4-plt.bin
+-Version: 7.3.5.0.98 (PLT)
+-File: ti-connectivity/wl128x-fw-5-sr.bin
+-Version: 7.3.10.0.142 (Single-role)
+-File: ti-connectivity/wl128x-fw-5-mr.bin
+-Version: 7.5.7.0.50 (Multi-role)
+-File: ti-connectivity/wl128x-fw-5-plt.bin
+-Version: 7.3.10.2.142 (PLT-only)
+-
+-File: ti-connectivity/wl127x-nvs.bin
+-File: ti-connectivity/wl128x-nvs.bin
+-Link: ti-connectivity/wl12xx-nvs.bin -> wl127x-nvs.bin
+-Link: ti-connectivity/wl1271-nvs.bin -> wl127x-nvs.bin
+-
+-Licence: Redistributable. See LICENCE.ti-connectivity for details.
+-
+-The NVS file includes two parts:
+-	 - radio calibration
+-	 - HW configuration parameters (aka. INI values)
+-
+-The published NVS files are for testing only.  Every device needs to
+-hava a unique NVS which is properly calibrated for best results.  You
+-can find more information about NVS generation for your device here:
+-
+-http://wireless.kernel.org/en/users/Drivers/wl12xx/calibrator
+-
+-If you're using a wl127x based device, use a symbolic link called
+-wl1271-nvs.bin that links to the wl127x-nvs.bin file.  If you are
+-using wl128x, link to wl128x-nvs.bin instead.
+-
+-The driver expects to find the firmwares under a ti-connectivity
+-subdirectory.  So if your system looks for firmwares in /lib/firmware,
+-the firmwares for wl12xx chips must be located in
+-/lib/firmware/ti-connectivity/.
+-
+---------------------------------------------------------------------------
+-
+-Driver: wl18xx - Texas Instruments 802.11 WLAN driver for WiLink8 chips
+-
+-File: ti-connectivity/wl18xx-fw.bin
+-Version: 8.2.0.0.100
+-File: ti-connectivity/wl18xx-fw-2.bin
+-Version: 8.5.0.0.55
+-File: ti-connectivity/wl18xx-fw-3.bin
+-Version: 8.8.0.0.13
+-File: ti-connectivity/wl18xx-fw-4.bin
+-Version: 8.9.0.0.79
+-
+-Licence: Redistributable. See LICENCE.ti-connectivity for details.
+-
+-The driver expects to find the firmwares under a ti-connectivity
+-subdirectory.  So if your system looks for firmwares in /lib/firmware,
+-the firmwares for wl18xx chips must be located in
+-/lib/firmware/ti-connectivity/.
+-
+---------------------------------------------------------------------------
+-
+-Driver: TI_ST - Texas Instruments bluetooth driver
+-
+-File: ti-connectivity/TIInit_6.2.31.bts
+-Version: 2.44 (TI_P31.123)
+-File: ti-connectivity/TIInit_6.6.15.bts
+-Version: 2.14 (TI_P6_15.93)
+-File: ti-connectivity/TIInit_7.2.31.bts
+-
+-Licence: Redistributable. See LICENCE.ti-connectivity for details.
+-
+-	TIInit_7.2.31.bts version 7.2.31
+-
+-	In order to use that file copy it to /lib/firmware/ti-connectivity.
+-
+---------------------------------------------------------------------------
+-
+-Driver: r8712u - Realtek 802.11n WLAN driver for RTL8712U
+-
+-File: rtlwifi/rtl8712u.bin
+-Info: From Vendor's rtl8712_8188_8191_8192SU_usb_linux_v7_0.20100831
+-      Reverted rtl8188C_8192C_8192D_usb_linux_v3.4.2_3727.20120404
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8192ce - Realtek 802.11n WLAN driver for RTL8192CE
+-
+-File: rtlwifi/rtl8192cfw.bin
+-File: rtlwifi/rtl8192cfwU.bin
+-File: rtlwifi/rtl8192cfwU_B.bin
+-Info: From Vendor's realtek/rtlwifi_linux_mac80211_0019.0320.2014V628 driver
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8192cu - Realtek 802.11n WLAN driver for RTL8192CU
+-
+-File: rtlwifi/rtl8192cufw.bin
+-File: rtlwifi/rtl8192cufw_A.bin
+-File: rtlwifi/rtl8192cufw_B.bin
+-File: rtlwifi/rtl8192cufw_TMSC.bin
+-Info: From Vendor's rtl8188C_8192C_usb_linux_v4.0.1_6911.20130308 driver
+-      All files extracted from driver/hal/rtl8192c/usb/Hal8192CUHWImg.c
+-      Relevant variables (CONFIG_BT_COEXISTENCE not set):
+-        - rtlwifi/rtl8192cufw_A.bin: Rtl8192CUFwUMCACutImgArray
+-        - rtlwifi/rtl8192cufw_B.bin: Rtl8192CUFwUMCBCutImgArray
+-        - rtlwifi/rtl8192cufw_TMSC.bin: Rtl8192CUFwTSMCImgArray
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8192se - Realtek 802.11n WLAN driver for RTL8192SE
+-
+-Info: updated from rtl_92ce_92se_92de_linux_mac80211_0004.0816.2011 driver version
+-File: rtlwifi/rtl8192sefw.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8192de - Realtek 802.11n WLAN driver for RTL8192DE
+-
+-Info: Updated from Realtek version rtl_92ce_92se_92de_8723ae_linux_mac80211_0007.0809.2012
+-File: rtlwifi/rtl8192defw.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8723e - Realtek 802.11n WLAN driver for RTL8723E
+-
+-Info: Taken from Realtek version rtl_92ce_92se_92de_8723ae_linux_mac80211_0007.0809.2012
+-File: rtlwifi/rtl8723fw.bin
+-File: rtlwifi/rtl8723fw_B.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8723be - Realtek 802.11n WLAN driver for RTL8723BE
+-
+-Info: From Vendor's realtek/rtlwifi_linux_mac80211_0019.0320.2014V628 driver
+-File: rtlwifi/rtl8723befw.bin
+-Info: Update to version 36 - Sent by Realtek
+-File: rtlwifi/rtl8723befw_36.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8723de - Realtek 802.11ac WLAN driver for RTL8723DE
+-
+-Info: Supplied by Vendor at https://github.com/pkshih/rtlwifi_rtl8723de
+-File: rtlwifi/rtl8723defw.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8188ee - Realtek 802.11n WLAN driver for RTL8188EE
+-
+-Info: Taken from Realtek version rtl_92ce_92se_92de_8723ae_88ee_linux_mac80211_0010.0109.2013
+-File: rtlwifi/rtl8188efw.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8821ae - Realtek 802.11n WLAN driver for RTL8812AE
+-
+-Info: From Vendor's realtek/rtlwifi_linux_mac80211_0019.0320.2014V628 driver
+-File: rtlwifi/rtl8812aefw.bin
+-File: rtlwifi/rtl8812aefw_wowlan.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8821ae - Realtek 802.11n WLAN driver for RTL8821AE
+-
+-Info: From Vendor's realtek/rtlwifi_linux_mac80211_0019.0320.2014V628 driver
+-File: rtlwifi/rtl8821aefw.bin
+-File: rtlwifi/rtl8821aefw_wowlan.bin
+-Info: Update to version 29 - Sent by Realtek
+-File: rtlwifi/rtl8821aefw_29.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8822be - Realtek 802.11n WLAN driver for RTL8822BE
+-
+-Info: Sent to Larry Finger by Realtek engineer Ping-Ke Shih <pkshih@realtek.com>
+-File: rtlwifi/rtl8822befw.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtw88 - Realtek 802.11ac WLAN driver for RTL8822BE and RTL8822CE
+-
+-Info: Sent to Larry Finger by Realtek engineer Yan-Hsuan Chuang <yhchuang@realtek.com>
+-File: rtw88/rtw8822b_fw.bin
+-File: rtw88/rtw8822c_fw.bin
+-File: rtw88/rtw8822c_wow_fw.bin
+-File: rtw88/README
+-File: rtw88/rtw8723d_fw.bin
+-File: rtw88/rtw8821c_fw.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+-    These firmware should be put under /lib/firmware/rtw88/
+-    And note that the rtw88 driver is able to support wake-on-wireless LAN
+-    for RTL8822C devices, after kernel v5.6+. So, make sure the firmware
+-    rtw88/rtw8822c_wow_fw.bin is also packed, otherwise the firmware load
+-    fail could be a problem.
+-    Although RTL8723D devices are 802.11n device, they are also supported
+-    by rtw88 because the hardware arch is similar.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtw89 - Realtek 802.11ax WLAN driver for RTL8851B/RTL8852A/RTL8852B/RTL8852C
+-
+-File: rtw89/rtw8851b_fw.bin
+-File: rtw89/rtw8852a_fw.bin
+-File: rtw89/rtw8852b_fw.bin
+-File: rtw89/rtw8852b_fw-1.bin
+-File: rtw89/rtw8852c_fw.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8192ee - Realtek 802.11n WLAN driver for RTL8192EE
+-
+-Info: Initial version taken from Realtek version
+-      rtl_92ce_92se_92de_8723ae_88ee_8723be_92ee_linux_mac80211_0017.1224.2013
+-      Updated Jan. 14, 2015 with file added by Realtek to
+-      http://github.com/lwfinger/rtlwifi_new.git.
+-      Same firmware rtl8192eu_nic.bin so just link them
+-Link: rtlwifi/rtl8192eefw.bin -> rtl8192eu_nic.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8723bs - Realtek 802.11n WLAN driver for RTL8723BS
+-
+-Info: Firmware files extracted from data statements in Realtek driver
+-      v4.3.5.5_12290.20140916_BTCOEX20140507-4E40.
+-File: rtlwifi/rtl8723bs_bt.bin
+-Link: rtlwifi/rtl8723bs_nic.bin -> rtl8723bu_nic.bin
+-Link: rtlwifi/rtl8723bs_ap_wowlan.bin -> rtl8723bu_ap_wowlan.bin
+-Link: rtlwifi/rtl8723bs_wowlan.bin -> rtl8723bu_wowlan.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rtl8xxxu - Realtek 802.11n WLAN driver for RTL8XXX USB devices
+-
+-Info: rtl8723au taken from Realtek driver
+-      rtl8723A_WiFi_linux_v4.1.3_6044.20121224
+-      Firmware is embedded in the driver as data statements. This info
+-      has been extracted into a binary file.
+-File: rtlwifi/rtl8723aufw_A.bin
+-File: rtlwifi/rtl8723aufw_B.bin
+-File: rtlwifi/rtl8723aufw_B_NoBT.bin
+-
+-Info: rtl8723bu taken from Realtek driver
+-      rtl8723BU_WiFi_linux_v4.3.16_14189.20150519_BTCOEX20150119-5844
+-      Firmware is embedded in the driver as data statements. This info
+-      has been extracted into a binary file.
+-File: rtlwifi/rtl8723bu_nic.bin
+-File: rtlwifi/rtl8723bu_wowlan.bin
+-File: rtlwifi/rtl8723bu_ap_wowlan.bin
+-
+-Info: rtl8192eu taken from Realtek driver
+-      rtl8192EU_WiFi_linux_v5.11.2.1-18-g8e7df912b.20210527_COEX20171113-0047
+-      Firmware is embedded in the driver as data statements. This info
+-      has been extracted into a binary file.
+-File: rtlwifi/rtl8192eu_nic.bin
+-Version: 35.7
+-File: rtlwifi/rtl8192eu_wowlan.bin
+-Version: 35.7
+-File: rtlwifi/rtl8192eu_ap_wowlan.bin
+-Version: 18.0
+-
+-Info: rtl8188fu taken from Realtek driver
+-      RTL8188FU_Linux_v4.3.23.6_20964.20170110
+-      Firmware was embedded in the driver as data statements. This info
+-      has been extracted into a binary file.
+-File: rtlwifi/rtl8188fufw.bin
+-
+-File: rtlwifi/rtl8710bufw_SMIC.bin
+-Version: 16.0
+-File: rtlwifi/rtl8710bufw_UMC.bin
+-Version: 16.0
+-
+-Info: rtl8188eu taken from Realtek driver version
+-      v5.2.2.4_25483.20171222.
+-      Firmware is embedded in the driver as data statements. This info
+-      has been extracted into a binary file.
+-File: rtlwifi/rtl8188eufw.bin
+-Version: 28.0
+-
+-Info: rtl8192fu taken from Realtek driver version
+-      v5.8.6.2_35538.20191028_COEX20190910-0d02.
+-      Firmware is embedded in the driver as data statements. This info
+-      has been extracted into a binary file.
+-File: rtlwifi/rtl8192fufw.bin
+-Version: 6.0
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: r8169 - RealTek 8169/8168/8101 ethernet driver.
+-
+-File: rtl_nic/rtl8168d-1.fw
+-File: rtl_nic/rtl8168d-2.fw
+-File: rtl_nic/rtl8105e-1.fw
+-File: rtl_nic/rtl8168e-1.fw
+-File: rtl_nic/rtl8168e-2.fw
+-
+-File: rtl_nic/rtl8168e-3.fw
+-Version: 0.0.4
+-
+-File: rtl_nic/rtl8168f-1.fw
+-Version: 0.0.5
+-
+-File: rtl_nic/rtl8168f-2.fw
+-Version: 0.0.4
+-
+-File: rtl_nic/rtl8411-1.fw
+-Version: 0.0.3
+-
+-File: rtl_nic/rtl8411-2.fw
+-Version: 0.0.1
+-
+-File: rtl_nic/rtl8402-1.fw
+-Version: 0.0.1
+-
+-File: rtl_nic/rtl8106e-1.fw
+-Version: 0.0.1
+-
+-File: rtl_nic/rtl8106e-2.fw
+-Version: 0.0.1
+-
+-File: rtl_nic/rtl8168g-1.fw
+-Version: 0.0.3
+-
+-File: rtl_nic/rtl8168g-2.fw
+-Version: 0.0.1
+-
+-File: rtl_nic/rtl8168g-3.fw
+-Version: 0.0.1
+-
+-File: rtl_nic/rtl8168h-1.fw
+-Version: 0.0.2
+-
+-File: rtl_nic/rtl8168h-2.fw
+-Version: 0.0.2
+-
+-File: rtl_nic/rtl8168fp-3.fw
+-Version: 0.0.1
+-
+-File: rtl_nic/rtl8107e-1.fw
+-Version: 0.0.2
+-
+-File: rtl_nic/rtl8107e-2.fw
+-Version: 0.0.2
+-
+-File: rtl_nic/rtl8125a-3.fw
+-Version: 0.0.1
+-
+-File: rtl_nic/rtl8125b-1.fw
+-Version: 0.0.2
+-
+-File: rtl_nic/rtl8125b-2.fw
+-Version: 0.0.2
+-
+-Licence:
+- * Copyright © 2011-2013, Realtek Semiconductor Corporation
+- *
+- * Permission is hereby granted for the distribution of this firmware
+- * data in hexadecimal or equivalent format, provided this copyright
+- * notice is accompanying it.
+-
+---------------------------------------------------------------------------
+-
+-Driver: r8152 - Realtek RTL8152/RTL8153 Based USB Ethernet Adapters
+-
+-File: rtl_nic/rtl8153a-2.fw
+-File: rtl_nic/rtl8153a-3.fw
+-File: rtl_nic/rtl8153a-4.fw
+-File: rtl_nic/rtl8153b-2.fw
+-File: rtl_nic/rtl8153c-1.fw
+-File: rtl_nic/rtl8156a-2.fw
+-File: rtl_nic/rtl8156b-2.fw
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: vt6656 - VIA VT6656 USB wireless driver
+-
+-File: vntwusb.fw
+-
+-Licence: Redistributable. See LICENCE.via_vt6656 for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: DFU Driver for Atheros bluetooth chipset AR3012
+-
+-File: ar3k/AthrBT_0x01020001.dfu
+-File: ar3k/ramps_0x01020001_26.dfu
+-File: ar3k/AthrBT_0x01020200.dfu
+-File: ar3k/ramps_0x01020200_26.dfu
+-File: ar3k/ramps_0x01020200_40.dfu
+-File: ar3k/AthrBT_0x31010000.dfu
+-File: ar3k/ramps_0x31010000_40.dfu
+-File: ar3k/AthrBT_0x11020000.dfu
+-File: ar3k/ramps_0x11020000_40.dfu
+-File: ar3k/ramps_0x01020201_26.dfu
+-File: ar3k/ramps_0x01020201_40.dfu
+-File: ar3k/AthrBT_0x41020000.dfu
+-File: ar3k/ramps_0x41020000_40.dfu
+-File: ar3k/AthrBT_0x11020100.dfu
+-File: ar3k/ramps_0x11020100_40.dfu
+-File: ar3k/AthrBT_0x31010100.dfu
+-File: ar3k/ramps_0x31010100_40.dfu
+-
+-Licence: Redistributable. See LICENCE.atheros_firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: DFU Driver for Atheros bluetooth chipset AR3012
+-
+-File: ar3k/AthrBT_0x01020201.dfu
+-File: ar3k/1020201coex/ramps_0x01020201_26_HighPriority.dfu
+-
+-Licence: Redistributable. See LICENSE.QualcommAtheros_ar3k for details
+-
+---------------------------------------------------------------------------
+-
+-Driver:Atheros AR300x UART HCI Bluetooth Chip driver
+-
+-File: ar3k/1020201/PS_ASIC.pst
+-File: ar3k/1020201/RamPatch.txt
+-File: ar3k/1020200/ar3kbdaddr.pst
+-File: ar3k/1020200/PS_ASIC.pst
+-File: ar3k/1020200/RamPatch.txt
+-File: ar3k/30101/ar3kbdaddr.pst
+-File: ar3k/30101/PS_ASIC.pst
+-File: ar3k/30101/RamPatch.txt
+-File: ar3k/30000/ar3kbdaddr.pst
+-File: ar3k/30000/PS_ASIC.pst
+-File: ar3k/30000/RamPatch.txt
+-
+-Licence: Redistributable. See LICENCE.atheros_firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: ath6kl - Atheros support for AR6003
+-
+-File: ath6k/AR6004/hw1.3/fw-3.bin
+-File: ath6k/AR6004/hw1.3/bdata.bin
+-File: ath6k/AR6004/hw1.2/fw-2.bin
+-File: ath6k/AR6004/hw1.2/bdata.bin
+-File: ath6k/AR6003/hw1.0/otp.bin.z77
+-File: ath6k/AR6003/hw1.0/bdata.SD31.bin
+-File: ath6k/AR6003/hw1.0/bdata.SD32.bin
+-File: ath6k/AR6003/hw1.0/data.patch.bin
+-File: ath6k/AR6003/hw1.0/bdata.WB31.bin
+-File: ath6k/AR6003/hw1.0/athwlan.bin.z77
+-File: ath6k/AR6003/hw2.1.1/fw-2.bin
+-File: ath6k/AR6003/hw2.1.1/fw-3.bin
+-File: ath6k/AR6003/hw2.1.1/otp.bin
+-File: ath6k/AR6003/hw2.1.1/athwlan.bin
+-File: ath6k/AR6003/hw2.1.1/endpointping.bin
+-File: ath6k/AR6003/hw2.1.1/bdata.SD31.bin
+-File: ath6k/AR6003/hw2.1.1/bdata.SD32.bin
+-File: ath6k/AR6003/hw2.1.1/data.patch.bin
+-File: ath6k/AR6003/hw2.1.1/bdata.WB31.bin
+-File: ath6k/AR6003/hw2.0/otp.bin.z77
+-File: ath6k/AR6003/hw2.0/bdata.SD31.bin
+-File: ath6k/AR6003/hw2.0/bdata.SD32.bin
+-File: ath6k/AR6003/hw2.0/data.patch.bin
+-File: ath6k/AR6003/hw2.0/bdata.WB31.bin
+-File: ath6k/AR6003/hw2.0/athwlan.bin.z77
+-File: ath6k/AR6002/eeprom.data
+-File: ath6k/AR6002/eeprom.bin
+-File: ath6k/AR6002/athwlan.bin.z77
+-File: ath6k/AR6002/data.patch.hw2_0.bin
+-
+-Licence: Redistributable. See LICENCE.atheros_firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: ath10k - Qualcomm Atheros support for QCA988x family of chips
+-
+-File: ath10k/QCA988X/hw2.0/board.bin
+-File: ath10k/QCA988X/hw2.0/firmware-4.bin
+-Version: 10.2.4.45
+-File: ath10k/QCA988X/hw2.0/notice_ath10k_firmware-4.txt
+-File: ath10k/QCA988X/hw2.0/firmware-5.bin
+-Version: 10.2.4-1.0-00047
+-File: ath10k/QCA988X/hw2.0/notice_ath10k_firmware-5.txt
+-File: ath10k/QCA6174/hw2.1/board.bin
+-File: ath10k/QCA6174/hw2.1/board-2.bin
+-File: ath10k/QCA6174/hw2.1/firmware-5.bin
+-Version: SW_RM.1.1.1-00157-QCARMSWPZ-1
+-File: ath10k/QCA6174/hw2.1/notice_ath10k_firmware-5.txt
+-File: ath10k/QCA6174/hw3.0/board.bin
+-File: ath10k/QCA6174/hw3.0/board-2.bin
+-File: ath10k/QCA6174/hw3.0/firmware-4.bin
+-Version: WLAN.RM.2.0-00180-QCARMSWPZ-1
+-File: ath10k/QCA6174/hw3.0/notice_ath10k_firmware-4.txt
+-File: ath10k/QCA6174/hw3.0/firmware-6.bin
+-Version: WLAN.RM.4.4.1-00288-QCARMSWPZ-1
+-File: ath10k/QCA6174/hw3.0/notice_ath10k_firmware-6.txt
+-File: ath10k/QCA6174/hw3.0/firmware-sdio-6.bin
+-Version: WLAN.RMH.4.4.1-00174
+-File: ath10k/QCA6174/hw3.0/notice_ath10k_firmware-sdio-6.txt
+-File: ath10k/QCA9377/hw1.0/board.bin
+-File: ath10k/QCA9377/hw1.0/board-2.bin
+-File: ath10k/QCA9377/hw1.0/firmware-5.bin
+-Version: WLAN.TF.1.0-00002-QCATFSWPZ-5
+-File: ath10k/QCA9377/hw1.0/notice_ath10k_firmware-5.txt
+-File: ath10k/QCA9377/hw1.0/firmware-sdio-5.bin
+-Version: WLAN.TF.1.1.1-00061-QCATFSWPZ-1
+-File: ath10k/QCA9377/hw1.0/notice_ath10k_firmware-sdio-5.txt
+-File: ath10k/QCA99X0/hw2.0/board-2.bin
+-File: ath10k/QCA99X0/hw2.0/firmware-5.bin
+-Version: 10.4.1.00030-1
+-File: ath10k/QCA99X0/hw2.0/notice_ath10k_firmware-5.txt
+-File: ath10k/QCA4019/hw1.0/board-2.bin
+-File: ath10k/QCA4019/hw1.0/firmware-5.bin
+-Version: 10.4-3.6-00140
+-File: ath10k/QCA4019/hw1.0/notice_ath10k_firmware-5.txt
+-File: ath10k/QCA9887/hw1.0/board.bin
+-File: ath10k/QCA9887/hw1.0/firmware-5.bin
+-Version: 10.2.4-1.0-00047
+-File: ath10k/QCA9887/hw1.0/notice_ath10k_firmware-5.txt
+-File: ath10k/QCA9888/hw2.0/board-2.bin
+-File: ath10k/QCA9888/hw2.0/firmware-5.bin
+-Version: 10.4-3.9.0.2-00157
+-File: ath10k/QCA9888/hw2.0/notice_ath10k_firmware-5.txt
+-File: ath10k/QCA9984/hw1.0/board-2.bin
+-File: ath10k/QCA9984/hw1.0/firmware-5.bin
+-Version: 10.4-3.9.0.2-00157
+-File: ath10k/QCA9984/hw1.0/notice_ath10k_firmware-5.txt
+-File: ath10k/QCA9377/hw1.0/firmware-6.bin
+-Version: WLAN.TF.2.1-00021-QCARMSWP-1
+-File: ath10k/QCA9377/hw1.0/notice_ath10k_firmware-6.txt
+-File: ath10k/WCN3990/hw1.0/board-2.bin
+-File: ath10k/WCN3990/hw1.0/firmware-5.bin
+-File: ath10k/WCN3990/hw1.0/wlanmdsp.mbn
+-Link: qcom/sdm845/wlanmdsp.mbn -> ../../ath10k/WCN3990/hw1.0/wlanmdsp.mbn
+-Version: WLAN.HL.2.0-01387-QCAHLSWMTPLZ-1
+-File: ath10k/WCN3990/hw1.0/notice.txt_wlanmdsp
+-
+-Licence: Redistributable. See LICENSE.QualcommAtheros_ath10k for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: ath11k - Qualcomm Technologies 802.11ax chipset support
+-
+-File: ath11k/IPQ6018/hw1.0/board-2.bin
+-File: ath11k/IPQ6018/hw1.0/m3_fw.b00
+-File: ath11k/IPQ6018/hw1.0/m3_fw.b01
+-File: ath11k/IPQ6018/hw1.0/m3_fw.b02
+-File: ath11k/IPQ6018/hw1.0/m3_fw.flist
+-File: ath11k/IPQ6018/hw1.0/m3_fw.mdt
+-File: ath11k/IPQ6018/hw1.0/q6_fw.b00
+-File: ath11k/IPQ6018/hw1.0/q6_fw.b01
+-File: ath11k/IPQ6018/hw1.0/q6_fw.b02
+-File: ath11k/IPQ6018/hw1.0/q6_fw.b03
+-File: ath11k/IPQ6018/hw1.0/q6_fw.b04
+-File: ath11k/IPQ6018/hw1.0/q6_fw.b05
+-File: ath11k/IPQ6018/hw1.0/q6_fw.b07
+-File: ath11k/IPQ6018/hw1.0/q6_fw.b08
+-File: ath11k/IPQ6018/hw1.0/q6_fw.flist
+-File: ath11k/IPQ6018/hw1.0/q6_fw.mdt
+-Version: WLAN.HK.2.7.0.1-01744-QCAHKSWPL_SILICONZ-1
+-File: ath11k/IPQ6018/hw1.0/Notice.txt
+-File: ath11k/IPQ8074/hw2.0/board-2.bin
+-File: ath11k/IPQ8074/hw2.0/m3_fw.b00
+-File: ath11k/IPQ8074/hw2.0/m3_fw.b01
+-File: ath11k/IPQ8074/hw2.0/m3_fw.b02
+-File: ath11k/IPQ8074/hw2.0/m3_fw.flist
+-File: ath11k/IPQ8074/hw2.0/m3_fw.mdt
+-File: ath11k/IPQ8074/hw2.0/q6_fw.b00
+-File: ath11k/IPQ8074/hw2.0/q6_fw.b01
+-File: ath11k/IPQ8074/hw2.0/q6_fw.b02
+-File: ath11k/IPQ8074/hw2.0/q6_fw.b03
+-File: ath11k/IPQ8074/hw2.0/q6_fw.b04
+-File: ath11k/IPQ8074/hw2.0/q6_fw.b05
+-File: ath11k/IPQ8074/hw2.0/q6_fw.b07
+-File: ath11k/IPQ8074/hw2.0/q6_fw.b08
+-File: ath11k/IPQ8074/hw2.0/q6_fw.flist
+-File: ath11k/IPQ8074/hw2.0/q6_fw.mdt
+-Version: WLAN.HK.2.7.0.1-01744-QCAHKSWPL_SILICONZ-1
+-File: ath11k/IPQ8074/hw2.0/Notice.txt
+-File: ath11k/QCA6390/hw2.0/board-2.bin
+-File: ath11k/QCA6390/hw2.0/amss.bin
+-File: ath11k/QCA6390/hw2.0/m3.bin
+-Version: WLAN.HST.1.0.1-05266-QCAHSTSWPLZ_V2_TO_X86-1
+-File: ath11k/QCA6390/hw2.0/Notice.txt
+-File: ath11k/WCN6855/hw2.0/regdb.bin
+-File: ath11k/WCN6855/hw2.0/board-2.bin
+-File: ath11k/WCN6855/hw2.0/amss.bin
+-File: ath11k/WCN6855/hw2.0/m3.bin
+-Version: WLAN.HSP.1.1-03125-QCAHSPSWPL_V1_V2_SILICONZ_LITE-3.6510.23
+-File: ath11k/WCN6855/hw2.0/Notice.txt
+-Link: ath11k/WCN6855/hw2.1/regdb.bin -> ../hw2.0/regdb.bin
+-Link: ath11k/WCN6855/hw2.1/board-2.bin -> ../hw2.0/board-2.bin
+-Link: ath11k/WCN6855/hw2.1/amss.bin -> ../hw2.0/amss.bin
+-Link: ath11k/WCN6855/hw2.1/m3.bin -> ../hw2.0/m3.bin
+-File: ath11k/QCN9074/hw1.0/board-2.bin
+-File: ath11k/QCN9074/hw1.0/amss.bin
+-File: ath11k/QCN9074/hw1.0/m3.bin
+-Version: WLAN.HK.2.7.0.1-01744-QCAHKSWPL_SILICONZ-1
+-File: ath11k/QCN9074/hw1.0/Notice.txt
+-File: ath11k/WCN6750/hw1.0/board-2.bin
+-File: ath11k/WCN6750/hw1.0/wpss.b00
+-File: ath11k/WCN6750/hw1.0/wpss.b01
+-File: ath11k/WCN6750/hw1.0/wpss.b02
+-File: ath11k/WCN6750/hw1.0/wpss.b03
+-File: ath11k/WCN6750/hw1.0/wpss.b04
+-File: ath11k/WCN6750/hw1.0/wpss.b05
+-File: ath11k/WCN6750/hw1.0/wpss.b06
+-File: ath11k/WCN6750/hw1.0/wpss.b07
+-File: ath11k/WCN6750/hw1.0/wpss.b08
+-File: ath11k/WCN6750/hw1.0/wpss.mdt
+-Version: WLAN.MSL.1.0.1-01160-QCAMSLSWPLZ-1
+-File: ath11k/WCN6750/hw1.0/Notice.txt
+-File: ath11k/IPQ5018/hw1.0/board-2.bin
+-File: ath11k/IPQ5018/hw1.0/m3_fw.b00
+-File: ath11k/IPQ5018/hw1.0/m3_fw.b01
+-File: ath11k/IPQ5018/hw1.0/m3_fw.b02
+-File: ath11k/IPQ5018/hw1.0/m3_fw.flist
+-File: ath11k/IPQ5018/hw1.0/m3_fw.mdt
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b00
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b01
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b02
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b03
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b04
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b05
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b07
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b08
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b09
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b10
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b11
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b13
+-File: ath11k/IPQ5018/hw1.0/q6_fw.b14
+-File: ath11k/IPQ5018/hw1.0/q6_fw.flist
+-File: ath11k/IPQ5018/hw1.0/q6_fw.mdt
+-Version: WLAN.HK.2.6.0.1-00861-QCAHKSWPL_SILICONZ-1
+-File: ath11k/IPQ5018/hw1.0/Notice.txt
+-
+-Licence: Redistributable. See LICENSE.QualcommAtheros_ath10k for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: myri10ge - Myri10GE 10GbE NIC driver
+-
+-File: myri10ge_eth_z8e.dat
+-File: myri10ge_ethp_z8e.dat
+-File: myri10ge_rss_eth_z8e.dat
+-File: myri10ge_rss_ethp_z8e.dat
+-File: myri10ge_eth_big_z8e.dat
+-File: myri10ge_ethp_big_z8e.dat
+-File: myri10ge_rss_eth_big_z8e.dat
+-File: myri10ge_rss_ethp_big_z8e.dat
+-Version: 1.4.57
+-
+-License: Redistributable.  See LICENCE.myri10ge_firmware for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: ath6kl - Atheros support for AR6003 WiFi-Bluetooth combo module
+-
+-File: ath6k/AR6003.1/hw2.1.1/athwlan.bin
+-File: ath6k/AR6003.1/hw2.1.1/bdata.SD31.bin
+-File: ath6k/AR6003.1/hw2.1.1/bdata.SD32.bin
+-File: ath6k/AR6003.1/hw2.1.1/bdata.WB31.bin
+-File: ath6k/AR6003.1/hw2.1.1/data.patch.bin
+-File: ath6k/AR6003.1/hw2.1.1/endpointping.bin
+-File: ath6k/AR6003.1/hw2.1.1/otp.bin
+-
+-License: Redistributable. See LICENCE.atheros_firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: ath6kl - Atheros support for AR3001 WiFi-Bluetooth combo module
+-
+-File: ar3k/30101coex/ar3kbdaddr.pst
+-File: ar3k/30101coex/PS_ASIC_aclLowPri.pst
+-File: ar3k/30101coex/PS_ASIC_aclHighPri.pst
+-File: ar3k/30101coex/PS_ASIC.pst
+-File: ar3k/30101coex/RamPatch.txt
+-
+-License: Redistributable. See LICENCE.atheros_firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: ene-ub6250 -- ENE UB6250 SD card reader driver
+-
+-File: ene-ub6250/sd_init1.bin
+-File: ene-ub6250/sd_init2.bin
+-File: ene-ub6250/sd_rdwr.bin
+-File: ene-ub6250/ms_init.bin
+-File: ene-ub6250/msp_rdwr.bin
+-File: ene-ub6250/ms_rdwr.bin
+-
+-Licence: Redistributable. See LICENCE.ene_firmware for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: isci -- Intel C600 SAS controller driver
+-
+-File: isci/isci_firmware.bin
+-Source: isci/
++File: isci/isci_firmware.bin
++Source: isci/
+ 
+ Licence: GPLv2. See GPL-2 for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: ar5523 -- Atheros AR5523 based USB Wifi dongles
+-
+-File: ar5523.bin
+-
+-Licence: Redistributable. See LICENCE.atheros_firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: carl9170 -- Atheros AR9170 802.11 draft-n USB driver
+-
+-File: carl9170-1.fw
+-Version: 1.9.6
+-Source: carl9170fw/
+-
+-Downloaded from http://linuxwireless.org/en/users/Drivers/carl9170
+-
+-Licence: GPLv2. Some build scripts use the New BSD (3-clause) licence.. See GPL-2 for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: btusb - Bluetooth USB driver
+-
+-File: intel/ibt-hw-37.7.bseq
+-Version: 1316.02.00
+-File: intel/ibt-hw-37.7.10-fw-1.80.2.3.d.bseq
+-Version: BT_WilkinsPeak_B3_REL_87_0001
+-File: intel/ibt-hw-37.7.10-fw-1.0.2.3.d.bseq
+-Version: BT_WilkinsPeak_B3_REL_87_0001
+-File: intel/ibt-hw-37.7.10-fw-1.80.1.2d.d.bseq
+-Version: BT_WilkinsPeak_B5_REL_42_0001
+-File: intel/ibt-hw-37.7.10-fw-1.0.1.2d.d.bseq
+-Version: BT_WilkinsPeak_B5_REL_42_0001
+-File: intel/ibt-hw-37.8.bseq
+-Version: 1339_02.00
+-File: intel/ibt-hw-37.8.10-fw-1.10.2.27.d.bseq
+-Version: BT_StonePeak_C0_REL_59_0001
+-File: intel/ibt-hw-37.8.10-fw-1.10.3.11.e.bseq
+-Version: BT_StonePeak_D0_REL_50_0002
+-File: intel/ibt-hw-37.8.10-fw-22.50.19.14.f.bseq
+-Version: BT_StonePeak_D1_REL_67_1278
+-File: intel/ibt-11-5.ddc
+-Version: LnP/SfP_REL1294
+-File: intel/ibt-11-5.sfi
+-Version: BT_LightningPeak_REL0487
+-File: intel/ibt-12-16.ddc
+-Version: BT_WindStormPeak_REL1299
+-File: intel/ibt-12-16.sfi
+-Version: BT_WindStormPeak_REL1299
+-File: intel/ibt-17-16-1.sfi
+-Version: BT_JeffersonPeak_B0_B0_REL20332
+-File: intel/ibt-17-16-1.ddc
+-Version: BT_JeffersonPeak_B0_B0_REL20332
+-File: intel/ibt-17-2.sfi
+-Version: BT_JeffersonPeak_B0_B0_REL20332
+-File: intel/ibt-17-2.ddc
+-Version: BT_JeffersonPeak_B0_B0_REL20332
+-File: intel/ibt-17-0-1.sfi
+-Version: BT_JeffersonPeak_A0_B0_REL0201
+-File: intel/ibt-17-0-1.ddc
+-Version: BT_JeffersonPeak_A0_B0_REL0201
+-File: intel/ibt-17-1.sfi
+-Version: BT_JeffersonPeak_A0_B0_REL0201
+-File: intel/ibt-17-1.ddc
+-Version: BT_JeffersonPeak_A0_B0_REL0201
+-File: intel/ibt-18-16-1.sfi
+-Version: BT_ThunderPeak_B0_B0_REL20182
+-File: intel/ibt-18-16-1.ddc
+-Version: BT_ThunderPeak_B0_B0_REL20182
+-File: intel/ibt-18-2.sfi
+-Version: BT_ThunderPeak_B0_B0_REL20182
+-File: intel/ibt-18-2.ddc
+-Version: BT_ThunderPeak_B0_B0_REL20182
+-File: intel/ibt-18-0-1.sfi
+-Version: BT_ThunderPeak_A0_B0_REL0201
+-File: intel/ibt-18-0-1.ddc
+-Version: BT_ThunderPeak_A0_B0_REL0201
+-File: intel/ibt-18-1.sfi
+-Version: BT_ThunderPeak_A0_B0_REL0201
+-File: intel/ibt-18-1.ddc
+-Version: BT_ThunderPeak_A0_B0_REL0201
+-File:intel/ibt-20-0-3.sfi
+-Version: BT_CyclonePeak_A0_REL53392
+-File:intel/ibt-20-0-3.ddc
+-Version: BT_CyclonePeak_A0_REL53392
+-File:intel/ibt-20-1-3.sfi
+-Version: BT_CyclonePeak_A0_REL53392
+-File:intel/ibt-20-1-3.ddc
+-Version: BT_CyclonePeak_A0_REL53392
+-File:intel/ibt-20-1-4.sfi
+-Version: BT_CyclonePeak_A0_REL53392
+-File:intel/ibt-20-1-4.ddc
+-Version: BT_CyclonePeak_A0_REL53392
+-File:intel/ibt-19-0-0.sfi
+-Version: BT_Quasar_REL53392
+-File:intel/ibt-19-0-0.ddc
+-Version: BT_Quasar_REL53392
+-File:intel/ibt-19-0-1.sfi
+-Version: BT_Quasar_REL53392
+-File:intel/ibt-19-0-1.ddc
+-Version: BT_Quasar_REL53392
+-File:intel/ibt-19-0-3.sfi
+-Version: BT_Quasar_REL53263
+-File:intel/ibt-19-0-3.ddc
+-Version: BT_Quasar_REL53263
+-File:intel/ibt-19-0-4.sfi
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-0-4.ddc
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-16-4.sfi
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-16-4.ddc
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-32-1.sfi
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-32-1.ddc
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-32-0.sfi
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-32-0.ddc
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-32-4.sfi
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-32-4.ddc
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-240-1.sfi
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-240-1.ddc
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-240-4.sfi
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-19-240-4.ddc
+-Version: BT_HarrisonPeak_REL53392
+-File:intel/ibt-0041-0041.sfi
+-Version: BT_TyphoonPeak_REL62562
+-File:intel/ibt-0041-0041.ddc
+-Version: BT_TyphoonPeak_REL62562
+-File:intel/ibt-0040-0041.sfi
+-Version: BT_Solar_GfP2_REL62562
+-File:intel/ibt-0040-0041.ddc
+-Version: BT_Solar_GfP2_REL62562
+-File:intel/ibt-1040-0041.sfi
+-Version: BT_SolarF_GfP2_REL62562
+-File:intel/ibt-1040-0041.ddc
+-Version: BT_SolarF_GfP2_REL62562
+-
+-File:intel/ibt-0040-1020.sfi
+-Version: BT_Solar_JfP1_REL59564
+-File:intel/ibt-0040-1020.ddc
+-Version: BT_Solar_JfP1_REL59564
+-File:intel/ibt-1040-1020.sfi
+-Version: BT_SolarF_JfP1_REL59564
+-File:intel/ibt-1040-1020.ddc
+-Version: BT_SolarF_JfP1_REL59564
+-
+-File:intel/ibt-0040-2120.sfi
+-Version: BT_Solar_JfP2_REL52159
+-File:intel/ibt-0040-2120.ddc
+-Version: BT_Solar_JfP2_REL52159
+-File:intel/ibt-1040-2120.sfi
+-Version: BT_SolarF_JfP2_REL59564
+-File:intel/ibt-1040-2120.ddc
+-Version: BT_SolarF_JfP2_REL59564
+-
+-File:intel/ibt-0040-4150.sfi
+-Version: BT_Solar_JnP2_REL62562
+-File:intel/ibt-0040-4150.ddc
+-Version: BT_Solar_JnP2_REL62562
+-File:intel/ibt-1040-4150.sfi
+-Version: BT_SolarF_JnP2_REL62562
+-File:intel/ibt-1040-4150.ddc
+-Version: BT_SolarF_JnP2_REL62562
+-
+-Licence: Redistributable. See LICENCE.ibt_firmware for details
+-
+-File: rtl_bt/rtl8192ee_fw.bin
+-File: rtl_bt/rtl8192eu_fw.bin
+-File: rtl_bt/rtl8723a_fw.bin
+-File: rtl_bt/rtl8723b_fw.bin
+-File: rtl_bt/rtl8723bs_fw.bin
+-File: rtl_bt/rtl8723bs_config-OBDA8723.bin
+-Link: rtl_bt/rtl8723bs_config-OBDA0623.bin -> rtl8723bs_config-OBDA8723.bin
+-File: rtl_bt/rtl8761a_fw.bin
+-File: rtl_bt/rtl8761b_fw.bin
+-File: rtl_bt/rtl8761b_config.bin
+-File: rtl_bt/rtl8761bu_fw.bin
+-File: rtl_bt/rtl8761bu_config.bin
+-File: rtl_bt/rtl8812ae_fw.bin
+-File: rtl_bt/rtl8821a_fw.bin
+-Link: rtl_bt/rtl8821a_config.bin -> rtl8821c_config.bin
+-File: rtl_bt/rtl8822b_fw.bin
+-File: rtl_bt/rtl8822b_config.bin
+-File: rtl_bt/rtl8723d_fw.bin
+-File: rtl_bt/rtl8723d_config.bin
+-File: rtl_bt/rtl8821c_fw.bin
+-File: rtl_bt/rtl8821c_config.bin
+-File: rtl_bt/rtl8821cs_fw.bin
+-File: rtl_bt/rtl8821cs_config.bin
+-File: rtl_bt/rtl8822cu_fw.bin
+-File: rtl_bt/rtl8822cu_config.bin
+-File: rtl_bt/rtl8822cs_fw.bin
+-File: rtl_bt/rtl8822cs_config.bin
+-File: rtl_bt/rtl8852au_fw.bin
+-File: rtl_bt/rtl8852au_config.bin
+-File: rtl_bt/rtl8852bu_fw.bin
+-File: rtl_bt/rtl8852bu_config.bin
+-File: rtl_bt/rtl8852cu_fw.bin
+-File: rtl_bt/rtl8852cu_config.bin
+-File: rtl_bt/rtl8851bu_fw.bin
+-File: rtl_bt/rtl8851bu_config.bin
+-
+-Licence: Redistributable. See LICENCE.rtlwifi_firmware.txt for details.
+-
+-Found in vendor driver, linux_bt_usb_2.11.20140423_8723be.rar
+-From https://github.com/troy-tan/driver_store
+-Files rtl_bt/rtl8822b_* came directly from Realtek. These files are
+-updated on April 14, 2017.
+-
+-Found in vendor driver, 20200806_LINUX_BT_DRIVER_RTL8761B_COEX_v0202.zip
+-File rtl_bt/rtl8761b_config.bin
+-File rtl_bt/rtl8761bu_config.bin
+-
+---------------------------------------------------------------------------
+-
+-Driver: btmtk_usb - Bluetooth USB driver
+-
+-File: mediatek/mt7650.bin
+-Link: mt7650.bin -> mediatek/mt7650.bin
+-
+-Licence: Redistributable. See LICENCE.ralink_a_mediatek_company_firmware for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: rp2 -- Comtrol RocketPort 2 serial driver
+ 
+ File: rp2.fw
+@@ -3632,56 +1902,6 @@ License: Redistributable. See LICENCE.moxa for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: cw1200 - ST-E CW1100/CW1200 WLAN driver
+-
+-File: wsm_22.bin
+-Version: WSM395
+-Licence: Redistributable. See LICENCE.cw1200 for details.
+-
+-File: sdd_sagrad_1091_1098.bin
+-
+-License:
+-  Copyright (c) 2011-2013 Sagrad, Inc.
+-
+-  This SDD ("Static Dynamic Data") file is licensed strictly for use with
+-  the Sagrad WiFi modules (such as the SG901-1091/1098) that utilize the
+-  cw1200 driver. There is no warranty expressed or implied about its
+-  fitness for any purpose.
+-
+-  Permission is hereby granted for the distribution of this SDD file as
+-  part of Linux or other Open Source operating system kernel in text or
+-  binary form as required.
+-
+-  (Please note that the actual device firmware is separately licensed)
+-
+---------------------------------------------------------------------------
+-
+-Driver: BFA/BNA - QLogic BR-series Adapter FC/FCOE drivers
+-
+-File: cbfw-3.2.5.1.bin
+-File: ctfw-3.2.5.1.bin
+-File: ct2fw-3.2.5.1.bin
+-
+-Licence:
+-
+-This file contains firmware data derived from proprietary unpublished
+-source code.
+-Copyright (c) 2013-2014 Brocade Communications Systems, Inc.
+-Copyright (c) 2014-2015 QLogic Corporation.
+-
+-Permission is hereby granted for the distribution of this firmware data
+-in hexadecimal or equivalent format, provided this copyright notice is
+-accompanying it.
+-
+-QLogic grants permission to use and redistribute these firmware files
+-for use with QLogic BR-series devices, but not as a part of the Linux
+-kernel or in any other form which would require these files themselves
+-to be covered by the terms of the GNU General Public License.
+-These firmware files are distributed in the hope that they will be
+-useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+-of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-
+---------------------------------------------------------------------------
+ Driver: qat - Intel(R) QAT crypto accelerator
+ 
+ File: qat_895xcc.bin
+@@ -3698,36 +1918,6 @@ Licence: Redistributable. See LICENCE.qat_firmware for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: rsi -- Redpine Signals Inc 91x driver
+-
+-File: rsi_91x.fw
+-
+-File: rsi/rs9113_wlan_qspi.rps
+-Version: 1.6.1
+-
+-File: rsi/rs9113_wlan_bt_dual_mode.rps
+-Version: 1.6.1
+-
+-File: rsi/rs9113_ap_bt_dual_mode.rps
+-Version: 1.6.1
+-
+-File: rsi/rs9116_wlan.rps
+-Version: 1.0.5b
+-
+-File: rsi/rs9116_wlan_bt_classic.rps
+-Version: 1.0.5b
+-
+-Licence:
+- * Firmware is:
+- *	Derived from proprietary unpublished source code,
+- *	Copyright (C) 2019 Redpine Signals Inc.
+- *
+- *	Permission is hereby granted for the distribution of this firmware
+- *	as part of Linux or other Open Source operating system kernel
+- *	provided this copyright notice is accompanying it.
+-
+---------------------------------------------------------------------------
+-
+ Driver: xhci-rcar -- Renesas R-Car Gen2/3 USB 3.0 host controller driver
+ 
+ File: r8a779x_usb3_v1.dlmem
+@@ -3770,86 +1960,6 @@ Licence: GPLv2 or later. See GPL-2 and GPL-3 for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: btqca - Qualcomm Atheros Bluetooth support for QCA61x4 chips
+-
+-File: qca/nvm_usb_00000201.bin
+-File: qca/nvm_usb_00000200.bin
+-File: qca/nvm_usb_00000300.bin
+-File: qca/nvm_usb_00000302.bin
+-File: qca/nvm_00130300.bin
+-File: qca/nvm_00130302.bin
+-File: qca/nvm_00230302.bin
+-File: qca/rampatch_usb_00000200.bin
+-File: qca/rampatch_usb_00000201.bin
+-File: qca/rampatch_usb_00000300.bin
+-File: qca/rampatch_usb_00000302.bin
+-File: qca/rampatch_00130300.bin
+-File: qca/rampatch_00130302.bin
+-File: qca/rampatch_00230302.bin
+-File: qca/nvm_00440302.bin
+-File: qca/rampatch_00440302.bin
+-File: qca/nvm_00440302_eu.bin
+-File: qca/nvm_00440302_i2s_eu.bin
+-File: qca/nvm_usb_00000302_eu.bin
+-File: qca/htbtfw20.tlv
+-File: qca/htnv20.bin
+-File: qca/rampatch_usb_00130200.bin
+-File: qca/nvm_usb_00130200.bin
+-File: qca/nvm_usb_00130200_0104.bin
+-File: qca/nvm_usb_00130200_0105.bin
+-File: qca/nvm_usb_00130200_0106.bin
+-File: qca/nvm_usb_00130200_0107.bin
+-File: qca/nvm_usb_00130200_0109.bin
+-File: qca/nvm_usb_00130200_0110.bin
+-File: qca/rampatch_usb_00130201.bin
+-File: qca/nvm_usb_00130201.bin
+-File: qca/nvm_usb_00130201_010a.bin
+-File: qca/nvm_usb_00130201_010b.bin
+-File: qca/nvm_usb_00130201_0303.bin
+-File: qca/nvm_usb_00130201_gf.bin
+-File: qca/nvm_usb_00130201_gf_010a.bin
+-File: qca/nvm_usb_00130201_gf_010b.bin
+-File: qca/nvm_usb_00130201_gf_0303.bin
+-File: qca/rampatch_usb_00190200.bin
+-File: qca/nvm_usb_00190200.bin
+-
+-Licence: Redistributable. See LICENSE.QualcommAtheros_ath10k and qca/NOTICE.txt for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: qca - Qualcomm Atheros Bluetooth support for WCN399x chips
+-
+-File: qca/crbtfw21.tlv
+-File: qca/crnv21.bin
+-File: qca/crbtfw32.tlv
+-File: qca/crnv32.bin
+-File: qca/crnv32u.bin
+-
+-Driver: qca - Qualcomm Atheros Bluetooth support for WCN6750 chips
+-
+-File: qca/msbtfw11.mbn
+-File: qca/msbtfw11.tlv
+-File: qca/msnv11.bin
+-File: qca/msnv11.b0a
+-File: qca/msnv11.b09
+-
+-Licence: Redistributable. See LICENSE.QualcommAtheros_ath10k and qca/NOTICE.txt for details
+-
+-Driver: qca - Qualcomm Atheros Bluetooth support for QCA2066 chips
+-
+-File: qca/hpbtfw21.tlv
+-File: qca/hpnv21.bin
+-File: qca/hpnv21g.bin
+-File: qca/hpnv21.301
+-File: qca/hpnv21.302
+-File: qca/hpnv21g.301
+-File: qca/hpnv21g.302
+-
+-
+-Licence: Redistributable. See LICENSE.QualcommAtheros_ath10k and qca/NOTICE.txt for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: liquidio -- Cavium LiquidIO driver
+ 
+ File: liquidio/lio_23xx_nic.bin
+@@ -4663,19 +2773,6 @@ Licence: Redistributable. See LICENCE.nvidia for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: wilc1000 - Atmel 802.11n WLAN driver for WILC1000
+-
+-File: atmel/wilc1000_fw.bin
+-File: atmel/wilc1000_ap_fw.bin
+-File: atmel/wilc1000_p2p_fw.bin
+-File: atmel/wilc1000_wifi_firmware.bin
+-File: atmel/wilc1000_wifi_firmware-1.bin
+-Version: 16.0
+-
+-License: Redistributable. See LICENSE.atmel for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: hfi1 - Intel OPA Gen 1 adapter
+ 
+ File: hfi1_dc8051.fw
+@@ -4699,18 +2796,6 @@ Licence: Redistributable. See LICENCE.ti-keystone for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: mwlwifi - Marvell mac80211 driver for 80211ac cards.
+-
+-File: mwlwifi/88W8864.bin
+-Version: 7.2.8.6
+-
+-File: mwlwifi/88W8897.bin
+-Version: 8.2.0.10
+-
+-Licence: Redistributable. See LICENCE.Marvell for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: mtk_scp - MediaTek SCP System Control Processing Driver
+ 
+ File: mediatek/mt8183/scp.img
+@@ -4726,195 +2811,6 @@ Licence: Redistributable. See LICENCE.mediatek for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: btmtk - MediaTek Bluetooth Driver
+-
+-File: mediatek/mt7622pr2h.bin
+-Version: 20180621204904
+-File: mediatek/mt7668pr2h.bin
+-Version: 20180517181834
+-# Note: explicitly commented out, since it's duplicated further down
+-# File: mediatek/mt7663pr2h.bin
+-# Version: 7663e2ccn04-2006030247
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mt76x0 - MediaTek MT76x0 Wireless MACs
+-
+-File: mediatek/mt7610u.bin
+-File: mediatek/mt7610e.bin
+-Version: 2.6
+-File: mediatek/mt7650e.bin
+-Version: 1.0.07-b370
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+----------------------------------------------------------------------------
+-
+-Driver: mt76x2e - MediaTek MT76x2 Wireless MACs
+-
+-File: mediatek/mt7662.bin
+-Version: 1.9
+-Link: mt7662.bin -> mediatek/mt7662.bin
+-
+-File: mediatek/mt7662_rom_patch.bin
+-Version: 0.0.2_P69
+-Link: mt7662_rom_patch.bin -> mediatek/mt7662_rom_patch.bin
+-
+-Licence: Redistributable. See LICENCE.ralink_a_mediatek_company_firmware for details
+-
+----------------------------------------------------------------------------
+-
+-Driver: mt76x2u - MediaTek MT76x2u Wireless MACs
+-
+-File: mediatek/mt7662u.bin
+-Version: 1.5
+-
+-File: mediatek/mt7662u_rom_patch.bin
+-Version: 0.0.2_P48
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mt7615e - MediaTek MT7615e Wireless MACs
+-
+-File: mediatek/mt7615_n9.bin
+-Version: 20200814
+-File: mediatek/mt7615_cr4.bin
+-Version: 20190114
+-File: mediatek/mt7615_rom_patch.bin
+-Version: 20190114
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mt7622 - MediaTek MT7622 Wireless MACs
+-
+-File: mediatek/mt7622_n9.bin
+-Version: 20200630
+-File: mediatek/mt7622_rom_patch.bin
+-Version: 20190114
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mt7663 - MediaTek MT7663 Wireless MACs
+-
+-File: mediatek/mt7663pr2h.bin
+-Version: 7663e2ccn04-2006030247
+-File: mediatek/mt7663_n9_v3.bin
+-Version: v3.1.1
+-
+-File: mediatek/mt7663pr2h_rebb.bin
+-Version: 7663e2-1802-19091404338b809
+-File: mediatek/mt7663_n9_rebb.bin
+-Version: 7663mp1827-20190914043434
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mt7915e - MediaTek Wireless MACs for MT7915/MT7916/MT7986/MT7981
+-
+-File: mediatek/mt7915_wm.bin
+-Version: 20220929104145
+-File: mediatek/mt7915_wa.bin
+-Version: 20220929104205
+-File: mediatek/mt7915_rom_patch.bin
+-Version: 20220929104113a
+-File: mediatek/mt7915_eeprom.bin
+-Version: 20200821
+-File: mediatek/mt7915_eeprom_dbdc.bin
+-Version: 20200821
+-
+-File: mediatek/mt7916_wm.bin
+-Version: 20230202145005
+-File: mediatek/mt7916_wa.bin
+-Version: 20230202143332
+-File: mediatek/mt7916_rom_patch.bin
+-Version: 20230202144915a
+-File: mediatek/mt7916_eeprom.bin
+-Version: 20211130
+-
+-File: mediatek/mt7986_wm.bin
+-Version: 20221012174725
+-File: mediatek/mt7986_wm_mt7975.bin
+-Version: 20221012174805
+-File: mediatek/mt7986_wa.bin
+-Version: 20221012174937
+-File: mediatek/mt7986_rom_patch.bin
+-Version: 20221012174648a
+-File: mediatek/mt7986_rom_patch_mt7975.bin
+-Version: 20221012174743a
+-File: mediatek/mt7986_wo_0.bin
+-Version: 20221012175005
+-File: mediatek/mt7986_wo_1.bin
+-Version: 20221012175032
+-File: mediatek/mt7986_eeprom_mt7976.bin
+-Version: 20211105
+-File: mediatek/mt7986_eeprom_mt7976_dbdc.bin
+-Version: 20220223
+-File: mediatek/mt7986_eeprom_mt7976_dual.bin
+-Version: 20211115
+-File: mediatek/mt7986_eeprom_mt7975_dual.bin
+-Version: 20220208
+-
+-File: mediatek/mt7981_wm.bin
+-Version: 20221208201806
+-File: mediatek/mt7981_wa.bin
+-Version: 20221208202048
+-File: mediatek/mt7981_rom_patch.bin
+-Version: 20221208201745a
+-File: mediatek/mt7981_wo.bin
+-Version: 20221208202138
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mt7921 - MediaTek MT7921 Wireless MACs
+-
+-File: mediatek/WIFI_MT7961_patch_mcu_1_2_hdr.bin
+-Version: 20230526130917a
+-File: mediatek/WIFI_RAM_CODE_MT7961_1.bin
+-Version: 20230526130958
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mt7921 - MediaTek MT7921 bluetooth chipset
+-
+-File: mediatek/BT_RAM_CODE_MT7961_1_2_hdr.bin
+-Version: 20230526131214
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mt7922 - MediaTek MT7922 Wireless MACs
+-
+-File: mediatek/WIFI_MT7922_patch_mcu_1_1_hdr.bin
+-Version: 20230530123154a
+-File: mediatek/WIFI_RAM_CODE_MT7922_1.bin
+-Version: 20230530123236
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: mt7922 - MediaTek MT7922 bluetooth chipset
+-
+-File: mediatek/BT_RAM_CODE_MT7922_1_1_hdr.bin
+-Version: 20230530123531
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+ Driver: nfp - Netronome Flow Processor
+ 
+ Link: netronome/nic_AMDA0081-0001_1x40.nffw -> nic/nic_AMDA0081-0001_1x40.nffw
+@@ -5009,16 +2905,6 @@ Licence: Redistributable. See LICENCE.Netronome for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: wil6210 - Qualcomm Atheros support for 11ad family of chips
+-
+-File: wil6210.fw
+-File: wil6210.brd
+-Version: 5.2.0.18
+-
+-Licence: Redistributable. See LICENSE.QualcommAtheros_ath10k for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: imx-sdma - support for i.MX SDMA driver
+ 
+ File: imx/sdma/sdma-imx6q.bin
+@@ -5077,69 +2963,6 @@ https://github.com/genesi/linux-legacy/tree/master/drivers/mxc/amd-gpu
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: qcom_q6v5_pas - Qualcomm remoteproc firmware
+-
+-File: qcom/apq8016/mba.mbn
+-File: qcom/apq8016/modem.mbn
+-File: qcom/apq8016/wcnss.mbn
+-File: qcom/apq8016/WCNSS_qcom_wlan_nv_sbc.bin
+-File: qcom/apq8096/adsp.mbn
+-File: qcom/apq8096/adspr.jsn
+-File: qcom/apq8096/adspua.jsn
+-File: qcom/apq8096/mba.mbn
+-File: qcom/apq8096/modem.mbn
+-File: qcom/apq8096/modemr.jsn
+-File: qcom/sdm845/adsp.mbn
+-File: qcom/sdm845/adspr.jsn
+-File: qcom/sdm845/adspua.jsn
+-File: qcom/sdm845/cdsp.mbn
+-File: qcom/sdm845/cdspr.jsn
+-File: qcom/sm8250/adsp.mbn
+-File: qcom/sm8250/adspr.jsn
+-File: qcom/sm8250/adspua.jsn
+-File: qcom/sm8250/cdsp.mbn
+-File: qcom/sm8250/cdspr.jsn
+-File: qcom/sc8280xp/LENOVO/21BX/adspr.jsn
+-File: qcom/sc8280xp/LENOVO/21BX/adspua.jsn
+-File: qcom/sc8280xp/LENOVO/21BX/battmgr.jsn
+-File: qcom/sc8280xp/LENOVO/21BX/cdspr.jsn
+-File: qcom/sc8280xp/LENOVO/21BX/qcadsp8280.mbn
+-File: qcom/sc8280xp/LENOVO/21BX/qccdsp8280.mbn
+-File: qcom/sc8280xp/LENOVO/21BX/qcslpi8280.mbn
+-Link: qcom/LENOVO/21BX -> ../sc8280xp/LENOVO/21BX
+-
+-Licence: Redistributable. See LICENSE.qcom and qcom/NOTICE.txt for details
+-
+-Binary files supplied originally from
+-http://releases.linaro.org/96boards/dragonboard410c/qualcomm/firmware/linux-board-support-package-r1036.1.zip
+-http://releases.linaro.org/96boards/dragonboard845c/qualcomm/firmware/RB3_firmware_20221121000000-v5.zip
+-http://releases.linaro.org/96boards/rb5/qualcomm/firmware/RB5_firmware_20210331-v4.zip
+-
+-adsp.mbn has been converted from 20-adsp_split/firmware/adsp.* using
+-https://github.com/andersson/pil-squasher
+-
+-cdsp.mbn has been converted from 21-cdsp_split/firmware/cdsp.* using
+-https://github.com/andersson/pil-squasher
+-
+---------------------------------------------------------------------------
+-
+-Driver: qcom_q6v5_mss - Qualcomm modem subsystem firmware
+-
+-File: qcom/sdm845/mba.mbn
+-File: qcom/sdm845/modem_nm.mbn
+-File: qcom/sdm845/modemuw.jsn
+-Link: qcom/sdm845/modem.mbn -> modem_nm.mbn
+-
+-Licence: Redistributable. See LICENSE.qcom and qcom/NOTICE.txt for details
+-
+-Binary files supplied originally from
+-http://releases.linaro.org/96boards/dragonboard845c/qualcomm/firmware/RB3_firmware_20221121000000-v5.zip
+-
+-modem.mbn has been converted from 28-modem/modem.* using
+-https://github.com/andersson/pil-squasher
+-
+---------------------------------------------------------------------------
+-
+ Driver: mlxsw_spectrum - Mellanox Spectrum switch
+ 
+ File: mellanox/mlxsw_spectrum-13.1420.122.mfa2
+@@ -5312,26 +3135,6 @@ Licence: Redistributable. See LICENCE.Marvell for details.
+ 
+ ------------------------------------------------
+ 
+-Driver: wfx - Silicon Labs Wi-Fi Transceiver
+-
+-File: wfx/wfm_wf200_C0.sec
+-Version: 3.14
+-
+-File: wfx/brd4001a.pds
+-File: wfx/brd8022a.pds
+-File: wfx/brd8023a.pds
+-
+-Licence: Redistributable. See wfx/LICENCE.wf200 for details.
+-
+-The firmware itself originates from https://github.com/SiliconLabs/wfx-firmware
+-
+-The *.pds files come from https://github.com/SiliconLabs/wfx-pds
+-
+-They have been processed with the tool "pds_compress" available on
+-https://github.com/SiliconLabs/wfx-linux-tools
+-
+---------------------------------------------------------------------------
+-
+ Driver: rvu_cptpf - Marvell CPT driver
+ 
+ File: mrvl/cpt01/ae.out
+@@ -5351,31 +3154,3 @@ Version: v1.21
+ Licence: Redistributable. See LICENCE.Marvell for details.
+ 
+ ---------------------------------------------------------------------------
+-
+-Driver: nxp-sr1xx - NXP Ultra Wide Band driver
+-File: nxp/sr150_fw.bin
+-Version: 35.00.03
+-
+-Licence: Redistributable. See LICENSE.nxp for details
+-Originates from https://github.com/NXP/uwb-NXPUWB-FW.git
+---------------------------------------------------------------------------
+-
+-Driver: btnxpuart - NXP BT UART driver
+-
+-File: nxp/uartuart8997_bt_v4.bin
+-File: nxp/uartiw416_bt_v0.bin
+-File: nxp/helper_uart_3000000.bin
+-Version: 16.92.21.p81
+-
+-File: nxp/uartuart8987_bt.bin
+-Version: 16.92.21.p76.5
+-
+-File: nxp/uartuart9098_bt_v1.bin
+-Version: 17.92.1.p136.24
+-
+-File: nxp/uartspi_n61x_v1.bin.se
+-Version: 18.99.1.p154.40
+-
+-Licence: Redistributable. See LICENSE.nxp for details
+-
+---------------------------------------------------------------------------
+-- 
+2.40.1
+

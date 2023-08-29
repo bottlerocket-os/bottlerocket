@@ -1,0 +1,836 @@
+From eaa004914098930239abf2f3c2e9f4acc79c10b0 Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Wed, 26 Jul 2023 11:06:45 +0000
+Subject: [PATCH] linux-firmware: Remove firmware for Accelarator devices
+
+Bottlerocket does not ship drivers for specialty accelarator hardware.
+Without those drivers the firmware is of no use. Drop the firmware from
+our images to reduce image size.
+
+The following list maps the driver names as specified in WHENCE to
+kernel config options. This creates an easy reference should we need to
+ship addiitonal firmware when adding drivers.
+
+* rvu_cptpf - CONFIG_CRYPTO_DEV_OCTEONTX_CPT &&
+  CONFIG_CRYPTO_DEV_OCTEONTX2_CPT
+* ccp - CONFIG_CRYPTO_DEV_CCP
+* qat - CONFIG_CRYPTO_DEV_QAT
+* liquidio - CONFIG_LIQUIDIO
+* nitrox - CONFIG_NITROX
+* knav_qmss_queue - CONFIG_KEYSTONE_NAVIGATOR_QMSS
+* nfp - CONFIG_NFP
+* fsl_mc bus - CONFIG_FSL_MC_BUS
+* inside-secure - CONFIG_CRYPTO_DEV_SAFEXCEL
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENCE.Netronome       |  65 ------------
+ LICENCE.cavium          |  59 -----------
+ LICENCE.cavium_liquidio |  68 -------------
+ LICENCE.qat_firmware    |  36 -------
+ LICENCE.ti-keystone     |  61 -----------
+ LICENSE.amd-sev         |  64 ------------
+ LICENSE.nxp_mc_firmware | 127 -----------------------
+ WHENCE                  | 218 ----------------------------------------
+ 8 files changed, 698 deletions(-)
+ delete mode 100644 LICENCE.Netronome
+ delete mode 100644 LICENCE.cavium
+ delete mode 100644 LICENCE.cavium_liquidio
+ delete mode 100644 LICENCE.qat_firmware
+ delete mode 100644 LICENCE.ti-keystone
+ delete mode 100644 LICENSE.amd-sev
+ delete mode 100644 LICENSE.nxp_mc_firmware
+
+diff --git a/LICENCE.Netronome b/LICENCE.Netronome
+deleted file mode 100644
+index 1ed7a7c..0000000
+--- a/LICENCE.Netronome
++++ /dev/null
+@@ -1,65 +0,0 @@
+-Copyright (c) 2017, NETRONOME Systems, Inc. All rights reserved.
+-
+-Agilio(r) Firmware License Agreement (the "AGREEMENT")
+-
+-BY INSTALLING OR USING IN ANY MANNER THE SOFTWARE THAT ACCOMPANIES THIS
+-AGREEMENT (THE "SOFTWARE") YOU (THE "LICENSEE") ACKNOWLEDGE TO BE BOUND
+-BY ALL OF THE TERMS OF THIS AGREEMENT.
+-
+-LICENSE GRANT. Subject to the terms and conditions set forth herein,
+-Netronome Systems, Inc. ("NETRONOME") hereby grants LICENSEE a non-
+-exclusive license to use, reproduce and distribute the SOFTWARE
+-exclusively in object form.
+-
+-Restrictions. LICENSEE agrees that, (a) unless explicitly provided by
+-NETRONOME, the source code of the SOFTWARE is not being provided to
+-LICENSEE and is confidential and proprietary to NETRONOME and that
+-LICENSEE has no right to access or use such source code. Accordingly,
+-LICENSEE agrees that it shall not cause or permit the disassembly,
+-decompilation or reverse engineering of the SOFTWARE or otherwise attempt
+-to gain access to the source code for the SOFTWARE; and (b) LICENSEE
+-agrees that it shall not subject the SOFTWARE in whole or in part, to the
+-terms of any software license that requires, as a condition of use,
+-modification and/or distribution that the source code of the SOFTWARE, or
+-the SOFTWARE be i) disclosed or distributed in source code form; ii)
+-licensed for the purpose of making derivative works of the source code of
+-the SOFTWARE; or iii) redistribution of the source code of the SOFTWARE
+-at no charge.
+-
+-DISCLAIMER OF ALL WARRANTIES. THE SOFTWARE IS PROVIDED "AS IS" AND WITH
+-ALL FAULTS AND NETRONOME AND ITS LICENSORS HEREBY DISCLAIM ALL EXPRESS OR
+-IMPLIED WARRANTIES OF ANY KIND, INCLUDING, WITHOUT LIMITATION, ANY
+-WARRANTIES OF MERCHANTABILITY, NON-INFRINGEMENT AND FITNESS FOR A
+-PARTICULAR PURPOSE.
+-
+-LIMITATIONS OF LIABILITY. EXCEPT WHERE PROHIBITED BY LAW, IN NO EVENT
+-SHALL NETRONOME OR ANY OTHER PARTY INVOLVED IN THE CREATION, PRODUCTION,
+-OR DELIVERY OF THE SOFTWARE BE LIABLE FOR ANY LOSS OF PROFITS, DATA, USE
+-OF THE SOFTWARE, DOCUMENTATION OR EQUIPMENT, OR FOR ANY SPECIAL,
+-INCIDENTAL, CONSEQUENTIAL, EXEMPLARY, PUNITIVE, MULTIPLE OR OTHER
+-DAMAGES, ARISING FROM OR IN CONNECTION WITH THE SOFTWARE EVEN IF
+-NETRONOME OR ITS LICENSORS HAVE BEEN MADE AWARE OF THE POSSIBILITY OF
+-SUCH DAMAGES AND NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF ANY
+-LIMITED REMEDY.
+-
+-EXPORT COMPLIANCE. LICENSEE shall not use or export or transmit the
+-SOFTWARE, directly or indirectly, to any restricted countries or in any
+-other manner that would violate any applicable US and other export
+-control and other regulations and laws as shall from time to time govern
+-the delivery, license and use of technology, including without limitation
+-the Export Administration Act of 1979, as amended, and any regulations
+-issued thereunder.
+-
+-PROHIBITION OF SOFTWARE USE IN HIGH RISK ACTIVITIES AND LIFE
+-SUPPORT APPLICATIONS. The SOFTWARE is not designed, manufactured or
+-intended for use as on-line control equipment in hazardous environments
+-requiring fail-safe performance, such as in the operation of nuclear
+-facilities, aircraft navigation or communications systems, air traffic
+-control, life support systems, human implantation or any other
+-application where product failure could lead to loss of life or
+-catastrophic property damage or weapons systems, in which the failure of
+-the SOFTWARE could lead directly to death, personal injury, or severe
+-physical or environmental damage ("High Risk Activities"). Accordingly
+-NETRONOME and, where applicable, NETRONOME'S third party licensors
+-specifically disclaim any express or implied warranty of fitness for High
+-Risk Activities.
+diff --git a/LICENCE.cavium b/LICENCE.cavium
+deleted file mode 100644
+index 5d2a2bb..0000000
+--- a/LICENCE.cavium
++++ /dev/null
+@@ -1,59 +0,0 @@
+-Copyright © 2015, Cavium, Inc. All rights reserved.
+-
+-Software License Agreement
+-
+-ANY USE, REPRODUCTION, OR DISTRIBUTION OF THE ACCOMPANYING BINARY SOFTWARE
+-CONSTITUTES LICENSEEE'S ACCEPTANCE OF THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+-
+-Licensed Software. Subject to the terms and conditions of this Agreement,
+-Cavium, Inc. ("Cavium") grants to Licensee a worldwide, non-exclusive, and
+-royalty-free license to use, reproduce, and distribute the binary software in
+-its complete and unmodified form as provided by Cavium.
+-
+-Restrictions. Licensee must reproduce the Cavium copyright notice above with
+-each binary software copy. Licensee must not reverse engineer, decompile,
+-disassemble or modify in any way the binary software. Licensee must not use
+-the binary software in violation of any applicable law or regulation. This
+-Agreement shall automatically terminate upon Licensee's breach of any term or
+-condition of this Agreement in which case, Licensee shall destroy all copies of
+-the binary software.
+-
+-Warranty Disclaimer.  THE LICENSED SOFTWARE IS OFFERED "AS IS," AND CAVIUM
+-GRANTS AND LICENSEE RECEIVES NO WARRANTIES OF ANY KIND, WHETHER EXPRESS,
+-IMPLIED, STATUTORY, OR BY COURSE OF COMMUNICATION OR DEALING WITH LICENSEE, OR
+-OTHERWISE.  CAVIUM AND ITS LICENSORS SPECIFICALLY DISCLAIM ANY IMPLIED
+-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, OR
+-NONINFRINGEMENT OF THIRD PARTY RIGHTS, CONCERNING THE LICENSED SOFTWARE,
+-DERIVATIVE WORKS, OR ANY DOCUMENTATION PROVIDED WITH THE FOREGOING.  WITHOUT
+-LIMITING THE GENERALITY OF THE FOREGOING, CAVIUM DOES NOT WARRANT THAT THE
+-LICENSED SOFTWARE IS ERROR-FREE OR WILL OPERATE WITHOUT INTERRUPTION, AND
+-CAVIUM GRANTS NO WARRANTY REGARDING ITS USE OR THE RESULTS THEREFROM, INCLUDING
+-ITS CORRECTNESS, ACCURACY, OR RELIABILITY.
+-
+-Limitation of Liability. IN NO EVENT WILL LICENSEE, CAVIUM, OR ANY OF CAVIUM'S
+-LICENSORS HAVE ANY LIABILITY HEREUNDER FOR ANY INDIRECT, SPECIAL, OR
+-CONSEQUENTIAL DAMAGES, HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+-FOR BREACH OF CONTRACT, TORT (INCLUDING NEGLIGENCE), OR OTHERWISE, ARISING OUT
+-OF THIS AGREEMENT, INCLUDING DAMAGES FOR LOSS OF PROFITS, OR THE COST OF
+-PROCUREMENT OF SUBSTITUTE GOODS, EVEN IF SUCH PARTY HAS BEEN ADVISED OF THE
+-POSSIBILITY OF SUCH DAMAGES.
+-
+-Export and Import Laws.  Licensee acknowledges and agrees that the Licensed
+-Software (including technical data and related technology) may be controlled by
+-the export control laws, rules, regulations, restrictions and national security
+-controls of the United States and other applicable foreign agencies (the
+-"Export Controls"), and agrees not export or re-export, or allow the export or
+-re-export of export-controlled the Licensed Software (including technical data
+-and related technology) or any copy, portion or direct product of the foregoing
+-in violation of the Export Controls. Licensee hereby represents that
+-(i) Licensee is not an entity or person to whom provision of the Licensed
+-Software (including technical data and related technology) is restricted or
+-prohibited by the Export Controls; and (ii) Licensee will not export, re-export
+-or otherwise transfer the export-controlled Licensed Software (including
+-technical data and related technology) in violation of U.S. sanction programs
+-or export control regulations to (a) any country, or  national or resident of
+-any country, subject to a United States trade embargo, (b) any person or entity
+-to whom shipment is restricted or prohibited by the Export Controls, or
+-(c) anyone who is engaged in activities related to the design, development,
+-production, or use of nuclear materials, nuclear facilities, nuclear weapons,
+-missiles or chemical or biological weapons.
+diff --git a/LICENCE.cavium_liquidio b/LICENCE.cavium_liquidio
+deleted file mode 100644
+index 250b9fe..0000000
+--- a/LICENCE.cavium_liquidio
++++ /dev/null
+@@ -1,68 +0,0 @@
+-This file contains licences pertaining to the following firmwares for
+-LiquidIO (c) adapters
+-
+-1. lio_nic_23xx.bin, lio_210nv_nic.bin, lio_410nv_nic.bin
+-
+-###########################################################################
+-
+-1. lio_nic_23xx.bin, lio_210nv_nic.bin, lio_410nv_nic.bin
+-
+-Copyright (c) 2018, Cavium, Inc. All rights reserved.
+-
+-Software License Agreement
+-
+-ANY USE, REPRODUCTION, OR DISTRIBUTION OF THE ACCOMPANYING BINARY SOFTWARE
+-CONSTITUTES LICENSEEE'S ACCEPTANCE OF THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+-
+-Licensed Software. Subject to the terms and conditions of this Agreement,
+-Cavium, Inc. ("Cavium") grants to Licensee a worldwide, non-exclusive, and
+-royalty-free license to use, reproduce, and distribute the binary software in
+-its complete and unmodified form as provided by Cavium.
+-
+-Restrictions. Licensee must reproduce the Cavium copyright notice above with
+-each binary software copy. Licensee must not reverse engineer, decompile,
+-disassemble or modify in any way the binary software. Licensee must not use
+-the binary software in violation of any applicable law or regulation. This
+-Agreement shall automatically terminate upon Licensee's breach of any term or
+-condition of this Agreement in which case, Licensee shall destroy all copies of
+-the binary software.
+-
+-Warranty Disclaimer.  THE LICENSED SOFTWARE IS OFFERED "AS IS," AND CAVIUM
+-GRANTS AND LICENSEE RECEIVES NO WARRANTIES OF ANY KIND, WHETHER EXPRESS,
+-IMPLIED, STATUTORY, OR BY COURSE OF COMMUNICATION OR DEALING WITH LICENSEE, OR
+-OTHERWISE.  CAVIUM AND ITS LICENSORS SPECIFICALLY DISCLAIM ANY IMPLIED
+-WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, OR
+-NONINFRINGEMENT OF THIRD PARTY RIGHTS, CONCERNING THE LICENSED SOFTWARE,
+-DERIVATIVE WORKS, OR ANY DOCUMENTATION PROVIDED WITH THE FOREGOING.  WITHOUT
+-LIMITING THE GENERALITY OF THE FOREGOING, CAVIUM DOES NOT WARRANT THAT THE
+-LICENSED SOFTWARE IS ERROR-FREE OR WILL OPERATE WITHOUT INTERRUPTION, AND
+-CAVIUM GRANTS NO WARRANTY REGARDING ITS USE OR THE RESULTS THEREFROM, INCLUDING
+-ITS CORRECTNESS, ACCURACY, OR RELIABILITY.
+-
+-Limitation of Liability. IN NO EVENT WILL LICENSEE, CAVIUM, OR ANY OF CAVIUM'S
+-LICENSORS HAVE ANY LIABILITY HEREUNDER FOR ANY INDIRECT, SPECIAL, OR
+-CONSEQUENTIAL DAMAGES, HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+-FOR BREACH OF CONTRACT, TORT (INCLUDING NEGLIGENCE), OR OTHERWISE, ARISING OUT
+-OF THIS AGREEMENT, INCLUDING DAMAGES FOR LOSS OF PROFITS, OR THE COST OF
+-PROCUREMENT OF SUBSTITUTE GOODS, EVEN IF SUCH PARTY HAS BEEN ADVISED OF THE
+-POSSIBILITY OF SUCH DAMAGES.
+-
+-Export and Import Laws.  Licensee acknowledges and agrees that the Licensed
+-Software (including technical data and related technology) may be controlled by
+-the export control laws, rules, regulations, restrictions and national security
+-controls of the United States and other applicable foreign agencies (the
+-"Export Controls"), and agrees not export or re-export, or allow the export or
+-re-export of export-controlled the Licensed Software (including technical data
+-and related technology) or any copy, portion or direct product of the foregoing
+-in violation of the Export Controls. Licensee hereby represents that
+-(i) Licensee is not an entity or person to whom provision of the Licensed
+-Software (including technical data and related technology) is restricted or
+-prohibited by the Export Controls; and (ii) Licensee will not export, re-export
+-or otherwise transfer the export-controlled Licensed Software (including
+-technical data and related technology) in violation of U.S. sanction programs
+-or export control regulations to (a) any country, or  national or resident of
+-any country, subject to a United States trade embargo, (b) any person or entity
+-to whom shipment is restricted or prohibited by the Export Controls, or
+-(c) anyone who is engaged in activities related to the design, development,
+-production, or use of nuclear materials, nuclear facilities, nuclear weapons,
+-missiles or chemical or biological weapons.
+diff --git a/LICENCE.qat_firmware b/LICENCE.qat_firmware
+deleted file mode 100644
+index 75a4ff1..0000000
+--- a/LICENCE.qat_firmware
++++ /dev/null
+@@ -1,36 +0,0 @@
+-Copyright (c) 2014-2023 Intel Corporation.
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-  following disclaimer in the documentation and/or other materials
+-  provided with the distribution.
+-* Neither the name of Intel Corporation nor the names of its suppliers
+-  may be used to endorse or promote products derived from this software
+-  without specific prior written permission.
+-* No reverse engineering, decompilation, or disassembly of this software
+-  is permitted.
+-
+-Limited patent license.  Intel Corporation grants a world-wide,
+-royalty-free, non-exclusive license under patents it now or hereafter
+-owns or controls to make, have made, use, import, offer to sell and
+-sell ("Utilize") this software, but solely to the extent that any
+-such patent is necessary to Utilize the software alone. The patent
+-license shall not apply to any other combinations which include this
+-software. No hardware per se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGE.
+diff --git a/LICENCE.ti-keystone b/LICENCE.ti-keystone
+deleted file mode 100644
+index 62cc3b3..0000000
+--- a/LICENCE.ti-keystone
++++ /dev/null
+@@ -1,61 +0,0 @@
+-Copyright (c) 2015 Texas Instruments Incorporated
+-
+-All rights reserved not granted herein.
+-
+-Limited License.
+-
+-Texas Instruments Incorporated grants a world-wide, royalty-free, non-exclusive
+-license under copyrights and patents it now or hereafter owns or controls to
+-make, have made, use, import, offer to sell and sell ("Utilize") this software
+-subject to the terms herein. With respect to the foregoing patent license, such
+-license is granted solely to the extent that any such patent is necessary to
+-Utilize the software alone. The patent license shall not apply to any
+-combinations which include this software, other than combinations with devices
+-manufactured by or for TI (“TI Devices”). No hardware patent is licensed
+-hereunder.
+-
+-Redistributions must preserve existing copyright notices and reproduce this
+-license (including the above copyright notice and the disclaimer and
+-(if applicable) source code license limitations below) in the documentation
+-and/or other materials provided with the distribution
+-
+-Redistribution and use in binary form, without modification, are permitted
+-provided that the following conditions are met:
+-
+-	* No reverse engineering, decompilation, or disassembly of this
+-	  software is permitted with respect to any software provided in binary
+-	  form.
+-
+-	* any redistribution and use are licensed by TI for use only with TI
+-	  Devices.
+-
+-	* Nothing shall obligate TI to provide you with source code for the
+-	  software licensed and provided to you in object code.
+-
+-If software source code is provided to you, modification and redistribution of
+-the source code are permitted provided that the following conditions are met:
+-
+-	* any redistribution and use of the source code, including any
+-	  resulting derivative works, are licensed by TI for use only with TI
+-	  Devices.
+-
+-	* any redistribution and use of any object code compiled from the
+-	  source code and any resulting derivative works, are licensed by TI
+-	  for use only with TI Devices.
+-
+-Neither the name of Texas Instruments Incorporated nor the names of its
+-suppliers may be used to endorse or promote products derived from this
+-software without specific prior written permission.
+-
+-DISCLAIMER.
+-
+-THIS SOFTWARE IS PROVIDED BY TI AND TI’S LICENSORS "AS IS" AND ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+-EVENT SHALL TI AND TI’S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENSE.amd-sev b/LICENSE.amd-sev
+deleted file mode 100644
+index de4d948..0000000
+--- a/LICENSE.amd-sev
++++ /dev/null
+@@ -1,64 +0,0 @@
+-Copyright (C) 2015-2019 Advanced Micro Devices, Inc., All rights reserved.
+-
+-Permission is hereby granted by Advanced Micro Devices, Inc. ("AMD"),
+-free of any license fees, to any person obtaining a copy of this
+-microcode in binary form (the "Software") ("You"), to install,
+-reproduce, copy and distribute copies of the Software and to permit
+-persons to whom the Software is provided to do the same, subject to
+-the following terms and conditions.  Your use of any portion of the
+-Software shall constitute Your acceptance of the following terms and
+-conditions. If You do not agree to the following terms and conditions,
+-do not use, retain or redistribute any portion of the Software.
+-
+-If You redistribute this Software, You must reproduce the above
+-copyright notice and this license with the Software.
+-Without specific, prior, written permission from AMD, You may not
+-reference AMD or AMD products in the promotion of any product derived
+-from or incorporating this Software in any manner that implies that
+-AMD endorses or has certified such product derived from or
+-incorporating this Software.
+-
+-You may not reverse engineer, decompile, or disassemble this Software
+-or any portion thereof.
+-
+-THE SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY EXPRESS OR IMPLIED
+-WARRANTY OF ANY KIND, INCLUDING BUT NOT LIMITED TO WARRANTIES OF
+-MERCHANTABILITY, NONINFRINGEMENT, TITLE, FITNESS FOR ANY PARTICULAR
+-PURPOSE, OR WARRANTIES ARISING FROM CONDUCT, COURSE OF DEALING, OR
+-USAGE OF TRADE. IN NO EVENT SHALL AMD OR ITS LICENSORS BE LIABLE FOR
+-ANY DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR
+-LOSS OF PROFITS, BUSINESS INTERRUPTION, OR LOSS OF DATA OR
+-INFORMATION) ARISING OUT OF AMD'S NEGLIGENCE, GROSS NEGLIGENCE, THE
+-USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF AMD HAS BEEN ADVISED
+-OF THE POSSIBILITY OF SUCH DAMAGES. BECAUSE SOME JURISDICTIONS
+-PROHIBIT THE EXCLUSION OR LIMITATION OF LIABILITY FOR CONSEQUENTIAL OR
+-INCIDENTAL DAMAGES OR THE EXCLUSION OF IMPLIED WARRANTIES, THE ABOVE
+-LIMITATION MAY NOT APPLY TO YOU.
+-
+-Without limiting the foregoing, the Software may implement third party
+-technologies for which You must obtain licenses from parties other
+-than AMD. You agree that AMD has not obtained or conveyed to You, and
+-that You shall be responsible for obtaining the rights to use and/or
+-distribute the applicable underlying intellectual property rights
+-related to the third party technologies. These third party
+-technologies are not licensed hereunder.
+-
+-If You use the Software (in whole or in part), You shall adhere to all
+-applicable U.S., European, and other export laws, including but not
+-limited to the U.S. Export Administration Regulations ("EAR"), (15
+-C.F.R. Sections 730 through 774), and E.U. Council Regulation (EC) No
+-1334/2000 of 22 June 2000. Further, pursuant to Section 740.6  of the
+-EAR, You hereby certify that, except pursuant to a license granted by
+-the United States Department of Commerce Bureau of Industry and
+-Security or as otherwise permitted pursuant to a License Exception
+-under the U.S. Export Administration Regulations ("EAR"), You will not
+-(1) export, re-export or release to a national of a country in Country
+-Groups D:1, E:1 or E:2 any restricted technology, software, or source
+-code You receive hereunder, or (2) export to Country Groups D:1, E:1
+-or E:2 the direct product of such technology or software, if such
+-foreign produced direct product is subject to national security
+-controls as identified on the Commerce Control List (currently found
+-in Supplement 1 to Part 774 of EAR). For the most current Country
+-Group listings, or for additional information about the EAR or Your
+-obligations under those regulations, please refer to the U.S. Bureau
+-of Industry and Security’s website at ttp://www.bis.doc.gov/.
+diff --git a/LICENSE.nxp_mc_firmware b/LICENSE.nxp_mc_firmware
+deleted file mode 100644
+index 4b12f58..0000000
+--- a/LICENSE.nxp_mc_firmware
++++ /dev/null
+@@ -1,127 +0,0 @@
+-Copyright (c) 2018 NXP. All rights reserved.
+-
+-Software License Agreement ("Agreement")
+-
+-ANY USE, REPRODUCTION, OR DISTRIBUTION OF THE ACCOMPANYING BINARY SOFTWARE
+-CONSTITUTES LICENSEE'S ACCEPTANCE OF THE TERMS AND CONDITIONS OF THIS AGREEMENT.
+-
+-Licensed Software. "Binary Software" means software in binary form specified in
+-ANNEX A. Subject to the terms and conditions of this Agreement, NXP USA, Inc.
+-("Licensor"), grants to you ("Licensee") a worldwide, non-exclusive, and
+-royalty-free license to reproduce and distribute the Binary Software in its
+-complete and unmodified binary form as provided by Licensor, for use solely in
+-conjunction with a programmable processing unit supplied directly or indirectly
+-from Licensor.
+-
+-Restrictions. Licensee must reproduce the Licensor copyright notice above with
+-each binary copy of the Binary Software or in the accompanying documentation.
+-Licensee must not reverse engineer, decompile, disassemble or modify in any way
+-the Binary Software. Licensee must not use the Binary Software in violation of
+-any applicable law or regulation. This Agreement shall automatically terminate
+-upon Licensee's breach of any term or condition of this Agreement in which case,
+-Licensee shall destroy all copies of the Binary Software. Neither the name of
+-Licensor nor the names of its suppliers may be used to endorse or promote
+-products derived from this Binary Software without specific prior written
+-permission.
+-
+-Disclaimer. TO THE MAXIMUM EXTENT PERMITTED BY LAW, LICENSOR EXPRESSLY
+-DISCLAIMS ANY WARRANTY FOR THE BINARY SOFTWARE. THE BINARY SOFTWARE IS PROVIDED
+-"AS IS", WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
+-WITHOUT LIMITATION THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+-PARTICULAR PURPOSE, OR NON-INFRINGEMENT. WITHOUT LIMITING THE GENERALITY OF THE
+-FOREGOING, LICENSOR DOES NOT WARRANT THAT THE BINARY SOFTWARE IS ERROR-FREE OR
+-WILL OPERATE WITHOUT INTERRUPTION, AND LICENSOR GRANTS NO WARRANTY REGARDING ITS
+-USE OR THE RESULTS THEREFROM, INCLUDING ITS CORRECTNESS, ACCURACY, OR
+-RELIABILITY.
+-
+-Limitation of Liability. IN NO EVENT WILL LICENSOR, OR ANY OF LICENSOR'S
+-LICENSORS HAVE ANY LIABILITY HEREUNDER FOR ANY INDIRECT, SPECIAL, OR
+-CONSEQUENTIAL DAMAGES, HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+-FOR BREACH OF CONTRACT, TORT (INCLUDING NEGLIGENCE), OR OTHERWISE, ARISING OUT
+-OF THIS AGREEMENT, INCLUDING DAMAGES FOR LOSS OF PROFITS, OR THE COST OF
+-PROCUREMENT OF SUBSTITUTE GOODS, EVEN IF SUCH PARTY HAS BEEN ADVISED OF THE
+-POSSIBILITY OF SUCH DAMAGES. LICENSOR'S TOTAL LIABILITY FOR ALL COSTS, DAMAGES,
+-CLAIMS, OR LOSSES WHATSOEVER ARISING OUT OF OR IN CONNECTION WITH THIS AGREEMENT
+-OR THE BINARY SOFTWARE SUPPLIED UNDER THIS AGREEMENT IS LIMITED TO THE AGGREGATE
+-AMOUNT PAID BY LICENSEE TO LICENSOR IN CONNECTION WITH THE BINARY SOFTWARE TO
+-WHICH LOSSES OR DAMAGES ARE CLAIMED.
+-
+-Trade Compliance.  Licensee shall comply with all applicable export and import
+-control laws and regulations including but not limited to the US Export
+-Administration Regulation (including prohibited party lists issued by other
+-federal governments), Catch-all regulations and all national and international
+-embargoes. Licensee further agrees that it will not knowingly transfer, divert,
+-export or re-export, directly or indirectly, any product, software, including
+-software source code, or technology restricted by such regulations or by other
+-applicable national regulations, received from Licensor under this Agreement,
+-or any direct product of such software or technical data to any person, firm,
+-entity, country or destination to which such transfer, diversion, export or
+-re-export is restricted or prohibited, without obtaining prior written
+-authorization from the applicable competent government authorities to the extent
+-required by those laws. Licensee acknowledge that the "restricted encryption
+-software" that is subject to the US Export Administration Regulations (EAR), is
+-not intended for use by a government end user, as defined in part 772 of the
+-EAR. This provision shall survive termination or expiration of this Agreement.
+-
+-Assignment. Licensee may not assign this Agreement without the prior written
+-consent of Licensor. Licensor may assign this Agreement without Licensee's
+-consent.
+-
+-Governing Law. This Agreement will be governed by, construed, and enforced in
+-accordance with the laws of the State of Texas, USA, without regard to conflicts
+-of laws principles, will apply to all matters relating to this Agreement or the
+-Binary Software, and Licensee agrees that any litigation will be subject to the
+-exclusive jurisdiction of the state or federal courts Texas, USA. The United
+-Nations Convention on Contracts for the International Sale of Goods will not
+-apply to this Agreement.
+-
+-Restrictions, Warranty Disclaimer, Limitation of Liability, Trade Compliance,
+-Assignment, Governing Law, and Third Party Terms shall survive termination or
+-expiration of this Agreement.
+-
+-Third Party Terms. The licensed Binary Software includes the following third
+-party software for which the following terms apply:
+-
+-Libfdt - Flat Device Tree manipulation
+-Copyright (c) 2006 David Gibson, IBM Corporation
+-All rights reserved.
+-
+-Redistributions must reproduce the above copyright notice, this list of
+-conditions and the following disclaimer in the documentation and/or other
+-materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-LibElf
+-Copyright (c) 2006,2008-2011 Joseph Koshy
+-All rights reserved.
+-
+-Redistributions must reproduce the above copyright notice, this list of
+-conditions and the following disclaimer in the documentation and/or other
+-materials provided with the distribution.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-
+-
+-ANNEX A
+-BINARY SOFTWARE
+-Only software in binary form may be provided under this Agreement
+-
+diff --git a/WHENCE b/WHENCE
+index f6b0299..58e9ca1 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -1071,19 +1071,6 @@ License: Redistributable.  See LICENCE.myri10ge_firmware for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: ccp - Platform Security Processor (PSP) device
+-
+-File: amd/amd_sev_fam17h_model0xh.sbin
+-Version: 2022-2-25
+-File: amd/amd_sev_fam17h_model3xh.sbin
+-Version: 2022-2-25
+-File: amd/amd_sev_fam19h_model0xh.sbin
+-Version: 2022-2-25
+-
+-License: Redistributable. See LICENSE.amd-sev for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: microcode_amd - AMD CPU Microcode Update Driver for Linux
+ 
+ File: amd-ucode/microcode_amd.bin
+@@ -1107,52 +1094,6 @@ License: Redistributable. See LICENSE.amd-ucode for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: qat - Intel(R) QAT crypto accelerator
+-
+-File: qat_895xcc.bin
+-File: qat_895xcc_mmp.bin
+-File: qat_c3xxx.bin
+-File: qat_c3xxx_mmp.bin
+-File: qat_c62x.bin
+-File: qat_c62x_mmp.bin
+-Link: qat_mmp.bin -> qat_895xcc_mmp.bin
+-File: qat_4xxx.bin
+-File: qat_4xxx_mmp.bin
+-
+-Licence: Redistributable. See LICENCE.qat_firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: liquidio -- Cavium LiquidIO driver
+-
+-File: liquidio/lio_23xx_nic.bin
+-Version: v1.7.2
+-
+-File: liquidio/lio_210nv_nic.bin
+-Version: v1.7.2
+-
+-File: liquidio/lio_210sv_nic.bin
+-Version: v1.7.2
+-
+-File: liquidio/lio_410nv_nic.bin
+-Version: v1.7.2
+-
+-Licence: Redistributable. See LICENCE.cavium_liquidio for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: nitrox -- Cavium CNN55XX crypto driver
+-
+-File: cavium/cnn55xx_ae.fw
+-Version: v01
+-
+-File: cavium/cnn55xx_se.fw
+-Version: v10
+-
+-Licence: Redistributable. See LICENCE.cavium for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: i915 -- Intel Integrated Graphics driver
+ 
+ File: i915/skl_dmc_ver1_23.bin
+@@ -1936,14 +1877,6 @@ Licence: Redistributable. See LICENCE.nvidia for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: knav_qmss_queue - TI Keystone 2 QMSS driver
+-
+-File: ti-keystone/ks2_qmss_pdsp_acc48_k2_le_1_0_0_9.bin
+-
+-Licence: Redistributable. See LICENCE.ti-keystone for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: mtk_scp - MediaTek SCP System Control Processing Driver
+ 
+ File: mediatek/mt8183/scp.img
+@@ -1959,100 +1892,6 @@ Licence: Redistributable. See LICENCE.mediatek for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: nfp - Netronome Flow Processor
+-
+-Link: netronome/nic_AMDA0081-0001_1x40.nffw -> nic/nic_AMDA0081-0001_1x40.nffw
+-Link: netronome/nic_AMDA0097-0001_2x40.nffw -> nic/nic_AMDA0097-0001_2x40.nffw
+-Link: netronome/nic_AMDA0099-0001_2x10.nffw -> nic/nic_AMDA0099-0001_2x10.nffw
+-Link: netronome/nic_AMDA0081-0001_4x10.nffw -> nic/nic_AMDA0081-0001_4x10.nffw
+-Link: netronome/nic_AMDA0097-0001_4x10_1x40.nffw -> nic/nic_AMDA0097-0001_4x10_1x40.nffw
+-Link: netronome/nic_AMDA0099-0001_1x10_1x25.nffw -> nic/nic_AMDA0099-0001_1x10_1x25.nffw
+-Link: netronome/nic_AMDA0099-0001_2x25.nffw -> nic/nic_AMDA0099-0001_2x25.nffw
+-Link: netronome/nic_AMDA0096-0001_2x10.nffw -> nic/nic_AMDA0096-0001_2x10.nffw
+-Link: netronome/nic_AMDA0097-0001_8x10.nffw -> nic/nic_AMDA0097-0001_8x10.nffw
+-Link: netronome/nic_AMDA0058-0011_2x40.nffw -> nic/nic_AMDA0058-0011_2x40.nffw
+-Link: netronome/nic_AMDA0058-0012_2x40.nffw -> nic/nic_AMDA0058-0012_2x40.nffw
+-Link: netronome/nic_AMDA0078-0011_1x100.nffw -> nic/nic_AMDA0078-0011_1x100.nffw
+-File: netronome/nic/nic_AMDA0081-0001_1x40.nffw
+-File: netronome/nic/nic_AMDA0097-0001_2x40.nffw
+-File: netronome/nic/nic_AMDA0099-0001_2x10.nffw
+-File: netronome/nic/nic_AMDA0081-0001_4x10.nffw
+-File: netronome/nic/nic_AMDA0097-0001_4x10_1x40.nffw
+-File: netronome/nic/nic_AMDA0099-0001_1x10_1x25.nffw
+-File: netronome/nic/nic_AMDA0099-0001_2x25.nffw
+-File: netronome/nic/nic_AMDA0096-0001_2x10.nffw
+-File: netronome/nic/nic_AMDA0097-0001_8x10.nffw
+-File: netronome/nic/nic_AMDA0058-0011_2x40.nffw
+-File: netronome/nic/nic_AMDA0058-0012_2x40.nffw
+-File: netronome/nic/nic_AMDA0078-0011_1x100.nffw
+-File: netronome/nic-sriov/nic_AMDA0081-0001_1x40.nffw
+-File: netronome/nic-sriov/nic_AMDA0097-0001_2x40.nffw
+-File: netronome/nic-sriov/nic_AMDA0099-0001_2x10.nffw
+-File: netronome/nic-sriov/nic_AMDA0081-0001_4x10.nffw
+-File: netronome/nic-sriov/nic_AMDA0097-0001_4x10_1x40.nffw
+-File: netronome/nic-sriov/nic_AMDA0099-0001_1x10_1x25.nffw
+-File: netronome/nic-sriov/nic_AMDA0099-0001_2x25.nffw
+-File: netronome/nic-sriov/nic_AMDA0096-0001_2x10.nffw
+-File: netronome/nic-sriov/nic_AMDA0097-0001_8x10.nffw
+-File: netronome/nic-sriov/nic_AMDA0058-0011_2x40.nffw
+-File: netronome/nic-sriov/nic_AMDA0058-0012_2x40.nffw
+-File: netronome/nic-sriov/nic_AMDA0078-0011_1x100.nffw
+-
+-Version: v2.1.16.1
+-
+-File: netronome/flower/nic_AMDA0099.nffw
+-File: netronome/flower/nic_AMDA0096.nffw
+-File: netronome/flower/nic_AMDA0097.nffw
+-File: netronome/flower/nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0081.nffw -> nic_AMDA0097.nffw
+-Link: netronome/flower/nic_AMDA0081-0001_1x40.nffw -> nic_AMDA0081.nffw
+-Link: netronome/flower/nic_AMDA0097-0001_2x40.nffw -> nic_AMDA0097.nffw
+-Link: netronome/flower/nic_AMDA0099-0001_2x10.nffw -> nic_AMDA0099.nffw
+-Link: netronome/flower/nic_AMDA0081-0001_4x10.nffw -> nic_AMDA0081.nffw
+-Link: netronome/flower/nic_AMDA0097-0001_4x10_1x40.nffw -> nic_AMDA0097.nffw
+-Link: netronome/flower/nic_AMDA0099-0001_2x25.nffw -> nic_AMDA0099.nffw
+-Link: netronome/flower/nic_AMDA0096-0001_2x10.nffw -> nic_AMDA0096.nffw
+-Link: netronome/flower/nic_AMDA0097-0001_8x10.nffw -> nic_AMDA0097.nffw
+-Link: netronome/flower/nic_AMDA0099-0001_1x10_1x25.nffw -> nic_AMDA0099.nffw
+-Link: netronome/flower/nic_AMDA0058-0011_1x100.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0058-0011_2x40.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0058-0011_4x10_1x40.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0058-0011_8x10.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0058-0012_1x100.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0058-0012_2x40.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0058-0012_4x10_1x40.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0058-0012_8x10.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0078-0011_1x100.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0078-0011_2x40.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0078-0011_4x10_1x40.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0078-0011_8x10.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0078-0012_1x100.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0078-0012_2x40.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0078-0012_4x10_1x40.nffw -> nic_AMDA0058.nffw
+-Link: netronome/flower/nic_AMDA0078-0012_8x10.nffw -> nic_AMDA0058.nffw
+-
+-Version: AOTC-2.14.A.6
+-
+-File: netronome/bpf/nic_AMDA0081-0001_1x40.nffw
+-File: netronome/bpf/nic_AMDA0097-0001_2x40.nffw
+-File: netronome/bpf/nic_AMDA0099-0001_2x10.nffw
+-File: netronome/bpf/nic_AMDA0081-0001_4x10.nffw
+-File: netronome/bpf/nic_AMDA0097-0001_4x10_1x40.nffw
+-File: netronome/bpf/nic_AMDA0099-0001_1x10_1x25.nffw
+-File: netronome/bpf/nic_AMDA0099-0001_2x25.nffw
+-File: netronome/bpf/nic_AMDA0096-0001_2x10.nffw
+-File: netronome/bpf/nic_AMDA0097-0001_8x10.nffw
+-File: netronome/bpf/nic_AMDA0058-0011_2x40.nffw
+-File: netronome/bpf/nic_AMDA0058-0012_2x40.nffw
+-File: netronome/bpf/nic_AMDA0078-0011_1x100.nffw
+-
+-Version: v2.0.6.124
+-
+-
+-Licence: Redistributable. See LICENCE.Netronome for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: imx-sdma - support for i.MX SDMA driver
+ 
+ File: imx/sdma/sdma-imx6q.bin
+@@ -2211,28 +2050,6 @@ Licence:
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: fsl-mc bus - NXP Management Complex Bus Driver
+-
+-File: dpaa2/mc/mc_10.10.0_ls1088a.itb
+-File: dpaa2/mc/mc_10.10.0_ls2088a.itb
+-File: dpaa2/mc/mc_10.10.0_lx2160a.itb
+-File: dpaa2/mc/mc_10.14.3_ls1088a.itb
+-File: dpaa2/mc/mc_10.14.3_ls2088a.itb
+-File: dpaa2/mc/mc_10.14.3_lx2160a.itb
+-File: dpaa2/mc/mc_10.16.2_ls1088a.itb
+-File: dpaa2/mc/mc_10.16.2_ls2088a.itb
+-File: dpaa2/mc/mc_10.16.2_lx2160a.itb
+-File: dpaa2/mc/mc_10.18.0_ls1088a.itb
+-File: dpaa2/mc/mc_10.18.0_ls2088a.itb
+-File: dpaa2/mc/mc_10.18.0_lx2160a.itb
+-File: dpaa2/mc/mc_10.28.1_ls1088a.itb
+-File: dpaa2/mc/mc_10.28.1_ls2088a.itb
+-File: dpaa2/mc/mc_10.28.1_lx2160a.itb
+-
+-Licence: Redistributable. See LICENSE.nxp_mc_firmware for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: ice - Intel(R) Ethernet Connection E800 Series
+ 
+ File: intel/ice/ddp/ice-1.3.30.0.pkg
+@@ -2247,21 +2064,6 @@ License: Redistributable. See LICENSE.ice_enhanced for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: inside-secure -- Inside Secure EIP197 crypto driver
+-
+-File: inside-secure/eip197_minifw/ipue.bin
+-File: inside-secure/eip197_minifw/ifpp.bin
+-
+-Licence: Redistributable.
+-Copyright (c) 2019 Verimatrix, Inc.
+-
+-Derived from proprietary unpublished source code.
+-Permission is hereby granted for the distribution of this firmware
+-as part of Linux or other Open Source operating system kernel,
+-provided this copyright notice is accompanying it.
+-
+-------------------------------------------------
+-
+ Driver: prestera - Marvell driver for Prestera family ASIC devices
+ 
+ File: mrvl/prestera/mvsw_prestera_fw-v2.0.img
+@@ -2273,23 +2075,3 @@ File: mrvl/prestera/mvsw_prestera_fw_arm64-v4.1.img
+ Licence: Redistributable. See LICENCE.Marvell for details.
+ 
+ ------------------------------------------------
+-
+-Driver: rvu_cptpf - Marvell CPT driver
+-
+-File: mrvl/cpt01/ae.out
+-File: mrvl/cpt01/se.out
+-File: mrvl/cpt01/ie.out
+-File: mrvl/cpt02/ae.out
+-File: mrvl/cpt02/se.out
+-File: mrvl/cpt02/ie.out
+-File: mrvl/cpt03/ae.out
+-File: mrvl/cpt03/se.out
+-File: mrvl/cpt03/ie.out
+-File: mrvl/cpt04/ae.out
+-File: mrvl/cpt04/se.out
+-File: mrvl/cpt04/ie.out
+-Version: v1.21
+-
+-Licence: Redistributable. See LICENCE.Marvell for details.
+-
+----------------------------------------------------------------------------
+-- 
+2.40.1
+

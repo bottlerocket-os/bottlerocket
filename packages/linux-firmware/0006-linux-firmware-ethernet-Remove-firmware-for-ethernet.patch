@@ -1,0 +1,539 @@
+From 138cb336108faab12961813bdf7ccc1ae4e1822b Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Wed, 26 Jul 2023 08:40:14 +0000
+Subject: [PATCH] linux-firmware: ethernet: Remove firmware for ethernet/IB
+ devices
+
+Bottlerocket does not ship drivers for older network equipment. Without
+the drivers shipping the firmware for thesde devices does not make
+sense. Drop the firmware to reduce image size.
+
+The following list maps driver names as specified in WHENCE to kernel
+config options enabling the driver. This way we can easily decide if we
+need to add firmware back into the package when we enable new drivers.
+
+* cassini - CONFIG_CASSINI
+* slicoss - CONFIG_SLICOSS
+* sxg - CONFIG_SXG
+* cxgb3 - CONFIG_CHELSIO_T3
+* e100 - CONFIG_E100
+* acenic - CONFIG_ACENIC
+* tehuti - CONFIG_TEHUTI
+* bnx2 - CONFIG_BNX2
+* ib_qib - CONFIG_INFINIBAND_QIB
+* myri_sbus - CONFIG_MYRI_SBUS (dropped upstream after 3.0)
+* hfi1 - CONFIG_INFINIBAND_HFI1
+* starfire - CONFIG_ADAPTEC_STARFIRE
+* typhoon - CONFIG_TYPHOON
+* vxge - CONFIG_VXGE
+* mscc-phy - CONFIG_MICROSEMI_PHY
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENCE.e100          |  28 ----
+ LICENCE.microchip     |  40 ------
+ LICENSE.hfi1_firmware |  39 ------
+ WHENCE                | 303 ------------------------------------------
+ 4 files changed, 410 deletions(-)
+ delete mode 100644 LICENCE.e100
+ delete mode 100644 LICENCE.microchip
+ delete mode 100644 LICENSE.hfi1_firmware
+
+diff --git a/LICENCE.e100 b/LICENCE.e100
+deleted file mode 100644
+index 0553817..0000000
+--- a/LICENCE.e100
++++ /dev/null
+@@ -1,28 +0,0 @@
+-Copyright (c) 1999-2001, Intel Corporation
+-
+-All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions are met:
+-
+- 1. Redistributions of source code must retain the above copyright notice,
+-    this list of conditions and the following disclaimer.
+-
+- 2. Redistributions in binary form must reproduce the above copyright notice,
+-    this list of conditions and the following disclaimer in the documentation
+-    and/or other materials provided with the distribution.
+-
+- 3. Neither the name of Intel Corporation nor the names of its contributors
+-    may be used to endorse or promote products derived from this software
+-    without specific prior written permission.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-DISCLAIMED. IN NO EVENT SHALL CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+-EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENCE.microchip b/LICENCE.microchip
+deleted file mode 100644
+index f270c99..0000000
+--- a/LICENCE.microchip
++++ /dev/null
+@@ -1,40 +0,0 @@
+-Copyright (C) 2018 Microchip Technology Incorporated and its subsidiaries.
+-All rights reserved.
+-
+-REDISTRIBUTION: Permission is hereby granted by Microchip Technology
+-Incorporated (Microchip), free of any license fees, to any person obtaining a
+-copy of this firmware (the "Software"), to install, reproduce, copy and
+-distribute copies, in binary form, hexadecimal or equivalent formats only, the
+-Software and to permit persons to whom the Software is provided to do the same,
+-subject to the following conditions:
+-
+-* Any redistribution of the Software must reproduce the above copyright notice,
+-  this license notice, and the following disclaimers and notices in the
+-  documentation and/or other materials provided with the Software.
+-
+-* Neither the name of Microchip, its products nor the names of its suppliers
+-  may be used to endorse or promote products derived from this Software without
+-  specific prior written permission.
+-
+-* No reverse engineering, decompilation, or disassembly of this Software is
+-  permitted.
+-
+-Limited patent license.  Microchip grants a world-wide, royalty-free,
+-non-exclusive, revocable license under any patents that it now has or hereafter
+-may have, own or control related to the Software to make, have made, use,
+-import, offer to sell and sell ("Utilize") this Software, but solely to the
+-extent that any such patent is necessary to Utilize the Software in conjunction
+-with Microchip processors. The patent license shall not apply to any other
+-combinations which include this Software nor to any other Microchip patents or
+-patent rights. No hardware per se is licensed hereunder.
+-
+-DISCLAIMER: THIS SOFTWARE IS PROVIDED BY MICROCHIP "AS IS" AND ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE
+-DISCLAIMED. IN NO EVENT SHALL ATMEL BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENSE.hfi1_firmware b/LICENSE.hfi1_firmware
+deleted file mode 100644
+index 01f0932..0000000
+--- a/LICENSE.hfi1_firmware
++++ /dev/null
+@@ -1,39 +0,0 @@
+-Copyright (c) 2015, Intel Corporation. 
+-All rights reserved. 
+-
+-Redistribution.
+-
+-Redistribution and use in binary form, without modification, are permitted
+-provided that the following conditions are met: 
+-*    Redistributions must reproduce the above copyright notice and the
+-     following disclaimer in the documentation and/or other materials provided
+-     with the distribution. 
+-*    Neither the name of Intel Corporation nor the names of its suppliers may
+-     be used to endorse or promote products derived from this software without
+-     specific prior written permission. 
+-*    No reverse engineering, decompilation, or disassembly of this software is
+-     permitted. 
+-
+-Limited patent license.
+-
+-Intel Corporation grants a world-wide, royalty-free, non-exclusive license
+-under patents it now or hereafter owns or controls to make, have made, use,
+-import, offer to sell and sell (“Utilize”) this software, but solely to the
+-extent that any such patent is necessary to Utilize the software alone. The
+-patent license shall not apply to any combinations which include this software.
+-No hardware per se is licensed hereunder. 
+-
+-
+-DISCLAIMER.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+-
+diff --git a/WHENCE b/WHENCE
+index 2ed9e9a..f6b0299 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -22,98 +22,6 @@ http://www.zdomain.com/a56.html
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: cassini - Sun Cassini
+-
+-File: sun/cassini.bin
+-
+-Licence: Unknown
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: slicoss - Alacritech IS-NIC products
+-
+-File: slicoss/gbdownload.sys
+-File: slicoss/gbrcvucode.sys
+-File: slicoss/oasisdbgdownload.sys
+-File: slicoss/oasisdownload.sys
+-File: slicoss/oasisrcvucode.sys
+-
+-Licence:
+-		Copyright (C) 1999-2009 Alacritech, Inc.
+-
+-	as an unpublished work. This notice does not imply unrestricted or
+-	public access to the source code from which this firmware image is
+-	derived.  Except as noted below this firmware image may not be
+-	reproduced, used, sold or transferred to any third party without
+-	Alacritech's prior written consent.  All Rights Reserved.
+-
+-	Permission is hereby granted for the distribution of this firmware
+-	image as part of a Linux or other Open Source operating system kernel
+-	in text or binary form as required.
+-
+-	This firmware may not be modified.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: sxg - Alacritech IS-NIC products
+-
+-File: sxg/saharadownloadB.sys
+-File: sxg/saharadbgdownloadB.sys
+-
+-Licence:
+-		Copyright (C) 1999-2009 Alacritech, Inc.
+-
+-	as an unpublished work. This notice does not imply unrestricted or
+-	public access to the source code from which this firmware image is
+-	derived.  Except as noted below this firmware image may not be
+-	reproduced, used, sold or transferred to any third party without
+-	Alacritech's prior written consent.  All Rights Reserved.
+-
+-	Permission is hereby granted for the distribution of this firmware
+-	image as part of a Linux or other Open Source operating system kernel
+-	in text or binary form as required.
+-
+-	This firmware may not be modified.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: cxgb3 - Chelsio Terminator 3 1G/10G Ethernet adapter
+-
+-File: cxgb3/t3b_psram-1.1.0.bin
+-File: cxgb3/t3c_psram-1.1.0.bin
+-File: cxgb3/t3fw-7.0.0.bin
+-File: cxgb3/t3fw-7.1.0.bin
+-File: cxgb3/t3fw-7.4.0.bin
+-File: cxgb3/t3fw-7.10.0.bin
+-File: cxgb3/t3fw-7.12.0.bin
+-
+-Licence: GPLv2 or OpenIB.org BSD license, no source visible
+-
+---------------------------------------------------------------------------
+-
+-Driver: cxgb3 - Chelsio Terminator 3 1G/10G Ethernet adapter
+-
+-File: cxgb3/ael2005_opt_edc.bin
+-File: cxgb3/ael2005_twx_edc.bin
+-File: cxgb3/ael2020_twx_edc.bin
+-
+-Licence:
+- *	Copyright (c) 2007-2009 NetLogic Microsystems, Inc.
+- *
+- *	Permission is hereby granted for the distribution of this firmware
+- *	data in hexadecimal or equivalent format, provided this copyright
+- *	notice is accompanying it.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: cxgb4 - Chelsio Terminator 4/5/6 1/10/25/40/100G Ethernet adapter
+ 
+ File: cxgb4/t4fw-1.14.4.0.bin
+@@ -141,28 +49,6 @@ Licence: Redistributable. See LICENCE.chelsio_firmware for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: e100 -- Intel PRO/100 Ethernet NIC
+-
+-File: e100/d101m_ucode.bin
+-File: e100/d101s_ucode.bin
+-File: e100/d102e_ucode.bin
+-
+-Licence: Redistributable. See LICENCE.e100 for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: acenic -- Alteon AceNIC Gigabit Ethernet card
+-
+-File: acenic/tg1.bin
+-File: acenic/tg2.bin
+-
+-Licence: Unknown
+-
+-Found in hex form in kernel source, but source allegedly available at
+-http://alteon.shareable.org/
+-
+---------------------------------------------------------------------------
+-
+ Driver: tg3 -- Broadcom Tigon3 based gigabit Ethernet cards
+ 
+ File: tigon/tg3.bin
+@@ -183,83 +69,6 @@ Found in hex form in kernel source.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: starfire - Adaptec Starfire/DuraLAN support
+-
+-File: adaptec/starfire_rx.bin
+-File: adaptec/starfire_tx.bin
+-
+-Licence: Allegedly GPLv2, but no source visible.
+-
+-Found in hex form in kernel source, with the following notice:
+-
+- BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE IT IS LICENSED "AS IS" AND
+- THERE IS NO WARRANTY FOR THE PROGRAM, INCLUDING BUT NOT LIMITED TO THE
+- IMPLIED WARRANTIES OF MERCHANTIBILITY OR FITNESS FOR A PARTICULAR PURPOSE
+- (TO THE EXTENT PERMITTED BY APPLICABLE LAW). USE OF THE PROGRAM IS AT YOUR
+- OWN RISK. IN NO EVENT WILL ADAPTEC OR ITS LICENSORS BE LIABLE TO YOU FOR
+- DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES
+- ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM.
+-
+---------------------------------------------------------------------------
+-
+-Driver: tehuti - Tehuti Networks 10G Ethernet
+-
+-File: tehuti/bdx.bin
+-
+-Licence:
+-
+- Copyright (C) 2007 Tehuti Networks Ltd.
+-
+- Permission is hereby granted for the distribution of this firmware data
+- in hexadecimal or equivalent format, provided this copyright notice is
+- accompanying it.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: typhoon - 3cr990 series Typhoon
+-
+-File: 3com/typhoon.bin
+-
+-Licence:
+-/*
+- * Copyright 1999-2004 3Com Corporation.  All Rights Reserved.
+- *
+- * Redistribution and use in source and binary forms of the 3c990img.h
+- * microcode software are permitted provided that the following conditions
+- * are met:
+- * 1. Redistribution of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistribution in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- * 3. The name of 3Com may not be used to endorse or promote products
+- *    derived from this software without specific prior written permission
+- *
+- * THIS SOFTWARE IS PROVIDED BY 3COM ``AS IS'' AND ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- *
+- * USER ACKNOWLEDGES AND AGREES THAT PURCHASE OR USE OF THE 3c990img.h
+- * MICROCODE SOFTWARE WILL NOT CREATE OR GIVE GROUNDS FOR A LICENSE BY
+- * IMPLICATION, ESTOPPEL, OR OTHERWISE IN ANY INTELLECTUAL PROPERTY RIGHTS
+- * (PATENT, COPYRIGHT, TRADE SECRET, MASK WORK, OR OTHER PROPRIETARY RIGHT)
+- * EMBODIED IN ANY OTHER 3COM HARDWARE OR SOFTWARE EITHER SOLELY OR IN
+- * COMBINATION WITH THE 3c990img.h MICROCODE SOFTWARE
+- */
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: yam - YAM driver for AX.25
+ 
+ File: yam/1200.bin
+@@ -272,16 +81,6 @@ Found in hex form in kernel source.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: myri_sbus - MyriCOM Gigabit Ethernet
+-
+-File: myricom/lanai.bin
+-
+-Licence: Unknown
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: bnx2x: Broadcom Everest
+ 
+ File: bnx2x/bnx2x-e1-7.13.1.0.fw
+@@ -313,27 +112,6 @@ Found in hex form in kernel source.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: bnx2 - Broadcom NetXtremeII
+-
+-File: bnx2/bnx2-mips-06-6.2.3.fw
+-File: bnx2/bnx2-mips-09-6.2.1b.fw
+-File: bnx2/bnx2-rv2p-06-6.0.15.fw
+-File: bnx2/bnx2-rv2p-09-6.0.17.fw
+-File: bnx2/bnx2-rv2p-09ax-6.0.17.fw
+-
+-Licence:
+-
+- This file contains firmware data derived from proprietary unpublished
+- source code, Copyright (c) 2004 - 2010 Broadcom Corporation.
+-
+- Permission is hereby granted for the distribution of this firmware data
+- in hexadecimal or equivalent format, provided this copyright notice is
+- accompanying it.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: netxen_nic - NetXen Multi port (1/10) Gigabit Ethernet NIC
+ 
+ File: phanfw.bin
+@@ -1243,46 +1021,6 @@ Licence: Redistributable. See LICENSE.amdgpu for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: ib_qib - QLogic Infiniband
+-
+-File: qlogic/sd7220.fw
+-
+-Licence:
+-
+- * Copyright (c) 2007, 2008 QLogic Corporation. All rights reserved.
+- *
+- * This software is available to you under a choice of one of two
+- * licenses.  You may choose to be licensed under the terms of the GNU
+- * General Public License (GPL) Version 2, available from the file
+- * COPYING in the main directory of this source tree, or the
+- * OpenIB.org BSD license below:
+- *
+- *     Redistribution and use in source and binary forms, with or
+- *     without modification, are permitted provided that the following
+- *     conditions are met:
+- *
+- *      - Redistributions of source code must retain the above
+- *        copyright notice, this list of conditions and the following
+- *        disclaimer.
+- *
+- *      - Redistributions in binary form must reproduce the above
+- *        copyright notice, this list of conditions and the following
+- *        disclaimer in the documentation and/or other materials
+- *        provided with the distribution.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+- * BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+- * ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+- * SOFTWARE.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: qed - QLogic 4xxxx Ethernet Driver Core Module.
+ 
+ File: qed/qed_init_values_zipped-8.4.2.0.bin
+@@ -1317,23 +1055,6 @@ Licence:
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: vxge - Exar X3100 Series 10GbE PCIe I/O Virtualized Server Adapter
+-
+-File: vxge/X3fw.ncf
+-File: vxge/X3fw-pxe.ncf
+-Version: 1.8.1
+-
+-Licence:
+-
+- This file contains firmware data derived from proprietary unpublished
+- source code, Copyright (c) 2010 Exar Corporation.
+-
+- Permission is hereby granted for the distribution of this firmware data
+- in hexadecimal or equivalent format, provided this copyright notice is
+- accompanying it.
+-
+---------------------------------------------------------------------------
+-
+ Driver: myri10ge - Myri10GE 10GbE NIC driver
+ 
+ File: myri10ge_eth_z8e.dat
+@@ -2215,21 +1936,6 @@ Licence: Redistributable. See LICENCE.nvidia for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: hfi1 - Intel OPA Gen 1 adapter
+-
+-File: hfi1_dc8051.fw
+-Version: 1.27.0
+-File: hfi1_fabric.fw
+-Version: 0x1055
+-File: hfi1_pcie.fw
+-Version: 0x4755
+-File: hfi1_sbus.fw
+-Version: 0x10130001
+-
+-Licence: Redistributable. See LICENSE.hfi1_firmware for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: knav_qmss_queue - TI Keystone 2 QMSS driver
+ 
+ File: ti-keystone/ks2_qmss_pdsp_acc48_k2_le_1_0_0_9.bin
+@@ -2527,15 +2233,6 @@ Licence: Redistributable. See LICENSE.nxp_mc_firmware for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: mscc-phy - Microchip PHY drivers
+-
+-File: microchip/mscc_vsc8574_revb_int8051_29e8.bin
+-File: microchip/mscc_vsc8584_revb_int8051_fb48.bin
+-
+-Licence: Redistributable. See LICENCE.microchip for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: ice - Intel(R) Ethernet Connection E800 Series
+ 
+ File: intel/ice/ddp/ice-1.3.30.0.pkg
+-- 
+2.40.1
+

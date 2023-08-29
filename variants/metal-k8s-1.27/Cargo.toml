@@ -29,6 +29,7 @@ included-packages = [
     "cni",
     "cni-plugins",
     "kernel-5.15",
+    "linux-firmware",
     "kubelet-1.27",
     "release",
 ]
@@ -41,5 +42,6 @@ aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
 kernel-5_15 = { path = "../../packages/kernel-5.15" }
+linux-firmware = { path = "../../packages/linux-firmware" }
 kubernetes-1_27 = { path = "../../packages/kubernetes-1.27" }
 release = { path = "../../packages/release" }

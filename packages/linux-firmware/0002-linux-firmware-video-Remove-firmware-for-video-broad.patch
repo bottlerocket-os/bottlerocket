@@ -1,0 +1,1630 @@
+From 80d430aa70fec3a2d0fdbe59f3a102c8aeaa564a Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Tue, 25 Jul 2023 09:43:12 +0000
+Subject: [PATCH] linux-firmware: video: Remove firmware for video/broadcast
+ devices
+
+Bottlerocket does not configure any special video encoding/decoding
+hardware, DVB/DAB tuner, TV cards, and V4L2 hardware. We do not need
+to ship firmware for devices we do not ship drivers for. The following
+list maps the drivers as named in WHENCE to kernel config options to
+easily check if we need to ship additional firmware in the future.
+
+* cpia2 - CONFIG_VIDEO_CPIA2
+* dabusb - CONFIG_USB_DABUSB (not available since 2.6.39)
+* vicam - CONFIG_USB_GSPCA_VICAM
+* ipu3-imgu - CONFIG_VIDEO_IPU3_IMGU
+* cx231xx - CONFIG_VIDEO_CX231XX
+* cx23418 - CONFIG_VIDEO_CX18
+* cx23885 - CONFIG_VIDEO_CX23885
+* cx25840 - CONFIG_VIDEO_CX25840
+* mtk-vpu - CONFIG_VIDEO_MEDIATEK_VPU
+* ti-vpe - CONFIG_VIDEO_TI_VPE
+* tlg2300 - CONFIG_VIDEO_TLG2300
+* s5p-mfc - CONFIG_VIDEO_SAMSUNG_S5P_MFC
+* go7007 - CONFIG_VIDEO_GO7007
+* venus - CONFIG_VIDEO_QCOM_VENUS
+* meson-vdec - CONFIG_VIDEO_MESON_VDEC
+* wave5 - CONFIG_VIDEO_WAVE_VPU (driver not yet included upstream)
+* amphion - CONFIG_VIDEO_AMPHION_VPU
+* dvb-ttusb-budget - CONFIG_DVB_TTUSB_BUDGET
+* dvb-ttpci - CONFIG_DVB_AV7110
+* xc4000 - CONFIG_MEDIA_TUNER_XC4000
+* xc5000 - CONFIG_MEDIA_TUNER_XC5000
+* dib0700 - CONFIG_DVB_USB_DIB0700
+* lsg8gxx - CONFIG_DVB_LGS8GXX
+* drxk - CONFIG_DVB_DRXK
+* as102 - CONFIG_DVB_AS102
+* it9135 - CONFIG_MEDIA_TUNER_IT913X
+* smsmdtv - CONFIG_SMS_SIANO_MDTV
+* tegra-vix - CONFIG_DRM_TEGRA
+* rk3399-dptx - CONFIG_ROCKCHIP_CDN_DP
+* cdns-mhdp - CONFIG_DRM_CDNS_MHDP8546
+* lt9611uxc - CONFIG_DRM_LONTIUM_LT9611UXC
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENCE.Abilis        |  22 --
+ LICENCE.cadence       |  63 ------
+ LICENCE.cnm           |  23 ---
+ LICENCE.go7007        | 457 ------------------------------------------
+ LICENCE.it913x        |  17 --
+ LICENCE.rockchip      |  41 ----
+ LICENCE.siano         |  31 ---
+ LICENCE.ti-tspa       |  46 -----
+ LICENCE.xc4000        |  23 ---
+ LICENCE.xc5000        |  23 ---
+ LICENCE.xc5000c       |  23 ---
+ LICENSE.Lontium       |   2 -
+ LICENSE.amlogic_vdec  |  15 --
+ LICENSE.amphion_vpu   |  48 -----
+ LICENSE.dib0700       |  22 --
+ LICENSE.ipu3_firmware |  36 ----
+ WHENCE                | 400 ------------------------------------
+ 17 files changed, 1292 deletions(-)
+ delete mode 100644 LICENCE.Abilis
+ delete mode 100644 LICENCE.cadence
+ delete mode 100644 LICENCE.cnm
+ delete mode 100644 LICENCE.go7007
+ delete mode 100644 LICENCE.it913x
+ delete mode 100644 LICENCE.rockchip
+ delete mode 100644 LICENCE.siano
+ delete mode 100644 LICENCE.ti-tspa
+ delete mode 100644 LICENCE.xc4000
+ delete mode 100644 LICENCE.xc5000
+ delete mode 100644 LICENCE.xc5000c
+ delete mode 100644 LICENSE.Lontium
+ delete mode 100644 LICENSE.amlogic_vdec
+ delete mode 100644 LICENSE.amphion_vpu
+ delete mode 100644 LICENSE.dib0700
+ delete mode 100644 LICENSE.ipu3_firmware
+
+diff --git a/LICENCE.Abilis b/LICENCE.Abilis
+deleted file mode 100644
+index 9050d2b..0000000
+--- a/LICENCE.Abilis
++++ /dev/null
+@@ -1,22 +0,0 @@
+-Firmware provided by Pierrick Hascoet <pierrick.hascoet@abiliss.com> to Devin
+-Heitmueller <dheitmueller@kernellabs.com> on January 15, 2010.
+-
+-The USB firmware files "dvb-as102_data1_st.hex" and "as102_data2_st.hex" for
+-Abilis's AS10X, used together with the AS10X USB Kernel driver, is provided
+-under the following licensing terms:
+-
+-Copyright (c) 2010, Abilis Systems Sarl
+-
+-Permission to use, copy, modify, and/or distribute this software for
+-any purpose with or without fee is hereby granted, provided that the
+-above copyright notice and this permission notice appear in all
+-copies.
+-
+-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+-WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+-WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+-AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+-DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+-PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+-TORTUOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+-PERFORMANCE OF THIS SOFTWARE.
+diff --git a/LICENCE.cadence b/LICENCE.cadence
+deleted file mode 100644
+index b3564c2..0000000
+--- a/LICENCE.cadence
++++ /dev/null
+@@ -1,63 +0,0 @@
+-Copyright (c) 2018, Cadence Design Systems, Inc.
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-  following disclaimer in the documentation and/or other materials
+-  provided with the distribution.
+-
+-* Neither the name of Cadence Design Systems, Inc., its products
+-  nor the names of its suppliers may be used to endorse or promote products
+-  derived from this Software without specific prior written permission.
+-
+-* No reverse engineering, decompilation, or disassembly of this software
+-  is permitted.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGE.
+-
+-This software contains:
+-
+-HDCP Cipher is licensed under the FreeBSD license. A copy of the FreeBSD
+-license can be found at
+-https://www.freebsd.org/copyright/freebsd-license.html.
+-The source code for HDCP Cipher can is available here:
+-http://www3.cs.stonybrook.edu/~rob/hdcp.html
+-
+-SSL Library is licensed under the Apache License, Version 2.0.
+-A copy of the Apache License, Version 2.0 can be found at
+-http://www.apache.org/licenses/LICENSE-2.0.
+-The original source code for SSL Library can is available here:
+-https://tls.mbed.org/download
+-
+-Fast discrete Fourier and cosine transforms and inverses
+-author: Monty <xiphmont@mit.edu>
+-modifications by: Monty
+-last modification date: Jul 1 1996
+-
+-/* These Fourier routines were originally based on the Fourier
+-routines of the same names from the NETLIB bihar and fftpack
+-fortran libraries developed by Paul N. Swarztrauber at the National
+-Center for Atmospheric Research in Boulder, CO USA.  They have been
+-reimplemented in C and optimized in a few ways for OggSquish. */
+-
+-/* As the original fortran libraries are public domain, the C Fourier
+-routines in this file are hereby released to the public domain as
+-well.  The C routines here produce output exactly equivalent to the
+-original fortran routines.  Of particular interest are the facts
+-that (like the original fortran), these routines can work on
+-arbitrary length vectors that need not be powers of two in
+-length. */
+diff --git a/LICENCE.cnm b/LICENCE.cnm
+deleted file mode 100644
+index 48d23ea..0000000
+--- a/LICENCE.cnm
++++ /dev/null
+@@ -1,23 +0,0 @@
+-Copyright (C) 2021 Chips&Media, Inc.
+-All rights reserved.
+-
+-Redistribution and use in binary form is permitted provided that the following
+-conditions are met:
+-
+-1. Redistributions must reproduce the above copyright notice, this list of
+-conditions and the following disclaimer in the documentation and/or other
+-materials provided with the distribution.
+-
+-2. Redistribution and use shall be used only with Texas Instruments Incorporateds
+-silicon products. Any other use, reproduction, modification, translation,
+-or compilation of the Software is prohibited.
+-
+-3. No reverse engineering, decompilation, or disassembly is permitted.
+-
+-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THIS SOFTWARE IS PROVIDED
+-"AS IS" WITHOUT WARRANTY OF ANY KIND, INCLUDING, WITHOUT LIMITATION, ANY EXPRESS
+-OR IMPLIED WARRANTIES OF MERCHANTABILITY, ACCURACY, FITNESS OR SUFFICIENCY FOR A
+-PARTICULAR PURPOSE, SATISFACTORY QUALITY, CORRESPONDENCE WITH DESCRIPTION, QUIET
+-ENJOYMENT OR NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY RIGHTS.
+-CHIPS&MEDIA, INC., ITS AFFILIATES AND THEIR SUPPLIERS DISCLAIM ANY WARRANTY THAT THE
+-DELIVERABLES WILL OPERATE WITHOUT INTERRUPTION OR BE ERROR-FREE.
+diff --git a/LICENCE.go7007 b/LICENCE.go7007
+deleted file mode 100644
+index 3689f3b..0000000
+--- a/LICENCE.go7007
++++ /dev/null
+@@ -1,457 +0,0 @@
+-The README file from the original package from Micronas appears below. Only
+-the part about the firmware redistribution in section 0 is relevant, all
+-other sections are completely obsolete.
+-
+----------------------------------------------------------------------------
+-                     WIS GO7007SB Public Linux Driver
+----------------------------------------------------------------------------
+-
+-
+-*** Please see the file RELEASE-NOTES for important last-minute updates ***
+-
+-
+-  0. OVERVIEW AND LICENSING/DISCLAIMER
+-
+-
+-This driver kit contains Linux drivers for the WIS GO7007SB multi-format
+-video encoder.  Only kernel version 2.6.x is supported.  The video stream
+-is available through the Video4Linux2 API and the audio stream is available
+-through the ALSA API (or the OSS emulation layer of the ALSA system).
+-
+-The files in kernel/ and hotplug/ are licensed under the GNU General Public
+-License Version 2 from the Free Software Foundation.  A copy of the license
+-is included in the file COPYING.
+-
+-The example applications in apps/ and C header files in include/ are
+-licensed under a permissive license included in the source files which
+-allows copying, modification and redistribution for any purpose without
+-attribution.
+-
+-The firmware files included in the firmware/ directory may be freely
+-redistributed only in conjunction with this document; but modification,
+-tampering and reverse engineering are prohibited.
+-
+-MICRONAS USA, INC., MAKES NO WARRANTIES TO ANY PERSON OR ENTITY WITH
+-RESPECT TO THE SOFTWARE OR ANY DERIVATIVES THEREOF OR ANY SERVICES OR
+-LICENSES AND DISCLAIMS ALL IMPLIED WARRANTIES, INCLUDING WITHOUT LIMITATION
+-WARRANTIES OF MERCHANTABILITY, SUPPORT, AND FITNESS FOR A PARTICULAR
+-PURPOSE AND NON-INFRINGEMENT.
+-
+-
+-  1. SYSTEM REQUIREMENTS
+-
+-
+-This driver requires Linux kernel 2.6.  Kernel 2.4 is not supported.  Using
+-kernel 2.6.10 or later is recommended, as earlier kernels are known to have
+-unstable USB 2.0 support.
+-
+-A fully built kernel source tree must be available.  Typically this will be
+-linked from "/lib/modules/<KERNEL VERSION>/build" for convenience.  If this
+-link does not exist, an extra parameter will need to be passed to the
+-`make` command.
+-
+-All vendor-built kernels should already be configured properly.  However,
+-for custom-built kernels, the following options need to be enabled in the
+-kernel as built-in or modules:
+-
+-        CONFIG_HOTPLUG           - Support for hot-pluggable devices
+-        CONFIG_MODULES           - Enable loadable module support
+-        CONFIG_KMOD              - Automatic kernel module loading
+-        CONFIG_FW_LOADER         - Hotplug firmware loading support
+-        CONFIG_I2C               - I2C support
+-        CONFIG_VIDEO_DEV         - Video For Linux
+-        CONFIG_SOUND             - Sound card support
+-        CONFIG_SND               - Advanced Linux Sound Architecture
+-        CONFIG_USB               - Support for Host-side USB
+-        CONFIG_USB_DEVICEFS      - USB device filesystem
+-        CONFIG_USB_EHCI_HCD      - EHCI HCD (USB 2.0) support
+-
+-Additionally, to use the example application, the following options need to
+-be enabled in the ALSA section:
+-
+-        CONFIG_SND_MIXER_OSS     - OSS Mixer API
+-        CONFIG_SND_PCM_OSS       - OSS PCM (digital audio) API
+-
+-The hotplug scripts, along with the fxload utility, must also be installed.
+-These scripts can be obtained from <http://linux-hotplug.sourceforge.net/>.
+-Hotplugging is used for loading firmware into the Cypruss EZ-USB chip using
+-fxload and for loading firmware into the driver using the firmware agent.
+-
+-
+-  2. COMPILING AND INSTALLING THE DRIVER
+-
+-
+-Most users should be able to compile the driver by simply running:
+-
+-        $ make
+-
+-in the top-level directory of the driver kit.  First the kernel modules
+-will be built, followed by the example applications.
+-
+-If the build system is unable to locate the kernel source tree for the
+-currently-running kernel, or if the module should be built for a kernel
+-other than the currently-running kernel, an additional parameter will need
+-to be passed to make to specify the appropriate kernel source directory:
+-
+-        $ make KERNELSRC=/usr/src/linux-2.6.10-custom3
+-
+-Once the compile completes, the driver and firmware files should be
+-installed by running:
+-
+-        $ make install
+-
+-The kernel modules will be placed in "/lib/modules/<KERNEL VERSION>/extra"
+-and the firmware files will be placed in the appropriate hotplug firmware
+-directory, usually /lib/firmware.  In addition, USB maps and scripts will
+-be placed in /etc/hotplug/usb to enable fxload to initialize the EZ-USB
+-control chip when the device is connected.
+-
+-
+-  3. PAL/SECAM TUNER CONFIGURATION (TV402U-EU only)
+-
+-
+-The PAL model of the Plextor ConvertX TV402U may require additional
+-configuration to correctly select the appropriate TV frequency band and
+-audio subchannel.
+-
+-Users with a device other than the Plextor ConvertX TV402U-EU should skip
+-this section.
+-
+-The wide variety of PAL TV systems used in Europe requires that additional
+-information about the local TV standards be passed to the driver in order
+-to properly tune TV channels.  The two necessary parameters are (a) the PAL
+-TV band, and (b) the audio subchannel format in use.
+-
+-In many cases, the appropriate TV band selection is passed to the driver
+-from applications.  However, in some cases, the application only specifies
+-that the driver should use PAL but not the specific information about the
+-appropriate TV band.  To work around this issue, the correct TV band may be
+-specified in the "force_band" parameter to the wis-sony-tuner module:
+-
+-     TV band           force_band
+-     -------           ----------
+-     PAL B/G                B
+-     PAL I                  I
+-     PAL D/K                D
+-     SECAM L                L
+-
+-If the "force_band" parameter is specified, the driver will ignore any TV
+-band specified by applications and will always use the band provided in the
+-module parameter.
+-
+-The other parameter that can be specified is the audio subchannel format.
+-There are several stereo audio carrier systems in use, including NICAM and
+-three varieties of A2.  To receive audio broadcast on one of these stereo
+-carriers, the "force_mpx_mode" parameter must be specified to the
+-wis-sony-tuner module.
+-
+-     TV band           Audio subcarrier       force_mpx_mode
+-     -------           ----------------       --------------
+-     PAL B/G            Mono (default)               1
+-     PAL B/G                  A2                     2
+-     PAL B/G                 NICAM                   3
+-     PAL I              Mono (default)               4
+-     PAL I                   NICAM                   5
+-     PAL D/K            Mono (default)               6
+-     PAL D/K                 A2 (1)                  7
+-     PAL D/K                 A2 (2)                  8
+-     PAL D/K                 A2 (3)                  9
+-     PAL D/K                 NICAM                  10
+-     SECAM L            Mono (default)              11
+-     SECAM L                 NICAM                  12
+-
+-If the "force_mpx_mode" parameter is not specified, the correct mono-only
+-mode will be chosen based on the TV band.  However, the tuner will not
+-receive stereo audio or bilingual broadcasts correctly.
+-
+-To pass the "force_band" or "force_mpx_mode" parameters to the
+-wis-sony-tuner module, the following line must be added to the modprobe
+-configuration file, which varies from one Linux distribution to another.
+-
+-     options wis-sony-tuner force_band=B force_mpx_mode=2
+-
+-The above example would force the tuner to the PAL B/G TV band and receive
+-stereo audio broadcasts on the A2 carrier.
+-
+-To verify that the configuration has been placed in the correct location,
+-execute:
+-
+-        $ modprobe -c | grep wis-sony-tuner
+-
+-If the configuration line appears, then modprobe will pass the parameters
+-correctly the next time the wis-sony-tuner module is loaded into the
+-kernel.
+-
+-
+-  4. TESTING THE DRIVER
+-
+-
+-Because few Linux applications are able to correctly capture from
+-Video4Linux2 devices with only compressed formats supported, the new driver
+-should be tested with the "gorecord" application in the apps/ directory.
+-
+-First connect a video source to the device, such as a DVD player or VCR.
+-This will be captured to a file for testing the driver.  If an input source
+-is unavailable, a test file can still be captured, but the video will be
+-black and the audio will be silent.
+-
+-This application will auto-detect the V4L2 and ALSA/OSS device names of the
+-hardware and will record video and audio to an AVI file for a specified
+-number of seconds.  For example:
+-
+-        $ apps/gorecord -duration 60 capture.avi
+-
+-If this application does not successfully record an AVI file, the error
+-messages produced by gorecord and recorded in the system log (usually in
+-/var/log/messages) should provide information to help resolve the problem.
+-
+-Supplying no parameters to gorecord will cause it to probe the available
+-devices and exit.  Use the -help flag for usage information.
+-
+-
+-  5. USING THE DRIVER
+-
+-
+-The V4L2 device implemented by the driver provides a standard compressed
+-format API, within the following criteria:
+-
+-  * Applications that only support the original Video4Linux1 API will not
+-    be able to communicate with this driver at all.
+-
+-  * No raw video modes are supported, so applications like xawtv that
+-    expect only uncompressed video will not function.
+-
+-  * Supported compression formats are: Motion-JPEG, MPEG1, MPEG2 and MPEG4.
+-
+-  * MPEG video formats are delivered as Video Elementary Streams only.
+-    Program Stream (PS), Transport Stream (TS) and Packetized Elementary
+-    Stream (PES) formats are not supported.
+-
+-  * Video parameters such as format and input port may not be changed while
+-    the encoder is active.
+-
+-  * The audio capture device only functions when the video encoder is
+-    actively capturing video.  Attempts to read from the audio device when
+-    the encoder is inactive will result in an I/O error.
+-
+-  * The native format of the audio device is 48Khz 2-channel 16-bit
+-    little-endian PCM, delivered through the ALSA system.  No audio
+-    compression is implemented in the hardware.  ALSA may convert to other
+-    uncompressed formats on the fly.
+-
+-The include/ directory contains a C header file describing non-standard
+-features of the GO7007SB encoder, which are described below:
+-
+-
+-  GO7007IOC_S_COMP_PARAMS, GO7007IOC_G_COMP_PARAMS
+-
+-    These ioctls are used to negotiate general compression parameters.
+-
+-    To query the current parameters, call the GO7007IOC_G_COMP_PARAMS ioctl
+-    with a pointer to a struct go7007_comp_params.  If the driver is not
+-    set to MPEG format, the EINVAL error code will be returned.
+-
+-    To change the current parameters, initialize all fields of a struct
+-    go7007_comp_params and call the GO7007_IOC_S_COMP_PARAMS ioctl with a
+-    pointer to this structure.  The driver will return the current
+-    parameters with any necessary changes to conform to the limitations of
+-    the hardware or current compression mode.  Any or all fields can be set
+-    to zero to request a reasonable default value.  If the driver is not
+-    set to MPEG format, the EINVAL error code will be returned.  When I/O
+-    is in progress, the EBUSY error code will be returned.
+-
+-    Fields in struct go7007_comp_params:
+-
+-        __u32                        The maximum number of frames in each
+-          gop_size                   Group Of Pictures; i.e. the maximum
+-                                     number of frames minus one between
+-                                     each key frame.
+-
+-        __u32                        The maximum number of sequential
+-          max_b_frames               bidirectionally-predicted frames.
+-                                     (B-frames are not yet supported.)
+-
+-        enum go7007_aspect_ratio     The aspect ratio to be encoded in the
+-          aspect_ratio               meta-data of the compressed format.
+-
+-                                     Choices are:
+-                                        GO7007_ASPECT_RATIO_1_1
+-                                        GO7007_ASPECT_RATIO_4_3_NTSC
+-                                        GO7007_ASPECT_RATIO_4_3_PAL
+-                                        GO7007_ASPECT_RATIO_16_9_NTSC
+-                                        GO7007_ASPECT_RATIO_16_9_PAL
+-
+-        __u32                        Bit-wise OR of control flags (below)
+-          flags
+-
+-    Flags in struct go7007_comp_params:
+-
+-        GO7007_COMP_CLOSED_GOP       Only produce self-contained GOPs, used
+-                                     to produce streams appropriate for
+-                                     random seeking.
+-
+-        GO7007_COMP_OMIT_SEQ_HEADER  Omit the stream sequence header.
+-
+-
+-  GO7007IOC_S_MPEG_PARAMS, GO7007IOC_G_MPEG_PARAMS
+-
+-    These ioctls are used to negotiate MPEG-specific stream parameters when
+-    the pixelformat has been set to V4L2_PIX_FMT_MPEG.
+-
+-    To query the current parameters, call the GO7007IOC_G_MPEG_PARAMS ioctl
+-    with a pointer to a struct go7007_mpeg_params.  If the driver is not
+-    set to MPEG format, the EINVAL error code will be returned.
+-
+-    To change the current parameters, initialize all fields of a struct
+-    go7007_mpeg_params and call the GO7007_IOC_S_MPEG_PARAMS ioctl with a
+-    pointer to this structure.  The driver will return the current
+-    parameters with any necessary changes to conform to the limitations of
+-    the hardware or selected MPEG mode.  Any or all fields can be set to
+-    zero to request a reasonable default value.  If the driver is not set
+-    to MPEG format, the EINVAL error code will be returned.  When I/O is in
+-    progress, the EBUSY error code will be returned.
+-
+-    Fields in struct go7007_mpeg_params:
+-
+-        enum go7007_mpeg_video_standard
+-          mpeg_video_standard        The MPEG video standard in which to
+-                                     compress the video.
+-
+-                                     Choices are:
+-                                        GO7007_MPEG_VIDEO_MPEG1
+-                                        GO7007_MPEG_VIDEO_MPEG2
+-                                        GO7007_MPEG_VIDEO_MPEG4
+-
+-        __u32                        Bit-wise OR of control flags (below)
+-          flags
+-
+-        __u32                        The profile and level indication to be
+-          pali                       stored in the sequence header.  This
+-                                     is only used as an indicator to the
+-                                     decoder, and does not affect the MPEG
+-                                     features used in the video stream.
+-                                     Not valid for MPEG1.
+-
+-                                     Choices for MPEG2 are:
+-                                        GO7007_MPEG2_PROFILE_MAIN_MAIN
+-
+-                                     Choices for MPEG4 are:
+-                                        GO7007_MPEG4_PROFILE_S_L0
+-                                        GO7007_MPEG4_PROFILE_S_L1
+-                                        GO7007_MPEG4_PROFILE_S_L2
+-                                        GO7007_MPEG4_PROFILE_S_L3
+-                                        GO7007_MPEG4_PROFILE_ARTS_L1
+-                                        GO7007_MPEG4_PROFILE_ARTS_L2
+-                                        GO7007_MPEG4_PROFILE_ARTS_L3
+-                                        GO7007_MPEG4_PROFILE_ARTS_L4
+-                                        GO7007_MPEG4_PROFILE_AS_L0
+-                                        GO7007_MPEG4_PROFILE_AS_L1
+-                                        GO7007_MPEG4_PROFILE_AS_L2
+-                                        GO7007_MPEG4_PROFILE_AS_L3
+-                                        GO7007_MPEG4_PROFILE_AS_L4
+-                                        GO7007_MPEG4_PROFILE_AS_L5
+-
+-    Flags in struct go7007_mpeg_params:
+-
+-        GO7007_MPEG_FORCE_DVD_MODE   Force all compression parameters and
+-                                     bitrate control settings to comply
+-                                     with DVD MPEG2 stream requirements.
+-                                     This overrides most compression and
+-                                     bitrate settings!
+-
+-        GO7007_MPEG_OMIT_GOP_HEADER  Omit the GOP header.
+-
+-        GO7007_MPEG_REPEAT_SEQHEADER Repeat the MPEG sequence header at
+-                                     the start of each GOP.
+-
+-
+-  GO7007IOC_S_BITRATE, GO7007IOC_G_BITRATE
+-
+-    These ioctls are used to set and query the target bitrate value for the
+-    compressed video stream.  The bitrate may be selected by storing the
+-    target bits per second in an int and calling GO7007IOC_S_BITRATE with a
+-    pointer to the int.  The bitrate may be queried by calling
+-    GO7007IOC_G_BITRATE with a pointer to an int where the current bitrate
+-    will be stored.
+-
+-    Note that this is the primary means of controlling the video quality
+-    for all compression modes, including V4L2_PIX_FMT_MJPEG.  The
+-    VIDIOC_S_JPEGCOMP ioctl is not supported.
+-
+-
+-----------------------------------------------------------------------------
+-                   Installing the WIS PCI Voyager Driver
+----------------------------------------------------------------------------
+-
+-The WIS PCI Voyager driver requires several patches to the Linux 2.6.11.x
+-kernel source tree before compiling the driver.  These patches update the
+-in-kernel SAA7134 driver to the newest development version and patch bugs
+-in the TDA8290/TDA8275 tuner driver.
+-
+-The following patches must be downloaded from Gerd Knorr's website and
+-applied in the order listed:
+-
+-	http://dl.bytesex.org/patches/2.6.11-2/i2c-tuner
+-	http://dl.bytesex.org/patches/2.6.11-2/i2c-tuner2
+-	http://dl.bytesex.org/patches/2.6.11-2/v4l2-api-mpeg
+-	http://dl.bytesex.org/patches/2.6.11-2/saa7134-update
+-
+-The following patches are included with this SDK and can be applied in any
+-order:
+-
+-	patches/2.6.11/saa7134-voyager.diff
+-	patches/2.6.11/tda8275-newaddr.diff
+-	patches/2.6.11/tda8290-ntsc.diff
+-
+-Check to make sure the CONFIG_VIDEO_SAA7134 option is enabled in the kernel
+-configuration, and build and install the kernel.
+-
+-After rebooting into the new kernel, the GO7007 driver can be compiled and
+-installed:
+-
+-	$ make SAA7134_BUILD=y
+-	$ make install
+-	$ modprobe saa7134-go7007
+-
+-There will be two V4L video devices associated with the PCI Voyager.  The
+-first device (most likely /dev/video0) provides access to the raw video
+-capture mode of the SAA7133 device and is used to configure the source
+-video parameters and tune the TV tuner.  This device can be used with xawtv
+-or other V4L(2) video software as a standard uncompressed device.
+-
+-The second device (most likely /dev/video1) provides access to the
+-compression functions of the GO7007.  It can be tested using the gorecord
+-application in the apps/ directory of this SDK:
+-
+-	$ apps/gorecord -vdevice /dev/video1 -noaudio test.avi
+-
+-Currently the frame resolution is fixed at 720x480 (NTSC) or 720x576 (PAL),
+-and the video standard must be specified to both the raw and the compressed
+-video devices (xawtv and gorecord, for example).
+-
+-
+---------------------------------------------------------------------------
+-RELEASE NOTES FOR WIS GO7007SB LINUX DRIVER
+----------------------------------------------------------------------------
+-
+-Last updated: 5 November 2005
+-
+- - Release 0.9.7 includes new support for using udev to run fxload.  The
+-   install script should automatically detect whether the old hotplug
+-   scripts or the new udev rules should be used.  To force the use of
+-   hotplug, run "make install USE_UDEV=n".  To force the use of udev, run
+-   "make install USE_UDEV=y".
+-
+- - Motion detection is supported but undocumented.  Try the `modet` app
+-   for a demonstration of how to use the facility.
+-
+- - Using USB2.0 devices such as the TV402U with USB1.1 HCDs or hubs can
+-   cause buffer overruns and frame drops, even at low framerates, due to
+-   inconsistency in the bitrate control mechanism.
+-
+- - On devices with an SAA7115, including the Plextor ConvertX, video height
+-   values of 96, 128, 160, 192, 256, 320, and 384 do not work in NTSC mode.
+-   All valid heights up to 512 work correctly in PAL mode.
+-
+- - The WIS Star Trek and PCI Voyager boards have no support yet for audio
+-   or the TV tuner.
+diff --git a/LICENCE.it913x b/LICENCE.it913x
+deleted file mode 100644
+index ec8f56c..0000000
+--- a/LICENCE.it913x
++++ /dev/null
+@@ -1,17 +0,0 @@
+-Copyright (c) 2014, ITE Tech. Inc.
+-
+-The firmware files "dvb-usb-it9135-01.fw" and "dvb-usb-it9135-02.fw"
+-are for ITEtech it9135 Ax and Bx chip versions.
+-
+-Permission to use, copy, modify, and/or distribute this software for
+-any purpose with or without fee is hereby granted, provided that the
+-above copyright notice and this permission notice appear in all copies.
+-
+-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
+-FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY
+-DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+-WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+-ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+-SOFTWARE.
+diff --git a/LICENCE.rockchip b/LICENCE.rockchip
+deleted file mode 100644
+index d23b4c4..0000000
+--- a/LICENCE.rockchip
++++ /dev/null
+@@ -1,41 +0,0 @@
+-Copyright (c) 2016, Fuzhou Rockchip Electronics Co.Ltd
+-All rights reserved.
+-
+-Redistribution.  Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-  following disclaimer in the documentation and/or other materials
+-  provided with the distribution.
+-
+-* Neither the name of Fuzhou Rockchip Electronics Co.Ltd, its products
+-  nor the names of its suppliers may be used to endorse or promote products
+-  derived from this Software without specific prior written permission.
+-
+-* No reverse engineering, decompilation, or disassembly of this software
+-  is permitted.
+-
+-Limited patent license. Fuzhou Rockchip Electronics Co.Ltd grants a world-wide,
+-royalty-free, non-exclusive license under patents it now or hereafter
+-owns or controls to make, have made, use, import, offer to sell and
+-sell ("Utilize") this software, but solely to the extent that any
+-such patent is necessary to Utilize the software alone, or in
+-combination with an operating system licensed under an approved Open
+-Source license as listed by the Open Source Initiative at
+-http://opensource.org/licenses.  The patent license shall not apply to
+-any other combinations which include this software.  No hardware per
+-se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGE.
+diff --git a/LICENCE.siano b/LICENCE.siano
+deleted file mode 100644
+index 97e5440..0000000
+--- a/LICENCE.siano
++++ /dev/null
+@@ -1,31 +0,0 @@
+-FIRMWARE LICENSE TERMS
+-
+-Copyright (c) 2005-2014 Siano Mobile Silicon Ltd.
+-All rights reserved.
+-
+-Redistribution. Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-following disclaimer in the documentation and/or other materials
+-provided with the distribution.
+-
+-* Neither the name of Siano Mobile Silicon Ltd. nor the names of its
+-suppliers may be used to endorse or promote products derived from this
+-software without specific prior written permission.
+-
+-* No reverse engineering, decompilation, or disassembly of this software
+-is permitted.
+-
+-DISCLAIMER. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+-USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+diff --git a/LICENCE.ti-tspa b/LICENCE.ti-tspa
+deleted file mode 100644
+index 728fc2b..0000000
+--- a/LICENCE.ti-tspa
++++ /dev/null
+@@ -1,46 +0,0 @@
+-TI TSPA License
+-TECHNOLOGY AND SOFTWARE PUBLICLY AVAILABLE
+-SOFTWARE LICENSE
+-
+-Copyright (c) 2020, Texas Instruments Incorporated.
+-
+-All rights reserved not granted herein.
+-
+-Limited License.
+-
+-Texas Instruments Incorporated grants a world-wide, royalty-free, non-exclusive
+-license under copyrights and patents it now or hereafter owns or controls to
+-make, have made, use, import, offer to sell and sell ("Utilize") this software,
+-but solely to the extent that any such patent is necessary to Utilize the
+-software alone. The patent license shall not apply to any combinations which
+-include this software.  No hardware per se is licensed hereunder.
+-
+-Redistribution and use in binary form, without modification, are permitted
+-provided that the following conditions are met:
+-
+-* Redistributions must preserve existing copyright notices and reproduce this
+-license (including the above copyright notice and the disclaimer below) in the
+-documentation and/or other materials provided with the distribution.
+-
+-* Neither the name of Texas Instruments Incorporated nor the names of its
+-suppliers may be used to endorse or promote products derived from this software
+-without specific prior written permission.
+-
+-* No reverse engineering, decompilation, or disassembly of this software is
+-permitted.
+-
+-* Nothing shall obligate TI to provide you with source code for the software
+-licensed and provided to you in object code.
+-
+-DISCLAIMER.
+-
+-THIS SOFTWARE IS PROVIDED BY TI AND TI’S LICENSORS "AS IS" AND ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+-EVENT SHALL TI AND TI’S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+-EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENCE.xc4000 b/LICENCE.xc4000
+deleted file mode 100644
+index e3cd261..0000000
+--- a/LICENCE.xc4000
++++ /dev/null
+@@ -1,23 +0,0 @@
+-The following XC4000 firmware file "dvb-fe-xc4000-1.4.1.fw" was
+-created based on version 1.4 of "xc4000_firmwares.h".
+-
+-Firmware provided as part of an XC4000 Linux developers kit by Brian
+-Mathews <bmathews@xceive.com> to Devin Heitmueller
+-<dheitmueller@kernellabs.org> on July 1, 2009.
+-
+-The code was released by Xceive under the following license:
+-
+-// Copyright (c) 2009, Xceive Corporation <info@xceive.com>
+-//
+-// Permission to use, copy, modify, and/or distribute this software, only
+-// for use with Xceive ICs, for any purpose with or without fee is hereby
+-// granted, provided that the above copyright notice and this permission
+-// notice appear in all source code copies.
+-//
+-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+-// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+-// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+-// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+-// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+-// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+-// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+diff --git a/LICENCE.xc5000 b/LICENCE.xc5000
+deleted file mode 100644
+index 0ac8557..0000000
+--- a/LICENCE.xc5000
++++ /dev/null
+@@ -1,23 +0,0 @@
+-The following XC500 firmware file "dvb-fe-xc5000-1.6.114.fw" was
+-created based on "xc5000_firmwares_32000Khz.h".
+-
+-Firmware provided as part of an XC5000 Linux developers kit by Brian
+-Mathews <bmathews@xceive.com> to Devin Heitmueller <dheitmueller@linuxtv.org>
+-on July 1, 2009.
+-
+-The code was released by Xceive under the following license:
+-
+-// Copyright (c) 2009, Xceive Corporation <info@xceive.com>
+-//
+-// Permission to use, copy, modify, and/or distribute this software, only
+-// for use with Xceive ICs, for any purpose with or without fee is hereby
+-// granted, provided that the above copyright notice and this permission
+-// notice appear in all source code copies.
+-//
+-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+-// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+-// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+-// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+-// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+-// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+-// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+diff --git a/LICENCE.xc5000c b/LICENCE.xc5000c
+deleted file mode 100644
+index 23b81e7..0000000
+--- a/LICENCE.xc5000c
++++ /dev/null
+@@ -1,23 +0,0 @@
+-The following XC500C firmware file "dvb-fe-xc5000C-4.1.30.7.fw" was created
+-based on "Xc5200_firmwares_32000Khz.h".
+-
+-Firmware provided as part of an XC5000C Linux developers kit by Ramon Cazares
+-<Ramon.Cazares@CrestaTech.com> to Devin Heitmueller dheitmueller@linuxtv.org
+-on July 25, 2012.
+-
+-The code was released by Cresta Technology under the following license:
+-
+-// Copyright (c) 2012, Cresta Technology Corporation <info@crestatech.com>
+-//
+-// Permission to use, copy, modify, and/or distribute this software, only
+-// for use with Cresta Technlogy ICs, for any purpose with or without fee is
+-// hereby granted, provided that the above copyright notice and this
+-// permission notice appear in all source code copies.
+-//
+-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+-// WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+-// MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+-// ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+-// WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+-// ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+-// OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+diff --git a/LICENSE.Lontium b/LICENSE.Lontium
+deleted file mode 100644
+index 2989473..0000000
+--- a/LICENSE.Lontium
++++ /dev/null
+@@ -1,2 +0,0 @@
+-Lontium Semiconductor Corp. grants permission to use and redistribute aforementioned firmware file for the use with devices containing Lontium chipsets, but not as part of the Linux kernel or in any other form which would require the file itself to be covered by the terms of the GNU General Public License or the GNU Lesser General Public License.
+-The firmware file is distributed in the hope that it will be useful, but is provided WITHOUT ANY WARRANTY, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+diff --git a/LICENSE.amlogic_vdec b/LICENSE.amlogic_vdec
+deleted file mode 100644
+index ac48f20..0000000
+--- a/LICENSE.amlogic_vdec
++++ /dev/null
+@@ -1,15 +0,0 @@
+----------------------------------------------------------------------
+-Amlogic Co., Inc. grants permission to use and redistribute
+-aforementioned firmware files for the use with devices containing
+-Amlogic chipsets, but not as part of the Linux kernel or in any other
+-form which would require these files themselves to be covered by the
+-terms of the GNU General Public License or the GNU Lesser General
+-Public License.
+-
+-These firmware files are distributed in the hope that they will be
+-useful, but are provided WITHOUT ANY WARRANTY, INCLUDING BUT NOT
+-LIMITED TO IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A
+-PARTICULAR PURPOSE.
+-
+-Amlogic Contact: Arden Jin <Arden.Jin@amlogic.com>
+----------------------------------------------------------------------
+diff --git a/LICENSE.amphion_vpu b/LICENSE.amphion_vpu
+deleted file mode 100644
+index 31840ec..0000000
+--- a/LICENSE.amphion_vpu
++++ /dev/null
+@@ -1,48 +0,0 @@
+-Copyright 2015, Amphion Semiconductor Ltd
+-Copyright 2021, NXP
+-All rights reserved.
+-
+-Redistribution. Reproduction and redistribution in binary form, without
+-modification, for use solely in conjunction with a NXP
+-chipset, is permitted provided that the following conditions are met:
+-
+-  . Redistributions must reproduce the above copyright notice and the following
+-    disclaimer in the documentation and/or other materials provided with the
+-    distribution.
+-
+-  . Neither the name of NXP nor the names of its suppliers
+-    may be used to endorse or promote products derived from this Software
+-    without specific prior written permission.
+-
+-  . No reverse engineering, decompilation, or disassembly of this Software is
+-    permitted.
+-
+-Limited patent license. NXP (.Licensor.) grants you
+-(.Licensee.) a limited, worldwide, royalty-free, non-exclusive license under
+-the Patents to make, have made, use, import, offer to sell and sell the
+-Software. No hardware per se is licensed hereunder.
+-The term .Patents. as used in this agreement means only those patents or patent
+-applications owned solely and exclusively by Licensor as of the date of
+-Licensor.s submission of the Software and any patents deriving priority (i.e.,
+-having a first effective filing date) therefrom. The term .Software. as used in
+-this agreement means the firmware image submitted by Licensor, under the terms
+-of this license, to git://git.kernel.org/pub/scm/linux/kernel/git/firmware/
+-linux-firmware.git.
+-Notwithstanding anything to the contrary herein, Licensor does not grant and
+-Licensee does not receive, by virtue of this agreement or the Licensor's
+-submission of any Software, any license or other rights under any patent or
+-patent application owned by any affiliate of Licensor or any other entity
+-(other than Licensor), whether expressly, impliedly, by virtue of estoppel or
+-exhaustion, or otherwise.
+-
+-DISCLAIMER. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+-THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENSE.dib0700 b/LICENSE.dib0700
+deleted file mode 100644
+index fdb6bde..0000000
+--- a/LICENSE.dib0700
++++ /dev/null
+@@ -1,22 +0,0 @@
+-Firmware provided by Patrick Boettcher <pboettcher@dibcom.fr> to Devin
+-Heitmueller <dheitmueller@kernellabs.com> on October 8, 2009.
+-
+-The USB firmware file "dvb-usb-dib0700.1.20.fw" for DiBcom's DiB0700,
+-used together with the Linux driver module dvb-usb-dib0700, is
+-provided under the following licensing terms:
+-
+-Copyright (c) 2009, DiBcom
+-
+-Permission to use, copy, modify, and/or distribute this software for
+-any purpose with or without fee is hereby granted, provided that the
+-above copyright notice and this permission notice appear in all
+-copies.
+-
+-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+-WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+-WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+-AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+-DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+-PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+-TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+-PERFORMANCE OF THIS SOFTWARE.
+diff --git a/LICENSE.ipu3_firmware b/LICENSE.ipu3_firmware
+deleted file mode 100644
+index 2559884..0000000
+--- a/LICENSE.ipu3_firmware
++++ /dev/null
+@@ -1,36 +0,0 @@
+-Copyright (c) 2017, Intel Corporation.
+-All rights reserved.
+-
+-Redistribution. Redistribution and use in binary form, without
+-modification, are permitted provided that the following conditions are
+-met:
+-
+-* Redistributions must reproduce the above copyright notice and the
+-  following disclaimer in the documentation and/or other materials
+-  provided with the distribution.
+-* Neither the name of Intel Corporation nor the names of its suppliers
+-  may be used to endorse or promote products derived from this software
+-  without specific prior written permission.
+-* No reverse engineering, decompilation, or disassembly of this software
+-  is permitted.
+-
+-Limited patent license. Intel Corporation grants a world-wide,
+-royalty-free, non-exclusive license under patents it now or hereafter
+-owns or controls to make, have made, use, import, offer to sell and
+-sell (“Utilize”) this software, but solely to the extent that any
+-such patent is necessary to Utilize the software alone. The patent license
+-shall not apply to any combinations which include this software. No hardware
+-per se is licensed hereunder.
+-
+-DISCLAIMER.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+-OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+-TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+-USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGE.
+diff --git a/WHENCE b/WHENCE
+index 116d04d..d78e45e 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -53,16 +53,6 @@ Found in hex form in the kernel source.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: dvb-ttusb-budget -- Technotrend/Hauppauge Nova-USB devices
+-
+-File: ttusb-budget/dspbootcode.bin
+-
+-Licence: Unknown
+-
+-Found in hex form in the kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: keyspan -- USB Keyspan USA-xxx serial device
+ 
+ File: keyspan/mpr.fw
+@@ -236,45 +226,6 @@ Converted from Intel HEX files, used in our binary representation of ihex.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: cpia2 -- cameras based on Vision's CPiA2
+-
+-File: cpia2/stv0672_vp4.bin
+-
+-Licence: Allegedly GPLv2+, but no source visible. Marked:
+-	Copyright (C) 2001 STMicroelectronics, Inc.
+-	Contact:  steve.miller@st.com
+-	Description: This file contains patch data for the CPiA2 (stv0672) VP4.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: dabusb -- Digital Audio Broadcasting (DAB) Receiver for USB and Linux
+-
+-File: dabusb/firmware.fw
+-File: dabusb/bitstream.bin
+-
+-Licence: Distributable
+-
+- * Copyright (C) 1999 BayCom GmbH
+- *
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that redistributions of source
+- * code retain the above copyright notice and this comment without
+- * modification.
+-
+---------------------------------------------------------------------------
+-
+-Driver: vicam -- USB 3com HomeConnect (aka vicam)
+-
+-File: vicam/firmware.fw
+-
+-Licence: Unknown
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: io_edgeport - USB Inside Out Edgeport Serial Driver
+ 
+ File: edgeport/boot.fw
+@@ -1038,17 +989,6 @@ Also available from http://wireless.kernel.org/en/users/Drivers/iwlwifi#Firmware
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: ipu3-imgu - Intel IPU3 (3rd Gen Image Processing Unit) driver
+-
+-File: intel/irci_irci_ecr-master_20161208_0213_20170112_1500.bin
+-Version: irci_irci_ecr-master_20161208_0213_20170112_1500
+-md5sum: 59abc311fce49c5a180b5a8a3917912d
+-Link: intel/ipu3-fw.bin -> irci_irci_ecr-master_20161208_0213_20170112_1500.bin
+-
+-Licence: Redistributable. See LICENSE.ipu3_firmware for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: tehuti - Tehuti Networks 10G Ethernet
+ 
+ File: tehuti/bdx.bin
+@@ -1203,36 +1143,6 @@ Found in hex form in kernel source.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: cx231xx - Conexant Cx23100/101/102 USB broadcast A/V decoder
+-
+-File: v4l-cx231xx-avcore-01.fw
+-
+-Driver: cx23418 - Conexant PCI Broadcast A/V with MPEG encoder
+-
+-File: v4l-cx23418-apu.fw
+-File: v4l-cx23418-cpu.fw
+-File: v4l-cx23418-dig.fw
+-
+-Driver: cx23885 - Conexant PCI Express Broadcast A/V decoder
+-
+-File: v4l-cx23885-avcore-01.fw
+-
+-Driver: cx23840 - Conexant sideport Broadcast A/V decoder
+-
+-File: v4l-cx25840.fw
+-
+-Licence: Redistributable.
+-
+-  Conexant grants permission to use and redistribute these firmware
+-  files for use with Conexant devices, but not as a part of the Linux
+-  kernel or in any other form which would require these files themselves
+-  to be covered by the terms of the GNU General Public License.
+-  These firmware files are distributed in the hope that they will be
+-  useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+-  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-
+---------------------------------------------------------------------------
+-
+ Driver: qlogicpti - PTI Qlogic, ISP Driver
+ 
+ File: qlogic/isp1000.bin
+@@ -1316,18 +1226,6 @@ Available from http://ldriver.qlogic.com/firmware/netxen_nic/new/
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: dvb-ttpci -- AV7110 cards
+-
+-File: av7110/bootcode.bin
+-Source: av7110/Boot.S
+-Source: av7110/Makefile
+-
+-Licence: GPLv2 or later. See GPL-2 and GPL-3 for details.
+-
+-ARM assembly source code from https://linuxtv.org/downloads/firmware/Boot.S
+-
+---------------------------------------------------------------------------
+-
+ Driver: rt61pci - Ralink RT2561, RT2561S, RT2661 wireless MACs
+ 
+ File: rt2561.bin
+@@ -1421,35 +1319,6 @@ Provided from the author, Bernd Porr <BerndPorr@f2s.com>
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: xc4000 - Xceive 4000 Tuner driver
+-
+-File: dvb-fe-xc4000-1.4.1.fw
+-Version: 1.4.1
+-
+-Licence: Redistributable. See LICENCE.xc4000 for details
+-
+---------------------------------------------------------------------------
+-Driver: xc5000 - Xceive 5000 Tuner driver
+-
+-File: dvb-fe-xc5000-1.6.114.fw
+-Version: 1.6.114
+-
+-File: dvb-fe-xc5000c-4.1.30.7.fw
+-Version: 4.1.30.7
+-
+-Licence: Redistributable. See LICENCE.xc5000 and LICENCE.xc5000c for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: dib0700 - DiBcom dib0700 USB DVB bridge driver
+-
+-File: dvb-usb-dib0700-1.20.fw
+-Version: 1.20
+-
+-Licence: Redistributable. See LICENSE.dib0700 for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: ath3k - DFU Driver for Atheros bluetooth chipset AR3011
+ 
+ File: ath3k-1.fw
+@@ -2387,14 +2256,6 @@ Licence: Redistributable, provided by Realtek in their driver
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: lgs8gxx - Legend Silicon GB20600 demodulator driver
+-
+-File: lgs8g75.fw
+-
+-Licence: Unknown
+-
+---------------------------------------------------------------------------
+-
+ Driver: ib_qib - QLogic Infiniband
+ 
+ File: qlogic/sd7220.fw
+@@ -2671,14 +2532,6 @@ Licence: GPLv2. See GPL-2 for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: ti-vpe - Texas Instruments V4L2 driver for Video Processing Engine
+-
+-File: ti/vpdma-1b8.bin
+-
+-Licence: Redistributable. See LICENCE.ti-tspa for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: wl1251 - Texas Instruments 802.11 WLAN driver for WiLink4 chips
+ 
+ File: ti-connectivity/wl1251-fw.bin
+@@ -2807,23 +2660,6 @@ Licence: Redistributable. See LICENCE.ti-connectivity for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: tlg2300 - Telgent 2300 V4L/DVB driver.
+-
+-File: tlg2300_firmware.bin
+-
+-Licence: Redistributable.
+-
+-  Telegent System grants permission to use and redistribute these
+-  firmware files for use with devices containing the chip tlg2300, but
+-  not as a part of the Linux kernel or in any other form which would
+-  require these files themselves to be covered by the terms of the GNU
+-  General Public License. These firmware files are distributed in the
+-  hope that they will be useful, but WITHOUT ANY WARRANTY; without even
+-  the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+-  PURPOSE.
+-
+---------------------------------------------------------------------------
+-
+ Driver: r8712u - Realtek 802.11n WLAN driver for RTL8712U
+ 
+ File: rtlwifi/rtl8712u.bin
+@@ -3459,23 +3295,6 @@ License: Redistributable. See LICENCE.atheros_firmware for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: drxk - Micronas DRX-K demodulator driver
+-
+-File: dvb-usb-terratec-h5-drxk.fw
+-
+-Licence: Redistributable.
+-
+-TERRATEC grants permission to use and redistribute these firmware
+-files for use with TERRATEC devices, but not as part of the Linux
+-kernel or in any other form which would require these files themselves
+-to be covered by the terms of the GNU General Public License.
+-
+-These firmware files are distributed in the hope that they will be
+-useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+-of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-
+---------------------------------------------------------------------------
+-
+ Driver: ene-ub6250 -- ENE UB6250 SD card reader driver
+ 
+ File: ene-ub6250/sd_init1.bin
+@@ -3506,27 +3325,6 @@ Licence: Redistributable. See LICENCE.atheros_firmware for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: s5p-mfc - Samsung MFC video encoder/decoder driver
+-
+-File: s5p-mfc.fw
+-File: s5p-mfc-v6.fw
+-File: s5p-mfc-v6-v2.fw
+-File: s5p-mfc-v7.fw
+-File: s5p-mfc-v8.fw
+-
+-Licence: Redistributable.
+-
+-Samsung grants permission to use and redistribute aforementioned firmware
+-files for the use with Exynos series devices, but not as part of the Linux
+-kernel, or in any other form which would require these files themselves
+-to be covered by the terms of the GNU General Public License.
+-
+-These firmware files are distributed in the hope that they will be
+-useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+-of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-
+---------------------------------------------------------------------------
+-
+ Driver: carl9170 -- Atheros AR9170 802.11 draft-n USB driver
+ 
+ File: carl9170-1.fw
+@@ -3770,33 +3568,6 @@ of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: go7007
+-
+-File: go7007/s2250-1.fw
+-File: go7007/s2250-2.fw
+-Link: s2250.fw -> go7007/s2250-2.fw
+-Link: s2250_loader.fw -> go7007/s2250-1.fw
+-
+-Licence:
+-  Sensoray grants permission to use and redistribute these firmware
+-  files for use with Sensoray devices, but not as a part of the Linux
+-  kernel or in any other form which would require these files themselves
+-  to be covered by the terms of the GNU General Public License.
+-  These firmware files are distributed in the hope that they will be
+-  useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+-  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-
+-File: go7007/go7007fw.bin
+-File: go7007/go7007tv.bin
+-File: go7007/lr192.fw
+-File: go7007/px-m402u.fw
+-File: go7007/px-tv402u.fw
+-File: go7007/wis-startrek.fw
+-
+-Licence: Redistributable. See LICENCE.go7007 for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: ccp - Platform Security Processor (PSP) device
+ 
+ File: amd/amd_sev_fam17h_model0xh.sbin
+@@ -3967,44 +3738,6 @@ Licence: Redistributable. See LICENCE.r8a779x_usb3 for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: as102 - Abilis Systems Single DVB-T Receiver
+-
+-File: as102_data1_st.hex
+-File: as102_data2_st.hex
+-
+-License: Redistributable. See LICENCE.Abilis for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: it9135 -- ITEtech IT913x DVB-T USB driver
+-
+-File: dvb-usb-it9135-01.fw
+-File: dvb-usb-it9135-02.fw
+-
+-Licence: Redistributable. See LICENCE.it913x for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: smsmdtv - Siano MDTV Core module
+-
+-File: cmmb_vega_12mhz.inp
+-File: cmmb_venice_12mhz.inp
+-File: dvb_nova_12mhz.inp
+-File: dvb_nova_12mhz_b0.inp
+-File: isdbt_nova_12mhz.inp
+-File: isdbt_nova_12mhz_b0.inp
+-File: isdbt_rio.inp
+-File: sms1xxx-hcw-55xxx-dvbt-02.fw
+-File: sms1xxx-hcw-55xxx-isdbt-02.fw
+-File: sms1xxx-nova-a-dvbt-01.fw
+-File: sms1xxx-nova-b-dvbt-01.fw
+-File: sms1xxx-stellar-dvbt-01.fw
+-File: tdmb_nova_12mhz.inp
+-
+-Licence: Redistributable. See LICENCE.siano for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: xhci-tegra -- NVIDIA Tegra XHCI driver
+ 
+ File: nvidia/tegra124/xusb.bin
+@@ -4023,23 +3756,6 @@ Licence: Redistributable. See LICENCE.nvidia for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: tegra-vic -- NVIDIA Tegra VIC driver
+-
+-File: nvidia/tegra124/vic03_ucode.bin
+-Link: nvidia/tegra124/vic.bin -> vic03_ucode.bin
+-
+-File: nvidia/tegra210/vic04_ucode.bin
+-Link: nvidia/tegra210/vic.bin -> vic04_ucode.bin
+-
+-File: nvidia/tegra186/vic04_ucode.bin
+-Link: nvidia/tegra186/vic.bin -> vic04_ucode.bin
+-
+-File: nvidia/tegra194/vic.bin
+-
+-Licence: Redistributable. See LICENCE.nvidia for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: atusb - ATUSB IEEE 802.15.4 transceiver driver
+ 
+ File: atusb/atusb-0.2.dfu
+@@ -4995,17 +4711,6 @@ Licence: Redistributable. See LICENCE.Marvell for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: mtk-vpu - MediaTek VPU video processing unit driver
+-
+-File: mediatek/mt8173/vpu_d.bin
+-File: mediatek/mt8173/vpu_p.bin
+-Link: vpu_d.bin -> mediatek/mt8173/vpu_d.bin
+-Link: vpu_p.bin -> mediatek/mt8173/vpu_p.bin
+-
+-Licence: Redistributable. See LICENCE.mediatek for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: mtk_scp - MediaTek SCP System Control Processing Driver
+ 
+ File: mediatek/mt8183/scp.img
+@@ -5035,15 +4740,6 @@ Licence: Redistributable. See LICENCE.mediatek for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: rk3399-dptx - ROCKCHIP rk3399 dptx firmware
+-
+-File: rockchip/dptx.bin
+-Version: 3.1
+-
+-Licence: Redistributable. See LICENCE.rockchip for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: mt76x0 - MediaTek MT76x0 Wireless MACs
+ 
+ File: mediatek/mt7610u.bin
+@@ -5323,44 +5019,6 @@ Licence: Redistributable. See LICENSE.QualcommAtheros_ath10k for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: venus - Qualcomm Venus video codec accelerator
+-
+-File: qcom/venus-1.8/venus.mbn
+-Link: qcom/venus-1.8/venus.mdt -> venus.mbn
+-
+-Version: 1.8-00109
+-
+-File: qcom/venus-4.2/venus.mbn
+-Link: qcom/venus-4.2/venus.mdt -> venus.mbn
+-
+-Version: 4.2
+-
+-File: qcom/venus-5.2/venus.mbn
+-Link: qcom/venus-5.2/venus.mdt -> venus.mbn
+-
+-Version: 5.2-00023
+-
+-File: qcom/venus-5.4/venus.mbn
+-Link: qcom/venus-5.4/venus.mdt -> venus.mbn
+-
+-Version: 5.4-00053
+-
+-File: qcom/vpu-1.0/venus.mbn
+-Link: qcom/vpu-1.0/venus.mdt -> venus.mbn
+-
+-Version: VIDEO.VPU.1.0-00087-PROD-1
+-
+-File: qcom/vpu-2.0/venus.mbn
+-
+-Version: VIDEO.VPU.2.0-00049-PROD-1
+-
+-Licence: Redistributable. See LICENSE.qcom and qcom/NOTICE.txt for details
+-
+-Binary files supplied originally from
+-https://developer.qualcomm.com/hardware/dragonboard-410c/tools
+-
+---------------------------------------------------------------------------
+-
+ Driver: imx-sdma - support for i.MX SDMA driver
+ 
+ File: imx/sdma/sdma-imx6q.bin
+@@ -5582,15 +5240,6 @@ Licence:
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: cdns-mhdp - Cadence MHDP8546 DP bridge
+-
+-File: cadence/mhdp8546.bin
+-Version: 2.1.0
+-
+-Licence: Redistributable. See LICENCE.cadence for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: fsl-mc bus - NXP Management Complex Bus Driver
+ 
+ File: dpaa2/mc/mc_10.10.0_ls1088a.itb
+@@ -5622,28 +5271,6 @@ Licence: Redistributable. See LICENCE.microchip for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: meson-vdec - Amlogic video decoder
+-
+-File: meson/vdec/g12a_h264.bin
+-File: meson/vdec/g12a_hevc_mmu.bin
+-File: meson/vdec/g12a_vp9.bin
+-File: meson/vdec/gxbb_h264.bin
+-File: meson/vdec/gxl_h263.bin
+-File: meson/vdec/gxl_h264.bin
+-File: meson/vdec/gxl_hevc.bin
+-File: meson/vdec/gxl_hevc_mmu.bin
+-File: meson/vdec/gxl_mjpeg.bin
+-File: meson/vdec/gxl_mpeg12.bin
+-File: meson/vdec/gxl_mpeg4_5.bin
+-File: meson/vdec/gxl_vp9.bin
+-File: meson/vdec/gxm_h264.bin
+-File: meson/vdec/sm1_hevc_mmu.bin
+-File: meson/vdec/sm1_vp9_mmu.bin
+-
+-Licence: Redistributable. See LICENSE.amlogic_vdec for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: ice - Intel(R) Ethernet Connection E800 Series
+ 
+ File: intel/ice/ddp/ice-1.3.30.0.pkg
+@@ -5685,14 +5312,6 @@ Licence: Redistributable. See LICENCE.Marvell for details.
+ 
+ ------------------------------------------------
+ 
+-Driver: lt9611uxc - Lontium DSI to HDMI bridge
+-
+-File: lt9611uxc_fw.bin
+-
+-License: Redistributable. See LICENSE.Lontium for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: wfx - Silicon Labs Wi-Fi Transceiver
+ 
+ File: wfx/wfm_wf200_C0.sec
+@@ -5713,14 +5332,6 @@ https://github.com/SiliconLabs/wfx-linux-tools
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: wave5 - Chips&Media, Inc. video codec driver
+-
+-File: cnm/wave521c_k3_codec_fw.bin
+-
+-Licence: Redistributable. See LICENCE.cnm for details.
+-
+----------------------------------------------------------------------------
+-
+ Driver: rvu_cptpf - Marvell CPT driver
+ 
+ File: mrvl/cpt01/ae.out
+@@ -5741,17 +5352,6 @@ Licence: Redistributable. See LICENCE.Marvell for details.
+ 
+ ---------------------------------------------------------------------------
+ 
+-Driver: amphion - Amphion VPU(Video Processing Unit) Codec IP driver
+-
+-File: amphion/vpu/vpu_fw_imx8_dec.bin
+-Version: 1.8.8
+-File: amphion/vpu/vpu_fw_imx8_enc.bin
+-Version: 1.3.4
+-
+-Licence: Redistributable. See LICENSE.amphion_vpu for details
+-
+----------------------------------------------------------------------------
+-
+ Driver: nxp-sr1xx - NXP Ultra Wide Band driver
+ File: nxp/sr150_fw.bin
+ Version: 35.00.03
+-- 
+2.40.1
+

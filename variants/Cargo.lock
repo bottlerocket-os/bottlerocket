@@ -856,6 +856,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "linux-firmware"
+version = "0.1.0"
+
+[[package]]
 name = "log4j2-hotpatch"
 version = "0.1.0"
 
@@ -889,6 +893,7 @@ dependencies = [
  "docker-proxy",
  "iputils",
  "kernel-6_1",
+ "linux-firmware",
  "login",
  "release",
  "strace",
@@ -903,6 +908,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_10",
  "kubernetes-1_23",
+ "linux-firmware",
  "release",
 ]
 
@@ -915,6 +921,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_15",
  "kubernetes-1_24",
+ "linux-firmware",
  "release",
 ]
 
@@ -927,6 +934,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_15",
  "kubernetes-1_25",
+ "linux-firmware",
  "release",
 ]
 
@@ -939,6 +947,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_15",
  "kubernetes-1_26",
+ "linux-firmware",
  "release",
 ]
 
@@ -951,6 +960,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_15",
  "kubernetes-1_27",
+ "linux-firmware",
  "release",
 ]
 

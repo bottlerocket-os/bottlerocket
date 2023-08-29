@@ -1,0 +1,1923 @@
+From 2819be643186fa19869700e0af67444872d677c7 Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Wed, 26 Jul 2023 11:16:37 +0000
+Subject: [PATCH] linux-firmware: gpu: Remove firmware for GPU devices
+
+Bottlerocket does not provide drivers for any GPUs for any of its
+kernels. Thus, shipping firmware for any of these non-supported devices
+makes no sense. One exception is the nvidia drivers for tesla devices in
+aws-*-nvidia variants. These variants include drivers through
+kmod-*-nvidia packages which ship device specific firmware for supported
+cards.
+
+The following list maps drivers as specified in WHENCE to kernel config
+options for easy reference, should firmware be needed through driver
+addition.
+
+* mga - CONFIG_DRM_MGA && CONFIG_DRM_MGAG200
+* r128 - CONFIG_DRM_R128
+* radeon - CONFIG_DRM_RADEON
+* amdgpu - CONFIG_DRM_AMDGPU
+* nouveau - CONFIG_DRM_NOUVEAU
+* adreno - CONFIG_DRM_MSM
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENCE.nvidia      |  131 -----
+ LICENSE.amdgpu      |   51 --
+ LICENSE.qcom        |  206 -------
+ LICENSE.qcom_yamato |   25 -
+ LICENSE.radeon      |   51 --
+ WHENCE              | 1363 -------------------------------------------
+ 6 files changed, 1827 deletions(-)
+ delete mode 100644 LICENCE.nvidia
+ delete mode 100644 LICENSE.amdgpu
+ delete mode 100644 LICENSE.qcom
+ delete mode 100644 LICENSE.qcom_yamato
+ delete mode 100644 LICENSE.radeon
+
+diff --git a/LICENCE.nvidia b/LICENCE.nvidia
+deleted file mode 100644
+index b99d5a3..0000000
+--- a/LICENCE.nvidia
++++ /dev/null
+@@ -1,131 +0,0 @@
+-           License For Customer Use of NVIDIA Software
+-
+-
+-IMPORTANT NOTICE -- READ CAREFULLY: This License For Customer Use of
+-NVIDIA Software ("LICENSE") is the agreement which governs use of
+-the software of NVIDIA Corporation and its subsidiaries ("NVIDIA")
+-downloadable herefrom, including computer software and associated
+-printed materials ("SOFTWARE").  By downloading, installing, copying,
+-or otherwise using the SOFTWARE, you agree to be bound by the terms
+-of this LICENSE.  If you do not agree to the terms of this LICENSE,
+-do not download the SOFTWARE.
+-
+-RECITALS
+-
+-Use of NVIDIA's products requires three elements: the SOFTWARE, the
+-hardware, and a personal computer. The SOFTWARE is protected by copyright
+-laws and international copyright treaties, as well as other intellectual
+-property laws and treaties.  The SOFTWARE may be protected by various
+-patents, and is not sold, and instead is only licensed for use, strictly
+-in accordance with this document.  The hardware is protected by various
+-patents, and is sold, but this agreement does not cover that sale, since
+-it may not necessarily be sold as a package with the SOFTWARE.  This
+-agreement sets forth the terms and conditions of the SOFTWARE LICENSE only.
+-
+-1.  DEFINITIONS
+-
+-1.1  Customer.  Customer means the entity or individual that
+-downloads or otherwise obtains the SOFTWARE.
+-
+-2.  GRANT OF LICENSE
+-
+-2.1  Rights and Limitations of Grant.  NVIDIA hereby grants Customer
+-the following non-exclusive, non-transferable right to use the
+-SOFTWARE, with the following limitations:
+-
+-2.1.1  Rights.  Customer may install and use multiple copies of the
+-SOFTWARE on a shared computer or concurrently on different computers,
+-and make multiple back-up copies of the SOFTWARE, solely for Customer's
+-use within Customer's Enterprise. "Enterprise" shall mean individual use
+-by Customer or any legal entity (such as a corporation or university)
+-and the subsidiaries it owns by more than fifty percent (50%).
+-
+-2.1.2  Open Source Exception.  Notwithstanding the foregoing terms
+-of Section 2.1.1, SOFTWARE may be copied and redistributed solely for
+-use on operating systems distributed under the terms of an OSI-approved
+-open source license as listed by the Open Source Initiative at
+-http://opensource.org, provided that the binary files thereof are not
+-modified, and Customer provides a copy of this license with the SOFTWARE.
+-
+-2.1.3  Limitations.
+-
+-No Reverse Engineering.  Customer may not reverse engineer,
+-decompile, or disassemble the SOFTWARE, nor attempt in any other
+-manner to obtain the source code.
+-
+-Usage. SOFTWARE is licensed only for use with microprocessor(s) which have
+-been (i) designed by NVIDIA and (ii) either (a) sold by or (b) licensed by
+-NVIDIA. Customer shall not use SOFTWARE in conjunction with, nor cause
+-SOFTWARE to be executed by, any other microprocessor.
+-
+-No Translation. Customer shall not translate SOFTWARE, nor cause or permit
+-SOFTWARE to be translated, from the architecture or language in which it is
+-originally provided by NVIDIA, into any other architecture or language.
+-
+-No Rental.  Customer may not rent or lease the SOFTWARE to someone
+-else.
+-
+-3.  TERMINATION
+-
+-This LICENSE will automatically terminate if Customer fails to
+-comply with any of the terms and conditions hereof.  In such event,
+-Customer must destroy all copies of the SOFTWARE and all of its
+-component parts.
+-
+-Defensive Suspension.  If Customer commences or participates in any legal
+-proceeding against NVIDIA, then NVIDIA may, in its sole discretion,
+-suspend or terminate all license grants and any other rights provided
+-under this LICENSE during the pendency of such legal proceedings.
+-
+-4.  COPYRIGHT
+-
+-All title and copyrights in and to the SOFTWARE (including but
+-not limited to all images, photographs, animations, video, audio,
+-music, text, and other information incorporated into the SOFTWARE),
+-the accompanying printed materials, and any copies of the SOFTWARE,
+-are owned by NVIDIA, or its suppliers.  The SOFTWARE is protected
+-by copyright laws and international treaty provisions.  Accordingly,
+-Customer is required to treat the SOFTWARE like any other copyrighted
+-material, except as otherwise allowed pursuant to this LICENSE
+-and that it may make one copy of the SOFTWARE solely for backup or
+-archive purposes.
+-
+-5.  APPLICABLE LAW
+-
+-This agreement shall be deemed to have been made in, and shall be
+-construed pursuant to, the laws of the State of California.
+-
+-6.  DISCLAIMER OF WARRANTIES AND LIMITATION ON LIABILITY
+-
+-6.1  No Warranties.  TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE
+-LAW, THE SOFTWARE IS PROVIDED "AS IS" AND NVIDIA AND ITS SUPPLIERS
+-DISCLAIM ALL WARRANTIES, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT
+-NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+-FOR A PARTICULAR PURPOSE.
+-
+-6.2  No Liability for Consequential Damages.  TO THE MAXIMUM
+-EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL NVIDIA OR
+-ITS SUPPLIERS BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, OR
+-CONSEQUENTIAL DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION,
+-DAMAGES FOR LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS
+-OF BUSINESS INFORMATION, OR ANY OTHER PECUNIARY LOSS) ARISING OUT
+-OF THE USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF NVIDIA HAS
+-BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+-
+-7.  MISCELLANEOUS
+-
+-The United Nations Convention on Contracts for the International
+-Sale of Goods is specifically disclaimed.  If any provision of this
+-LICENSE is inconsistent with, or cannot be fully enforced under,
+-the law, such provision will be construed as limited to the extent
+-necessary to be consistent with and fully enforceable under the law.
+-This agreement is the final, complete and exclusive agreement between
+-the parties relating to the subject matter hereof, and supersedes
+-all prior or contemporaneous understandings and agreements relating
+-to such subject matter, whether oral or written.  Customer agrees
+-that it will not ship, transfer or export the SOFTWARE into any
+-country, or use the SOFTWARE in any manner, prohibited by the
+-United States Bureau of Export Administration or any export laws,
+-restrictions or regulations.  This LICENSE may only be modified in
+-writing signed by an authorized officer of NVIDIA.
+-
+diff --git a/LICENSE.amdgpu b/LICENSE.amdgpu
+deleted file mode 100644
+index 349e207..0000000
+--- a/LICENSE.amdgpu
++++ /dev/null
+@@ -1,51 +0,0 @@
+-Copyright (C) 2023  Advanced Micro Devices, Inc. All rights reserved.
+-
+-REDISTRIBUTION: Permission is hereby granted, free of any license fees,
+-to any person obtaining a copy of this microcode (the "Software"), to
+-install, reproduce, copy and distribute copies, in binary form only, of
+-the Software and to permit persons to whom the Software is provided to
+-do the same, provided that the following conditions are met:
+-
+-No reverse engineering, decompilation, or disassembly of this Software
+-is permitted.
+-
+-Redistributions must reproduce the above copyright notice, this
+-permission notice, and the following disclaimers and notices in the
+-Software documentation and/or other materials provided with the
+-Software.
+-
+-DISCLAIMER: THE USE OF THE SOFTWARE IS AT YOUR SOLE RISK.  THE SOFTWARE
+-IS PROVIDED "AS IS" AND WITHOUT WARRANTY OF ANY KIND AND COPYRIGHT
+-HOLDER AND ITS LICENSORS EXPRESSLY DISCLAIM ALL WARRANTIES, EXPRESS AND
+-IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+-COPYRIGHT HOLDER AND ITS LICENSORS DO NOT WARRANT THAT THE SOFTWARE WILL
+-MEET YOUR REQUIREMENTS, OR THAT THE OPERATION OF THE SOFTWARE WILL BE
+-UNINTERRUPTED OR ERROR-FREE.  THE ENTIRE RISK ASSOCIATED WITH THE USE OF
+-THE SOFTWARE IS ASSUMED BY YOU.  FURTHERMORE, COPYRIGHT HOLDER AND ITS
+-LICENSORS DO NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE
+-OR THE RESULTS OF THE USE OF THE SOFTWARE IN TERMS OF ITS CORRECTNESS,
+-ACCURACY, RELIABILITY, CURRENTNESS, OR OTHERWISE.
+-
+-DISCLAIMER: UNDER NO CIRCUMSTANCES INCLUDING NEGLIGENCE, SHALL COPYRIGHT
+-HOLDER AND ITS LICENSORS OR ITS DIRECTORS, OFFICERS, EMPLOYEES OR AGENTS
+-("AUTHORIZED REPRESENTATIVES") BE LIABLE FOR ANY INCIDENTAL, INDIRECT,
+-SPECIAL OR CONSEQUENTIAL DAMAGES (INCLUDING DAMAGES FOR LOSS OF BUSINESS
+-PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, AND THE
+-LIKE) ARISING OUT OF THE USE, MISUSE OR INABILITY TO USE THE SOFTWARE,
+-BREACH OR DEFAULT, INCLUDING THOSE ARISING FROM INFRINGEMENT OR ALLEGED
+-INFRINGEMENT OF ANY PATENT, TRADEMARK, COPYRIGHT OR OTHER INTELLECTUAL
+-PROPERTY RIGHT EVEN IF COPYRIGHT HOLDER AND ITS AUTHORIZED
+-REPRESENTATIVES HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.  IN
+-NO EVENT SHALL COPYRIGHT HOLDER OR ITS AUTHORIZED REPRESENTATIVES TOTAL
+-LIABILITY FOR ALL DAMAGES, LOSSES, AND CAUSES OF ACTION (WHETHER IN
+-CONTRACT, TORT (INCLUDING NEGLIGENCE) OR OTHERWISE) EXCEED THE AMOUNT OF
+-US$10.
+-
+-Notice:  The Software is subject to United States export laws and
+-regulations.  You agree to comply with all domestic and international
+-export laws and regulations that apply to the Software, including but
+-not limited to the Export Administration Regulations administered by the
+-U.S. Department of Commerce and International Traffic in Arm Regulations
+-administered by the U.S. Department of State.  These laws include
+-restrictions on destinations, end users and end use.
+diff --git a/LICENSE.qcom b/LICENSE.qcom
+deleted file mode 100644
+index faacf9c..0000000
+--- a/LICENSE.qcom
++++ /dev/null
+@@ -1,206 +0,0 @@
+-PLEASE READ THIS LICENSE AGREEMENT ("AGREEMENT") CAREFULLY.  THIS AGREEMENT IS
+-A BINDING LEGAL AGREEMENT ENTERED INTO BY AND BETWEEN YOU (OR IF YOU ARE
+-ENTERING INTO THIS AGREEMENT ON BEHALF OF AN ENTITY, THEN THE ENTITY THAT YOU
+-REPRESENT) AND QUALCOMM TECHNOLOGIES, INC. ("QTI" "WE" "OUR" OR "US").  THIS IS
+-THE AGREEMENT THAT APPLIES TO YOUR USE OF THE DESIGNATED AND/OR LINKED
+-APPLICATIONS, THE ENCLOSED QUALCOMM TECHNOLOGIES' MATERIALS, INCLUDING RELATED
+-DOCUMENTATION AND ANY UPDATES OR IMPROVEMENTS THEREOF
+-(COLLECTIVELY, "MATERIALS").  BY USING OR COMPLETING THE INSTALLATION OF THE
+-MATERIALS, YOU ARE ACCEPTING THIS AGREEMENT AND YOU AGREE TO BE BOUND BY ITS
+-TERMS AND CONDITIONS.  IF YOU DO NOT AGREE TO THESE TERMS, QTI IS UNWILLING TO
+-AND DOES NOT LICENSE THE MATERIALS TO YOU. IF YOU DO NOT AGREE TO THESE TERMS
+-YOU MUST DISCONTINUE THE INSTALLATION PROCESS AND YOU MAY NOT USE THE MATERIALS
+-OR RETAIN ANY COPIES OF THE MATERIALS. ANY USE OR POSSESSION OF THE MATERIALS
+-BY YOU IS SUBJECT TO THE TERMS AND CONDITIONS SET FORTH IN THIS AGREEMENT.
+-
+-1. RIGHT TO USE DELIVERABLES; RESTRICTIONS.
+-
+-  1.1 License.  Subject to the terms and conditions of this Agreement,
+-  including, without limitation, the restrictions, conditions, limitations and
+-  exclusions set forth in this Agreement, QTI hereby grants to you a
+-  nonexclusive, limited license under QTI's copyrights to:  (i) install and use
+-  the Materials; and (ii) to reproduce and redistribute the binary code portions
+-  of the Materials (the "Redistributable Binary Code").  You may make and use a
+-  reasonable number of copies of any documentation.
+-
+-  1.2 Redistribution Restrictions.  Distribution of the Redistributable Binary
+-  Code is subject to the following restrictions: (i) Redistributable Binary Code
+-  may only be distributed in binary format and may not be distributed in source
+-  code format:; (ii)  the Redistributable Binary Code may only operate in
+-  conjunction with platforms incorporating Qualcomm Technologies, Inc. chipsets;
+-  (iii) redistribution of the Redistributable Binary Code must include the .txt
+-  file setting forth the terms and condition of this Agreement; (iv) you may not
+-  use Qualcomm Technologies' or its affiliates or subsidiaries name, logo or
+-  trademarks; and (v) copyright, trademark, patent and any other notices that
+-  appear on the Materials may not be removed or obscured.
+-
+-  1.3 Additional Restrictions.  Except as expressly permitted by this Agreement,
+-  you shall have no right to sublicense, transfer or otherwise disclose the
+-  Materials to any third party.  You shall not reverse engineer, reverse
+-  assemble, reverse translate, decompile or reduce to source code form any
+-  portion of the Materials provided in object code form or executable form.
+-  Except for the purposes expressly permitted in this Agreement, You shall not
+-  use the Materials for any other purpose.  QTI (or its licensors) shall retain
+-  title and all ownership rights in and to the Materials and any alterations,
+-  modifications (including all derivative works), translations or adaptations
+-  made of the Materials, and all copies thereof, and nothing herein shall be
+-  deemed to grant any right to You under any of QTI's or its affiliates'
+-  patents.  You shall not subject the Materials to any third party license
+-  terms (e.g., open source license terms).  You shall not use the Materials for
+-  the purpose of identifying or providing evidence to support any potential
+-  patent infringement claim against QTI, its affiliates, or any of QTI's or
+-  QTI's affiliates' suppliers and/or direct or indirect customers.  QTI hereby
+-  reserves all rights not expressly granted herein.
+-
+-  1.4 Third Party Software and Materials.  The Software may contain or link to
+-  certain software and/or materials that are written or owned by third parties.
+-  Such third party code and materials may be licensed under separate or
+-  different terms and conditions and are not licensed to you under the terms of
+-  this Agreement.  You agree to comply with all terms and conditions imposed on
+-  you in the applicable third party licenses.  Such terms and conditions may
+-  impose certain obligations on you as a condition to the permitted use of such
+-  third party code and materials.  QTI does not represent or warrant that such
+-  third party licensors have or will continue to license or make available their
+-  code and materials to you.
+-
+-  1.5 Feedback.  QTI may from time to time receive suggestions, feedback or
+-  other information from You regarding the Materials.  Any suggestions, feedback
+-  or other disclosures received from You are and shall be entirely voluntary on
+-  the part of You.  Notwithstanding any other term in this Agreement, QTI shall
+-  be free to use suggestions, feedback or other information received from You,
+-  without obligation of any kind to You.  The Parties agree that all inventions,
+-  product improvements, and modifications conceived of or made by QTI that are
+-  based, either in whole or in part, on ideas, feedback, suggestions, or
+-  recommended improvements received from You are the exclusive property of QTI,
+-  and all right, title and interest in and to any such inventions, product
+-  improvements, and modifications will vest solely in QTI.
+-
+-  1.6 No Technical Support.  QTI is under no obligation to provide any form of
+-  technical support for the Materials, and if QTI, in its sole discretion,
+-  chooses to provide any form of support or information relating to the
+-  Materials, such support and information shall be deemed confidential and
+-  proprietary to QTI.
+-
+-2. WARRANTY DISCLAIMER.  YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT THE USE OF
+-THE MATERIALS IS AT YOUR SOLE RISK.  THE MATERIALS AND TECHNICAL SUPPORT, IF
+-ANY, ARE PROVIDED "AS IS" AND WITHOUT WARRANTY OF ANY KIND, WHETHER EXPRESS OR
+-IMPLIED.  QTI ITS LICENSORS AND AFFILIATES MAKE NO WARRANTIES, EXPRESS OR
+-IMPLIED, WITH RESPECT TO THE MATERIALS OR ANY OTHER INFORMATION OR DOCUMENTATION
+-PROVIDED UNDER THIS AGREEMENT, INCLUDING BUT NOT LIMITED TO ANY WARRANTY OF
+-MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE OR AGAINST INFRINGEMENT, OR
+-ANY EXPRESS OR IMPLIED WARRANTY ARISING OUT OF TRADE USAGE OR OUT OF A COURSE OF
+-DEALING OR COURSE OF PERFORMANCE.  NOTHING CONTAINED IN THIS AGREEMENT SHALL BE
+-CONSTRUED AS (I) A WARRANTY OR REPRESENTATION BY QTI, ITS LICENSORS OR
+-AFFILIATES AS TO THE VALIDITY OR SCOPE OF ANY PATENT, COPYRIGHT OR OTHER
+-INTELLECTUAL PROPERTY RIGHT OR (II) A WARRANTY OR REPRESENTATION BY QTI THAT ANY
+-MANUFACTURE OR USE WILL BE FREE FROM INFRINGEMENT OF PATENTS, COPYRIGHTS OR
+-OTHER INTELLECTUAL PROPERTY RIGHTS OF OTHERS, AND IT SHALL BE THE SOLE
+-RESPONSIBILITY OF YOU TO MAKE SUCH DETERMINATION AS IS NECESSARY WITH RESPECT TO
+-THE ACQUISITION OF LICENSES UNDER PATENTS AND OTHER INTELLECTUAL PROPERTY OF
+-THIRD PARTIES.
+-
+-3. NO OTHER LICENSES OR INTELLECTUAL PROPERTY RIGHTS. Neither this Agreement,
+-nor any act by QTI or any of its affiliates pursuant to this Agreement or
+-relating to the Materials (including, without limitation, the provision by QTI
+-or its affiliates of the Materials), shall provide to You any license or any
+-other rights whatsoever under any patents, trademarks, trade secrets, copyrights
+-or any other intellectual property of QTI or any of its affiliates, except for
+-the copyright rights expressly licensed under this Agreement. You understand and
+-agree that:
+-
+-  (i) Neither this Agreement, nor delivery of the Materials, grants any right to
+-  practice, or any other right at all with respect to, any patent of QTI or any
+-  of its affiliates; and
+-
+-  (ii) A separate license agreement from QUALCOMM Incorporated is needed to use
+-  or practice any patent of QUALCOMM Incorporated. You agree not to contend in
+-  any context that, as a result of the provision or use of the Materials, either
+-  QTI or any of its affiliates has any obligation to extend, or You or any other
+-  party has obtained any right to, any license, whether express or implied, with
+-  respect to any patent of QTI or any of its affiliates for any purpose.
+-
+-4. TERMINATION.  This Agreement shall be effective upon acceptance, or access or
+-use of the Materials (whichever occurs first) by You and shall continue until
+-terminated. You may terminate the Agreement at any time by deleting and
+-destroying all copies of the Materials and all related information in Your
+-possession or control. This Agreement terminates immediately and automatically,
+-with or without notice, if You fail to comply with any provision hereof.
+-Additionally, QTI may at any time terminate this Agreement, without cause, upon
+-notice to You. Upon termination You must, to the extent possible, delete or
+-destroy all copies of the Materials in Your possession and the license granted
+-to You in this Agreement shall terminate. Sections 1.2 through 10 shall survive
+-the termination of this Agreement. In the event that any restrictions,
+-conditions, limitations are found to be either invalid or unenforceable, the
+-rights granted to You in Section 1 (License) shall be null, void and ineffective
+-from the Effective Date, and QTI shall also have the right to terminate this
+-Agreement immediately, and with retroactive effect to the effective date.
+-
+-5. LIMITATION OF LIABILITY.  IN NO EVENT SHALL QTI, QTI's AFFILIATES OR ITS
+-LICENSORS BE LIABLE TO YOU FOR ANY INCIDENTAL, CONSEQUENTIAL OR SPECIAL DAMAGES,
+-INCLUDING BUT NOT LIMITED TO ANY LOST PROFITS, LOST SAVINGS, OR OTHER INCIDENTAL
+-DAMAGES, ARISING OUT OF THE USE OR INABILITY TO USE, OR THE DELIVERY OR FAILURE
+-TO DELIVER, ANY OF THE DELIVERABLES, OR ANY BREACH OF ANY OBLIGATION UNDER THIS
+-AGREEMENT, EVEN IF QTI HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+-THE FOREGOING LIMITATION OF LIABILITY SHALL REMAIN IN FULL FORCE AND EFFECT
+-REGARDLESS OF WHETHER YOUR REMEDIES HEREUNDER ARE DETERMINED TO HAVE FAILED OF
+-THEIR ESSENTIAL PURPOSE.  THE ENTIRE LIABILITY OF QTI, QTI's AFFILIATES AND ITS
+-LICENSORS, AND THE SOLE AND EXCLUSIVE REMEDY OF YOU, FOR ANY CLAIM OR CAUSE OF
+-ACTION ARISING HEREUNDER (WHETHER IN CONTRACT, TORT, OR OTHERWISE) SHALL NOT
+-EXCEED US$50.
+-
+-6. INDEMNIFICATION.  You agree to indemnify and hold harmless QTI and its
+-officers, directors, employees and successors and assigns against any and all
+-third party claims, demands, causes of action, losses, liabilities, damages,
+-costs and expenses, incurred by QTI (including but not limited to costs of
+-defense, investigation and reasonable attorney's fees) arising out of, resulting
+-from or related to: (i) any breach of this Agreement by You; and (ii) your acts,
+-omissions, products and services.  If requested by QTI, You agree to defend QTI
+-in connection with any third party claims, demands, or causes of action
+-resulting from, arising out of or in connection with any of the foregoing.
+-
+-7. ASSIGNMENT.  You shall not assign this Agreement or any right or interest
+-under this Agreement, nor delegate any obligation to be performed under this
+-Agreement, without QTI's prior written consent.  For purposes of this Section 7,
+-an "assignment" by You under this Section shall be deemed to include, without
+-limitation, any merger, consolidation, sale of all or substantially all of its
+-assets, or any substantial change in the management or control of You.
+-Any attempted assignment in contravention of this Section 9 shall be void.
+-QTI may freely assign this Agreement or delegate any or all of its rights and
+-obligations hereunder to any third party.
+-
+-8. COMPLIANCE WITH LAWS; APPLICABLE LAW.  You agree to comply with all
+-applicable local, international and national laws and regulations and with U.S.
+-Export Administration Regulations, as they apply to the subject matter of this
+-Agreement.  This Agreement is governed by the laws of the State of California,
+-excluding California's choice of law rules.
+-
+-9. CONTRACTING PARTIES.  If the Materials are downloaded on any computer owned
+-by a corporation or other legal entity, then this Agreement is formed by and
+-between QTI and such entity.  The individual accepting the terms of this
+-Agreement represents and warrants to QTI that they have the authority to bind
+-such entity to the terms and conditions of this Agreement.
+-
+-10. MISCELLANEOUS PROVISIONS.  This Agreement, together with all exhibits
+-attached hereto, which are incorporated herein by this reference, constitutes
+-the entire agreement between QTI and You and supersedes all prior negotiations,
+-representations and agreements between the parties with respect to the subject
+-matter hereof.  No addition or modification of this Agreement shall be effective
+-unless made in writing and signed by the respective representatives of QTI and
+-You.  The restrictions, limitations, exclusions and conditions set forth in this
+-Agreement shall apply even if QTI or any of its affiliates becomes aware of or
+-fails to act in a manner to address any violation or failure to comply
+-therewith.  You hereby acknowledge and agree that the restrictions, limitations,
+-conditions and exclusions imposed in this Agreement on the rights granted in
+-this Agreement are not a derogation of the benefits of such rights.  You further
+-acknowledges that, in the absence of such restrictions, limitations, conditions
+-and exclusions, QTI would not have entered into this Agreement with You.  Each
+-party shall be responsible for and shall bear its own expenses in connection
+-with this Agreement.  If any of the provisions of this Agreement are determined
+-to be invalid, illegal, or otherwise unenforceable, the remaining provisions
+-shall remain in full force and effect.  This Agreement is entered into solely
+-in the English language, and if for any reason any other language version is
+-prepared by any party, it shall be solely for convenience and the English
+-version shall govern and control all aspects.  If You are located in the
+-province of Quebec, Canada, the following applies: The Parties hereby confirm
+-they have requested this Agreement and all related documents be prepared
+-in English.
+diff --git a/LICENSE.qcom_yamato b/LICENSE.qcom_yamato
+deleted file mode 100644
+index 1fd702b..0000000
+--- a/LICENSE.qcom_yamato
++++ /dev/null
+@@ -1,25 +0,0 @@
+-Copyright (c) 2008-2011, QUALCOMM Incorporated. All rights reserved.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions are met:
+-    * Redistributions of source code must retain the above copyright
+-      notice, this list of conditions and the following disclaimer.
+-    * Redistributions in binary form must reproduce the above copyright
+-      notice, this list of conditions and the following disclaimer in the
+-      documentation and/or other materials provided with the distribution.
+-    * Neither the name of QUALCOMM Incorporated nor
+-      the names of its contributors may be used to endorse or promote
+-      products derived from this software without specific prior written
+-      permission.
+-
+-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+-POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENSE.radeon b/LICENSE.radeon
+deleted file mode 100644
+index b05e714..0000000
+--- a/LICENSE.radeon
++++ /dev/null
+@@ -1,51 +0,0 @@
+-Copyright (C) 2009-2017  Advanced Micro Devices, Inc. All rights reserved.
+-
+-REDISTRIBUTION: Permission is hereby granted, free of any license fees,
+-to any person obtaining a copy of this microcode (the "Software"), to
+-install, reproduce, copy and distribute copies, in binary form only, of
+-the Software and to permit persons to whom the Software is provided to
+-do the same, provided that the following conditions are met:
+-
+-No reverse engineering, decompilation, or disassembly of this Software
+-is permitted.
+-
+-Redistributions must reproduce the above copyright notice, this
+-permission notice, and the following disclaimers and notices in the
+-Software documentation and/or other materials provided with the
+-Software.
+-
+-DISCLAIMER: THE USE OF THE SOFTWARE IS AT YOUR SOLE RISK.  THE SOFTWARE
+-IS PROVIDED "AS IS" AND WITHOUT WARRANTY OF ANY KIND AND COPYRIGHT
+-HOLDER AND ITS LICENSORS EXPRESSLY DISCLAIM ALL WARRANTIES, EXPRESS AND
+-IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+-COPYRIGHT HOLDER AND ITS LICENSORS DO NOT WARRANT THAT THE SOFTWARE WILL
+-MEET YOUR REQUIREMENTS, OR THAT THE OPERATION OF THE SOFTWARE WILL BE
+-UNINTERRUPTED OR ERROR-FREE.  THE ENTIRE RISK ASSOCIATED WITH THE USE OF
+-THE SOFTWARE IS ASSUMED BY YOU.  FURTHERMORE, COPYRIGHT HOLDER AND ITS
+-LICENSORS DO NOT WARRANT OR MAKE ANY REPRESENTATIONS REGARDING THE USE
+-OR THE RESULTS OF THE USE OF THE SOFTWARE IN TERMS OF ITS CORRECTNESS,
+-ACCURACY, RELIABILITY, CURRENTNESS, OR OTHERWISE.
+-
+-DISCLAIMER: UNDER NO CIRCUMSTANCES INCLUDING NEGLIGENCE, SHALL COPYRIGHT
+-HOLDER AND ITS LICENSORS OR ITS DIRECTORS, OFFICERS, EMPLOYEES OR AGENTS
+-("AUTHORIZED REPRESENTATIVES") BE LIABLE FOR ANY INCIDENTAL, INDIRECT,
+-SPECIAL OR CONSEQUENTIAL DAMAGES (INCLUDING DAMAGES FOR LOSS OF BUSINESS
+-PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, AND THE
+-LIKE) ARISING OUT OF THE USE, MISUSE OR INABILITY TO USE THE SOFTWARE,
+-BREACH OR DEFAULT, INCLUDING THOSE ARISING FROM INFRINGEMENT OR ALLEGED
+-INFRINGEMENT OF ANY PATENT, TRADEMARK, COPYRIGHT OR OTHER INTELLECTUAL
+-PROPERTY RIGHT EVEN IF COPYRIGHT HOLDER AND ITS AUTHORIZED
+-REPRESENTATIVES HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.  IN
+-NO EVENT SHALL COPYRIGHT HOLDER OR ITS AUTHORIZED REPRESENTATIVES TOTAL
+-LIABILITY FOR ALL DAMAGES, LOSSES, AND CAUSES OF ACTION (WHETHER IN
+-CONTRACT, TORT (INCLUDING NEGLIGENCE) OR OTHERWISE) EXCEED THE AMOUNT OF
+-US$10.
+-
+-Notice:  The Software is subject to United States export laws and
+-regulations.  You agree to comply with all domestic and international
+-export laws and regulations that apply to the Software, including but
+-not limited to the Export Administration Regulations administered by the
+-U.S. Department of Commerce and International Traffic in Arm Regulations
+-administered by the U.S. Department of State.  These laws include
+-restrictions on destinations, end users and end use.
+diff --git a/WHENCE b/WHENCE
+index 58e9ca1..3bb6523 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -123,904 +123,6 @@ Available from http://ldriver.qlogic.com/firmware/netxen_nic/new/
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: mga - Matrox G200/G400/G550
+-
+-File: matrox/g200_warp.fw
+-File: matrox/g400_warp.fw
+-
+-Licence:
+-
+-Copyright 1999 Matrox Graphics Inc.
+-All Rights Reserved.
+-
+-Permission is hereby granted, free of charge, to any person obtaining a
+-copy of this software and associated documentation files (the "Software"),
+-to deal in the Software without restriction, including without limitation
+-the rights to use, copy, modify, merge, publish, distribute, sublicense,
+-and/or sell copies of the Software, and to permit persons to whom the
+-Software is furnished to do so, subject to the following conditions:
+-
+-The above copyright notice and this permission notice shall be included
+-in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+-MATROX GRAPHICS INC., OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM,
+-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+-OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: r128 - ATI Rage 128
+-
+-File: r128/r128_cce.bin
+-
+-Licence:
+-
+-Copyright 2000 Advanced Micro Devices, Inc.
+-
+- * Permission is hereby granted, free of charge, to any person obtaining a
+- * copy of this software and associated documentation files (the "Software"),
+- * to deal in the Software without restriction, including without limitation
+- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+- * and/or sell copies of the Software, and to permit persons to whom the
+- * Software is furnished to do so, subject to the following conditions:
+- *
+- * The above copyright notice and this permission notice (including the next
+- * paragraph) shall be included in all copies or substantial portions of the
+- * Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+- * PRECISION INSIGHT AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+- * DEALINGS IN THE SOFTWARE.
+-
+-Found in decimal form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: radeon - ATI Radeon
+-
+-File: radeon/R100_cp.bin
+-File: radeon/R200_cp.bin
+-File: radeon/R300_cp.bin
+-File: radeon/R420_cp.bin
+-File: radeon/RS600_cp.bin
+-File: radeon/RS690_cp.bin
+-File: radeon/R520_cp.bin
+-File: radeon/R600_pfp.bin
+-File: radeon/R600_me.bin
+-File: radeon/RV610_pfp.bin
+-File: radeon/RV610_me.bin
+-File: radeon/RV630_pfp.bin
+-File: radeon/RV630_me.bin
+-File: radeon/RV620_pfp.bin
+-File: radeon/RV620_me.bin
+-File: radeon/RV635_pfp.bin
+-File: radeon/RV635_me.bin
+-File: radeon/RV670_pfp.bin
+-File: radeon/RV670_me.bin
+-File: radeon/RS780_pfp.bin
+-File: radeon/RS780_me.bin
+-File: radeon/RV770_pfp.bin
+-File: radeon/RV770_me.bin
+-File: radeon/RV730_pfp.bin
+-File: radeon/RV730_me.bin
+-File: radeon/RV710_pfp.bin
+-File: radeon/RV710_me.bin
+-
+-Licence:
+-
+- * Copyright 2007-2009 Advanced Micro Devices, Inc.
+- * All Rights Reserved.
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining a
+- * copy of this software and associated documentation files (the "Software"),
+- * to deal in the Software without restriction, including without limitation
+- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+- * and/or sell copies of the Software, and to permit persons to whom the
+- * Software is furnished to do so, subject to the following conditions:
+- *
+- * The above copyright notice and this permission notice (including the next
+- * paragraph) shall be included in all copies or substantial portions of the
+- * Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+- * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: radeon - ATI Radeon
+-
+-File: radeon/R600_rlc.bin
+-File: radeon/R600_uvd.bin
+-File: radeon/RS780_uvd.bin
+-File: radeon/R700_rlc.bin
+-File: radeon/RV710_uvd.bin
+-File: radeon/RV710_smc.bin
+-File: radeon/RV730_smc.bin
+-File: radeon/RV740_smc.bin
+-File: radeon/RV770_smc.bin
+-File: radeon/RV770_uvd.bin
+-File: radeon/CEDAR_me.bin
+-File: radeon/CEDAR_pfp.bin
+-File: radeon/CEDAR_rlc.bin
+-File: radeon/CEDAR_smc.bin
+-File: radeon/CYPRESS_me.bin
+-File: radeon/CYPRESS_pfp.bin
+-File: radeon/CYPRESS_rlc.bin
+-File: radeon/CYPRESS_uvd.bin
+-File: radeon/CYPRESS_smc.bin
+-File: radeon/JUNIPER_me.bin
+-File: radeon/JUNIPER_pfp.bin
+-File: radeon/JUNIPER_rlc.bin
+-File: radeon/JUNIPER_smc.bin
+-File: radeon/REDWOOD_me.bin
+-File: radeon/REDWOOD_pfp.bin
+-File: radeon/REDWOOD_rlc.bin
+-File: radeon/REDWOOD_smc.bin
+-File: radeon/PALM_me.bin
+-File: radeon/PALM_pfp.bin
+-File: radeon/SUMO_rlc.bin
+-File: radeon/SUMO_uvd.bin
+-File: radeon/BARTS_mc.bin
+-File: radeon/BARTS_me.bin
+-File: radeon/BARTS_pfp.bin
+-File: radeon/BARTS_smc.bin
+-File: radeon/BTC_rlc.bin
+-File: radeon/CAICOS_mc.bin
+-File: radeon/CAICOS_me.bin
+-File: radeon/CAICOS_pfp.bin
+-File: radeon/CAICOS_smc.bin
+-File: radeon/TURKS_mc.bin
+-File: radeon/TURKS_me.bin
+-File: radeon/TURKS_pfp.bin
+-File: radeon/TURKS_smc.bin
+-File: radeon/CAYMAN_mc.bin
+-File: radeon/CAYMAN_me.bin
+-File: radeon/CAYMAN_pfp.bin
+-File: radeon/CAYMAN_rlc.bin
+-File: radeon/CAYMAN_smc.bin
+-File: radeon/SUMO_pfp.bin
+-File: radeon/SUMO_me.bin
+-File: radeon/SUMO2_pfp.bin
+-File: radeon/SUMO2_me.bin
+-File: radeon/ARUBA_me.bin
+-File: radeon/ARUBA_pfp.bin
+-File: radeon/ARUBA_rlc.bin
+-File: radeon/PITCAIRN_ce.bin
+-File: radeon/PITCAIRN_mc.bin
+-File: radeon/PITCAIRN_mc2.bin
+-File: radeon/PITCAIRN_me.bin
+-File: radeon/PITCAIRN_pfp.bin
+-File: radeon/PITCAIRN_rlc.bin
+-File: radeon/PITCAIRN_smc.bin
+-File: radeon/TAHITI_ce.bin
+-File: radeon/TAHITI_mc.bin
+-File: radeon/TAHITI_mc2.bin
+-File: radeon/TAHITI_me.bin
+-File: radeon/TAHITI_pfp.bin
+-File: radeon/TAHITI_rlc.bin
+-File: radeon/TAHITI_uvd.bin
+-File: radeon/TAHITI_smc.bin
+-File: radeon/TAHITI_vce.bin
+-File: radeon/VERDE_ce.bin
+-File: radeon/VERDE_mc.bin
+-File: radeon/VERDE_mc2.bin
+-File: radeon/VERDE_me.bin
+-File: radeon/VERDE_pfp.bin
+-File: radeon/VERDE_rlc.bin
+-File: radeon/VERDE_smc.bin
+-File: radeon/OLAND_ce.bin
+-File: radeon/OLAND_mc.bin
+-File: radeon/OLAND_mc2.bin
+-File: radeon/OLAND_me.bin
+-File: radeon/OLAND_pfp.bin
+-File: radeon/OLAND_rlc.bin
+-File: radeon/OLAND_smc.bin
+-File: radeon/HAINAN_ce.bin
+-File: radeon/HAINAN_mc.bin
+-File: radeon/HAINAN_mc2.bin
+-File: radeon/HAINAN_me.bin
+-File: radeon/HAINAN_pfp.bin
+-File: radeon/HAINAN_rlc.bin
+-File: radeon/HAINAN_smc.bin
+-File: radeon/BONAIRE_ce.bin
+-File: radeon/BONAIRE_mc.bin
+-File: radeon/BONAIRE_mc2.bin
+-File: radeon/BONAIRE_me.bin
+-File: radeon/BONAIRE_mec.bin
+-File: radeon/BONAIRE_pfp.bin
+-File: radeon/BONAIRE_rlc.bin
+-File: radeon/BONAIRE_sdma.bin
+-File: radeon/BONAIRE_uvd.bin
+-File: radeon/BONAIRE_smc.bin
+-File: radeon/BONAIRE_vce.bin
+-File: radeon/KABINI_ce.bin
+-File: radeon/KABINI_me.bin
+-File: radeon/KABINI_mec.bin
+-File: radeon/KABINI_pfp.bin
+-File: radeon/KABINI_rlc.bin
+-File: radeon/KABINI_sdma.bin
+-File: radeon/KAVERI_ce.bin
+-File: radeon/KAVERI_me.bin
+-File: radeon/KAVERI_mec.bin
+-File: radeon/KAVERI_pfp.bin
+-File: radeon/KAVERI_rlc.bin
+-File: radeon/KAVERI_sdma.bin
+-File: radeon/HAWAII_ce.bin
+-File: radeon/HAWAII_mc.bin
+-File: radeon/HAWAII_mc2.bin
+-File: radeon/HAWAII_me.bin
+-File: radeon/HAWAII_mec.bin
+-File: radeon/HAWAII_pfp.bin
+-File: radeon/HAWAII_rlc.bin
+-File: radeon/HAWAII_sdma.bin
+-File: radeon/HAWAII_smc.bin
+-File: radeon/MULLINS_ce.bin
+-File: radeon/MULLINS_me.bin
+-File: radeon/MULLINS_mec.bin
+-File: radeon/MULLINS_pfp.bin
+-File: radeon/MULLINS_rlc.bin
+-File: radeon/MULLINS_sdma.bin
+-File: radeon/pitcairn_ce.bin
+-File: radeon/pitcairn_k_smc.bin
+-File: radeon/pitcairn_mc.bin
+-File: radeon/pitcairn_me.bin
+-File: radeon/pitcairn_pfp.bin
+-File: radeon/pitcairn_rlc.bin
+-File: radeon/pitcairn_smc.bin
+-File: radeon/tahiti_ce.bin
+-File: radeon/tahiti_k_smc.bin
+-File: radeon/tahiti_mc.bin
+-File: radeon/tahiti_me.bin
+-File: radeon/tahiti_pfp.bin
+-File: radeon/tahiti_rlc.bin
+-File: radeon/tahiti_smc.bin
+-File: radeon/verde_ce.bin
+-File: radeon/verde_k_smc.bin
+-File: radeon/verde_mc.bin
+-File: radeon/verde_me.bin
+-File: radeon/verde_pfp.bin
+-File: radeon/verde_rlc.bin
+-File: radeon/verde_smc.bin
+-File: radeon/oland_ce.bin
+-File: radeon/oland_k_smc.bin
+-File: radeon/oland_mc.bin
+-File: radeon/oland_me.bin
+-File: radeon/oland_pfp.bin
+-File: radeon/oland_rlc.bin
+-File: radeon/oland_smc.bin
+-File: radeon/hainan_ce.bin
+-File: radeon/hainan_k_smc.bin
+-File: radeon/hainan_mc.bin
+-File: radeon/hainan_me.bin
+-File: radeon/hainan_pfp.bin
+-File: radeon/hainan_rlc.bin
+-File: radeon/hainan_smc.bin
+-File: radeon/bonaire_ce.bin
+-File: radeon/bonaire_k_smc.bin
+-File: radeon/bonaire_mc.bin
+-File: radeon/bonaire_me.bin
+-File: radeon/bonaire_mec.bin
+-File: radeon/bonaire_pfp.bin
+-File: radeon/bonaire_rlc.bin
+-File: radeon/bonaire_sdma.bin
+-File: radeon/bonaire_sdma1.bin
+-File: radeon/bonaire_smc.bin
+-File: radeon/bonaire_uvd.bin
+-File: radeon/bonaire_vce.bin
+-File: radeon/kabini_ce.bin
+-File: radeon/kabini_me.bin
+-File: radeon/kabini_mec.bin
+-File: radeon/kabini_pfp.bin
+-File: radeon/kabini_rlc.bin
+-File: radeon/kabini_sdma.bin
+-File: radeon/kabini_sdma1.bin
+-File: radeon/kabini_uvd.bin
+-File: radeon/kabini_vce.bin
+-File: radeon/kaveri_ce.bin
+-File: radeon/kaveri_me.bin
+-File: radeon/kaveri_mec.bin
+-File: radeon/kaveri_mec2.bin
+-File: radeon/kaveri_pfp.bin
+-File: radeon/kaveri_rlc.bin
+-File: radeon/kaveri_sdma.bin
+-File: radeon/kaveri_sdma1.bin
+-File: radeon/kaveri_uvd.bin
+-File: radeon/kaveri_vce.bin
+-File: radeon/hawaii_ce.bin
+-File: radeon/hawaii_k_smc.bin
+-File: radeon/hawaii_mc.bin
+-File: radeon/hawaii_me.bin
+-File: radeon/hawaii_mec.bin
+-File: radeon/hawaii_pfp.bin
+-File: radeon/hawaii_rlc.bin
+-File: radeon/hawaii_sdma.bin
+-File: radeon/hawaii_sdma1.bin
+-File: radeon/hawaii_smc.bin
+-File: radeon/hawaii_uvd.bin
+-File: radeon/hawaii_vce.bin
+-File: radeon/mullins_ce.bin
+-File: radeon/mullins_me.bin
+-File: radeon/mullins_mec.bin
+-File: radeon/mullins_pfp.bin
+-File: radeon/mullins_rlc.bin
+-File: radeon/mullins_sdma.bin
+-File: radeon/mullins_sdma1.bin
+-File: radeon/mullins_uvd.bin
+-File: radeon/mullins_vce.bin
+-File: radeon/banks_k_2_smc.bin
+-File: radeon/si58_mc.bin
+-
+-Licence: Redistributable. See LICENSE.radeon for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: amdgpu - AMD Radeon
+-
+-File: amdgpu/tahiti_ce.bin
+-File: amdgpu/tahiti_k_smc.bin
+-File: amdgpu/tahiti_mc.bin
+-File: amdgpu/tahiti_me.bin
+-File: amdgpu/tahiti_pfp.bin
+-File: amdgpu/tahiti_rlc.bin
+-File: amdgpu/tahiti_smc.bin
+-File: amdgpu/tahiti_uvd.bin
+-File: amdgpu/pitcairn_ce.bin
+-File: amdgpu/pitcairn_k_smc.bin
+-File: amdgpu/pitcairn_mc.bin
+-File: amdgpu/pitcairn_me.bin
+-File: amdgpu/pitcairn_pfp.bin
+-File: amdgpu/pitcairn_rlc.bin
+-File: amdgpu/pitcairn_smc.bin
+-File: amdgpu/pitcairn_uvd.bin
+-File: amdgpu/verde_ce.bin
+-File: amdgpu/verde_k_smc.bin
+-File: amdgpu/verde_mc.bin
+-File: amdgpu/verde_me.bin
+-File: amdgpu/verde_pfp.bin
+-File: amdgpu/verde_rlc.bin
+-File: amdgpu/verde_smc.bin
+-File: amdgpu/verde_uvd.bin
+-File: amdgpu/hainan_ce.bin
+-File: amdgpu/hainan_k_smc.bin
+-File: amdgpu/hainan_mc.bin
+-File: amdgpu/hainan_me.bin
+-File: amdgpu/hainan_pfp.bin
+-File: amdgpu/hainan_rlc.bin
+-File: amdgpu/hainan_smc.bin
+-File: amdgpu/oland_ce.bin
+-File: amdgpu/oland_k_smc.bin
+-File: amdgpu/oland_mc.bin
+-File: amdgpu/oland_me.bin
+-File: amdgpu/oland_pfp.bin
+-File: amdgpu/oland_rlc.bin
+-File: amdgpu/oland_smc.bin
+-File: amdgpu/oland_uvd.bin
+-File: amdgpu/si58_mc.bin
+-File: amdgpu/banks_k_2_smc.bin
+-File: amdgpu/bonaire_ce.bin
+-File: amdgpu/bonaire_k_smc.bin
+-File: amdgpu/bonaire_mc.bin
+-File: amdgpu/bonaire_me.bin
+-File: amdgpu/bonaire_mec.bin
+-File: amdgpu/bonaire_pfp.bin
+-File: amdgpu/bonaire_rlc.bin
+-File: amdgpu/bonaire_sdma.bin
+-File: amdgpu/bonaire_sdma1.bin
+-File: amdgpu/bonaire_smc.bin
+-File: amdgpu/bonaire_uvd.bin
+-File: amdgpu/bonaire_vce.bin
+-File: amdgpu/hawaii_ce.bin
+-File: amdgpu/hawaii_k_smc.bin
+-File: amdgpu/hawaii_mc.bin
+-File: amdgpu/hawaii_me.bin
+-File: amdgpu/hawaii_mec.bin
+-File: amdgpu/hawaii_pfp.bin
+-File: amdgpu/hawaii_rlc.bin
+-File: amdgpu/hawaii_sdma.bin
+-File: amdgpu/hawaii_sdma1.bin
+-File: amdgpu/hawaii_smc.bin
+-File: amdgpu/hawaii_uvd.bin
+-File: amdgpu/hawaii_vce.bin
+-File: amdgpu/kabini_ce.bin
+-File: amdgpu/kabini_me.bin
+-File: amdgpu/kabini_mec.bin
+-File: amdgpu/kabini_pfp.bin
+-File: amdgpu/kabini_rlc.bin
+-File: amdgpu/kabini_sdma.bin
+-File: amdgpu/kabini_sdma1.bin
+-File: amdgpu/kabini_uvd.bin
+-File: amdgpu/kabini_vce.bin
+-File: amdgpu/mullins_ce.bin
+-File: amdgpu/mullins_me.bin
+-File: amdgpu/mullins_mec.bin
+-File: amdgpu/mullins_pfp.bin
+-File: amdgpu/mullins_rlc.bin
+-File: amdgpu/mullins_sdma.bin
+-File: amdgpu/mullins_sdma1.bin
+-File: amdgpu/mullins_uvd.bin
+-File: amdgpu/mullins_vce.bin
+-File: amdgpu/kaveri_ce.bin
+-File: amdgpu/kaveri_me.bin
+-File: amdgpu/kaveri_mec.bin
+-File: amdgpu/kaveri_mec2.bin
+-File: amdgpu/kaveri_pfp.bin
+-File: amdgpu/kaveri_rlc.bin
+-File: amdgpu/kaveri_sdma.bin
+-File: amdgpu/kaveri_sdma1.bin
+-File: amdgpu/kaveri_uvd.bin
+-File: amdgpu/kaveri_vce.bin
+-File: amdgpu/topaz_ce.bin
+-File: amdgpu/topaz_k_smc.bin
+-File: amdgpu/topaz_mc.bin
+-File: amdgpu/topaz_me.bin
+-File: amdgpu/topaz_mec2.bin
+-File: amdgpu/topaz_mec.bin
+-File: amdgpu/topaz_pfp.bin
+-File: amdgpu/topaz_rlc.bin
+-File: amdgpu/topaz_sdma1.bin
+-File: amdgpu/topaz_sdma.bin
+-File: amdgpu/topaz_smc.bin
+-File: amdgpu/tonga_ce.bin
+-File: amdgpu/tonga_k_smc.bin
+-File: amdgpu/tonga_mc.bin
+-File: amdgpu/tonga_me.bin
+-File: amdgpu/tonga_mec2.bin
+-File: amdgpu/tonga_mec.bin
+-File: amdgpu/tonga_pfp.bin
+-File: amdgpu/tonga_rlc.bin
+-File: amdgpu/tonga_sdma1.bin
+-File: amdgpu/tonga_sdma.bin
+-File: amdgpu/tonga_smc.bin
+-File: amdgpu/tonga_uvd.bin
+-File: amdgpu/tonga_vce.bin
+-File: amdgpu/carrizo_ce.bin
+-File: amdgpu/carrizo_me.bin
+-File: amdgpu/carrizo_mec2.bin
+-File: amdgpu/carrizo_mec.bin
+-File: amdgpu/carrizo_pfp.bin
+-File: amdgpu/carrizo_rlc.bin
+-File: amdgpu/carrizo_sdma1.bin
+-File: amdgpu/carrizo_sdma.bin
+-File: amdgpu/carrizo_uvd.bin
+-File: amdgpu/carrizo_vce.bin
+-File: amdgpu/fiji_ce.bin
+-File: amdgpu/fiji_mc.bin
+-File: amdgpu/fiji_me.bin
+-File: amdgpu/fiji_mec2.bin
+-File: amdgpu/fiji_mec.bin
+-File: amdgpu/fiji_pfp.bin
+-File: amdgpu/fiji_rlc.bin
+-File: amdgpu/fiji_sdma1.bin
+-File: amdgpu/fiji_sdma.bin
+-File: amdgpu/fiji_smc.bin
+-File: amdgpu/fiji_uvd.bin
+-File: amdgpu/fiji_vce.bin
+-File: amdgpu/stoney_ce.bin
+-File: amdgpu/stoney_me.bin
+-File: amdgpu/stoney_mec.bin
+-File: amdgpu/stoney_pfp.bin
+-File: amdgpu/stoney_rlc.bin
+-File: amdgpu/stoney_sdma.bin
+-File: amdgpu/stoney_uvd.bin
+-File: amdgpu/stoney_vce.bin
+-File: amdgpu/polaris10_ce.bin
+-File: amdgpu/polaris10_ce_2.bin
+-File: amdgpu/polaris10_mc.bin
+-File: amdgpu/polaris10_k_mc.bin
+-File: amdgpu/polaris10_me.bin
+-File: amdgpu/polaris10_me_2.bin
+-File: amdgpu/polaris10_mec2.bin
+-File: amdgpu/polaris10_mec2_2.bin
+-File: amdgpu/polaris10_mec.bin
+-File: amdgpu/polaris10_mec_2.bin
+-File: amdgpu/polaris10_pfp.bin
+-File: amdgpu/polaris10_pfp_2.bin
+-File: amdgpu/polaris10_rlc.bin
+-File: amdgpu/polaris10_sdma1.bin
+-File: amdgpu/polaris10_sdma.bin
+-File: amdgpu/polaris10_smc.bin
+-File: amdgpu/polaris10_k_smc.bin
+-File: amdgpu/polaris10_k2_smc.bin
+-File: amdgpu/polaris10_smc_sk.bin
+-File: amdgpu/polaris10_uvd.bin
+-File: amdgpu/polaris10_vce.bin
+-File: amdgpu/polaris11_ce.bin
+-File: amdgpu/polaris11_ce_2.bin
+-File: amdgpu/polaris11_mc.bin
+-File: amdgpu/polaris11_k_mc.bin
+-File: amdgpu/polaris11_me.bin
+-File: amdgpu/polaris11_me_2.bin
+-File: amdgpu/polaris11_mec2.bin
+-File: amdgpu/polaris11_mec2_2.bin
+-File: amdgpu/polaris11_mec.bin
+-File: amdgpu/polaris11_mec_2.bin
+-File: amdgpu/polaris11_pfp.bin
+-File: amdgpu/polaris11_pfp_2.bin
+-File: amdgpu/polaris11_rlc.bin
+-File: amdgpu/polaris11_sdma1.bin
+-File: amdgpu/polaris11_sdma.bin
+-File: amdgpu/polaris11_smc.bin
+-File: amdgpu/polaris11_k_smc.bin
+-File: amdgpu/polaris11_k2_smc.bin
+-File: amdgpu/polaris11_smc_sk.bin
+-File: amdgpu/polaris11_uvd.bin
+-File: amdgpu/polaris11_vce.bin
+-File: amdgpu/polaris12_ce.bin
+-File: amdgpu/polaris12_ce_2.bin
+-File: amdgpu/polaris12_mc.bin
+-File: amdgpu/polaris12_k_mc.bin
+-File: amdgpu/polaris12_32_mc.bin
+-File: amdgpu/polaris12_me.bin
+-File: amdgpu/polaris12_me_2.bin
+-File: amdgpu/polaris12_mec.bin
+-File: amdgpu/polaris12_mec_2.bin
+-File: amdgpu/polaris12_mec2.bin
+-File: amdgpu/polaris12_mec2_2.bin
+-File: amdgpu/polaris12_pfp.bin
+-File: amdgpu/polaris12_pfp_2.bin
+-File: amdgpu/polaris12_rlc.bin
+-File: amdgpu/polaris12_sdma.bin
+-File: amdgpu/polaris12_sdma1.bin
+-File: amdgpu/polaris12_smc.bin
+-File: amdgpu/polaris12_k_smc.bin
+-File: amdgpu/polaris12_uvd.bin
+-File: amdgpu/polaris12_vce.bin
+-File: amdgpu/vegam_ce.bin
+-File: amdgpu/vegam_me.bin
+-File: amdgpu/vegam_mec.bin
+-File: amdgpu/vegam_mec2.bin
+-File: amdgpu/vegam_pfp.bin
+-File: amdgpu/vegam_rlc.bin
+-File: amdgpu/vegam_sdma.bin
+-File: amdgpu/vegam_sdma1.bin
+-File: amdgpu/vegam_smc.bin
+-File: amdgpu/vegam_uvd.bin
+-File: amdgpu/vegam_vce.bin
+-File: amdgpu/vega10_acg_smc.bin
+-File: amdgpu/vega10_asd.bin
+-File: amdgpu/vega10_ce.bin
+-File: amdgpu/vega10_gpu_info.bin
+-File: amdgpu/vega10_me.bin
+-File: amdgpu/vega10_mec.bin
+-File: amdgpu/vega10_mec2.bin
+-File: amdgpu/vega10_pfp.bin
+-File: amdgpu/vega10_rlc.bin
+-File: amdgpu/vega10_sdma.bin
+-File: amdgpu/vega10_sdma1.bin
+-File: amdgpu/vega10_smc.bin
+-File: amdgpu/vega10_sos.bin
+-File: amdgpu/vega10_uvd.bin
+-File: amdgpu/vega10_vce.bin
+-File: amdgpu/vega12_asd.bin
+-File: amdgpu/vega12_ce.bin
+-File: amdgpu/vega12_gpu_info.bin
+-File: amdgpu/vega12_me.bin
+-File: amdgpu/vega12_mec.bin
+-File: amdgpu/vega12_mec2.bin
+-File: amdgpu/vega12_pfp.bin
+-File: amdgpu/vega12_rlc.bin
+-File: amdgpu/vega12_sdma.bin
+-File: amdgpu/vega12_sdma1.bin
+-File: amdgpu/vega12_smc.bin
+-File: amdgpu/vega12_sos.bin
+-File: amdgpu/vega12_uvd.bin
+-File: amdgpu/vega12_vce.bin
+-File: amdgpu/vega20_asd.bin
+-File: amdgpu/vega20_ce.bin
+-File: amdgpu/vega20_me.bin
+-File: amdgpu/vega20_mec.bin
+-File: amdgpu/vega20_mec2.bin
+-File: amdgpu/vega20_pfp.bin
+-File: amdgpu/vega20_rlc.bin
+-File: amdgpu/vega20_sdma.bin
+-File: amdgpu/vega20_sdma1.bin
+-File: amdgpu/vega20_smc.bin
+-File: amdgpu/vega20_sos.bin
+-File: amdgpu/vega20_uvd.bin
+-File: amdgpu/vega20_vce.bin
+-File: amdgpu/vega20_ta.bin
+-File: amdgpu/raven_asd.bin
+-File: amdgpu/raven_ce.bin
+-File: amdgpu/raven_gpu_info.bin
+-File: amdgpu/raven_me.bin
+-File: amdgpu/raven_mec.bin
+-File: amdgpu/raven_mec2.bin
+-File: amdgpu/raven_pfp.bin
+-File: amdgpu/raven_rlc.bin
+-File: amdgpu/raven_sdma.bin
+-File: amdgpu/raven_vcn.bin
+-File: amdgpu/raven_dmcu.bin
+-File: amdgpu/raven_kicker_rlc.bin
+-File: amdgpu/raven_ta.bin
+-File: amdgpu/picasso_asd.bin
+-File: amdgpu/picasso_ce.bin
+-File: amdgpu/picasso_gpu_info.bin
+-File: amdgpu/picasso_me.bin
+-File: amdgpu/picasso_mec.bin
+-File: amdgpu/picasso_mec2.bin
+-File: amdgpu/picasso_pfp.bin
+-File: amdgpu/picasso_rlc.bin
+-File: amdgpu/picasso_rlc_am4.bin
+-File: amdgpu/picasso_sdma.bin
+-File: amdgpu/picasso_vcn.bin
+-File: amdgpu/picasso_ta.bin
+-File: amdgpu/raven2_asd.bin
+-File: amdgpu/raven2_ce.bin
+-File: amdgpu/raven2_gpu_info.bin
+-File: amdgpu/raven2_me.bin
+-File: amdgpu/raven2_mec.bin
+-File: amdgpu/raven2_mec2.bin
+-File: amdgpu/raven2_pfp.bin
+-File: amdgpu/raven2_rlc.bin
+-File: amdgpu/raven2_sdma.bin
+-File: amdgpu/raven2_vcn.bin
+-File: amdgpu/raven2_ta.bin
+-File: amdgpu/navi10_asd.bin
+-File: amdgpu/navi10_ce.bin
+-File: amdgpu/navi10_gpu_info.bin
+-File: amdgpu/navi10_me.bin
+-File: amdgpu/navi10_mec.bin
+-File: amdgpu/navi10_mec2.bin
+-File: amdgpu/navi10_pfp.bin
+-File: amdgpu/navi10_rlc.bin
+-File: amdgpu/navi10_sdma.bin
+-File: amdgpu/navi10_sdma1.bin
+-File: amdgpu/navi10_smc.bin
+-File: amdgpu/navi10_sos.bin
+-File: amdgpu/navi10_vcn.bin
+-File: amdgpu/navi10_ta.bin
+-File: amdgpu/navi14_asd.bin
+-File: amdgpu/navi14_ce.bin
+-File: amdgpu/navi14_ce_wks.bin
+-File: amdgpu/navi14_gpu_info.bin
+-File: amdgpu/navi14_me.bin
+-File: amdgpu/navi14_me_wks.bin
+-File: amdgpu/navi14_mec.bin
+-File: amdgpu/navi14_mec_wks.bin
+-File: amdgpu/navi14_mec2.bin
+-File: amdgpu/navi14_mec2_wks.bin
+-File: amdgpu/navi14_pfp.bin
+-File: amdgpu/navi14_pfp_wks.bin
+-File: amdgpu/navi14_rlc.bin
+-File: amdgpu/navi14_sdma.bin
+-File: amdgpu/navi14_sdma1.bin
+-File: amdgpu/navi14_smc.bin
+-File: amdgpu/navi14_sos.bin
+-File: amdgpu/navi14_vcn.bin
+-File: amdgpu/navi14_ta.bin
+-File: amdgpu/navi12_asd.bin
+-File: amdgpu/navi12_ce.bin
+-File: amdgpu/navi12_dmcu.bin
+-File: amdgpu/navi12_gpu_info.bin
+-File: amdgpu/navi12_me.bin
+-File: amdgpu/navi12_mec.bin
+-File: amdgpu/navi12_mec2.bin
+-File: amdgpu/navi12_pfp.bin
+-File: amdgpu/navi12_rlc.bin
+-File: amdgpu/navi12_sdma.bin
+-File: amdgpu/navi12_sdma1.bin
+-File: amdgpu/navi12_smc.bin
+-File: amdgpu/navi12_sos.bin
+-File: amdgpu/navi12_vcn.bin
+-File: amdgpu/navi12_ta.bin
+-File: amdgpu/renoir_asd.bin
+-File: amdgpu/renoir_ce.bin
+-File: amdgpu/renoir_gpu_info.bin
+-File: amdgpu/renoir_me.bin
+-File: amdgpu/renoir_mec.bin
+-File: amdgpu/renoir_mec2.bin
+-File: amdgpu/renoir_pfp.bin
+-File: amdgpu/renoir_rlc.bin
+-File: amdgpu/renoir_sdma.bin
+-File: amdgpu/renoir_vcn.bin
+-File: amdgpu/renoir_dmcub.bin
+-File: amdgpu/renoir_ta.bin
+-File: amdgpu/sienna_cichlid_ce.bin
+-File: amdgpu/sienna_cichlid_dmcub.bin
+-File: amdgpu/sienna_cichlid_me.bin
+-File: amdgpu/sienna_cichlid_mec.bin
+-File: amdgpu/sienna_cichlid_mec2.bin
+-File: amdgpu/sienna_cichlid_pfp.bin
+-File: amdgpu/sienna_cichlid_rlc.bin
+-File: amdgpu/sienna_cichlid_sdma.bin
+-File: amdgpu/sienna_cichlid_smc.bin
+-File: amdgpu/sienna_cichlid_sos.bin
+-File: amdgpu/sienna_cichlid_ta.bin
+-File: amdgpu/sienna_cichlid_vcn.bin
+-File: amdgpu/green_sardine_asd.bin
+-File: amdgpu/green_sardine_ce.bin
+-File: amdgpu/green_sardine_dmcub.bin
+-File: amdgpu/green_sardine_me.bin
+-File: amdgpu/green_sardine_mec2.bin
+-File: amdgpu/green_sardine_mec.bin
+-File: amdgpu/green_sardine_pfp.bin
+-File: amdgpu/green_sardine_rlc.bin
+-File: amdgpu/green_sardine_sdma.bin
+-File: amdgpu/green_sardine_ta.bin
+-File: amdgpu/green_sardine_vcn.bin
+-File: amdgpu/navy_flounder_ce.bin
+-File: amdgpu/navy_flounder_dmcub.bin
+-File: amdgpu/navy_flounder_me.bin
+-File: amdgpu/navy_flounder_mec.bin
+-File: amdgpu/navy_flounder_mec2.bin
+-File: amdgpu/navy_flounder_pfp.bin
+-File: amdgpu/navy_flounder_rlc.bin
+-File: amdgpu/navy_flounder_sdma.bin
+-File: amdgpu/navy_flounder_smc.bin
+-File: amdgpu/navy_flounder_sos.bin
+-File: amdgpu/navy_flounder_ta.bin
+-File: amdgpu/navy_flounder_vcn.bin
+-File: amdgpu/arcturus_asd.bin
+-File: amdgpu/arcturus_gpu_info.bin
+-File: amdgpu/arcturus_mec2.bin
+-File: amdgpu/arcturus_mec.bin
+-File: amdgpu/arcturus_rlc.bin
+-File: amdgpu/arcturus_sdma.bin
+-File: amdgpu/arcturus_smc.bin
+-File: amdgpu/arcturus_sos.bin
+-File: amdgpu/arcturus_ta.bin
+-File: amdgpu/arcturus_vcn.bin
+-File: amdgpu/dimgrey_cavefish_ce.bin
+-File: amdgpu/dimgrey_cavefish_dmcub.bin
+-File: amdgpu/dimgrey_cavefish_me.bin
+-File: amdgpu/dimgrey_cavefish_mec.bin
+-File: amdgpu/dimgrey_cavefish_mec2.bin
+-File: amdgpu/dimgrey_cavefish_pfp.bin
+-File: amdgpu/dimgrey_cavefish_rlc.bin
+-File: amdgpu/dimgrey_cavefish_sdma.bin
+-File: amdgpu/dimgrey_cavefish_smc.bin
+-File: amdgpu/dimgrey_cavefish_sos.bin
+-File: amdgpu/dimgrey_cavefish_ta.bin
+-File: amdgpu/dimgrey_cavefish_vcn.bin
+-File: amdgpu/vangogh_asd.bin
+-File: amdgpu/vangogh_ce.bin
+-File: amdgpu/vangogh_dmcub.bin
+-File: amdgpu/vangogh_me.bin
+-File: amdgpu/vangogh_mec2.bin
+-File: amdgpu/vangogh_mec.bin
+-File: amdgpu/vangogh_pfp.bin
+-File: amdgpu/vangogh_rlc.bin
+-File: amdgpu/vangogh_sdma.bin
+-File: amdgpu/vangogh_toc.bin
+-File: amdgpu/vangogh_vcn.bin
+-File: amdgpu/yellow_carp_asd.bin
+-File: amdgpu/yellow_carp_ce.bin
+-File: amdgpu/yellow_carp_dmcub.bin
+-File: amdgpu/yellow_carp_me.bin
+-File: amdgpu/yellow_carp_mec.bin
+-File: amdgpu/yellow_carp_mec2.bin
+-File: amdgpu/yellow_carp_pfp.bin
+-File: amdgpu/yellow_carp_rlc.bin
+-File: amdgpu/yellow_carp_sdma.bin
+-File: amdgpu/yellow_carp_ta.bin
+-File: amdgpu/yellow_carp_toc.bin
+-File: amdgpu/yellow_carp_vcn.bin
+-File: amdgpu/beige_goby_ce.bin
+-File: amdgpu/beige_goby_dmcub.bin
+-File: amdgpu/beige_goby_me.bin
+-File: amdgpu/beige_goby_mec.bin
+-File: amdgpu/beige_goby_mec2.bin
+-File: amdgpu/beige_goby_pfp.bin
+-File: amdgpu/beige_goby_rlc.bin
+-File: amdgpu/beige_goby_sdma.bin
+-File: amdgpu/beige_goby_smc.bin
+-File: amdgpu/beige_goby_sos.bin
+-File: amdgpu/beige_goby_ta.bin
+-File: amdgpu/beige_goby_vcn.bin
+-File: amdgpu/cyan_skillfish2_ce.bin
+-File: amdgpu/cyan_skillfish2_me.bin
+-File: amdgpu/cyan_skillfish2_mec.bin
+-File: amdgpu/cyan_skillfish2_mec2.bin
+-File: amdgpu/cyan_skillfish2_pfp.bin
+-File: amdgpu/cyan_skillfish2_rlc.bin
+-File: amdgpu/cyan_skillfish2_sdma.bin
+-File: amdgpu/cyan_skillfish2_sdma1.bin
+-File: amdgpu/aldebaran_mec2.bin
+-File: amdgpu/aldebaran_mec.bin
+-File: amdgpu/aldebaran_rlc.bin
+-File: amdgpu/aldebaran_sdma.bin
+-File: amdgpu/aldebaran_sjt_mec2.bin
+-File: amdgpu/aldebaran_sjt_mec.bin
+-File: amdgpu/aldebaran_smc.bin
+-File: amdgpu/aldebaran_sos.bin
+-File: amdgpu/aldebaran_ta.bin
+-File: amdgpu/aldebaran_vcn.bin
+-File: amdgpu/gc_10_3_6_ce.bin
+-File: amdgpu/gc_10_3_6_me.bin
+-File: amdgpu/gc_10_3_6_mec.bin
+-File: amdgpu/gc_10_3_6_mec2.bin
+-File: amdgpu/gc_10_3_6_pfp.bin
+-File: amdgpu/gc_10_3_6_rlc.bin
+-File: amdgpu/gc_10_3_7_ce.bin
+-File: amdgpu/gc_10_3_7_me.bin
+-File: amdgpu/gc_10_3_7_mec.bin
+-File: amdgpu/gc_10_3_7_mec2.bin
+-File: amdgpu/gc_10_3_7_pfp.bin
+-File: amdgpu/gc_10_3_7_rlc.bin
+-File: amdgpu/gc_11_0_0_imu.bin
+-File: amdgpu/gc_11_0_0_me.bin
+-File: amdgpu/gc_11_0_0_mec.bin
+-File: amdgpu/gc_11_0_0_mes1.bin
+-File: amdgpu/gc_11_0_0_mes.bin
+-File: amdgpu/gc_11_0_0_mes_2.bin
+-File: amdgpu/gc_11_0_0_pfp.bin
+-File: amdgpu/gc_11_0_0_rlc.bin
+-File: amdgpu/gc_11_0_1_imu.bin
+-File: amdgpu/gc_11_0_1_me.bin
+-File: amdgpu/gc_11_0_1_mec.bin
+-File: amdgpu/gc_11_0_1_mes.bin
+-File: amdgpu/gc_11_0_1_mes1.bin
+-File: amdgpu/gc_11_0_1_mes_2.bin
+-File: amdgpu/gc_11_0_1_pfp.bin
+-File: amdgpu/gc_11_0_1_rlc.bin
+-File: amdgpu/gc_11_0_2_imu.bin
+-File: amdgpu/gc_11_0_2_me.bin
+-File: amdgpu/gc_11_0_2_mec.bin
+-File: amdgpu/gc_11_0_2_mes1.bin
+-File: amdgpu/gc_11_0_2_mes.bin
+-File: amdgpu/gc_11_0_2_mes_2.bin
+-File: amdgpu/gc_11_0_2_pfp.bin
+-File: amdgpu/gc_11_0_2_rlc.bin
+-File: amdgpu/gc_11_0_4_imu.bin
+-File: amdgpu/gc_11_0_4_me.bin
+-File: amdgpu/gc_11_0_4_mec.bin
+-File: amdgpu/gc_11_0_4_mes.bin
+-File: amdgpu/gc_11_0_4_mes1.bin
+-File: amdgpu/gc_11_0_4_mes_2.bin
+-File: amdgpu/gc_11_0_4_pfp.bin
+-File: amdgpu/gc_11_0_4_rlc.bin
+-File: amdgpu/dcn_3_1_4_dmcub.bin
+-File: amdgpu/dcn_3_1_5_dmcub.bin
+-File: amdgpu/dcn_3_1_6_dmcub.bin
+-File: amdgpu/dcn_3_2_0_dmcub.bin
+-File: amdgpu/dcn_3_2_1_dmcub.bin
+-File: amdgpu/psp_13_0_0_sos.bin
+-File: amdgpu/psp_13_0_0_ta.bin
+-File: amdgpu/psp_13_0_4_ta.bin
+-File: amdgpu/psp_13_0_4_toc.bin
+-File: amdgpu/psp_13_0_5_asd.bin
+-File: amdgpu/psp_13_0_5_ta.bin
+-File: amdgpu/psp_13_0_5_toc.bin
+-File: amdgpu/psp_13_0_7_sos.bin
+-File: amdgpu/psp_13_0_7_ta.bin
+-File: amdgpu/psp_13_0_8_asd.bin
+-File: amdgpu/psp_13_0_8_ta.bin
+-File: amdgpu/psp_13_0_8_toc.bin
+-File: amdgpu/psp_13_0_11_ta.bin
+-File: amdgpu/psp_13_0_11_toc.bin
+-File: amdgpu/sdma_5_2_6.bin
+-File: amdgpu/sdma_5_2_7.bin
+-File: amdgpu/sdma_6_0_0.bin
+-File: amdgpu/sdma_6_0_1.bin
+-File: amdgpu/sdma_6_0_2.bin
+-File: amdgpu/smu_13_0_0.bin
+-File: amdgpu/smu_13_0_7.bin
+-File: amdgpu/vcn_3_1_2.bin
+-File: amdgpu/vcn_4_0_0.bin
+-File: amdgpu/vcn_4_0_2.bin
+-File: amdgpu/vcn_4_0_4.bin
+-
+-Licence: Redistributable. See LICENSE.amdgpu for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: qed - QLogic 4xxxx Ethernet Driver Core Module.
+ 
+ File: qed/qed_init_values_zipped-8.4.2.0.bin
+@@ -1459,424 +561,6 @@ Version: HuC API/APB ver 8.5.0 for Meteorlake
+ License: Redistributable. See LICENSE.i915 for details
+ --------------------------------------------------------------------------
+ 
+-Driver: nouveau - NVIDIA GPU driver
+-
+-File: nvidia/gk20a/fecs_data.bin
+-File: nvidia/gk20a/fecs_inst.bin
+-File: nvidia/gk20a/gpccs_data.bin
+-File: nvidia/gk20a/gpccs_inst.bin
+-File: nvidia/gk20a/sw_bundle_init.bin
+-File: nvidia/gk20a/sw_ctx.bin
+-File: nvidia/gk20a/sw_method_init.bin
+-File: nvidia/gk20a/sw_nonctx.bin
+-File: nvidia/gm200/acr/bl.bin
+-File: nvidia/gm200/acr/ucode_load.bin
+-File: nvidia/gm200/acr/ucode_unload.bin
+-File: nvidia/gm200/gr/fecs_bl.bin
+-File: nvidia/gm200/gr/fecs_data.bin
+-File: nvidia/gm200/gr/fecs_inst.bin
+-File: nvidia/gm200/gr/fecs_sig.bin
+-File: nvidia/gm200/gr/gpccs_bl.bin
+-File: nvidia/gm200/gr/gpccs_data.bin
+-File: nvidia/gm200/gr/gpccs_inst.bin
+-File: nvidia/gm200/gr/gpccs_sig.bin
+-File: nvidia/gm200/gr/sw_bundle_init.bin
+-File: nvidia/gm200/gr/sw_ctx.bin
+-File: nvidia/gm200/gr/sw_method_init.bin
+-File: nvidia/gm200/gr/sw_nonctx.bin
+-Link: nvidia/gm204/acr/bl.bin -> ../../gm200/acr/bl.bin
+-Link: nvidia/gm204/acr/ucode_load.bin -> ../../gm200/acr/ucode_load.bin
+-Link: nvidia/gm204/acr/ucode_unload.bin -> ../../gm200/acr/ucode_unload.bin
+-Link: nvidia/gm204/gr/fecs_bl.bin -> ../../gm200/gr/fecs_bl.bin
+-File: nvidia/gm204/gr/fecs_data.bin
+-Link: nvidia/gm204/gr/fecs_inst.bin -> ../../gm200/gr/fecs_inst.bin
+-File: nvidia/gm204/gr/fecs_sig.bin
+-Link: nvidia/gm204/gr/gpccs_bl.bin -> ../../gm200/gr/gpccs_bl.bin
+-File: nvidia/gm204/gr/gpccs_data.bin
+-Link: nvidia/gm204/gr/gpccs_inst.bin -> ../../gm200/gr/gpccs_inst.bin
+-File: nvidia/gm204/gr/gpccs_sig.bin
+-Link: nvidia/gm204/gr/sw_bundle_init.bin -> ../../gm200/gr/sw_bundle_init.bin
+-Link: nvidia/gm204/gr/sw_ctx.bin -> ../../gm200/gr/sw_ctx.bin
+-Link: nvidia/gm204/gr/sw_method_init.bin -> ../../gm200/gr/sw_method_init.bin
+-Link: nvidia/gm204/gr/sw_nonctx.bin -> ../../gm200/gr/sw_nonctx.bin
+-Link: nvidia/gm206/acr/bl.bin  -> ../../gm200/acr/bl.bin
+-File: nvidia/gm206/acr/ucode_load.bin
+-File: nvidia/gm206/acr/ucode_unload.bin
+-Link: nvidia/gm206/gr/fecs_bl.bin -> ../../gm200/gr/fecs_bl.bin
+-File: nvidia/gm206/gr/fecs_data.bin
+-Link: nvidia/gm206/gr/fecs_inst.bin -> ../../gm200/gr/fecs_inst.bin
+-File: nvidia/gm206/gr/fecs_sig.bin
+-Link: nvidia/gm206/gr/gpccs_bl.bin -> ../../gm200/gr/gpccs_bl.bin
+-File: nvidia/gm206/gr/gpccs_data.bin
+-Link: nvidia/gm206/gr/gpccs_inst.bin -> ../../gm200/gr/gpccs_inst.bin
+-File: nvidia/gm206/gr/gpccs_sig.bin
+-Link: nvidia/gm206/gr/sw_bundle_init.bin -> ../../gm200/gr/sw_bundle_init.bin
+-Link: nvidia/gm206/gr/sw_ctx.bin -> ../../gm200/gr/sw_ctx.bin
+-Link: nvidia/gm206/gr/sw_method_init.bin -> ../../gm200/gr/sw_method_init.bin
+-Link: nvidia/gm206/gr/sw_nonctx.bin -> ../../gm200/gr/sw_nonctx.bin
+-File: nvidia/gm20b/acr/bl.bin
+-File: nvidia/gm20b/acr/ucode_load.bin
+-File: nvidia/gm20b/gr/fecs_bl.bin
+-File: nvidia/gm20b/gr/fecs_data.bin
+-File: nvidia/gm20b/gr/fecs_inst.bin
+-File: nvidia/gm20b/gr/fecs_sig.bin
+-File: nvidia/gm20b/gr/gpccs_data.bin
+-File: nvidia/gm20b/gr/gpccs_inst.bin
+-File: nvidia/gm20b/gr/sw_bundle_init.bin
+-File: nvidia/gm20b/gr/sw_ctx.bin
+-Link: nvidia/gm20b/gr/sw_method_init.bin -> ../../gm200/gr/sw_method_init.bin
+-File: nvidia/gm20b/gr/sw_nonctx.bin
+-File: nvidia/gm20b/pmu/desc.bin
+-File: nvidia/gm20b/pmu/image.bin
+-File: nvidia/gm20b/pmu/sig.bin
+-File: nvidia/gp100/acr/bl.bin
+-File: nvidia/gp100/acr/ucode_load.bin
+-File: nvidia/gp100/acr/ucode_unload.bin
+-Link: nvidia/gp100/gr/fecs_bl.bin -> ../../gm200/gr/fecs_bl.bin
+-File: nvidia/gp100/gr/fecs_data.bin
+-File: nvidia/gp100/gr/fecs_inst.bin
+-File: nvidia/gp100/gr/fecs_sig.bin
+-Link: nvidia/gp100/gr/gpccs_bl.bin -> ../../gm200/gr/gpccs_bl.bin
+-File: nvidia/gp100/gr/gpccs_data.bin
+-File: nvidia/gp100/gr/gpccs_inst.bin
+-File: nvidia/gp100/gr/gpccs_sig.bin
+-File: nvidia/gp100/gr/sw_bundle_init.bin
+-File: nvidia/gp100/gr/sw_ctx.bin
+-File: nvidia/gp100/gr/sw_method_init.bin
+-File: nvidia/gp100/gr/sw_nonctx.bin
+-File: nvidia/gp102/acr/bl.bin
+-File: nvidia/gp102/acr/ucode_load.bin
+-File: nvidia/gp102/acr/ucode_unload.bin
+-File: nvidia/gp102/acr/unload_bl.bin
+-Link: nvidia/gp102/gr/fecs_bl.bin -> ../../gm200/gr/fecs_bl.bin
+-File: nvidia/gp102/gr/fecs_data.bin
+-File: nvidia/gp102/gr/fecs_inst.bin
+-File: nvidia/gp102/gr/fecs_sig.bin
+-Link: nvidia/gp102/gr/gpccs_bl.bin -> ../../gm200/gr/gpccs_bl.bin
+-File: nvidia/gp102/gr/gpccs_data.bin
+-File: nvidia/gp102/gr/gpccs_inst.bin
+-File: nvidia/gp102/gr/gpccs_sig.bin
+-File: nvidia/gp102/gr/sw_bundle_init.bin
+-File: nvidia/gp102/gr/sw_ctx.bin
+-File: nvidia/gp102/gr/sw_method_init.bin
+-File: nvidia/gp102/gr/sw_nonctx.bin
+-File: nvidia/gp102/nvdec/scrubber.bin
+-File: nvidia/gp102/sec2/desc.bin
+-File: nvidia/gp102/sec2/image.bin
+-File: nvidia/gp102/sec2/sig.bin
+-File: nvidia/gp102/sec2/desc-1.bin
+-File: nvidia/gp102/sec2/image-1.bin
+-File: nvidia/gp102/sec2/sig-1.bin
+-Link: nvidia/gp104/acr/bl.bin -> ../../gp102/acr/bl.bin
+-Link: nvidia/gp104/acr/ucode_load.bin -> ../../gp102/acr/ucode_load.bin
+-Link: nvidia/gp104/acr/ucode_unload.bin -> ../../gp102/acr/ucode_unload.bin
+-Link: nvidia/gp104/acr/unload_bl.bin -> ../../gp102/acr/unload_bl.bin
+-Link: nvidia/gp104/gr/fecs_bl.bin -> ../../gp102/gr/fecs_bl.bin
+-File: nvidia/gp104/gr/fecs_data.bin
+-File: nvidia/gp104/gr/fecs_inst.bin
+-File: nvidia/gp104/gr/fecs_sig.bin
+-Link: nvidia/gp104/gr/gpccs_bl.bin -> ../../gp102/gr/gpccs_bl.bin
+-File: nvidia/gp104/gr/gpccs_data.bin
+-File: nvidia/gp104/gr/gpccs_inst.bin
+-File: nvidia/gp104/gr/gpccs_sig.bin
+-Link: nvidia/gp104/gr/sw_bundle_init.bin -> ../../gp102/gr/sw_bundle_init.bin
+-Link: nvidia/gp104/gr/sw_ctx.bin -> ../../gp102/gr/sw_ctx.bin
+-Link: nvidia/gp104/gr/sw_method_init.bin -> ../../gp102/gr/sw_method_init.bin
+-Link: nvidia/gp104/gr/sw_nonctx.bin -> ../../gp102/gr/sw_nonctx.bin
+-Link: nvidia/gp104/nvdec/scrubber.bin -> ../../gp102/nvdec/scrubber.bin
+-Link: nvidia/gp104/sec2/desc.bin -> ../../gp102/sec2/desc.bin
+-Link: nvidia/gp104/sec2/image.bin -> ../../gp102/sec2/image.bin
+-Link: nvidia/gp104/sec2/sig.bin -> ../../gp102/sec2/sig.bin
+-Link: nvidia/gp104/sec2/desc-1.bin -> ../../gp102/sec2/desc-1.bin
+-Link: nvidia/gp104/sec2/image-1.bin -> ../../gp102/sec2/image-1.bin
+-Link: nvidia/gp104/sec2/sig-1.bin -> ../../gp102/sec2/sig-1.bin
+-Link: nvidia/gp106/acr/bl.bin -> ../../gp102/acr/bl.bin
+-Link: nvidia/gp106/acr/ucode_load.bin -> ../../gp102/acr/ucode_load.bin
+-Link: nvidia/gp106/acr/ucode_unload.bin -> ../../gp102/acr/ucode_unload.bin
+-Link: nvidia/gp106/acr/unload_bl.bin -> ../../gp102/acr/unload_bl.bin
+-Link: nvidia/gp106/gr/fecs_bl.bin -> ../../gp102/gr/fecs_bl.bin
+-File: nvidia/gp106/gr/fecs_data.bin
+-Link: nvidia/gp106/gr/fecs_inst.bin -> ../../gp102/gr/fecs_inst.bin
+-File: nvidia/gp106/gr/fecs_sig.bin
+-Link: nvidia/gp106/gr/gpccs_bl.bin -> ../../gp102/gr/gpccs_bl.bin
+-File: nvidia/gp106/gr/gpccs_data.bin
+-Link: nvidia/gp106/gr/gpccs_inst.bin -> ../../gp102/gr/gpccs_inst.bin
+-File: nvidia/gp106/gr/gpccs_sig.bin
+-Link: nvidia/gp106/gr/sw_bundle_init.bin -> ../../gp102/gr/sw_bundle_init.bin
+-Link: nvidia/gp106/gr/sw_ctx.bin -> ../../gp102/gr/sw_ctx.bin
+-Link: nvidia/gp106/gr/sw_method_init.bin -> ../../gp102/gr/sw_method_init.bin
+-Link: nvidia/gp106/gr/sw_nonctx.bin -> ../../gp102/gr/sw_nonctx.bin
+-Link: nvidia/gp106/nvdec/scrubber.bin -> ../../gp102/nvdec/scrubber.bin
+-Link: nvidia/gp106/sec2/desc.bin -> ../../gp102/sec2/desc.bin
+-Link: nvidia/gp106/sec2/image.bin -> ../../gp102/sec2/image.bin
+-Link: nvidia/gp106/sec2/sig.bin -> ../../gp102/sec2/sig.bin
+-Link: nvidia/gp106/sec2/desc-1.bin -> ../../gp102/sec2/desc-1.bin
+-Link: nvidia/gp106/sec2/image-1.bin -> ../../gp102/sec2/image-1.bin
+-Link: nvidia/gp106/sec2/sig-1.bin -> ../../gp102/sec2/sig-1.bin
+-Link: nvidia/gp107/acr/bl.bin -> ../../gp102/acr/bl.bin
+-Link: nvidia/gp107/acr/ucode_load.bin -> ../../gp102/acr/ucode_load.bin
+-Link: nvidia/gp107/acr/ucode_unload.bin -> ../../gp102/acr/ucode_unload.bin
+-Link: nvidia/gp107/acr/unload_bl.bin -> ../../gp102/acr/unload_bl.bin
+-File: nvidia/gp107/gr/fecs_bl.bin
+-File: nvidia/gp107/gr/fecs_data.bin
+-File: nvidia/gp107/gr/fecs_inst.bin
+-File: nvidia/gp107/gr/fecs_sig.bin
+-File: nvidia/gp107/gr/gpccs_bl.bin
+-File: nvidia/gp107/gr/gpccs_data.bin
+-File: nvidia/gp107/gr/gpccs_inst.bin
+-File: nvidia/gp107/gr/gpccs_sig.bin
+-Link: nvidia/gp107/gr/sw_bundle_init.bin -> ../../gp102/gr/sw_bundle_init.bin
+-File: nvidia/gp107/gr/sw_ctx.bin
+-Link: nvidia/gp107/gr/sw_method_init.bin -> ../../gp102/gr/sw_method_init.bin
+-File: nvidia/gp107/gr/sw_nonctx.bin
+-Link: nvidia/gp107/nvdec/scrubber.bin -> ../../gp102/nvdec/scrubber.bin
+-Link: nvidia/gp107/sec2/desc.bin -> ../../gp102/sec2/desc.bin
+-Link: nvidia/gp107/sec2/image.bin -> ../../gp102/sec2/image.bin
+-Link: nvidia/gp107/sec2/sig.bin -> ../../gp102/sec2/sig.bin
+-Link: nvidia/gp107/sec2/desc-1.bin -> ../../gp102/sec2/desc-1.bin
+-Link: nvidia/gp107/sec2/image-1.bin -> ../../gp102/sec2/image-1.bin
+-Link: nvidia/gp107/sec2/sig-1.bin -> ../../gp102/sec2/sig-1.bin
+-File: nvidia/gp10b/acr/bl.bin
+-File: nvidia/gp10b/acr/ucode_load.bin
+-File: nvidia/gp10b/gr/fecs_bl.bin
+-File: nvidia/gp10b/gr/fecs_data.bin
+-File: nvidia/gp10b/gr/fecs_inst.bin
+-File: nvidia/gp10b/gr/fecs_sig.bin
+-File: nvidia/gp10b/gr/gpccs_bl.bin
+-File: nvidia/gp10b/gr/gpccs_data.bin
+-File: nvidia/gp10b/gr/gpccs_inst.bin
+-File: nvidia/gp10b/gr/gpccs_sig.bin
+-File: nvidia/gp10b/gr/sw_bundle_init.bin
+-File: nvidia/gp10b/gr/sw_ctx.bin
+-File: nvidia/gp10b/gr/sw_method_init.bin
+-File: nvidia/gp10b/gr/sw_nonctx.bin
+-File: nvidia/gp10b/pmu/desc.bin
+-File: nvidia/gp10b/pmu/image.bin
+-File: nvidia/gp10b/pmu/sig.bin
+-Link: nvidia/gp108/acr/bl.bin -> ../../gp102/acr/bl.bin
+-Link: nvidia/gp108/acr/ucode_load.bin -> ../../gp102/acr/ucode_load.bin
+-Link: nvidia/gp108/acr/ucode_unload.bin -> ../../gp102/acr/ucode_unload.bin
+-Link: nvidia/gp108/acr/unload_bl.bin -> ../../gp102/acr/unload_bl.bin
+-File: nvidia/gp108/gr/fecs_bl.bin
+-File: nvidia/gp108/gr/fecs_data.bin
+-File: nvidia/gp108/gr/fecs_inst.bin
+-File: nvidia/gp108/gr/fecs_sig.bin
+-File: nvidia/gp108/gr/gpccs_bl.bin
+-File: nvidia/gp108/gr/gpccs_data.bin
+-File: nvidia/gp108/gr/gpccs_inst.bin
+-File: nvidia/gp108/gr/gpccs_sig.bin
+-File: nvidia/gp108/gr/sw_bundle_init.bin
+-File: nvidia/gp108/gr/sw_ctx.bin
+-File: nvidia/gp108/gr/sw_method_init.bin
+-File: nvidia/gp108/gr/sw_nonctx.bin
+-Link: nvidia/gp108/nvdec/scrubber.bin -> ../../gp102/nvdec/scrubber.bin
+-Link: nvidia/gp108/sec2/desc.bin -> ../../gp102/sec2/desc-1.bin
+-Link: nvidia/gp108/sec2/image.bin -> ../../gp102/sec2/image-1.bin
+-Link: nvidia/gp108/sec2/sig.bin -> ../../gp102/sec2/sig-1.bin
+-File: nvidia/gv100/acr/bl.bin
+-File: nvidia/gv100/acr/ucode_load.bin
+-File: nvidia/gv100/acr/ucode_unload.bin
+-File: nvidia/gv100/acr/unload_bl.bin
+-File: nvidia/gv100/gr/fecs_bl.bin
+-File: nvidia/gv100/gr/fecs_data.bin
+-File: nvidia/gv100/gr/fecs_inst.bin
+-File: nvidia/gv100/gr/fecs_sig.bin
+-File: nvidia/gv100/gr/gpccs_bl.bin
+-File: nvidia/gv100/gr/gpccs_data.bin
+-File: nvidia/gv100/gr/gpccs_inst.bin
+-File: nvidia/gv100/gr/gpccs_sig.bin
+-File: nvidia/gv100/gr/sw_bundle_init.bin
+-File: nvidia/gv100/gr/sw_ctx.bin
+-File: nvidia/gv100/gr/sw_method_init.bin
+-File: nvidia/gv100/gr/sw_nonctx.bin
+-File: nvidia/gv100/nvdec/scrubber.bin
+-File: nvidia/gv100/sec2/desc.bin
+-File: nvidia/gv100/sec2/image.bin
+-File: nvidia/gv100/sec2/sig.bin
+-File: nvidia/tu102/acr/bl.bin
+-File: nvidia/tu102/acr/ucode_ahesasc.bin
+-File: nvidia/tu102/acr/ucode_asb.bin
+-File: nvidia/tu102/acr/unload_bl.bin
+-File: nvidia/tu102/acr/ucode_unload.bin
+-File: nvidia/tu102/gr/fecs_bl.bin
+-File: nvidia/tu102/gr/fecs_data.bin
+-File: nvidia/tu102/gr/fecs_inst.bin
+-File: nvidia/tu102/gr/fecs_sig.bin
+-File: nvidia/tu102/gr/gpccs_bl.bin
+-File: nvidia/tu102/gr/gpccs_data.bin
+-File: nvidia/tu102/gr/gpccs_inst.bin
+-File: nvidia/tu102/gr/gpccs_sig.bin
+-File: nvidia/tu102/gr/sw_bundle_init.bin
+-File: nvidia/tu102/gr/sw_ctx.bin
+-File: nvidia/tu102/gr/sw_method_init.bin
+-File: nvidia/tu102/gr/sw_nonctx.bin
+-File: nvidia/tu102/gr/sw_veid_bundle_init.bin
+-File: nvidia/tu102/nvdec/scrubber.bin
+-File: nvidia/tu102/sec2/desc.bin
+-File: nvidia/tu102/sec2/image.bin
+-File: nvidia/tu102/sec2/sig.bin
+-Link: nvidia/tu104/acr/bl.bin -> ../../tu102/acr/bl.bin
+-Link: nvidia/tu104/acr/ucode_ahesasc.bin -> ../../tu102/acr/ucode_ahesasc.bin
+-Link: nvidia/tu104/acr/ucode_asb.bin -> ../../tu102/acr/ucode_asb.bin
+-Link: nvidia/tu104/acr/unload_bl.bin -> ../../tu102/acr/unload_bl.bin
+-Link: nvidia/tu104/acr/ucode_unload.bin -> ../../tu102/acr/ucode_unload.bin
+-Link: nvidia/tu104/gr/fecs_bl.bin -> ../../tu102/gr/fecs_bl.bin
+-File: nvidia/tu104/gr/fecs_data.bin
+-File: nvidia/tu104/gr/fecs_inst.bin
+-File: nvidia/tu104/gr/fecs_sig.bin
+-Link: nvidia/tu104/gr/gpccs_bl.bin -> ../../tu102/gr/gpccs_bl.bin
+-File: nvidia/tu104/gr/gpccs_data.bin
+-File: nvidia/tu104/gr/gpccs_inst.bin
+-File: nvidia/tu104/gr/gpccs_sig.bin
+-File: nvidia/tu104/gr/sw_bundle_init.bin
+-File: nvidia/tu104/gr/sw_ctx.bin
+-File: nvidia/tu104/gr/sw_method_init.bin
+-File: nvidia/tu104/gr/sw_nonctx.bin
+-File: nvidia/tu104/gr/sw_veid_bundle_init.bin
+-Link: nvidia/tu104/nvdec/scrubber.bin -> ../../tu102/nvdec/scrubber.bin
+-Link: nvidia/tu104/sec2/desc.bin -> ../../tu102/sec2/desc.bin
+-Link: nvidia/tu104/sec2/image.bin -> ../../tu102/sec2/image.bin
+-Link: nvidia/tu104/sec2/sig.bin -> ../../tu102/sec2/sig.bin
+-Link: nvidia/tu106/acr/bl.bin -> ../../tu102/acr/bl.bin
+-Link: nvidia/tu106/acr/ucode_ahesasc.bin -> ../../tu102/acr/ucode_ahesasc.bin
+-Link: nvidia/tu106/acr/ucode_asb.bin -> ../../tu102/acr/ucode_asb.bin
+-Link: nvidia/tu106/acr/unload_bl.bin -> ../../tu102/acr/unload_bl.bin
+-Link: nvidia/tu106/acr/ucode_unload.bin -> ../../tu102/acr/ucode_unload.bin
+-Link: nvidia/tu106/gr/fecs_bl.bin -> ../../tu102/gr/fecs_bl.bin
+-File: nvidia/tu106/gr/fecs_data.bin
+-File: nvidia/tu106/gr/fecs_inst.bin
+-File: nvidia/tu106/gr/fecs_sig.bin
+-Link: nvidia/tu106/gr/gpccs_bl.bin -> ../../tu102/gr/gpccs_bl.bin
+-File: nvidia/tu106/gr/gpccs_data.bin
+-File: nvidia/tu106/gr/gpccs_inst.bin
+-File: nvidia/tu106/gr/gpccs_sig.bin
+-File: nvidia/tu106/gr/sw_bundle_init.bin
+-File: nvidia/tu106/gr/sw_ctx.bin
+-File: nvidia/tu106/gr/sw_method_init.bin
+-File: nvidia/tu106/gr/sw_nonctx.bin
+-File: nvidia/tu106/gr/sw_veid_bundle_init.bin
+-Link: nvidia/tu106/nvdec/scrubber.bin -> ../../tu102/nvdec/scrubber.bin
+-Link: nvidia/tu106/sec2/desc.bin -> ../../tu102/sec2/desc.bin
+-Link: nvidia/tu106/sec2/image.bin -> ../../tu102/sec2/image.bin
+-Link: nvidia/tu106/sec2/sig.bin -> ../../tu102/sec2/sig.bin
+-File: nvidia/tu116/acr/bl.bin
+-File: nvidia/tu116/acr/ucode_ahesasc.bin
+-File: nvidia/tu116/acr/ucode_asb.bin
+-File: nvidia/tu116/acr/ucode_unload.bin
+-File: nvidia/tu116/acr/unload_bl.bin
+-File: nvidia/tu116/gr/fecs_bl.bin
+-File: nvidia/tu116/gr/fecs_data.bin
+-File: nvidia/tu116/gr/fecs_inst.bin
+-File: nvidia/tu116/gr/fecs_sig.bin
+-File: nvidia/tu116/gr/gpccs_bl.bin
+-File: nvidia/tu116/gr/gpccs_data.bin
+-File: nvidia/tu116/gr/gpccs_inst.bin
+-File: nvidia/tu116/gr/gpccs_sig.bin
+-File: nvidia/tu116/gr/sw_bundle_init.bin
+-File: nvidia/tu116/gr/sw_ctx.bin
+-File: nvidia/tu116/gr/sw_method_init.bin
+-File: nvidia/tu116/gr/sw_nonctx.bin
+-File: nvidia/tu116/gr/sw_veid_bundle_init.bin
+-File: nvidia/tu116/nvdec/scrubber.bin
+-File: nvidia/tu116/sec2/desc.bin
+-File: nvidia/tu116/sec2/image.bin
+-File: nvidia/tu116/sec2/sig.bin
+-Link: nvidia/tu117/acr/bl.bin -> ../../tu116/acr/bl.bin
+-Link: nvidia/tu117/acr/ucode_ahesasc.bin -> ../../tu116/acr/ucode_ahesasc.bin
+-Link: nvidia/tu117/acr/ucode_asb.bin -> ../../tu116/acr/ucode_asb.bin
+-Link: nvidia/tu117/acr/ucode_unload.bin -> ../../tu116/acr/ucode_unload.bin
+-Link: nvidia/tu117/acr/unload_bl.bin -> ../../tu116/acr/unload_bl.bin
+-Link: nvidia/tu117/gr/fecs_bl.bin -> ../../tu116/gr/fecs_bl.bin
+-File: nvidia/tu117/gr/fecs_data.bin
+-File: nvidia/tu117/gr/fecs_inst.bin
+-File: nvidia/tu117/gr/fecs_sig.bin
+-Link: nvidia/tu117/gr/gpccs_bl.bin -> ../../tu116/gr/gpccs_bl.bin
+-File: nvidia/tu117/gr/gpccs_data.bin
+-File: nvidia/tu117/gr/gpccs_inst.bin
+-File: nvidia/tu117/gr/gpccs_sig.bin
+-File: nvidia/tu117/gr/sw_bundle_init.bin
+-File: nvidia/tu117/gr/sw_ctx.bin
+-File: nvidia/tu117/gr/sw_method_init.bin
+-File: nvidia/tu117/gr/sw_nonctx.bin
+-File: nvidia/tu117/gr/sw_veid_bundle_init.bin
+-Link: nvidia/tu117/nvdec/scrubber.bin -> ../../tu116/nvdec/scrubber.bin
+-Link: nvidia/tu117/sec2/desc.bin -> ../../tu116/sec2/desc.bin
+-Link: nvidia/tu117/sec2/image.bin -> ../../tu116/sec2/image.bin
+-Link: nvidia/tu117/sec2/sig.bin -> ../../tu116/sec2/sig.bin
+-File: nvidia/ga102/acr/ucode_ahesasc.bin
+-File: nvidia/ga102/acr/ucode_asb.bin
+-File: nvidia/ga102/acr/ucode_unload.bin
+-File: nvidia/ga102/gr/fecs_bl.bin
+-File: nvidia/ga102/gr/fecs_sig.bin
+-File: nvidia/ga102/gr/gpccs_bl.bin
+-File: nvidia/ga102/gr/gpccs_sig.bin
+-File: nvidia/ga102/gr/NET_img.bin
+-File: nvidia/ga102/nvdec/scrubber.bin
+-File: nvidia/ga102/sec2/desc.bin
+-File: nvidia/ga102/sec2/hs_bl_sig.bin
+-File: nvidia/ga102/sec2/image.bin
+-File: nvidia/ga102/sec2/sig.bin
+-Link: nvidia/ga103/acr/ucode_ahesasc.bin -> ../../ga102/acr/ucode_ahesasc.bin
+-Link: nvidia/ga103/acr/ucode_asb.bin -> ../../ga102/acr/ucode_asb.bin
+-Link: nvidia/ga103/acr/ucode_unload.bin -> ../../ga102/acr/ucode_unload.bin
+-File: nvidia/ga103/gr/fecs_bl.bin
+-File: nvidia/ga103/gr/fecs_sig.bin
+-File: nvidia/ga103/gr/gpccs_bl.bin
+-File: nvidia/ga103/gr/gpccs_sig.bin
+-File: nvidia/ga103/gr/NET_img.bin
+-Link: nvidia/ga103/nvdec/scrubber.bin -> ../../ga102/nvdec/scrubber.bin
+-Link: nvidia/ga103/sec2/desc.bin -> ../../ga102/sec2/desc.bin
+-Link: nvidia/ga103/sec2/hs_bl_sig.bin -> ../../ga102/sec2/hs_bl_sig.bin
+-Link: nvidia/ga103/sec2/image.bin -> ../../ga102/sec2/image.bin
+-Link: nvidia/ga103/sec2/sig.bin -> ../../ga102/sec2/sig.bin
+-Link: nvidia/ga104/acr/ucode_ahesasc.bin -> ../../ga102/acr/ucode_ahesasc.bin
+-Link: nvidia/ga104/acr/ucode_asb.bin -> ../../ga102/acr/ucode_asb.bin
+-Link: nvidia/ga104/acr/ucode_unload.bin -> ../../ga102/acr/ucode_unload.bin
+-File: nvidia/ga104/gr/fecs_bl.bin
+-File: nvidia/ga104/gr/fecs_sig.bin
+-File: nvidia/ga104/gr/gpccs_bl.bin
+-File: nvidia/ga104/gr/gpccs_sig.bin
+-File: nvidia/ga104/gr/NET_img.bin
+-Link: nvidia/ga104/nvdec/scrubber.bin -> ../../ga102/nvdec/scrubber.bin
+-Link: nvidia/ga104/sec2/desc.bin -> ../../ga102/sec2/desc.bin
+-Link: nvidia/ga104/sec2/hs_bl_sig.bin -> ../../ga102/sec2/hs_bl_sig.bin
+-Link: nvidia/ga104/sec2/image.bin -> ../../ga102/sec2/image.bin
+-Link: nvidia/ga104/sec2/sig.bin -> ../../ga102/sec2/sig.bin
+-Link: nvidia/ga106/acr/ucode_ahesasc.bin -> ../../ga102/acr/ucode_ahesasc.bin
+-Link: nvidia/ga106/acr/ucode_asb.bin -> ../../ga102/acr/ucode_asb.bin
+-Link: nvidia/ga106/acr/ucode_unload.bin -> ../../ga102/acr/ucode_unload.bin
+-File: nvidia/ga106/gr/fecs_bl.bin
+-File: nvidia/ga106/gr/fecs_sig.bin
+-File: nvidia/ga106/gr/gpccs_bl.bin
+-File: nvidia/ga106/gr/gpccs_sig.bin
+-File: nvidia/ga106/gr/NET_img.bin
+-Link: nvidia/ga106/nvdec/scrubber.bin -> ../../ga102/nvdec/scrubber.bin
+-Link: nvidia/ga106/sec2/desc.bin -> ../../ga102/sec2/desc.bin
+-Link: nvidia/ga106/sec2/hs_bl_sig.bin -> ../../ga102/sec2/hs_bl_sig.bin
+-Link: nvidia/ga106/sec2/image.bin -> ../../ga102/sec2/image.bin
+-Link: nvidia/ga106/sec2/sig.bin -> ../../ga102/sec2/sig.bin
+-Link: nvidia/ga107/acr/ucode_ahesasc.bin -> ../../ga102/acr/ucode_ahesasc.bin
+-Link: nvidia/ga107/acr/ucode_asb.bin -> ../../ga102/acr/ucode_asb.bin
+-Link: nvidia/ga107/acr/ucode_unload.bin -> ../../ga102/acr/ucode_unload.bin
+-File: nvidia/ga107/gr/fecs_bl.bin
+-File: nvidia/ga107/gr/fecs_sig.bin
+-File: nvidia/ga107/gr/gpccs_bl.bin
+-File: nvidia/ga107/gr/gpccs_sig.bin
+-File: nvidia/ga107/gr/NET_img.bin
+-Link: nvidia/ga107/nvdec/scrubber.bin -> ../../ga102/nvdec/scrubber.bin
+-Link: nvidia/ga107/sec2/desc.bin -> ../../ga102/sec2/desc.bin
+-Link: nvidia/ga107/sec2/hs_bl_sig.bin -> ../../ga102/sec2/hs_bl_sig.bin
+-Link: nvidia/ga107/sec2/image.bin -> ../../ga102/sec2/image.bin
+-Link: nvidia/ga107/sec2/sig.bin -> ../../ga102/sec2/sig.bin
+-
+-File: nvidia/tu10x/typec/ccg_primary.cyacd
+-File: nvidia/tu10x/typec/ccg_secondary.cyacd
+-File: nvidia/tu10x/typec/ccg_boot.cyacd
+-
+-Licence: Redistributable. See LICENCE.nvidia for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: mtk_scp - MediaTek SCP System Control Processing Driver
+ 
+ File: mediatek/mt8183/scp.img
+@@ -1903,53 +587,6 @@ Licence: Redistributable. See LICENSE.sdma_firmware for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: adreno - Qualcomm Adreno GPU firmware
+-
+-File: qcom/a300_pfp.fw
+-Link: a300_pfp.fw -> qcom/a300_pfp.fw
+-File: qcom/a300_pm4.fw
+-Link: a300_pm4.fw -> qcom/a300_pm4.fw
+-File: qcom/a330_pfp.fw
+-File: qcom/a330_pm4.fw
+-File: qcom/a420_pfp.fw
+-File: qcom/a420_pm4.fw
+-File: qcom/a530_pfp.fw
+-File: qcom/a530_pm4.fw
+-File: qcom/a530v3_gpmu.fw2
+-File: qcom/apq8096/a530_zap.mbn
+-Link: qcom/a530_zap.mdt -> apq8096/a530_zap.mbn
+-File: qcom/a630_gmu.bin
+-File: qcom/a630_sqe.fw
+-File: qcom/sdm845/a630_zap.mbn
+-File: qcom/a650_gmu.bin
+-File: qcom/a650_sqe.fw
+-File: qcom/sm8250/a650_zap.mbn
+-File: qcom/a660_gmu.bin
+-File: qcom/a660_sqe.fw
+-File: qcom/leia_pfp_470.fw
+-File: qcom/leia_pm4_470.fw
+-File: qcom/sc8280xp/LENOVO/21BX/qcdxkmsuc8280.mbn
+-
+-Licence: Redistributable. See LICENSE.qcom and qcom/NOTICE.txt for details
+-
+-Binary files supplied originally from
+-https://developer.qualcomm.com/hardware/dragonboard-410c/tools
+-
+---------------------------------------------------------------------------
+-
+-Driver: adreno - Qualcomm Adreno GPU firmware
+-
+-File: qcom/yamato_pfp.fw
+-File: qcom/yamato_pm4.fw
+-
+-Licence: Redistributable, BSD-3-Clause licence, See LICENSE.qcom_yamato for details
+-
+-Binary files generated from header files in EfikaMX kernel sources. A prefix of
+-four zero bytes was prepended to make them work with the DRM MSM driver. See
+-https://github.com/genesi/linux-legacy/tree/master/drivers/mxc/amd-gpu
+-
+---------------------------------------------------------------------------
+-
+ Driver: mlxsw_spectrum - Mellanox Spectrum switch
+ 
+ File: mellanox/mlxsw_spectrum-13.1420.122.mfa2
+-- 
+2.40.1
+

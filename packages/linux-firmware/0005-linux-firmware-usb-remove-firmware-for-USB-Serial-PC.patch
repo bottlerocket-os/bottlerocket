@@ -1,0 +1,901 @@
+From abd8555549e48367b9edb9baaa61b40afcfd6231 Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Tue, 25 Jul 2023 14:27:14 +0000
+Subject: [PATCH] linux-firmware: usb: remove firmware for USB/Serial/PCMCIA
+ devices
+
+Bottlerocket does not configure most drivers for USB,PCMCIA, and serial devices
+for any of its kernels. Without those drivers, the firmware for these
+devices is not of use and does not need to be shipped by us.
+
+The following list maps the driver names as specified in WHENCE to
+kernel config options enabling drivers. That way we are able to find the
+firmware for any driver we may be enabling in the future.
+
+* kaweth - CONFIG_USB_KAWETH
+* keyspan - CONFIG_SERIAL_KEYSPAN
+* keyspan_pda - CONFIG_SERIAL_KEYSPAN_PDA
+* emi26 - CONFIG_USB_EMI26
+* emi62 - CONFIG_USB_EMI62
+* ti_usb_3410_5052 - CONFIG_USB_SERIAL_TI
+* whiteheat - CONFIG_USB_SERIAL_WHITEHEAT
+* io_edgeport - CONFIG_USB_SERIAL_EDGEPORT
+* io_ti - CONFIG_USB_SERIAL_EDGEPORT_TI
+* orinoco - CONFIG_ORINOCO_USB
+* usbdux - CONFIG_COMEDI_USBDUX
+* usbduxfast - CONFIG_COMEDI_USBDUXFAST
+* usbduxsigma - CONFIG_COMEDI_USBDUXSIGMA
+* s2255drv - CONFIG_USB_S2255
+* ueagle-atm - CONFIG_USB_EAGLEATM
+* vt6656 - CONFIG_VT6656
+* ene-ub6250 - CONFIG_USB_STORAGE_ENE_UB6250
+* mxu11x0 - CONFIG_USB_SERIAL_MXUPORT11
+* mxuport - CONFIG_USB_SERIAL_MXUPORT
+* xhci-rcar - CONFIG_USB_XHCI_RCAR
+* xhci-tegra - CONFIG_USB_XHCI_TEGRA
+* atusb - CONFIG_IEEE802154_ATUSB
+* pcnet_cs - CONFIG_PCMCIA_PCNET
+* 3c589_cs - CONFIG_PCMCIA_3C589
+* 3c574_cs - CONFIG_PCMCIA_3C574
+* serial_cs - CONFIG_SERIAL_8250_CS
+* smc91c92_cs - CONFIG_PCMCIA_SMC91C92
+* rp2 - CONFIG_SERIAL_RP2
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ LICENCE.agere                |  77 ------
+ LICENCE.ene_firmware         |  14 -
+ LICENCE.kaweth               |  28 --
+ LICENCE.moxa                 |  16 --
+ LICENCE.r8a779x_usb3         |  26 --
+ LICENCE.ueagle-atm4-firmware |  39 ---
+ LICENCE.via_vt6656           |  25 --
+ WHENCE                       | 495 -----------------------------------
+ 8 files changed, 720 deletions(-)
+ delete mode 100644 LICENCE.agere
+ delete mode 100644 LICENCE.ene_firmware
+ delete mode 100644 LICENCE.kaweth
+ delete mode 100644 LICENCE.moxa
+ delete mode 100644 LICENCE.r8a779x_usb3
+ delete mode 100644 LICENCE.ueagle-atm4-firmware
+ delete mode 100644 LICENCE.via_vt6656
+
+diff --git a/LICENCE.agere b/LICENCE.agere
+deleted file mode 100644
+index c11466c..0000000
+--- a/LICENCE.agere
++++ /dev/null
+@@ -1,77 +0,0 @@
+-agere_sta_fw.bin -- 9.48 Hermes I
+-agere_ap_fw.bin  -- 9.48 Hermes I
+-
+-The above firmware images were compiled from the Agere linux driver
+-wl_lkm_718_release.tar.gz, and dumped. The driver is coverred by the
+-following copyright and software license.
+-
+- * SOFTWARE LICENSE
+- *
+- * This software is provided subject to the following terms and conditions,
+- * which you should read carefully before using the software.  Using this
+- * software indicates your acceptance of these terms and conditions.  If you do
+- * not agree with these terms and conditions, do not use the software.
+- *
+- * COPYRIGHT © 1994 - 1995  by AT&T.                All Rights Reserved
+- * COPYRIGHT © 1996 - 2000 by Lucent Technologies.  All Rights Reserved
+- * COPYRIGHT © 2001 - 2004  by Agere Systems Inc.   All Rights Reserved
+- * All rights reserved.
+- *
+- * Redistribution and use in source or binary forms, with or without
+- * modifications, are permitted provided that the following conditions are met:
+- *
+- * . Redistributions of source code must retain the above copyright notice, this
+- *    list of conditions and the following Disclaimer as comments in the code as
+- *    well as in the documentation and/or other materials provided with the
+- *    distribution.
+- *
+- * . Redistributions in binary form must reproduce the above copyright notice,
+- *    this list of conditions and the following Disclaimer in the documentation
+- *    and/or other materials provided with the distribution.
+- *
+- * . Neither the name of Agere Systems Inc. nor the names of the contributors
+- *    may be used to endorse or promote products derived from this software
+- *    without specific prior written permission.
+- *
+- * Disclaimer
+- *
+- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+- * INCLUDING, BUT NOT LIMITED TO, INFRINGEMENT AND THE IMPLIED WARRANTIES OF
+- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  ANY
+- * USE, MODIFICATION OR DISTRIBUTION OF THIS SOFTWARE IS SOLELY AT THE USERS OWN
+- * RISK. IN NO EVENT SHALL AGERE SYSTEMS INC. OR CONTRIBUTORS BE LIABLE FOR ANY
+- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+- * ON ANY THEORY OF LIABILITY, INCLUDING, BUT NOT LIMITED TO, CONTRACT, STRICT
+- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+- * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+- * DAMAGE.
+-
+-The following statement from Agere clarifies the status of the firmware
+-
+----
+-I would like to confirm that the two drivers; Linux LKM Wireless Driver
+-Source Code, Version 7.18 and Linux LKM Wireless Driver Source Code,
+-Version 7.22 comply with Open Source BSD License. Therefore the source
+-code can be distributed in unmodified or modified form consistent with
+-the terms of the license.
+-
+-The Linux driver architecture was based on two modules, the MSF (Module
+-specific functions) and the HCF (Hardware Control Functions).  Included
+-in the HCF is run-time firmware (binary format) which is downloaded into
+-the RAM of the Hermes 1/2/2.5 WMAC.
+-
+-This hex coded firmware is not based on any open source software and
+-hence it is not subject to any Open Source License.  The firmware was
+-developed by Agere and runs on the DISC processor embedded within the
+-Hermes 1/2/2.5 Wireless MAC devices. 
+-
+-Hope this helps.
+-
+-Sincerely,
+-
+-Viren Pathare
+-Intellectual Property Licensing Manager
+-Agere
+----
+diff --git a/LICENCE.ene_firmware b/LICENCE.ene_firmware
+deleted file mode 100644
+index 08f2b01..0000000
+--- a/LICENCE.ene_firmware
++++ /dev/null
+@@ -1,14 +0,0 @@
+-copyright (c) 2011, ENE TECHNOLOGY INC.
+-
+-Permission to use, copy, modify, and/or distribute this software for any purpose
+-with or without fee is hereby granted, provided that the above copyright notice
+-and this permission notice appear in all copies.
+-
+-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+-WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT
+-SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+-CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+-NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+-WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+diff --git a/LICENCE.kaweth b/LICENCE.kaweth
+deleted file mode 100644
+index 75a59c0..0000000
+--- a/LICENCE.kaweth
++++ /dev/null
+@@ -1,28 +0,0 @@
+-Copyright 1999 Kawasaki LSI.
+-
+-Redistribution and use in source and binary forms, with or without
+-modification, are permitted provided that the following conditions
+-are met:
+-1. Redistributions of source code must retain the above copyright
+-   notice, this list of conditions and the following disclaimer.
+-2. Redistributions in binary form must reproduce the above copyright
+-   notice, this list of conditions and the following disclaimer in the
+-   documentation and/or other materials provided with the distribution.
+-3. All advertising materials mentioning features or use of this software
+-   must display the following acknowledgement:
+-       This product includes software developed by Kawasaki LSI.
+-4. Neither the name of the company nor the names of its contributors
+-   may be used to endorse or promote products derived from this software
+-   without specific prior written permission.
+-
+-THIS SOFTWARE IS PROVIDED BY KAWASAKI LSI ``AS IS'' AND ANY EXPRESS OR
+-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+-DISCLAIMED.  IN NO EVENT SHALL KAWASAKI LSI BE LIABLE FOR ANY DIRECT,
+-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+-STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+-IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+-POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENCE.moxa b/LICENCE.moxa
+deleted file mode 100644
+index 120017b..0000000
+--- a/LICENCE.moxa
++++ /dev/null
+@@ -1,16 +0,0 @@
+-The software accompanying this license statement (the “Software”)
+-is the property of Moxa Inc. (the “Moxa”), and is protected by
+-United States and International Copyright Laws and International
+-treaty provisions. No ownership rights are granted by this
+-Agreement or possession of the Software. Therefore, you must treat
+-the Licensed Software like any other copyrighted material. Your
+-rights and obligations in its use are described as follows:
+-
+-1. You may freely redistribute this software under this license.
+-2. You may freely download and use this software on Moxa's device.
+-3. You may not modify or attempt to reverse engineer the software, or
+-   make any attempt to change or even examine the source code of the
+-   software.
+-4. You may not re-license or sub-license the software to any person or
+-   business, using any other license.
+-5. Moxa(r) is worldwide registered trademark.
+diff --git a/LICENCE.r8a779x_usb3 b/LICENCE.r8a779x_usb3
+deleted file mode 100644
+index e2afcc9..0000000
+--- a/LICENCE.r8a779x_usb3
++++ /dev/null
+@@ -1,26 +0,0 @@
+-Copyright (c) 2014, Renesas Electronics Corporation
+-All rights reserved.
+-
+-Redistribution and use in binary form, without modification, are permitted
+-provided that the following conditions are met:
+-
+-1. Redistribution in binary form must reproduce the above copyright notice,
+-   this list of conditions and the following disclaimer in the documentation
+-   and/or other materials provided with the distribution.
+-2. The name of Renesas Electronics Corporation may not be used to endorse or
+-   promote products derived from this software without specific prior written
+-   permission.
+-3. Reverse engineering, decompilation, or disassembly of this software is
+-   not permitted.
+-
+-THIS SOFTWARE IS PROVIDED "AS IS" AND RENESAS ELECTRONICS CORPORATION DISCLAIMS
+-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
+-NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL RENESAS ELECTRONICS
+-CORPORATION BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+-OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+-POSSIBILITY OF SUCH DAMAGE.
+diff --git a/LICENCE.ueagle-atm4-firmware b/LICENCE.ueagle-atm4-firmware
+deleted file mode 100644
+index 333675d..0000000
+--- a/LICENCE.ueagle-atm4-firmware
++++ /dev/null
+@@ -1,39 +0,0 @@
+-This license applies to eagle4 firmware & DSPcode
+-namely, the files eagleIV.fw  DSP4p.bin*
+-
+-| Copyright (2006) Ikanos Communications, Inc. 
+-| 
+-| Redistribution and use in source and binary forms, with or without 
+-| modification, are permitted provided that the following 
+-| conditions are met: 
+-| 
+-| * Redistribution of source code must retain the above copyright 
+-| notice, this list of conditions and the following disclaimer. 
+-| 
+-| * Redistribution in binary form must reproduce the above 
+-| copyright notice, this list of conditions and the following 
+-| disclaimer in the documentation and/or other materials provided 
+-| with the distribution. 
+-| 
+-| * The name of Ikanos Corporation may not be used to endorse         
+-|   or promote products derived from this source code without specific     
+-|   prior written consent of Ikanos Corporation. 
+-| 
+-| THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+-| "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+-| LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+-| A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+-| OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+-| SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+-| LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+-| DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
+-| THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+-| (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+-| OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+-| USER ACKNOWLEDGES AND AGREES THAT THE PURCHASE OR USE OF THIS SOFTWARE WILL 
+-| NOT CREATE OR GIVE GROUNDS FOR A     
+-|  LICENSE BY IMPLICATION, ESTOPPEL, OR OTHERWISE IN ANY INTELLECTUAL         
+-|  PROPERTY RIGHTS (PATENT, COPYRIGHT, TRADE SECRET, MASK WORK, OR OTHER   
+-|  PROPRIETARY RIGHT) EMBODIED IN ANY OTHER IKANOS HARDWARE OR SOFTWARE         
+-|  EITHER SOLELY OR IN COMBINATION WITH THIS SOFTWARE. 
+-
+diff --git a/LICENCE.via_vt6656 b/LICENCE.via_vt6656
+deleted file mode 100644
+index f231f98..0000000
+--- a/LICENCE.via_vt6656
++++ /dev/null
+@@ -1,25 +0,0 @@
+-The following license applies to the binary-only VT6656 firmware
+-as contained in the file "vntwusb.fw"
+-================================================================
+-Copyright 1998-2010 VIA Technologies, Inc. All Rights Reserved.
+-
+-Permission is hereby granted, free of charge, to any person
+-obtaining a copy of this software and associated documentation
+-files (the "Software"), to deal in the Software without
+-restriction, including without limitation the rights to use,
+-copy, modify, merge, publish, distribute, sublicense, and/or sell
+-copies of the Software, and to permit persons to whom the
+-Software is furnished to do so, subject to the following
+-conditions:
+-
+-The above copyright notice and this permission notice shall be
+-included in all copies or substantial portions of the Software.
+-
+-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+-OTHER DEALINGS IN THE SOFTWARE.
+diff --git a/WHENCE b/WHENCE
+index bf5204f..2ed9e9a 100644
+--- a/WHENCE
++++ b/WHENCE
+@@ -8,226 +8,6 @@ kernel.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: kaweth -- USB KLSI KL5USB101-based Ethernet device
+-
+-File: kaweth/new_code.bin
+-File: kaweth/new_code_fix.bin
+-File: kaweth/trigger_code.bin
+-File: kaweth/trigger_code_fix.bin
+-
+-Licence: Redistributable. See LICENCE.kaweth for details
+-
+-Found in hex form in the kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: keyspan -- USB Keyspan USA-xxx serial device
+-
+-File: keyspan/mpr.fw
+-File: keyspan/usa18x.fw
+-File: keyspan/usa19.fw
+-File: keyspan/usa19qi.fw
+-File: keyspan/usa19qw.fw
+-File: keyspan/usa19w.fw
+-File: keyspan/usa28.fw
+-File: keyspan/usa28xa.fw
+-File: keyspan/usa28xb.fw
+-File: keyspan/usa28x.fw
+-File: keyspan/usa49w.fw
+-File: keyspan/usa49wlc.fw
+-
+-Converted from Intel HEX files, used in our binary representation of ihex.
+-
+-Original licence information:
+-
+-		Copyright (C) 1999-2001
+-		Keyspan, A division of InnoSys Incorporated ("Keyspan")
+-
+-	as an unpublished work. This notice does not imply unrestricted or
+-	public access to the source code from which this firmware image is
+-	derived.  Except as noted below this firmware image may not be
+-	reproduced, used, sold or transferred to any third party without
+-	Keyspan's prior written consent.  All Rights Reserved.
+-
+-	Permission is hereby granted for the distribution of this firmware
+-	image as part of a Linux or other Open Source operating system kernel
+-	in text or binary form as required.
+-
+-	This firmware may not be modified and may only be used with
+-	Keyspan hardware.  Distribution and/or Modification of the
+-	keyspan.c driver which includes this firmware, in whole or in
+-	part, requires the inclusion of this statement."
+-
+---------------------------------------------------------------------------
+-
+-Driver: keyspan_pda -- USB Keyspan PDA single-port serial device
+-
+-File: keyspan_pda/keyspan_pda.fw
+-Source: keyspan_pda/keyspan_pda.S
+-
+-File: keyspan_pda/xircom_pgs.fw
+-Source: keyspan_pda/xircom_pgs.S
+-
+-Source: keyspan_pda/Makefile
+-
+-Licence: GPLv2 or later. See GPL-2 and GPL-3 for details.
+-
+-Compiled from original 8051 source into Intel HEX, used in our binary ihex form.
+-
+---------------------------------------------------------------------------
+-
+-Driver: emi26 -- EMI 2|6 USB Audio interface
+-
+-File: emi26/bitstream.fw
+-Version: 1.1.1.131
+-Info: DATE=2001dec06
+-
+-File: emi26/firmware.fw
+-Version: 1.0.2.916
+-Info: DATE=12.02.2002
+-
+-File: emi26/loader.fw
+-
+-Converted from Intel HEX files, used in our binary representation of ihex.
+-
+-Original licence information:
+-/*
+- * This firmware is for the Emagic EMI 2|6 Audio Interface
+- *
+- * The firmware contained herein is Copyright (c) 1999-2002 Emagic
+- * as an unpublished work. This notice does not imply unrestricted
+- * or public access to this firmware which is a trade secret of Emagic,
+- * and which may not be reproduced, used, sold or transferred to
+- * any third party without Emagic's written consent. All Rights Reserved.
+- *
+- * Permission is hereby granted for the distribution of this firmware
+- * image as part of a Linux or other Open Source operating system kernel
+- * in text or binary form as required.
+- *
+- * This firmware may not be modified and may only be used with the
+- * Emagic EMI 2|6 Audio Interface. Distribution and/or Modification of
+- * any driver which includes this firmware, in whole or in part,
+- * requires the inclusion of this statement.
+- */
+-
+---------------------------------------------------------------------------
+-
+-Driver: emi62 -- EMI 6|2m USB Audio interface
+-
+-File: emi62/bitstream.fw
+-Version: 1.0.0.191
+-Info: DATE= 2002oct28
+-
+-File: emi62/loader.fw
+-Version: 1.0.2.002
+-Info: DATE=10.01.2002
+-
+-File: emi62/midi.fw
+-Version: 1.04.062
+-Info: DATE=16.10.2002
+-
+-File: emi62/spdif.fw
+-Version: 1.04.062
+-Info: DATE=16.10.2002
+-
+-Converted from Intel HEX files, used in our binary representation of ihex.
+-
+-Original licence information: None
+-
+---------------------------------------------------------------------------
+-
+-Driver: ti_usb_3410_5052 -- USB TI 3410/5052 serial device
+-
+-File: ti_3410.fw
+-Info: firmware 9/10/04 FW3410_Special_StartWdogOnStartPort
+-
+-File: ti_5052.fw
+-Info: firmware 9/18/04
+-
+-Licence: Allegedly GPLv2+, but no source visible. Marked:
+-	 Copyright (C) 2004 Texas Instruments
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: ti_usb_3410_5052 -- Multi-Tech USB cell modems
+-
+-File: mts_cdma.fw
+-File: mts_gsm.fw
+-File: mts_edge.fw
+-
+-Licence: "all firmware components are redistributable in binary form"
+-         per support@multitech.com
+-	 Copyright (C) 2005 Multi-Tech Systems, Inc.
+-
+-Found in hex form in ftp://ftp.multitech.com/wireless/wireless_linux.zip
+-
+---------------------------------------------------------------------------
+-
+-Driver: ti_usb_3410_5052 -- Multi-Tech USB fax modems
+-
+-File: mts_mt9234mu.fw
+-File: mts_mt9234zba.fw
+-
+-Licence: Unknown
+-
+---------------------------------------------------------------------------
+-
+-Driver: whiteheat -- USB ConnectTech WhiteHEAT serial device
+-
+-File: whiteheat.fw
+-Version: 4.06
+-
+-File: whiteheat_loader.fw
+-
+-Licence: Allegedly GPLv2, but no source visible. Marked:
+-	 Copyright (C) 2000-2002  ConnectTech Inc
+-
+-Debug loader claims the following behaviour:
+-	Port 1 LED flashes when the vend_ax program is running
+-	Port 2 LED flashes when any SETUP command arrives
+-	Port 3 LED flashes when any valid VENDOR request occurs
+-	Port 4 LED flashes when the EXTERNAL RAM DOWNLOAD request occurs
+-
+-Converted from Intel HEX files, used in our binary representation of ihex.
+-
+---------------------------------------------------------------------------
+-
+-Driver: io_edgeport - USB Inside Out Edgeport Serial Driver
+-
+-File: edgeport/boot.fw
+-File: edgeport/boot2.fw
+-File: edgeport/down.fw
+-File: edgeport/down2.fw
+-
+-Licence: Allegedly GPLv2+, but no source visible. Marked:
+-//**************************************************************
+-//* Edgeport/4 Binary Image
+-//* Generated by HEX2C v1.06
+-//* Copyright (C) 1998 Inside Out Networks, All rights reserved.
+-//**************************************************************
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+-Driver: io_ti - USB Inside Out Edgeport Serial Driver
+-(TI Devices)
+-
+-File: edgeport/down3.bin
+-
+-Licence:
+-//**************************************************************
+-//* Edgeport Binary Image (for TI based products)
+-//* Generated by TIBin2C v2.00 (watchport)
+-//* Copyright (C) 2001 Inside Out Networks, All rights reserved.
+-//**************************************************************
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: dsp56k - Atari DSP56k support
+ 
+ File: dsp56k/bootstrap.bin
+@@ -242,17 +22,6 @@ http://www.zdomain.com/a56.html
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: orinoco - Agere/Prism/Symbol Orinoco support
+-
+-File: agere_sta_fw.bin
+-Version: 9.48 Hermes I
+-File: agere_ap_fw.bin
+-Version: 9.48 Hermes I
+-
+-Licence: Redistributable. See LICENCE.agere for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: cassini - Sun Cassini
+ 
+ File: sun/cassini.bin
+@@ -503,90 +272,6 @@ Found in hex form in kernel source.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: pcnet_cs - NE2000 compatible PCMCIA adapter
+-
+-File: cis/LA-PCM.cis
+-File: cis/PCMLM28.cis
+-File: cis/DP83903.cis
+-File: cis/NE2K.cis
+-File: cis/tamarack.cis
+-File: cis/PE-200.cis
+-File: cis/PE520.cis
+-Source: cis/
+-
+-Licence: Dual GPLv2/MPL
+-
+-Originally developed by the pcmcia-cs project
+-Copyright (C) 1998, 1999, 2000 David A. Hinds
+-
+---------------------------------------------------------------------------
+-
+-Driver: 3c589_cs - 3Com PCMCIA adapter
+-
+-File: cis/3CXEM556.cis
+-Source: cis/src/3CXEM556.cis
+-
+-Licence: Dual GPLv2/MPL
+-
+-Originally developed by the pcmcia-cs project
+-Copyright (C) 1998, 1999, 2000 David A. Hinds
+-
+---------------------------------------------------------------------------
+-
+-Driver: 3c574_cs - 3Com PCMCIA adapter
+-
+-File: cis/3CCFEM556.cis
+-Source: cis/src/3CCFEM556.cis
+-
+-Licence: Dual GPLv2/MPL
+-
+-Originally developed by the pcmcia-cs project
+-Copyright (C) 1998, 1999, 2000 David A. Hinds
+-
+---------------------------------------------------------------------------
+-
+-Driver: serial_cs - Serial PCMCIA adapter
+-
+-File: cis/MT5634ZLX.cis
+-File: cis/RS-COM-2P.cis
+-File: cis/COMpad2.cis
+-File: cis/COMpad4.cis
+-Source: cis/src/MT5634ZLX.cis
+-Source: cis/src/RS-COM-2P.cis
+-Source: cis/src/COMpad2.cis
+-Source: cis/src/COMpad4.cis
+-
+-Licence: Dual GPLv2/MPL
+-
+-Originally developed by the pcmcia-cs project
+-Copyright (C) 1998, 1999, 2000 David A. Hinds
+-
+---------------------------------------------------------------------------
+-
+-Driver: serial_cs - Serial PCMCIA adapter
+-
+-File: cis/SW_555_SER.cis
+-File: cis/SW_7xx_SER.cis
+-File: cis/SW_8xx_SER.cis
+-
+-Licence: GPLv3. See GPL-3 for details.
+-
+-Copyright Sierra Wireless
+-
+---------------------------------------------------------------------------
+-
+-Driver: smc91c92_cs - SMC 91Cxx PCMCIA
+-
+-File: ositech/Xilinx7OD.bin
+-
+-Licence: Allegedly GPL, but no source visible. Marked:
+-    This file contains the firmware of Seven of Diamonds from OSITECH.
+-    (Special thanks to Kevin MacPherson of OSITECH)
+-
+-Found in hex form in kernel source.
+-
+---------------------------------------------------------------------------
+-
+ Driver: myri_sbus - MyriCOM Gigabit Ethernet
+ 
+ File: myricom/lanai.bin
+@@ -660,19 +345,6 @@ Available from http://ldriver.qlogic.com/firmware/netxen_nic/new/
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: usbdux/usbduxfast/usbduxsigma - usbdux data acquisition cards
+-
+-File: usbdux_firmware.bin
+-File: usbduxfast_firmware.bin
+-File: usbduxsigma_firmware.bin
+-Source: usbdux/
+-
+-Licence: GPLv2. See GPL-2 for details.
+-
+-Provided from the author, Bernd Porr <BerndPorr@f2s.com>
+-
+---------------------------------------------------------------------------
+-
+ Driver: mga - Matrox G200/G400/G550
+ 
+ File: matrox/g200_warp.fw
+@@ -1571,23 +1243,6 @@ Licence: Redistributable. See LICENSE.amdgpu for details.
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: s2255drv
+-
+-File: f2255usb.bin
+-Version: 1.2.8
+-
+-Licence: Redistributable.
+-
+-  Sensoray grants permission to use and redistribute these firmware
+-  files for use with Sensoray devices, but not as a part of the Linux
+-  kernel or in any other form which would require these files themselves
+-  to be covered by the terms of the GNU General Public License.
+-  These firmware files are distributed in the hope that they will be
+-  useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+-  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-
+---------------------------------------------------------------------------
+-
+ Driver: ib_qib - QLogic Infiniband
+ 
+ File: qlogic/sd7220.fw
+@@ -1662,47 +1317,6 @@ Licence:
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: ueagle-atm - Driver for USB ADSL Modems based on Eagle IV Chipset
+-
+-File: ueagle-atm/CMV4p.bin.v2
+-File: ueagle-atm/DSP4p.bin
+-File: ueagle-atm/eagleIV.fw
+-Version: 1.0
+-
+-Licence: Redistributable. See LICENCE.ueagle-atm4-firmware for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: ueagle-atm - Driver for USB ADSL Modems based on Eagle I,II,III
+-
+-File: ueagle-atm/930-fpga.bin
+-File: ueagle-atm/CMVeiWO.bin
+-File: ueagle-atm/CMVepFR10.bin
+-File: ueagle-atm/DSP9p.bin
+-File: ueagle-atm/eagleIII.fw
+-File: ueagle-atm/adi930.fw
+-File: ueagle-atm/CMVep.bin
+-File: ueagle-atm/CMVepFR.bin
+-File: ueagle-atm/DSPei.bin
+-File: ueagle-atm/CMV9i.bin
+-File: ueagle-atm/CMVepES03.bin
+-File: ueagle-atm/CMVepIT.bin
+-File: ueagle-atm/DSPep.bin
+-File: ueagle-atm/CMV9p.bin
+-File: ueagle-atm/CMVepES.bin
+-File: ueagle-atm/CMVepWO.bin
+-File: ueagle-atm/eagleI.fw
+-File: ueagle-atm/CMVei.bin
+-File: ueagle-atm/CMVepFR04.bin
+-File: ueagle-atm/DSP9i.bin
+-File: ueagle-atm/eagleII.fw
+-Version: 1.1
+-
+-Licence: Redistributable. Based on
+-         https://mail.gna.org/public/eagleusb-dev/2004-11/msg00172.html
+-
+---------------------------------------------------------------------------
+-
+ Driver: vxge - Exar X3100 Series 10GbE PCIe I/O Virtualized Server Adapter
+ 
+ File: vxge/X3fw.ncf
+@@ -1720,14 +1334,6 @@ Licence:
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: vt6656 - VIA VT6656 USB wireless driver
+-
+-File: vntwusb.fw
+-
+-Licence: Redistributable. See LICENCE.via_vt6656 for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: myri10ge - Myri10GE 10GbE NIC driver
+ 
+ File: myri10ge_eth_z8e.dat
+@@ -1742,37 +1348,6 @@ Version: 1.4.57
+ 
+ License: Redistributable.  See LICENCE.myri10ge_firmware for details.
+ 
+---------------------------------------------------------------------------
+-Driver: ene-ub6250 -- ENE UB6250 SD card reader driver
+-
+-File: ene-ub6250/sd_init1.bin
+-File: ene-ub6250/sd_init2.bin
+-File: ene-ub6250/sd_rdwr.bin
+-File: ene-ub6250/ms_init.bin
+-File: ene-ub6250/msp_rdwr.bin
+-File: ene-ub6250/ms_rdwr.bin
+-
+-Licence: Redistributable. See LICENCE.ene_firmware for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: rp2 -- Comtrol RocketPort 2 serial driver
+-
+-File: rp2.fw
+-
+-Licence: Redistributable.
+-
+-Copyright (C) 2013 Comtrol Corporation
+-
+-Comtrol grants permission to use and redistribute these firmware
+-files for use with Comtrol devices, but not as part of the Linux
+-kernel or in any other form which would require these files themselves
+-to be covered by the terms of the GNU General Public License.
+-
+-These firmware files are distributed in the hope that they will be
+-useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+-of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-
+ --------------------------------------------------------------------------
+ 
+ Driver: ccp - Platform Security Processor (PSP) device
+@@ -1811,34 +1386,6 @@ License: Redistributable. See LICENSE.amd-ucode for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: mxu11x0 - MOXA UPort 11x0 USB Serial hub driver
+-
+-File: moxa/moxa-1110.fw
+-File: moxa/moxa-1130.fw
+-File: moxa/moxa-1131.fw
+-File: moxa/moxa-1150.fw
+-File: moxa/moxa-1151.fw
+-
+-License: Redistributable. See LICENCE.moxa for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: mxuport - MOXA UPort USB Serial hub driver
+-
+-File: moxa/moxa-1250.fw
+-File: moxa/moxa-1251.fw
+-File: moxa/moxa-1410.fw
+-File: moxa/moxa-1450.fw
+-File: moxa/moxa-1451.fw
+-File: moxa/moxa-1613.fw
+-File: moxa/moxa-1618.fw
+-File: moxa/moxa-1653.fw
+-File: moxa/moxa-1658.fw
+-
+-License: Redistributable. See LICENCE.moxa for details
+-
+---------------------------------------------------------------------------
+-
+ Driver: qat - Intel(R) QAT crypto accelerator
+ 
+ File: qat_895xcc.bin
+@@ -1855,48 +1402,6 @@ Licence: Redistributable. See LICENCE.qat_firmware for details
+ 
+ --------------------------------------------------------------------------
+ 
+-Driver: xhci-rcar -- Renesas R-Car Gen2/3 USB 3.0 host controller driver
+-
+-File: r8a779x_usb3_v1.dlmem
+-File: r8a779x_usb3_v2.dlmem
+-File: r8a779x_usb3_v3.dlmem
+-
+-Licence: Redistributable. See LICENCE.r8a779x_usb3 for details.
+-
+---------------------------------------------------------------------------
+-
+-Driver: xhci-tegra -- NVIDIA Tegra XHCI driver
+-
+-File: nvidia/tegra124/xusb.bin
+-Version: v45.46
+-
+-File: nvidia/tegra210/xusb.bin
+-Version: v50.24
+-
+-File: nvidia/tegra186/xusb.bin
+-Version: v55.15
+-
+-File: nvidia/tegra194/xusb.bin
+-Version: v60.06
+-
+-Licence: Redistributable. See LICENCE.nvidia for details
+-
+---------------------------------------------------------------------------
+-
+-Driver: atusb - ATUSB IEEE 802.15.4 transceiver driver
+-
+-File: atusb/atusb-0.2.dfu
+-Version: 0.2
+-File: atusb/atusb-0.3.dfu
+-Version: 0.3
+-File: atusb/rzusb-0.3.bin
+-Version: 0.3
+-Info: atusb/ChangeLog
+-
+-Licence: GPLv2 or later. See GPL-2 and GPL-3 for details.
+-
+---------------------------------------------------------------------------
+-
+ Driver: liquidio -- Cavium LiquidIO driver
+ 
+ File: liquidio/lio_23xx_nic.bin
+-- 
+2.40.1
+
