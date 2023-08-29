@@ -14,7 +14,7 @@ root_role_sha512 = "0123456789abcdef"
 
 # For reference, this is the Bottlerocket root role:
 #root_role_url = "https://cache.bottlerocket.aws/root.json"
-#root_role_sha512 = "b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241ed80423666d169079d736ab79965b4dd25a5a6db5f01578b397496d49ce11a3aa2"
+#root_role_sha512 = "a3c58bc73999264f6f28f3ed9bfcb325a5be943a782852c7d53e803881968e0a4698bd54c2f125493f4669610a9da83a1787eb58a8303b2ee488fa2a3f7d802f"
 
 # pubsys assumes a single publication key that signs the snapshot, targets,
 # and timestamp roles.  Here you specify where that key lives so we can sign
