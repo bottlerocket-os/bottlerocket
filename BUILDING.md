@@ -214,7 +214,7 @@ Next, you need the Bottlerocket root role, which is used by tuftool to verify th
 This will download and verify the root role itself:
 ```shell
 curl -O "https://cache.bottlerocket.aws/root.json"
-sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241ed80423666d169079d736ab79965b4dd25a5a6db5f01578b397496d49ce11a3aa2  root.json"
+sha512sum -c <<<"a3c58bc73999264f6f28f3ed9bfcb325a5be943a782852c7d53e803881968e0a4698bd54c2f125493f4669610a9da83a1787eb58a8303b2ee488fa2a3f7d802f  root.json"
 ```
 
 Next, set your desired parameters, and download the kmod kit:
