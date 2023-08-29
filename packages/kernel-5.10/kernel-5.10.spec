@@ -29,6 +29,12 @@ Patch2001: 2001-kbuild-add-support-for-zstd-compressed-modules.patch
 Patch5001: 5001-x86-cpu-amd-Move-the-errata-checking-functionality-u.patch
 Patch5002: 5002-x86-cpu-amd-Add-a-Zenbleed-fix.patch
 
+# Cherry-picked fixes for CVE-2023-20588 ("DIV0"). Can be dropped when moving
+# upstream to 5.10.192 or later.
+Patch5011: 5011-x86-bugs-Increase-the-x86-bugs-vector-size-to-two-u3.patch
+Patch5012: 5012-x86-CPU-AMD-Do-not-leak-quotient-data-after-a-divisi.patch
+Patch5013: 5013-x86-CPU-AMD-Fix-the-DIV-0-initial-fix-attempt.patch
+
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname

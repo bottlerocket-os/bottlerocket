@@ -1,0 +1,111 @@
+From 188ef20eb7f347966659092d75051f0cd4b572bf Mon Sep 17 00:00:00 2001
+From: "Borislav Petkov (AMD)" <bp@alien8.de>
+Date: Sat, 5 Aug 2023 00:06:43 +0200
+Subject: [PATCH] x86/CPU/AMD: Do not leak quotient data after a division by 0
+
+commit 77245f1c3c6495521f6a3af082696ee2f8ce3921 upstream.
+
+Under certain circumstances, an integer division by 0 which faults, can
+leave stale quotient data from a previous division operation on Zen1
+microarchitectures.
+
+Do a dummy division 0/1 before returning from the #DE exception handler
+in order to avoid any leaks of potentially sensitive data.
+
+Signed-off-by: Borislav Petkov (AMD) <bp@alien8.de>
+Cc: <stable@kernel.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+(cherry picked from commit b6fc2fbf89089ecfb8eb9a89a7fc91d444f4fec7)
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ arch/x86/include/asm/cpufeatures.h |  2 ++
+ arch/x86/include/asm/processor.h   |  2 ++
+ arch/x86/kernel/cpu/amd.c          | 19 +++++++++++++++++++
+ arch/x86/kernel/traps.c            |  2 ++
+ 4 files changed, 25 insertions(+)
+
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 9b06e142bad1..630196281a48 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -435,4 +435,6 @@
+ #define X86_BUG_RAS_POISONING		X86_BUG(29) /* CPU is affected by RAS poisoning */
+ #define X86_BUG_GDS			X86_BUG(30) /* CPU is affected by Gather Data Sampling */
+ 
++/* BUG word 2 */
++#define X86_BUG_DIV0			X86_BUG(1*32 + 1) /* AMD DIV0 speculation bug */
+ #endif /* _ASM_X86_CPUFEATURES_H */
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index 12714134f5eb..f20dc0c73cae 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -810,9 +810,11 @@ DECLARE_PER_CPU(u64, msr_misc_features_shadow);
+ #ifdef CONFIG_CPU_SUP_AMD
+ extern u16 amd_get_nb_id(int cpu);
+ extern u32 amd_get_nodes_per_socket(void);
++extern void amd_clear_divider(void);
+ #else
+ static inline u16 amd_get_nb_id(int cpu)		{ return 0; }
+ static inline u32 amd_get_nodes_per_socket(void)	{ return 0; }
++static inline void amd_clear_divider(void)		{ }
+ #endif
+ 
+ static inline uint32_t hypervisor_cpuid_base(const char *sig, uint32_t leaves)
+diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
+index 3d99a823ffac..842357ee7724 100644
+--- a/arch/x86/kernel/cpu/amd.c
++++ b/arch/x86/kernel/cpu/amd.c
+@@ -76,6 +76,10 @@ static const int amd_zenbleed[] =
+ 			   AMD_MODEL_RANGE(0x17, 0x60, 0x0, 0x7f, 0xf),
+ 			   AMD_MODEL_RANGE(0x17, 0xa0, 0x0, 0xaf, 0xf));
+ 
++static const int amd_div0[] =
++	AMD_LEGACY_ERRATUM(AMD_MODEL_RANGE(0x17, 0x00, 0x0, 0x2f, 0xf),
++			   AMD_MODEL_RANGE(0x17, 0x50, 0x0, 0x5f, 0xf));
++
+ static bool cpu_has_amd_erratum(struct cpuinfo_x86 *cpu, const int *erratum)
+ {
+ 	int osvw_id = *erratum++;
+@@ -1168,6 +1172,11 @@ static void init_amd(struct cpuinfo_x86 *c)
+ 	check_null_seg_clears_base(c);
+ 
+ 	zenbleed_check(c);
++
++	if (cpu_has_amd_erratum(c, amd_div0)) {
++		pr_notice_once("AMD Zen1 DIV0 bug detected. Disable SMT for full protection.\n");
++		setup_force_cpu_bug(X86_BUG_DIV0);
++	}
+ }
+ 
+ #ifdef CONFIG_X86_32
+@@ -1293,3 +1302,13 @@ void amd_check_microcode(void)
+ {
+ 	on_each_cpu(zenbleed_check_cpu, NULL, 1);
+ }
++
++/*
++ * Issue a DIV 0/1 insn to clear any division data from previous DIV
++ * operations.
++ */
++void noinstr amd_clear_divider(void)
++{
++	asm volatile(ALTERNATIVE("", "div %2\n\t", X86_BUG_DIV0)
++		     :: "a" (0), "d" (0), "r" (1));
++}
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index 3780c728345c..d8142b5738ac 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -198,6 +198,8 @@ DEFINE_IDTENTRY(exc_divide_error)
+ {
+ 	do_error_trap(regs, 0, "divide error", X86_TRAP_DE, SIGFPE,
+ 		      FPE_INTDIV, error_get_trap_addr(regs));
++
++	amd_clear_divider();
+ }
+ 
+ DEFINE_IDTENTRY(exc_overflow)
+-- 
+2.40.1
+
