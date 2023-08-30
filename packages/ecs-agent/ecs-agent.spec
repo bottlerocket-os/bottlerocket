@@ -2,7 +2,7 @@
 %global agent_gorepo amazon-ecs-agent
 %global agent_goimport %{agent_goproject}/%{agent_gorepo}
 
-%global agent_gover 1.70.2
+%global agent_gover 1.75.0
 
 # git rev-parse --short=8
 %global agent_gitrev 06008fa1
@@ -10,12 +10,12 @@
 %global ecscni_goproject github.com/aws
 %global ecscni_gorepo amazon-ecs-cni-plugins
 %global ecscni_goimport %{ecscni_goproject}/%{ecscni_gorepo}
-%global ecscni_gitrev db5864722987c34ba309e6e7a7628fd1ccad1520
+%global ecscni_gitrev 53a8481891251e66e35847554d52a13fc7c4fd03
 
 %global vpccni_goproject github.com/aws
 %global vpccni_gorepo amazon-vpc-cni-plugins
 %global vpccni_goimport %{vpccni_goproject}/%{vpccni_gorepo}
-%global vpccni_gitrev 24d6bd87707d1b1801086fc507ebab8d32067412
+%global vpccni_gitrev a83b66349768e020487a00e31767fc2e6fc88136
 %global vpccni_gover 1.3
 
 # Construct reproducible tar archives
@@ -296,7 +296,7 @@ mv %{vpccni_gorepo}-%{vpccni_gitrev}/vendor go-vendor/%{vpccni_gorepo}
 # ├── LICENSE.amazon-ecs-cni-plugins
 # ├── LICENSE.amazon-vpc-cni-plugins
 # ├── NOTICE
-# ├── THIRD-PARTY
+# ├── THIRD_PARTY.md
 # └── vendor
 #     ├── amazon-ecs-agent
 #     │ └── ...
@@ -309,7 +309,7 @@ mv %{vpccni_gorepo}-%{vpccni_gitrev}/vendor go-vendor/%{vpccni_gorepo}
 %{_cross_attribution_vendor_dir}
 %license %{agent_gorepo}-%{agent_gover}/LICENSE
 %license %{agent_gorepo}-%{agent_gover}/NOTICE
-%license %{agent_gorepo}-%{agent_gover}/THIRD-PARTY
+%license %{agent_gorepo}-%{agent_gover}/ecs-agent/THIRD_PARTY.md
 %license %{ecscni_gorepo}-%{ecscni_gitrev}/LICENSE.%{ecscni_gorepo}
 %license %{vpccni_gorepo}-%{vpccni_gitrev}/LICENSE.%{vpccni_gorepo}
 

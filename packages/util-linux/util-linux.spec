@@ -1,5 +1,5 @@
-%global majorminor 2.38
-%global version %{majorminor}.1
+%global majorminor 2.39
+%global version %{majorminor}.2
 
 Name: %{_cross_os}util-linux
 Version: %{version}
@@ -234,6 +234,9 @@ done
 %exclude %{_cross_bindir}/wdctl
 %exclude %{_cross_bindir}/whereis
 %exclude %{_cross_bindir}/write
+%exclude %{_cross_bindir}/fadvise
+%exclude %{_cross_bindir}/pipesz
+%exclude %{_cross_bindir}/waitpid
 %if "%{_cross_arch}" == "x86_64"
 %exclude %{_cross_bindir}/i386
 %exclude %{_cross_bindir}/x86_64
@@ -283,6 +286,7 @@ done
 %exclude %{_cross_sbindir}/vigr
 %exclude %{_cross_sbindir}/vipw
 %exclude %{_cross_sbindir}/zramctl
+%exclude %{_cross_sbindir}/blkpr
 
 %exclude %{_cross_bashdir}
 %exclude %{_cross_docdir}
@@ -299,7 +303,6 @@ done
 %dir %{_cross_includedir}/blkid
 %{_cross_includedir}/blkid/blkid.h
 %{_cross_pkgconfigdir}/blkid.pc
-%exclude %{_cross_libdir}/libblkid.la
 
 %files -n %{_cross_os}libfdisk
 %license %{_cross_licensedir}/libfdisk/COPYING.LGPL-2.1-or-later
@@ -312,7 +315,6 @@ done
 %dir %{_cross_includedir}/libfdisk
 %{_cross_includedir}/libfdisk/libfdisk.h
 %{_cross_pkgconfigdir}/fdisk.pc
-%exclude %{_cross_libdir}/libfdisk.la
 
 %files -n %{_cross_os}libmount
 %license %{_cross_licensedir}/libmount/COPYING.LGPL-2.1-or-later
@@ -325,7 +327,6 @@ done
 %dir %{_cross_includedir}/libmount
 %{_cross_includedir}/libmount/libmount.h
 %{_cross_pkgconfigdir}/mount.pc
-%exclude %{_cross_libdir}/libmount.la
 
 %files -n %{_cross_os}libsmartcols
 %license %{_cross_licensedir}/libsmartcols/COPYING.LGPL-2.1-or-later
@@ -338,7 +339,6 @@ done
 %dir %{_cross_includedir}/libsmartcols
 %{_cross_includedir}/libsmartcols/libsmartcols.h
 %{_cross_pkgconfigdir}/smartcols.pc
-%exclude %{_cross_libdir}/libsmartcols.la
 
 %files -n %{_cross_os}libuuid
 %license %{_cross_licensedir}/libuuid/COPYING.BSD-3-Clause
@@ -351,6 +351,5 @@ done
 %dir %{_cross_includedir}/uuid
 %{_cross_includedir}/uuid/uuid.h
 %{_cross_pkgconfigdir}/uuid.pc
-%exclude %{_cross_libdir}/libuuid.la
 
 %changelog

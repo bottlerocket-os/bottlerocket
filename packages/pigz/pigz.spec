@@ -1,5 +1,5 @@
 Name: %{_cross_os}pigz
-Version: 2.7
+Version: 2.8
 Release: 1%{?dist}
 Summary: pigz is a parallel implementation of gzip which utilizes multiple cores
 License: Zlib AND Apache-2.0

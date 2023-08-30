@@ -1,38 +1,27 @@
-From 09721aa67086fde4f3cfd05d13b7ba1c4b05d379 Mon Sep 17 00:00:00 2001
-From: Samuel Karp <skarp@amazon.com>
-Date: Wed, 8 Jul 2020 11:18:35 -0700
+From 3df68e0247900b32e096eefd7465fb5e836916d1 Mon Sep 17 00:00:00 2001
+From: Shikha Vyaghra <vyaghras@amazon.com>
+Date: Wed, 23 Aug 2023 21:09:50 +0000
 Subject: [PATCH] bottlerocket: default filesystem locations
 
+This patch was originally written by Samuel Karp <skarp@amazon.com>
+(09721aa67086fde4f3cfd05d13b7ba1c4b05d379). In this updated patch
+version all the settings that can be configured using config file,
+have been removed from the patch.
+
 Signed-off-by: Sean P. Kelly <seankell@amazon.com>
+Signed-off-by: Shikha Vyaghra <vyaghras@amazon.com>
 ---
- agent/config/config.go             | 6 +++---
- agent/config/config_unix.go        | 6 +++---
+ agent/config/config.go             | 2 +-
  agent/ecscni/plugin_linux.go       | 2 +-
  agent/ecscni/plugin_unsupported.go | 2 +-
  agent/utils/license.go             | 6 +++---
- 5 files changed, 11 insertions(+), 11 deletions(-)
+ 4 files changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/agent/config/config.go b/agent/config/config.go
-index 38f0d0f..acebb26 100644
+index 34339bd..0cf7426 100644
 --- a/agent/config/config.go
 +++ b/agent/config/config.go
-@@ -51,7 +51,7 @@ const (
- 	AgentPrometheusExpositionPort = 51680
- 
- 	// defaultConfigFileName is the default (json-formatted) config file
--	defaultConfigFileName = "/etc/ecs_container_agent/config.json"
-+	defaultConfigFileName = "/etc/ecs/ecs.config.json"
- 
- 	// DefaultClusterName is the name of the default cluster.
- 	DefaultClusterName = "default"
-@@ -118,13 +118,13 @@ const (
- 	minimumNumImagesToDeletePerCycle = 1
- 
- 	// defaultCNIPluginsPath is the default path where cni binaries are located
--	defaultCNIPluginsPath = "/amazon-ecs-cni-plugins"
-+	defaultCNIPluginsPath = "/usr/libexec/amazon-ecs-agent"
- 
- 	// DefaultMinSupportedCNIVersion denotes the minimum version of cni spec required
+@@ -122,7 +122,7 @@ const (
  	DefaultMinSupportedCNIVersion = "0.3.0"
  
  	// pauseContainerTarball is the path to the pause container tarball
@@ -41,37 +30,11 @@ index 38f0d0f..acebb26 100644
  
  	// DefaultTaskMetadataSteadyStateRate is set as 40. This is arrived from our benchmarking
  	// results where task endpoint can handle 4000 rps effectively. Here, 100 containers
-diff --git a/agent/config/config_unix.go b/agent/config/config_unix.go
-index 6c1254d..3adefaa 100644
---- a/agent/config/config_unix.go
-+++ b/agent/config/config_unix.go
-@@ -29,10 +29,10 @@ const (
- 	// AgentCredentialsAddress is used to serve the credentials for tasks.
- 	AgentCredentialsAddress = "" // this is left blank right now for net=bridge
- 	// defaultAuditLogFile specifies the default audit log filename
--	defaultCredentialsAuditLogFile = "/log/audit.log"
-+	defaultCredentialsAuditLogFile = "/var/log/ecs/audit.log"
- 
- 	// defaultRuntimeStatsLogFile stores the path where the golang runtime stats are periodically logged
--	defaultRuntimeStatsLogFile = `/log/agent-runtime-stats.log`
-+	defaultRuntimeStatsLogFile = `/var/log/ecs/agent-runtime-stats.log`
- 
- 	// DefaultTaskCgroupV1Prefix is default cgroup v1 prefix for ECS tasks
- 	DefaultTaskCgroupV1Prefix = "/ecs"
-@@ -63,7 +63,7 @@ func DefaultConfig() Config {
- 		DockerEndpoint:                      "unix:///var/run/docker.sock",
- 		ReservedPorts:                       []uint16{SSHPort, DockerReservedPort, DockerReservedSSLPort, AgentIntrospectionPort, AgentCredentialsPort},
- 		ReservedPortsUDP:                    []uint16{},
--		DataDir:                             "/data/",
-+		DataDir:                             "/var/lib/ecs/data",
- 		DataDirOnHost:                       "/var/lib/ecs",
- 		DisableMetrics:                      BooleanDefaultFalse{Value: ExplicitlyDisabled},
- 		ReservedMemory:                      0,
 diff --git a/agent/ecscni/plugin_linux.go b/agent/ecscni/plugin_linux.go
-index cb13d41..4acf042 100644
+index 0d3a940..3e76060 100644
 --- a/agent/ecscni/plugin_linux.go
 +++ b/agent/ecscni/plugin_linux.go
-@@ -33,7 +33,7 @@ import (
+@@ -34,7 +34,7 @@ import (
  const (
  	vpcCNIPluginInterfaceType = "vlan"
  	// vpcCNIPluginPath is the path of the cni plugin's log file.
@@ -81,7 +44,7 @@ index cb13d41..4acf042 100644
  
  // newCNIGuard returns a new instance of CNI guard for the CNI client.
 diff --git a/agent/ecscni/plugin_unsupported.go b/agent/ecscni/plugin_unsupported.go
-index e156b75..55d1a3c 100644
+index 05bc3cf..a34a823 100644
 --- a/agent/ecscni/plugin_unsupported.go
 +++ b/agent/ecscni/plugin_unsupported.go
 @@ -26,7 +26,7 @@ import (
@@ -106,7 +69,7 @@ index 6eccff6..324307c 100644
 -	thirdPartyFile = "THIRD-PARTY"
 +	licenseFile    = "/usr/share/licenses/ecs-agent/LICENSE"
 +	noticeFile     = "/usr/share/licenses/ecs-agent/NOTICE"
-+	thirdPartyFile = "/usr/share/licenses/ecs-agent/THIRD-PARTY"
++	thirdPartyFile = "/usr/share/licenses/ecs-agent/THIRD_PARTY.md"
  )
  
  var readFile = ioutil.ReadFile

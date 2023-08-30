@@ -12,8 +12,8 @@ path = "../packages.rs"
 releases-url = "https://github.com/containernetworking/plugins/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/containernetworking/plugins/archive/v1.2.0/plugins-1.2.0.tar.gz"
-sha512 = "fb6fb4f46ac1610b3721f5f3a6ddfb096cbf2e5d5b792306edca5351a3944d2f802170d83e5adec01420395bf64fc8a174ede61ac9b93b5ac6b938a4b48651e6"
+url = "https://github.com/containernetworking/plugins/archive/v1.3.0/plugins-1.3.0.tar.gz"
+sha512 = "87e186b3cd64f66280f5b2293dcdd1fc22cb8f51a248124fb622adc48a893348419ba4c29c4769dede4d9e60f2e9fea5d4198f10badb4ecd20a1551e0b344e10"
 
 # RPM BuildRequires
 [build-dependencies]

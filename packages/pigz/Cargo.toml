@@ -9,8 +9,8 @@ build = "../build.rs"
 path = "../packages.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://zlib.net/pigz/pigz-2.7.tar.gz"
-sha512 = "9f9f61de4a0307fc057dc4e31a98bd8d706d9e709ecde0be02a871534fddf6a1fe1321158aa72708603aaaece43f83d2423b127f7689b6219b23aea4f989e8f5"
+url = "https://zlib.net/pigz/pigz-2.8.tar.gz"
+sha512 = "ae3d9d593e1645d65f9ab77aa828600c9af4bb30d0a073da7ae3dd805e65b87efaf6a0efb980f2d0168e475ae506eba194547d6479956dabb9d88293a9078a7f"
 
 # RPM BuildRequires
 [build-dependencies]
