@@ -25,7 +25,7 @@ fastrand = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_plain = "1"
-serde_yaml = "0.8"
+serde_yaml = "0.9"
 snafu = "0.7"
 term_size = "0.3"
 testsys-config = { path = "../testsys-config/", version = "0.1" }
