@@ -263,6 +263,7 @@ args = [
     "${CARGO_MAKE_TASK}",
     "--project-path=${TWOLITER_PROJECT}",
     "--cargo-home=${CARGO_HOME}",
+    "--",
     "${@}",
 ]
 
