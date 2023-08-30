@@ -8,7 +8,7 @@ publish = false
 
 [dependencies]
 aws-config = "0.55"
-aws-credential-types = "0.55"
+aws-credential-types = "0.56"
 aws-sdk-ebs = "0.28"
 aws-sdk-ec2 = "0.28"
 aws-sdk-kms = "0.28"
