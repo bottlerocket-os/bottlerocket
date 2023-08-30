@@ -26,4 +26,4 @@ tokio = { version = "1", default-features = false, features = ["macros", "rt-mul
 url = "2"
 
 [dev-dependencies]
-assert-json-diff = "1"
+assert-json-diff = "2"
