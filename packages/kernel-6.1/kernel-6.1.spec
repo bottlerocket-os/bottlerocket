@@ -25,6 +25,12 @@ Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
 # options for nvidia are instead included through DRM_SIMPLE
 Patch1005: 1005-Revert-Revert-drm-fb_helper-improve-CONFIG_FB-depend.patch
 
+# Cherry-picked fixes for CVE-2023-20588 ("DIV0"). Can be dropped when moving
+# upstream to 6.1.48 or later
+Patch5001: 5001-x86-bugs-Increase-the-x86-bugs-vector-size-to-two-u3.patch
+Patch5002: 5002-x86-CPU-AMD-Do-not-leak-quotient-data-after-a-divisi.patch
+Patch5003: 5003-x86-CPU-AMD-Fix-the-DIV-0-initial-fix-attempt.patch
+
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
