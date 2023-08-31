@@ -752,9 +752,9 @@ capability | setting | default value
 
 ##### OCI Defaults: Resource Limits
 
-Each of the `resource-limits` settings below contain two numeric fields: `hard-limit` and `soft-limit`, which are **32-bit unsigned integers**.
+Each of the `resource-limits` settings below contain two fields: `hard-limit` and `soft-limit`.
 
-Please see the [`getrlimit` linux manpage](https://man7.org/linux/man-pages/man7/capabilities.7.html) for meanings of `hard-limit` and `soft-limit`.
+Please see the [`getrlimit` linux manpage](https://man7.org/linux/man-pages/man2/getrlimit.2.html) for meanings of `hard-limit` and `soft-limit`.
 
 The full list of resource limits that can be configured in Bottlerocket are:
 <table>
