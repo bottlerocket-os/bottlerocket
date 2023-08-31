@@ -52,6 +52,11 @@ Patch9010: 9010-units-keep-modprobe-service-units-running.patch
 # DBUS services not used in Bottlerocket
 Patch9011: 9011-systemd-networkd-Conditionalize-hostnamed-timezoned-.patch
 
+# Local patch to adjust the default mount rate limit to 25 per second.
+# Carried as a patch so that SYSTEMD_DEFAULT_MOUNT_RATE_LIMIT_BURST can be used
+# as a kernel command line parameter to override.
+Patch9012: 9012-core-mount-increase-mount-rate-limit-burst-to-25.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson

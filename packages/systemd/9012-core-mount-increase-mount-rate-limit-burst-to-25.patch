@@ -1,0 +1,29 @@
+From 1f8d86a74c09738eb000aacec6bbd74360177796 Mon Sep 17 00:00:00 2001
+From: Ben Cressey <bcressey@amazon.com>
+Date: Thu, 31 Aug 2023 19:14:13 +0000
+Subject: [PATCH] core/mount: increase mount rate limit burst to 25
+
+On systems where many mounts are set up on boot, the default rate
+limit is too low and leads to several stalls.
+
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
+---
+ src/core/mount.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/core/mount.c b/src/core/mount.c
+index d82092a..7ba009b 100644
+--- a/src/core/mount.c
++++ b/src/core/mount.c
+@@ -1928,7 +1928,7 @@ static void mount_enumerate(Manager *m) {
+         mnt_init_debug(0);
+ 
+         if (!m->mount_monitor) {
+-                unsigned mount_rate_limit_burst = 5;
++                unsigned mount_rate_limit_burst = 25;
+                 int fd;
+ 
+                 m->mount_monitor = mnt_new_monitor();
+-- 
+2.40.1
+
