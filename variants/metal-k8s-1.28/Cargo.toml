@@ -1,0 +1,51 @@
+[package]
+# This is the metal-k8s-1.28 variant. "." is not allowed in crate names, but
+# we don't use this crate name anywhere.
+name = "metal-k8s-1_28"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[package.metadata.build-variant.image-layout]
+os-image-size-gib = 4
+partition-plan = "unified"
+
+[package.metadata.build-variant.image-features]
+grub-set-private-var = true
+unified-cgroup-hierarchy = true
+uefi-secure-boot = true
+xfs-data-partition = true
+
+[package.metadata.build-variant]
+image-format = "raw"
+supported-arches = ["x86_64"]
+kernel-parameters = [
+    # Only reserve if there are at least 2GB
+    "crashkernel=2G-:256M"
+]
+included-packages = [
+    # core
+    "release",
+    "kernel-6.1",
+    # k8s
+    "aws-iam-authenticator",
+    "cni",
+    "cni-plugins",
+    "kubelet-1.28",
+]
+
+[lib]
+path = "../variants.rs"
+
+[build-dependencies]
+# core
+release = { path = "../../packages/release" }
+kernel-6_1 = { path = "../../packages/kernel-6.1" }
+# k8s
+aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
+cni = { path = "../../packages/cni" }
+cni-plugins = { path = "../../packages/cni-plugins" }
+kubernetes-1_28 = { path = "../../packages/kubernetes-1.28" }
