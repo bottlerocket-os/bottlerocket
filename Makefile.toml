@@ -3,6 +3,11 @@ skip_core_tasks = true
 
 [env]
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
+# The build tool, Twoliter, needs to be installed to run a Bottlerocket build.
+# If you need to build in an offline environment, first you should run `cargo
+# make fetch` in an online environment. Subsequently in the offline environment
+# you need to set this to true. `cargo make -e TWOLITER_SKIP_INSTALL=true build`
+TWOLITER_SKIP_INSTALL = "false"
 # TODO - replace with crates.io version when published
 TWOLITER_GIT = "https://github.com/bottlerocket-os/twoliter"
 TWOLITER_REV = "v0.0.2"
@@ -242,8 +247,15 @@ fi
 ] }
 
 [tasks.install-twoliter]
+script_runner = "bash"
 script = [
 '''
+if [ "${TWOLITER_SKIP_INSTALL}" = "true" ]; then
+   echo "TWOLITER_SKIP_INSTALL=${TWOLITER_SKIP_INSTALL}"
+   echo "Skipping Twoliter installation"
+   exit 0
+fi
+
 cargo install \
   --locked \
   --root "${TWOLITER_INSTALL_ROOT}" \
