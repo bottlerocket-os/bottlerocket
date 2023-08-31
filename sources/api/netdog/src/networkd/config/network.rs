@@ -481,17 +481,10 @@ where
         if Self::dhcp4_enabled(&dhcp4) {
             let dhcp4_s = self.network.dhcp4_mut();
             dhcp4_s.metric = Self::dhcp4_metric(&dhcp4);
-            // The following ensure DNS comes back with the lease
-            dhcp4_s.use_dns = Some(true);
-            dhcp4_s.use_domains = Some(true);
             dhcp4_s.use_mtu = Some(true);
         }
 
         if Self::dhcp6_enabled(&dhcp6) {
-            let dhcp6_s = self.network.dhcp6_mut();
-            // The following ensure DNS comes back with the lease
-            dhcp6_s.use_dns = Some(true);
-            dhcp6_s.use_domains = Some(true);
             let ipv6_accept_ra_s = self.network.ipv6_accept_ra_mut();
             ipv6_accept_ra_s.use_mtu = Some(true);
         }
@@ -509,9 +502,6 @@ where
         if Self::dhcp4_enabled(&dhcp4) {
             let dhcp = self.network.dhcp4_mut();
             dhcp.metric = Self::dhcp4_metric(&dhcp4);
-            // The following ensure DNS comes back with the lease
-            dhcp.use_dns = Some(true);
-            dhcp.use_domains = Some(true);
             dhcp.use_mtu = Some(true);
         }
     }
@@ -526,10 +516,6 @@ where
         self.network.link_mut().required = Some(Self::dhcp6_required(&dhcp6));
 
         if Self::dhcp6_enabled(&dhcp6) {
-            let dhcp = self.network.dhcp6_mut();
-            // The following ensure DNS comes back with the lease
-            dhcp.use_dns = Some(true);
-            dhcp.use_domains = Some(true);
             let accept_ra = self.network.ipv6_accept_ra_mut();
             accept_ra.use_mtu = Some(true);
         }

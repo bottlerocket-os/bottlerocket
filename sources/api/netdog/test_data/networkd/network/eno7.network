@@ -6,11 +6,6 @@ RequiredFamilyForOnline=ipv4
 [Network]
 DHCP=yes
 [DHCPv4]
-UseDNS=true
-UseDomains=true
 UseMTU=true
-[DHCPv6]
-UseDNS=true
-UseDomains=true
 [IPv6AcceptRA]
 UseMTU=true

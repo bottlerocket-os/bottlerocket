@@ -5,8 +5,5 @@ RequiredForOnline=true
 RequiredFamilyForOnline=ipv6
 [Network]
 DHCP=ipv6
-[DHCPv6]
-UseDNS=true
-UseDomains=true
 [IPv6AcceptRA]
 UseMTU=true
