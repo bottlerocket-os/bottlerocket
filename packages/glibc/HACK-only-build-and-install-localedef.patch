@@ -1,4 +1,4 @@
-From b6644fe81bac2f2b7d4be801a163341824ae1283 Mon Sep 17 00:00:00 2001
+From e0ee1ec4eccbfd91f56a8c9967cd1fb79fc4a744 Mon Sep 17 00:00:00 2001
 From: Michael Olbrich <m.olbrich@pengutronix.de>
 Date: Mon, 21 May 2018 16:45:02 +0200
 Subject: [PATCH] HACK: only build and install localedef
@@ -7,16 +7,19 @@ Signed-off-by: Michael Olbrich <m.olbrich@pengutronix.de>
 
 Upstream: https://git.pengutronix.de/cgit/ptxdist/plain/patches/localedef-glibc-2.27/0001-HACK-only-build-and-install-localedef.patch?id=47116f66f411d4dadfce42c2fdd6d41b351ccfd4
 Signed-off-by: Peter Seiderer <ps.report@gmx.net>
+["fixed" a build failure after 64924422a99690d147a166b4de3103f3bf3eaf6c]
+Signed-off-by: Ben Cressey <bcressey@amazon.com>
 ---
- Rules           | 14 ++++++++++----
- locale/Makefile |  6 +++---
- 2 files changed, 13 insertions(+), 7 deletions(-)
+ Rules              | 14 ++++++++++----
+ include/features.h |  2 +-
+ locale/Makefile    |  6 +++---
+ 3 files changed, 14 insertions(+), 8 deletions(-)
 
 diff --git a/Rules b/Rules
-index ac9455d6a7..da4e76523d 100644
+index 279ae490ac..1321956be6 100644
 --- a/Rules
 +++ b/Rules
-@@ -224,10 +224,16 @@ binaries-shared-notests = $(filter-out $(binaries-pie) $(binaries-static), \
+@@ -221,10 +221,16 @@ binaries-shared-notests = $(filter-out $(binaries-pie) $(binaries-static), \
  				       $(binaries-all-notests))
  
  ifneq "$(strip $(binaries-shared-notests))" ""
@@ -37,8 +40,21 @@ index ac9455d6a7..da4e76523d 100644
  endif
  
  ifneq "$(strip $(binaries-shared-tests))" ""
+diff --git a/include/features.h b/include/features.h
+index 7c51b4a2e4..8522197511 100644
+--- a/include/features.h
++++ b/include/features.h
+@@ -471,7 +471,7 @@
+    to be disabled when building those functions, despite _GNU_SOURCE
+    being defined.  */
+ #if __GLIBC_USE (ISOC2X)
+-# define __GLIBC_USE_C2X_STRTOL 1
++# define __GLIBC_USE_C2X_STRTOL 0
+ #else
+ # define __GLIBC_USE_C2X_STRTOL 0
+ #endif
 diff --git a/locale/Makefile b/locale/Makefile
-index c315683b3f..0666bcd8c8 100644
+index d7036b0855..68afdddc7f 100644
 --- a/locale/Makefile
 +++ b/locale/Makefile
 @@ -33,15 +33,15 @@ categories	= ctype messages monetary numeric time paper name \
@@ -61,5 +77,5 @@ index c315683b3f..0666bcd8c8 100644
  
  libBrokenLocale-routines = broken_cur_max
 -- 
-2.33.1
+2.40.1
 

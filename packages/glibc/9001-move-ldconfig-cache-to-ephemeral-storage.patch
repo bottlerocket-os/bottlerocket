@@ -1,4 +1,4 @@
-From e1e04bfa509b5f638e20fad15efb1c52a828c9e4 Mon Sep 17 00:00:00 2001
+From b7ddf0e1d55f4f59696ff42504511d0030accd2a Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
 Date: Mon, 16 Sep 2019 17:00:50 +0000
 Subject: [PATCH] move ldconfig cache to ephemeral storage
@@ -9,11 +9,11 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/sysdeps/generic/ldconfig.h b/sysdeps/generic/ldconfig.h
-index 3ab757077d..785ff40984 100644
+index 59da12ad89..18d080be0d 100644
 --- a/sysdeps/generic/ldconfig.h
 +++ b/sysdeps/generic/ldconfig.h
-@@ -48,7 +48,7 @@
- #define FLAG_RISCV_FLOAT_ABI_DOUBLE	0x1000
+@@ -49,7 +49,7 @@
+ #define FLAG_LARCH_FLOAT_ABI_DOUBLE	0x1200
  
  /* Name of auxiliary cache.  */
 -#define _PATH_LDCONFIG_AUX_CACHE "/var/cache/ldconfig/aux-cache"
@@ -22,5 +22,5 @@ index 3ab757077d..785ff40984 100644
  /* Declared in cache.c.  */
  extern void print_cache (const char *cache_name);
 -- 
-2.21.3
+2.39.2
 

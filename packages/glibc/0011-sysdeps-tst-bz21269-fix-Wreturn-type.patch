@@ -1,0 +1,30 @@
+From 1aed90c9c8f8be9f68b58e96b6e4cd0fc08eb2b1 Mon Sep 17 00:00:00 2001
+From: Sam James <sam@gentoo.org>
+Date: Thu, 17 Aug 2023 09:30:29 +0100
+Subject: [PATCH] sysdeps: tst-bz21269: fix -Wreturn-type
+
+Thanks to Andreas Schwab for reporting.
+
+Fixes: 652b9fdb77d9fd056d4dd26dad2c14142768ab49
+Signed-off-by: Sam James <sam@gentoo.org>
+(cherry picked from commit 369f373057073c307938da91af16922bda3dff6a)
+---
+ sysdeps/unix/sysv/linux/i386/tst-bz21269.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/i386/tst-bz21269.c b/sysdeps/unix/sysv/linux/i386/tst-bz21269.c
+index 28f5359bea..822c41fceb 100644
+--- a/sysdeps/unix/sysv/linux/i386/tst-bz21269.c
++++ b/sysdeps/unix/sysv/linux/i386/tst-bz21269.c
+@@ -60,8 +60,6 @@ xmodify_ldt (int func, const void *ptr, unsigned long bytecount)
+ 	FAIL_UNSUPPORTED ("modify_ldt not supported");
+       FAIL_EXIT1 ("modify_ldt failed (errno=%d)", errno);
+     }
+-
+-  return 0;
+ }
+ 
+ static int
+-- 
+2.40.1
+

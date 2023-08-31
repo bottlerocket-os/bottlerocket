@@ -1,0 +1,185 @@
+From 6b99458d197ab779ebb6ff632c168e2cbfa4f543 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Fri, 11 Aug 2023 10:10:16 +0200
+Subject: [PATCH] nscd: Do not rebuild getaddrinfo (bug 30709)
+
+The nscd daemon caches hosts data from NSS modules verbatim, without
+filtering protocol families or sorting them (otherwise separate caches
+would be needed for certain ai_flags combinations).  The cache
+implementation is complete separate from the getaddrinfo code.  This
+means that rebuilding getaddrinfo is not needed.  The only function
+actually used is __bump_nl_timestamp from check_pf.c, and this change
+moves it into nscd/connections.c.
+
+Tested on x86_64-linux-gnu with -fexceptions, built with
+build-many-glibcs.py.  I also backported this patch into a distribution
+that still supports nscd and verified manually that caching still works.
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit 039ff51ac7e02db1cfc0c23e38ac7bfbb00221d1)
+---
+ include/ifaddrs.h                  |  4 ---
+ inet/check_pf.c                    |  9 ------
+ nscd/Makefile                      |  2 +-
+ nscd/connections.c                 | 11 +++++++
+ nscd/gai.c                         | 50 ------------------------------
+ sysdeps/unix/sysv/linux/check_pf.c | 17 +---------
+ 6 files changed, 13 insertions(+), 80 deletions(-)
+ delete mode 100644 nscd/gai.c
+
+diff --git a/include/ifaddrs.h b/include/ifaddrs.h
+index 416118f1b3..19a3afb19f 100644
+--- a/include/ifaddrs.h
++++ b/include/ifaddrs.h
+@@ -34,9 +34,5 @@ extern void __check_native (uint32_t a1_index, int *a1_native,
+ 			    uint32_t a2_index, int *a2_native)
+   attribute_hidden;
+ 
+-#if IS_IN (nscd)
+-extern uint32_t __bump_nl_timestamp (void) attribute_hidden;
+-#endif
+-
+ # endif /* !_ISOMAC */
+ #endif	/* ifaddrs.h */
+diff --git a/inet/check_pf.c b/inet/check_pf.c
+index 5310c99121..6d1475920f 100644
+--- a/inet/check_pf.c
++++ b/inet/check_pf.c
+@@ -60,12 +60,3 @@ __free_in6ai (struct in6addrinfo *in6ai)
+ {
+   /* Nothing to do.  */
+ }
+-
+-
+-#if IS_IN (nscd)
+-uint32_t
+-__bump_nl_timestamp (void)
+-{
+-  return 0;
+-}
+-#endif
+diff --git a/nscd/Makefile b/nscd/Makefile
+index 2a0489f4cf..16b6460ee9 100644
+--- a/nscd/Makefile
++++ b/nscd/Makefile
+@@ -35,7 +35,7 @@ nscd-modules := nscd connections pwdcache getpwnam_r getpwuid_r grpcache \
+ 		getgrnam_r getgrgid_r hstcache gethstbyad_r gethstbynm3_r \
+ 		getsrvbynm_r getsrvbypt_r servicescache \
+ 		dbg_log nscd_conf nscd_stat cache mem nscd_setup_thread \
+-		xmalloc xstrdup aicache initgrcache gai res_hconf \
++		xmalloc xstrdup aicache initgrcache res_hconf \
+ 		netgroupcache cachedumper
+ 
+ ifeq ($(build-nscd)$(have-thread-library),yesyes)
+diff --git a/nscd/connections.c b/nscd/connections.c
+index a405a44a9b..15693e5090 100644
+--- a/nscd/connections.c
++++ b/nscd/connections.c
+@@ -256,6 +256,17 @@ int inotify_fd = -1;
+ #ifdef HAVE_NETLINK
+ /* Descriptor for netlink status updates.  */
+ static int nl_status_fd = -1;
++
++static uint32_t
++__bump_nl_timestamp (void)
++{
++  static uint32_t nl_timestamp;
++
++  if (atomic_fetch_add_relaxed (&nl_timestamp, 1) + 1 == 0)
++    atomic_fetch_add_relaxed (&nl_timestamp, 1);
++
++  return nl_timestamp;
++}
+ #endif
+ 
+ /* Number of times clients had to wait.  */
+diff --git a/nscd/gai.c b/nscd/gai.c
+deleted file mode 100644
+index e29f3fe583..0000000000
+--- a/nscd/gai.c
++++ /dev/null
+@@ -1,50 +0,0 @@
+-/* Copyright (C) 2004-2023 Free Software Foundation, Inc.
+-   This file is part of the GNU C Library.
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published
+-   by the Free Software Foundation; version 2 of the License, or
+-   (at your option) any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, see <https://www.gnu.org/licenses/>.  */
+-
+-#include <alloca.h>
+-#include <sys/stat.h>
+-
+-/* This file uses the getaddrinfo code but it compiles it without NSCD
+-   support.  We just need a few symbol renames.  */
+-#define __ioctl ioctl
+-#define __getsockname getsockname
+-#define __socket socket
+-#define __recvmsg recvmsg
+-#define __bind bind
+-#define __sendto sendto
+-#define __strchrnul strchrnul
+-#define __getline getline
+-#define __qsort_r qsort_r
+-/* nscd uses 1MB or 2MB thread stacks.  */
+-#define __libc_use_alloca(size) (size <= __MAX_ALLOCA_CUTOFF)
+-#define __getifaddrs getifaddrs
+-#define __freeifaddrs freeifaddrs
+-#undef __fstat64
+-#define __fstat64 fstat64
+-#undef __stat64
+-#define __stat64 stat64
+-
+-/* We are nscd, so we don't want to be talking to ourselves.  */
+-#undef  USE_NSCD
+-
+-#include <getaddrinfo.c>
+-
+-/* Support code.  */
+-#include <check_pf.c>
+-#include <check_native.c>
+-
+-/* Some variables normally defined in libc.  */
+-nss_action_list __nss_hosts_database attribute_hidden;
+diff --git a/sysdeps/unix/sysv/linux/check_pf.c b/sysdeps/unix/sysv/linux/check_pf.c
+index 2b0b8b6368..3aa6a00348 100644
+--- a/sysdeps/unix/sysv/linux/check_pf.c
++++ b/sysdeps/unix/sysv/linux/check_pf.c
+@@ -66,25 +66,10 @@ static struct cached_data *cache;
+ __libc_lock_define_initialized (static, lock);
+ 
+ 
+-#if IS_IN (nscd)
+-static uint32_t nl_timestamp;
+-
+-uint32_t
+-__bump_nl_timestamp (void)
+-{
+-  if (atomic_fetch_add_relaxed (&nl_timestamp, 1) + 1 == 0)
+-    atomic_fetch_add_relaxed (&nl_timestamp, 1);
+-
+-  return nl_timestamp;
+-}
+-#endif
+-
+ static inline uint32_t
+ get_nl_timestamp (void)
+ {
+-#if IS_IN (nscd)
+-  return nl_timestamp;
+-#elif defined USE_NSCD
++#if defined USE_NSCD
+   return __nscd_get_nl_timestamp ();
+ #else
+   return 0;
+-- 
+2.40.1
+

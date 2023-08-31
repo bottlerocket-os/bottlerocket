@@ -1,0 +1,300 @@
+From 98c293c61f770b6b7a22f89a6ea81b711ecb1952 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Fri, 11 Aug 2023 11:18:17 +0200
+Subject: [PATCH] malloc: Enable merging of remainders in memalign (bug 30723)
+
+Previously, calling _int_free from _int_memalign could put remainders
+into the tcache or into fastbins, where they are invisible to the
+low-level allocator.  This results in missed merge opportunities
+because once these freed chunks become available to the low-level
+allocator, further memalign allocations (even of the same size are)
+likely obstructing merges.
+
+Furthermore, during forwards merging in _int_memalign, do not
+completely give up when the remainder is too small to serve as a
+chunk on its own.  We can still give it back if it can be merged
+with the following unused chunk.  This makes it more likely that
+memalign calls in a loop achieve a compact memory layout,
+independently of initial heap layout.
+
+Drop some useless (unsigned long) casts along the way, and tweak
+the style to more closely match GNU on changed lines.
+
+Reviewed-by: DJ Delorie <dj@redhat.com>
+(cherry picked from commit 542b1105852568c3ebc712225ae78b8c8ba31a78)
+---
+ malloc/malloc.c | 197 +++++++++++++++++++++++++++++-------------------
+ 1 file changed, 121 insertions(+), 76 deletions(-)
+
+diff --git a/malloc/malloc.c b/malloc/malloc.c
+index e2f1a615a4..948f9759af 100644
+--- a/malloc/malloc.c
++++ b/malloc/malloc.c
+@@ -1086,6 +1086,11 @@ typedef struct malloc_chunk* mchunkptr;
+ 
+ static void*  _int_malloc(mstate, size_t);
+ static void     _int_free(mstate, mchunkptr, int);
++static void _int_free_merge_chunk (mstate, mchunkptr, INTERNAL_SIZE_T);
++static INTERNAL_SIZE_T _int_free_create_chunk (mstate,
++					       mchunkptr, INTERNAL_SIZE_T,
++					       mchunkptr, INTERNAL_SIZE_T);
++static void _int_free_maybe_consolidate (mstate, INTERNAL_SIZE_T);
+ static void*  _int_realloc(mstate, mchunkptr, INTERNAL_SIZE_T,
+ 			   INTERNAL_SIZE_T);
+ static void*  _int_memalign(mstate, size_t, size_t);
+@@ -4637,31 +4642,52 @@ _int_free (mstate av, mchunkptr p, int have_lock)
+     if (!have_lock)
+       __libc_lock_lock (av->mutex);
+ 
+-    nextchunk = chunk_at_offset(p, size);
+-
+-    /* Lightweight tests: check whether the block is already the
+-       top block.  */
+-    if (__glibc_unlikely (p == av->top))
+-      malloc_printerr ("double free or corruption (top)");
+-    /* Or whether the next chunk is beyond the boundaries of the arena.  */
+-    if (__builtin_expect (contiguous (av)
+-			  && (char *) nextchunk
+-			  >= ((char *) av->top + chunksize(av->top)), 0))
+-	malloc_printerr ("double free or corruption (out)");
+-    /* Or whether the block is actually not marked used.  */
+-    if (__glibc_unlikely (!prev_inuse(nextchunk)))
+-      malloc_printerr ("double free or corruption (!prev)");
+-
+-    nextsize = chunksize(nextchunk);
+-    if (__builtin_expect (chunksize_nomask (nextchunk) <= CHUNK_HDR_SZ, 0)
+-	|| __builtin_expect (nextsize >= av->system_mem, 0))
+-      malloc_printerr ("free(): invalid next size (normal)");
++    _int_free_merge_chunk (av, p, size);
+ 
+-    free_perturb (chunk2mem(p), size - CHUNK_HDR_SZ);
++    if (!have_lock)
++      __libc_lock_unlock (av->mutex);
++  }
++  /*
++    If the chunk was allocated via mmap, release via munmap().
++  */
++
++  else {
++    munmap_chunk (p);
++  }
++}
++
++/* Try to merge chunk P of SIZE bytes with its neighbors.  Put the
++   resulting chunk on the appropriate bin list.  P must not be on a
++   bin list yet, and it can be in use.  */
++static void
++_int_free_merge_chunk (mstate av, mchunkptr p, INTERNAL_SIZE_T size)
++{
++  mchunkptr nextchunk = chunk_at_offset(p, size);
++
++  /* Lightweight tests: check whether the block is already the
++     top block.  */
++  if (__glibc_unlikely (p == av->top))
++    malloc_printerr ("double free or corruption (top)");
++  /* Or whether the next chunk is beyond the boundaries of the arena.  */
++  if (__builtin_expect (contiguous (av)
++			&& (char *) nextchunk
++			>= ((char *) av->top + chunksize(av->top)), 0))
++    malloc_printerr ("double free or corruption (out)");
++  /* Or whether the block is actually not marked used.  */
++  if (__glibc_unlikely (!prev_inuse(nextchunk)))
++    malloc_printerr ("double free or corruption (!prev)");
++
++  INTERNAL_SIZE_T nextsize = chunksize(nextchunk);
++  if (__builtin_expect (chunksize_nomask (nextchunk) <= CHUNK_HDR_SZ, 0)
++      || __builtin_expect (nextsize >= av->system_mem, 0))
++    malloc_printerr ("free(): invalid next size (normal)");
++
++  free_perturb (chunk2mem(p), size - CHUNK_HDR_SZ);
+ 
+-    /* consolidate backward */
+-    if (!prev_inuse(p)) {
+-      prevsize = prev_size (p);
++  /* Consolidate backward.  */
++  if (!prev_inuse(p))
++    {
++      INTERNAL_SIZE_T prevsize = prev_size (p);
+       size += prevsize;
+       p = chunk_at_offset(p, -((long) prevsize));
+       if (__glibc_unlikely (chunksize(p) != prevsize))
+@@ -4669,9 +4695,25 @@ _int_free (mstate av, mchunkptr p, int have_lock)
+       unlink_chunk (av, p);
+     }
+ 
+-    if (nextchunk != av->top) {
++  /* Write the chunk header, maybe after merging with the following chunk.  */
++  size = _int_free_create_chunk (av, p, size, nextchunk, nextsize);
++  _int_free_maybe_consolidate (av, size);
++}
++
++/* Create a chunk at P of SIZE bytes, with SIZE potentially increased
++   to cover the immediately following chunk NEXTCHUNK of NEXTSIZE
++   bytes (if NEXTCHUNK is unused).  The chunk at P is not actually
++   read and does not have to be initialized.  After creation, it is
++   placed on the appropriate bin list.  The function returns the size
++   of the new chunk.  */
++static INTERNAL_SIZE_T
++_int_free_create_chunk (mstate av, mchunkptr p, INTERNAL_SIZE_T size,
++			mchunkptr nextchunk, INTERNAL_SIZE_T nextsize)
++{
++  if (nextchunk != av->top)
++    {
+       /* get and clear inuse bit */
+-      nextinuse = inuse_bit_at_offset(nextchunk, nextsize);
++      bool nextinuse = inuse_bit_at_offset (nextchunk, nextsize);
+ 
+       /* consolidate forward */
+       if (!nextinuse) {
+@@ -4686,8 +4728,8 @@ _int_free (mstate av, mchunkptr p, int have_lock)
+ 	been given one chance to be used in malloc.
+       */
+ 
+-      bck = unsorted_chunks(av);
+-      fwd = bck->fd;
++      mchunkptr bck = unsorted_chunks (av);
++      mchunkptr fwd = bck->fd;
+       if (__glibc_unlikely (fwd->bk != bck))
+ 	malloc_printerr ("free(): corrupted unsorted chunks");
+       p->fd = fwd;
+@@ -4706,61 +4748,52 @@ _int_free (mstate av, mchunkptr p, int have_lock)
+       check_free_chunk(av, p);
+     }
+ 
+-    /*
+-      If the chunk borders the current high end of memory,
+-      consolidate into top
+-    */
+-
+-    else {
++  else
++    {
++      /* If the chunk borders the current high end of memory,
++	 consolidate into top.  */
+       size += nextsize;
+       set_head(p, size | PREV_INUSE);
+       av->top = p;
+       check_chunk(av, p);
+     }
+ 
+-    /*
+-      If freeing a large space, consolidate possibly-surrounding
+-      chunks. Then, if the total unused topmost memory exceeds trim
+-      threshold, ask malloc_trim to reduce top.
+-
+-      Unless max_fast is 0, we don't know if there are fastbins
+-      bordering top, so we cannot tell for sure whether threshold
+-      has been reached unless fastbins are consolidated.  But we
+-      don't want to consolidate on each free.  As a compromise,
+-      consolidation is performed if FASTBIN_CONSOLIDATION_THRESHOLD
+-      is reached.
+-    */
++  return size;
++}
+ 
+-    if ((unsigned long)(size) >= FASTBIN_CONSOLIDATION_THRESHOLD) {
++/* If freeing a large space, consolidate possibly-surrounding
++   chunks.  Then, if the total unused topmost memory exceeds trim
++   threshold, ask malloc_trim to reduce top.  */
++static void
++_int_free_maybe_consolidate (mstate av, INTERNAL_SIZE_T size)
++{
++  /* Unless max_fast is 0, we don't know if there are fastbins
++     bordering top, so we cannot tell for sure whether threshold has
++     been reached unless fastbins are consolidated.  But we don't want
++     to consolidate on each free.  As a compromise, consolidation is
++     performed if FASTBIN_CONSOLIDATION_THRESHOLD is reached.  */
++  if (size >= FASTBIN_CONSOLIDATION_THRESHOLD)
++    {
+       if (atomic_load_relaxed (&av->have_fastchunks))
+ 	malloc_consolidate(av);
+ 
+-      if (av == &main_arena) {
++      if (av == &main_arena)
++	{
+ #ifndef MORECORE_CANNOT_TRIM
+-	if ((unsigned long)(chunksize(av->top)) >=
+-	    (unsigned long)(mp_.trim_threshold))
+-	  systrim(mp_.top_pad, av);
++	  if (chunksize (av->top) >= mp_.trim_threshold)
++	    systrim (mp_.top_pad, av);
+ #endif
+-      } else {
+-	/* Always try heap_trim(), even if the top chunk is not
+-	   large, because the corresponding heap might go away.  */
+-	heap_info *heap = heap_for_ptr(top(av));
++	}
++      else
++	{
++	  /* Always try heap_trim, even if the top chunk is not large,
++	     because the corresponding heap might go away.  */
++	  heap_info *heap = heap_for_ptr (top (av));
+ 
+-	assert(heap->ar_ptr == av);
+-	heap_trim(heap, mp_.top_pad);
+-      }
++	  assert (heap->ar_ptr == av);
++	  heap_trim (heap, mp_.top_pad);
++	}
+     }
+-
+-    if (!have_lock)
+-      __libc_lock_unlock (av->mutex);
+-  }
+-  /*
+-    If the chunk was allocated via mmap, release via munmap().
+-  */
+-
+-  else {
+-    munmap_chunk (p);
+-  }
+ }
+ 
+ /*
+@@ -5221,7 +5254,7 @@ _int_memalign (mstate av, size_t alignment, size_t bytes)
+                 (av != &main_arena ? NON_MAIN_ARENA : 0));
+       set_inuse_bit_at_offset (newp, newsize);
+       set_head_size (p, leadsize | (av != &main_arena ? NON_MAIN_ARENA : 0));
+-      _int_free (av, p, 1);
++      _int_free_merge_chunk (av, p, leadsize);
+       p = newp;
+ 
+       assert (newsize >= nb &&
+@@ -5232,15 +5265,27 @@ _int_memalign (mstate av, size_t alignment, size_t bytes)
+   if (!chunk_is_mmapped (p))
+     {
+       size = chunksize (p);
+-      if ((unsigned long) (size) > (unsigned long) (nb + MINSIZE))
++      mchunkptr nextchunk = chunk_at_offset(p, size);
++      INTERNAL_SIZE_T nextsize = chunksize(nextchunk);
++      if (size > nb)
+         {
+           remainder_size = size - nb;
+-          remainder = chunk_at_offset (p, nb);
+-          set_head (remainder, remainder_size | PREV_INUSE |
+-                    (av != &main_arena ? NON_MAIN_ARENA : 0));
+-          set_head_size (p, nb);
+-          _int_free (av, remainder, 1);
+-        }
++	  if (remainder_size >= MINSIZE
++	      || nextchunk == av->top
++	      || !inuse_bit_at_offset (nextchunk, nextsize))
++	    {
++	      /* We can only give back the tail if it is larger than
++		 MINSIZE, or if the following chunk is unused (top
++		 chunk or unused in-heap chunk).  Otherwise we would
++		 create a chunk that is smaller than MINSIZE.  */
++	      remainder = chunk_at_offset (p, nb);
++	      set_head_size (p, nb);
++	      remainder_size = _int_free_create_chunk (av, remainder,
++						       remainder_size,
++						       nextchunk, nextsize);
++	      _int_free_maybe_consolidate (av, remainder_size);
++	    }
++	}
+     }
+ 
+   check_inuse_chunk (av, p);
+-- 
+2.40.1
+

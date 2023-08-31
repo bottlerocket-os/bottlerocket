@@ -1,5 +1,5 @@
 Name: %{_cross_os}glibc
-Version: 2.37
+Version: 2.38
 Release: 1%{?dist}
 Summary: The GNU libc libraries
 License: LGPL-2.1-or-later AND (LGPL-2.1-or-later WITH GCC-exception-2.0) AND GPL-2.0-or-later AND (GPL-2.0-or-later WITH GCC-exception-2.0) AND BSD-3-Clause AND ISC
@@ -13,19 +13,22 @@ Source3: ldconfig-service.conf
 # applied and reverted during the build.
 Source99: HACK-only-build-and-install-localedef.patch
 
-# Upstream patches from 2.36 release branch:
+# Upstream patches from 2.38 release branch:
 # ```
-# git checkout origin/release/2.37/master
-# git format-patch glibc-2.37..
+# git checkout origin/release/2.38/master
+# git format-patch --no-numbered glibc-2.38..
 # ```
-Patch0001: 0001-cdefs-Limit-definition-of-fortification-macros.patch
-Patch0002: 0002-LoongArch-Add-new-relocation-types.patch
-Patch0003: 0003-Use-64-bit-time_t-interfaces-in-strftime-and-strptim.patch
-Patch0004: 0004-Account-for-grouping-in-printf-width-bug-30068.patch
-Patch0005: 0005-NEWS-Document-CVE-2023-25139.patch
-Patch0006: 0006-elf-Smoke-test-ldconfig-p-against-system-etc-ld.so.c.patch
-Patch0007: 0007-stdlib-Undo-post-review-change-to-16adc58e73f3-BZ-27.patch
-Patch0008: 0008-elf-Restore-ldconfig-libc6-implicit-soname-logic-BZ-.patch
+Patch0001: 0001-stdlib-Improve-tst-realpath-compatibility-with-sourc.patch
+Patch0002: 0002-x86-Fix-for-cache-computation-on-AMD-legacy-cpus.patch
+Patch0003: 0003-nscd-Do-not-rebuild-getaddrinfo-bug-30709.patch
+Patch0004: 0004-x86-Fix-incorrect-scope-of-setting-shared_per_thread.patch
+Patch0005: 0005-x86_64-Fix-build-with-disable-multiarch-BZ-30721.patch
+Patch0006: 0006-i686-Fix-build-with-disable-multiarch.patch
+Patch0007: 0007-malloc-Enable-merging-of-remainders-in-memalign-bug-.patch
+Patch0008: 0008-malloc-Remove-bin-scanning-from-memalign-bug-30723.patch
+Patch0009: 0009-sysdeps-tst-bz21269-fix-test-parameter.patch
+Patch0010: 0010-sysdeps-tst-bz21269-handle-ENOSYS-skip-appropriately.patch
+Patch0011: 0011-sysdeps-tst-bz21269-fix-Wreturn-type.patch
 
 # Fedora patches
 Patch1001: glibc-cs-path.patch
@@ -54,15 +57,16 @@ CFLAGS="${BUILDFLAGS}" CPPFLAGS="" CXXFLAGS="${BUILDFLAGS}" \
   --sysconfdir="%{_cross_sysconfdir}" \
   --localstatedir="%{_cross_localstatedir}" \
   --enable-bind-now \
+  --enable-fortify-source \
+  --enable-multi-arch \
   --enable-shared \
   --enable-stack-protector=strong \
+  --disable-build-nscd \
   --disable-crypt \
-  --disable-multi-arch \
+  --disable-nscd \
   --disable-profile \
   --disable-systemtap \
   --disable-timezone-tools \
-  --disable-tunables \
-  --without-cvs \
   --without-gd \
   --without-selinux
   %{nil}}
@@ -151,7 +155,6 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 
 %{_cross_sbindir}/ldconfig
 %exclude %{_cross_sbindir}/iconvconfig
-%exclude %{_cross_sbindir}/nscd
 %exclude %{_cross_sbindir}/sln
 
 %dir %{_cross_libexecdir}/getconf
@@ -170,9 +173,7 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %{_cross_libdir}/librt.so.*
 %{_cross_libdir}/libthread_db.so.*
 %{_cross_libdir}/libutil.so.*
-%if "%{_cross_arch}" == "x86_64"
 %{_cross_libdir}/libmvec.so.*
-%endif
 %exclude %{_cross_libdir}/audit/sotruss-lib.so
 %exclude %{_cross_libdir}/libc_malloc_debug.so.*
 %exclude %{_cross_libdir}/libmemusage.so
@@ -218,9 +219,7 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %{_cross_libdir}/libm.so
 %{_cross_libdir}/libresolv.so
 %{_cross_libdir}/libthread_db.so
-%if "%{_cross_arch}" == "x86_64"
 %{_cross_libdir}/libmvec.so
-%endif
 %exclude %{_cross_libdir}/libc_malloc_debug.so
 %exclude %{_cross_libdir}/libnss_compat.so
 %exclude %{_cross_libdir}/libnss_db.so
