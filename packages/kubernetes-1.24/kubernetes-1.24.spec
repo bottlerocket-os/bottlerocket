@@ -52,7 +52,6 @@ Source14: credential-provider-config-yaml
 Source20: prestart-pull-pause-ctr.conf
 Source21: dockershim-symlink.conf
 Source22: make-kubelet-dirs.conf
-Source23: load-ipvs-modules.conf
 
 Source1000: clarify.toml
 
@@ -104,7 +103,7 @@ install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{S:10} %{S:13} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/kubelet.service.d
-install -p -m 0644 %{S:20} %{S:21} %{S:22} %{S:23} %{buildroot}%{_cross_unitdir}/kubelet.service.d
+install -p -m 0644 %{S:20} %{S:21} %{S:22} %{buildroot}%{_cross_unitdir}/kubelet.service.d
 
 mkdir -p %{buildroot}%{_cross_templatedir}
 install -m 0644 %{S:2} %{buildroot}%{_cross_templatedir}/kubelet-env
@@ -141,7 +140,6 @@ ln -rs \
 %dir %{_cross_unitdir}/kubelet.service.d
 %{_cross_unitdir}/kubelet.service.d/prestart-pull-pause-ctr.conf
 %{_cross_unitdir}/kubelet.service.d/make-kubelet-dirs.conf
-%{_cross_unitdir}/kubelet.service.d/load-ipvs-modules.conf
 %{_cross_unitdir}/kubelet.service.d/dockershim-symlink.conf
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/kubelet-env
