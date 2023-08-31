@@ -27,6 +27,7 @@ Source8: oci-default-hooks-json
 Source9: cfsignal-toml
 Source10: warm-pool-wait-toml
 Source11: bottlerocket-cis-checks-metadata-json
+Source12: 00-resolved.conf
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -49,10 +50,8 @@ Source119: reboot-if-required.service
 Source120: warm-pool-wait.service
 Source121: disable-udp-offload.service
 Source122: has-boot-ever-succeeded.service
-Source123: etc-systemd-network.mount
-
-# Drop-ins
-Source150: requires-mounts-network-config.conf
+Source123: run-netdog.mount
+Source124: write-network-status.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -135,6 +134,7 @@ Summary: Bottlerocket userdata configuration system
 Summary: Bottlerocket network configuration helper
 %if %{with systemd_networkd}
 Requires: %{_cross_os}systemd-networkd
+Requires: %{_cross_os}systemd-resolved
 %else
 Requires: %{_cross_os}wicked
 %endif
@@ -439,12 +439,13 @@ install -p -m 0644 \
   %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
   %{S:113} %{S:114} %{S:118} %{S:119} %{S:122} \
+  %{S:123} \
   %{buildroot}%{_cross_unitdir}
 
 %if %{with systemd_networkd}
-install -d %{buildroot}%{_cross_unitdir}/generate-network-config.service.d
-install -p -m 0644 %{S:150} %{buildroot}%{_cross_unitdir}/generate-network-config.service.d
-install -p -m 0644 %{S:123} %{buildroot}%{_cross_unitdir}
+install -p -m 0644 %{S:124} %{buildroot}%{_cross_unitdir}
+install -d %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
+install -p -m 0644 %{S:12} %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
 %endif
 
 %if %{with nvidia_flavor}
@@ -487,12 +488,6 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %files
 %{_cross_attribution_vendor_dir}
 
-%if %{with systemd_networkd}
-%dir %{_cross_unitdir}/generate-network-config.service.d
-%{_cross_unitdir}/generate-network-config.service.d/requires-mounts-network-config.conf
-%{_cross_unitdir}/etc-systemd-network.mount
-%endif
-
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
 %{_cross_unitdir}/apiserver.service
@@ -510,10 +505,15 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %{_cross_bindir}/netdog
 %{_cross_tmpfilesdir}/netdog.conf
 %{_cross_unitdir}/generate-network-config.service
+%{_cross_unitdir}/run-netdog.mount
 %if %{with vmware_platform}
 %{_cross_unitdir}/disable-udp-offload.service
 %endif
-
+%if %{with systemd_networkd}
+%{_cross_unitdir}/write-network-status.service
+%dir %{_cross_libdir}/systemd/resolved.conf.d
+%{_cross_libdir}/systemd/resolved.conf.d/00-resolved.conf
+%endif
 
 %files -n %{_cross_os}corndog
 %{_cross_bindir}/corndog

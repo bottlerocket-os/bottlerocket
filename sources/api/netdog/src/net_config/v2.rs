@@ -37,6 +37,13 @@ impl Interfaces for NetConfigV2 {
         !self.interfaces.is_empty()
     }
 
+    fn interfaces(&self) -> Vec<InterfaceId> {
+        self.interfaces
+            .keys()
+            .map(|name| name.clone().into())
+            .collect()
+    }
+
     #[cfg(net_backend = "wicked")]
     fn as_wicked_interfaces(&self) -> Vec<WickedInterface> {
         let mut wicked_interfaces = Vec::with_capacity(self.interfaces.len());

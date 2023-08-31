@@ -1,14 +1,14 @@
-use super::{error, Result};
+use super::{error, fetch_net_config, Result};
 use crate::interface_id::InterfaceId;
-use crate::net_config::{self, Interfaces};
-use crate::{
-    DEFAULT_NET_CONFIG_FILE, KERNEL_CMDLINE, OVERRIDE_NET_CONFIG_FILE, PRIMARY_INTERFACE,
-    PRIMARY_MAC_ADDRESS,
-};
+use crate::net_config::Interfaces;
+use crate::{KERNEL_CMDLINE, PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS};
 use argh::FromArgs;
 use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::path::Path;
+
+#[cfg(net_backend = "systemd-networkd")]
+use crate::networkd::config::{NetworkDConfigFile, NETWORKD_CONFIG_DIR};
 
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "generate-net-config")]
@@ -18,20 +18,11 @@ pub(crate) struct GenerateNetConfigArgs {}
 /// Generate configuration for network interfaces.
 pub(crate) fn run() -> Result<()> {
     let mut from_cmd_line = false;
-    let maybe_net_config = if Path::exists(Path::new(OVERRIDE_NET_CONFIG_FILE)) {
-        net_config::from_path(OVERRIDE_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
-            path: OVERRIDE_NET_CONFIG_FILE,
-        })?
-    } else if Path::exists(Path::new(DEFAULT_NET_CONFIG_FILE)) {
-        net_config::from_path(DEFAULT_NET_CONFIG_FILE).context(error::NetConfigParseSnafu {
-            path: DEFAULT_NET_CONFIG_FILE,
-        })?
-    } else {
+
+    let (maybe_net_config, source) = fetch_net_config()?;
+    if source == Path::new(KERNEL_CMDLINE) {
         from_cmd_line = true;
-        net_config::from_command_line(KERNEL_CMDLINE).context(error::NetConfigParseSnafu {
-            path: KERNEL_CMDLINE,
-        })?
-    };
+    }
 
     // `maybe_net_config` could be `None` if no interfaces were defined
     let net_config = match maybe_net_config {
@@ -96,7 +87,10 @@ fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bo
 
 #[cfg(net_backend = "systemd-networkd")]
 fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bool) -> Result<()> {
-    use crate::networkd::config::NetworkDConfigFile;
+    fs::create_dir_all(NETWORKD_CONFIG_DIR).context(error::CreateDirSnafu {
+        path: NETWORKD_CONFIG_DIR,
+    })?;
+
     let networkd_config = net_config
         .as_networkd_config()
         .context(error::NetworkDConfigCreateSnafu)?;
@@ -108,6 +102,7 @@ fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bo
         if from_cmd_line {
             if let NetworkDConfigFile::Network(ref mut n) = config {
                 n.accept_ra();
+                n.disable_dad();
             }
         }
 

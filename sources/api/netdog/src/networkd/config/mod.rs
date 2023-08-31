@@ -7,7 +7,7 @@ use super::Result;
 pub(crate) use netdev::{NetDevBuilder, NetDevConfig};
 pub(crate) use network::{NetworkBuilder, NetworkConfig};
 
-const NETWORKD_CONFIG_DIR: &str = "/etc/systemd/network";
+pub(crate) const NETWORKD_CONFIG_DIR: &str = "/etc/systemd/network";
 const CONFIG_FILE_PREFIX: &str = "10-";
 
 pub(crate) enum NetworkDConfigFile {

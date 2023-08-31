@@ -32,6 +32,9 @@ The `SystemdUnitSection` macro requires the following input parameters.
 - `section`: The name of the section this struct represents.  This parameter is set on the struct.
 - `entry`: The configuration entry name (which may be different than the struct member name).  This parameter must be set on each struct member.
 
+The `SystemdUnitSection` macro has the following optional input parameters:
+- `space_separated`: Meant for use with `Vec`s, this boolean parameter will join the items in the `Vec` with a space.  If used on an `Option`, the parameter has no effect and the field is displayed normally without changes.
+
 # Example
 
 This is an abbreviated set of structs that could represent a `systemd-networkd` .network file.
@@ -210,6 +213,8 @@ struct SystemdUnitSection {
 struct SystemdUnitSectionField {
     ident: Option<Ident>,
     entry: String,
+    #[darling(default)]
+    space_separated: bool,
 }
 
 impl ToTokens for SystemdUnitSection {
@@ -248,13 +253,28 @@ impl ToTokens for SystemdUnitSectionField {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let struct_field_name = self.ident.as_ref().expect("Should always have a name");
         let systemd_entry_name = &self.entry;
-
-        tokens.extend(quote! {
-            // `Vec`s and `Option`s are both iterators, allowing us to write the same code for both
-            for field in self.#struct_field_name.iter() {
-                write!(f, "{}={}\n", #systemd_entry_name, field)?;
-
+        // `Vec`s and `Option`s are both iterators, allowing us to write the same code for both
+        let field = if self.space_separated {
+            // Be friendly and don't choke if this attribute is placed on an `Option` rather than a
+            // Vec.  Turn it into an interator, and because all fields must implement Display we
+            // can call `to_string()` on them.  Having a `Vec<String>` guarantees we can use
+            // `join()`.  `join()` is implemented for `Vec<String>` but not guaranteed for all
+            // other types.
+            quote! {
+                let joined = self.#struct_field_name.clone().into_iter().map(|t| t.to_string()).collect::<Vec<String>>().join(" ");
+                if !joined.is_empty() {
+                    write!(f, "{}={}\n", #systemd_entry_name, joined)?;
+                }
             }
-        })
+        } else {
+            quote! {
+                for field in self.#struct_field_name.iter() {
+                    write!(f, "{}={}\n", #systemd_entry_name, field)?;
+
+                }
+            }
+        };
+
+        tokens.extend(field)
     }
 }

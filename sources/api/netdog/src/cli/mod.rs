@@ -12,11 +12,12 @@ pub(crate) mod remove;
 #[cfg(net_backend = "systemd-networkd")]
 pub(crate) mod primary_interface;
 #[cfg(net_backend = "systemd-networkd")]
-pub(crate) mod write_primary_interface_status;
+pub(crate) mod write_network_status;
 
+use crate::net_config::{self, Interfaces};
 use crate::{
-    PRIMARY_INTERFACE, PRIMARY_MAC_ADDRESS, PRIMARY_SYSCTL_CONF, SYSCTL_MARKER_FILE,
-    SYSTEMD_SYSCTL, SYS_CLASS_NET,
+    DEFAULT_NET_CONFIG_FILE, KERNEL_CMDLINE, OVERRIDE_NET_CONFIG_FILE, PRIMARY_INTERFACE,
+    PRIMARY_MAC_ADDRESS, PRIMARY_SYSCTL_CONF, SYSCTL_MARKER_FILE, SYSTEMD_SYSCTL, SYS_CLASS_NET,
 };
 pub(crate) use generate_hostname::GenerateHostnameArgs;
 pub(crate) use generate_net_config::GenerateNetConfigArgs;
@@ -25,9 +26,10 @@ use serde::{Deserialize, Serialize};
 pub(crate) use set_hostname::SetHostnameArgs;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fmt::Write;
-use std::fs;
-use std::path::Path;
+use std::os::unix::fs::symlink;
+use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::{fs, io};
 pub(crate) use write_resolv_conf::WriteResolvConfArgs;
 
 #[cfg(net_backend = "wicked")]
@@ -38,7 +40,7 @@ pub(crate) use remove::RemoveArgs;
 #[cfg(net_backend = "systemd-networkd")]
 pub(crate) use primary_interface::PrimaryInterfaceArgs;
 #[cfg(net_backend = "systemd-networkd")]
-pub(crate) use write_primary_interface_status::WritePrimaryInterfaceStatusArgs;
+pub(crate) use write_network_status::WriteNetworkStatusArgs;
 
 #[derive(Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -165,6 +167,46 @@ where
     Ok(())
 }
 
+// Gather net config from possible sources, returning both the config and the source
+fn fetch_net_config() -> Result<(Option<Box<dyn Interfaces>>, PathBuf)> {
+    let override_path = PathBuf::from(OVERRIDE_NET_CONFIG_FILE);
+    let default_path = PathBuf::from(DEFAULT_NET_CONFIG_FILE);
+    let cmdline = PathBuf::from(KERNEL_CMDLINE);
+
+    for path in [override_path, default_path] {
+        if Path::exists(&path) {
+            return Ok((
+                net_config::from_path(&path).context(error::NetConfigParseSnafu { path: &path })?,
+                path,
+            ));
+        }
+    }
+
+    Ok((
+        net_config::from_command_line(&cmdline)
+            .context(error::NetConfigParseSnafu { path: &cmdline })?,
+        cmdline,
+    ))
+}
+
+fn force_symlink<P1, P2>(target: P1, link: P2) -> Result<()>
+where
+    P1: AsRef<Path>,
+    P2: AsRef<Path>,
+{
+    let target = target.as_ref();
+    let link = link.as_ref();
+
+    // Remove link if it already exists
+    if let Err(e) = fs::remove_file(link) {
+        if e.kind() != io::ErrorKind::NotFound {
+            Err(e).context(error::SymlinkSnafu { target, link })?;
+        }
+    }
+    // Link to requested target
+    symlink(target, link).context(error::SymlinkSnafu { target, link })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -197,6 +239,10 @@ mod error {
     #[snafu(visibility(pub(crate)))]
     #[allow(clippy::enum_variant_names)]
     pub(crate) enum Error {
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Unable to create directory '{}': {}", path.display(),source))]
+        CreateDir { path: PathBuf, source: io::Error },
+
         #[snafu(display("Failed to write current IP to '{}': {}", path.display(), source))]
         CurrentIpWriteFailed { path: PathBuf, source: io::Error },
 
@@ -209,8 +255,20 @@ mod error {
         #[snafu(display("Failed to read/parse DNS settings from DHCP lease: {}", source))]
         DnsFromLease { source: dns::Error },
 
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Unable to create interface drop-in directory '{}': {}", path.display(), source))]
+        DropInDirCreate { path: PathBuf, source: io::Error },
+
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Unable to write interface drop-in '{}': {}", path.display(), source))]
+        DropInFileWrite { path: PathBuf, source: io::Error },
+
         #[snafu(display("'systemd-sysctl' failed: {}", stderr))]
         FailedSystemdSysctl { stderr: String },
+
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("'systemctl' failed: {}", stderr))]
+        FailedSystemctl { stderr: String },
 
         #[snafu(display("Failed to remove '{}': {}", path.display(), source))]
         FileRemove { path: PathBuf, source: io::Error },
@@ -297,6 +355,10 @@ mod error {
         #[snafu(display("Failed to run 'systemd-sysctl': {}", source))]
         SystemdSysctlExecution { source: io::Error },
 
+        #[cfg(net_backend = "systemd-networkd")]
+        #[snafu(display("Failed to run 'systemctl': {}", source))]
+        SystemctlExecution { source: io::Error },
+
         #[snafu(display("Failed to parse networkctl status for interface: {}", source))]
         NetworkctlParse { source: io::Error },
 
@@ -310,6 +372,13 @@ mod error {
         #[snafu(display("Unable to determine primary interface IP Address: {}", source))]
         PrimaryInterfaceAddress {
             source: networkd_status::NetworkDStatusError,
+        },
+
+        #[snafu(display("Unable to symlink '{}' to '{}': {}", link.display(), target.display(), source))]
+        Symlink {
+            target: PathBuf,
+            link: PathBuf,
+            source: io::Error,
         },
     }
 }

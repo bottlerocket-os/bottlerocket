@@ -29,6 +29,7 @@ pub(crate) struct NetworkConfig {
     route: Vec<RouteSection>,
     dhcp4: Option<Dhcp4Section>,
     dhcp6: Option<Dhcp6Section>,
+    ipv6_accept_ra: Option<Ipv6AcceptRaSection>,
 }
 
 #[derive(Debug, Default, SystemdUnitSection)]
@@ -62,6 +63,8 @@ struct NetworkSection {
     dhcp: Option<DhcpBool>,
     #[systemd(entry = "IPv6AcceptRA")]
     ipv6_accept_ra: Option<bool>,
+    #[systemd(entry = "IPv6DuplicateAddressDetection")]
+    ipv6_duplicate_address_detection: Option<i32>,
     #[systemd(entry = "LinkLocalAddressing")]
     link_local_addressing: Option<DhcpBool>,
     #[systemd(entry = "PrimarySlave")]
@@ -92,6 +95,8 @@ struct Dhcp4Section {
     use_dns: Option<bool>,
     #[systemd(entry = "UseDomains")]
     use_domains: Option<bool>,
+    #[systemd(entry = "UseMTU")]
+    use_mtu: Option<bool>,
 }
 
 #[derive(Debug, Default, SystemdUnitSection)]
@@ -101,6 +106,19 @@ struct Dhcp6Section {
     use_dns: Option<bool>,
     #[systemd(entry = "UseDomains")]
     use_domains: Option<bool>,
+    #[systemd(entry = "WithoutRA")]
+    without_ra: Option<WithoutRa>,
+}
+
+#[derive(Debug, Default, SystemdUnitSection)]
+#[systemd(section = "IPv6AcceptRA")]
+struct Ipv6AcceptRaSection {
+    #[systemd(entry = "UseDNS")]
+    use_dns: Option<bool>,
+    #[systemd(entry = "UseDomains")]
+    use_domains: Option<bool>,
+    #[systemd(entry = "UseMTU")]
+    use_mtu: Option<bool>,
 }
 
 // The `Any` variant isn't currently used, but is valid
@@ -139,6 +157,25 @@ impl Display for DhcpBool {
             DhcpBool::Ipv6 => write!(f, "ipv6"),
             DhcpBool::No => write!(f, "no"),
             DhcpBool::Yes => write!(f, "yes"),
+        }
+    }
+}
+
+// Only the `Solicit` variant is currently used.
+#[allow(dead_code)]
+#[derive(Debug)]
+enum WithoutRa {
+    No,
+    Solicit,
+    InformationRequest,
+}
+
+impl Display for WithoutRa {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WithoutRa::No => write!(f, "no"),
+            WithoutRa::Solicit => write!(f, "solicit"),
+            WithoutRa::InformationRequest => write!(f, "information-request"),
         }
     }
 }
@@ -186,7 +223,14 @@ impl NetworkConfig {
     /// Add config to accept IPv6 router advertisements
     // TODO: expose a network config option for this
     pub(crate) fn accept_ra(&mut self) {
-        self.network_mut().ipv6_accept_ra = Some(true)
+        self.network_mut().ipv6_accept_ra = Some(true);
+        self.dhcp6_mut().without_ra = Some(WithoutRa::Solicit);
+    }
+
+    /// Add config to disable IPv6 duplicate address detection
+    // TODO: expose a network config option for this
+    pub(crate) fn disable_dad(&mut self) {
+        self.network_mut().ipv6_duplicate_address_detection = Some(0)
     }
 
     /// Write the config to the proper directory with the proper prefix and file extention
@@ -247,6 +291,11 @@ impl NetworkConfig {
 
     fn dhcp6_mut(&mut self) -> &mut Dhcp6Section {
         self.dhcp6.get_or_insert_with(Dhcp6Section::default)
+    }
+
+    fn ipv6_accept_ra_mut(&mut self) -> &mut Ipv6AcceptRaSection {
+        self.ipv6_accept_ra
+            .get_or_insert_with(Ipv6AcceptRaSection::default)
     }
 }
 
@@ -432,16 +481,12 @@ where
         if Self::dhcp4_enabled(&dhcp4) {
             let dhcp4_s = self.network.dhcp4_mut();
             dhcp4_s.metric = Self::dhcp4_metric(&dhcp4);
-            // The following ensure DNS comes back with the lease
-            dhcp4_s.use_dns = Some(true);
-            dhcp4_s.use_domains = Some(true);
+            dhcp4_s.use_mtu = Some(true);
         }
 
         if Self::dhcp6_enabled(&dhcp6) {
-            let dhcp6_s = self.network.dhcp6_mut();
-            // The following ensure DNS comes back with the lease
-            dhcp6_s.use_dns = Some(true);
-            dhcp6_s.use_domains = Some(true);
+            let ipv6_accept_ra_s = self.network.ipv6_accept_ra_mut();
+            ipv6_accept_ra_s.use_mtu = Some(true);
         }
     }
 
@@ -457,9 +502,7 @@ where
         if Self::dhcp4_enabled(&dhcp4) {
             let dhcp = self.network.dhcp4_mut();
             dhcp.metric = Self::dhcp4_metric(&dhcp4);
-            // The following ensure DNS comes back with the lease
-            dhcp.use_dns = Some(true);
-            dhcp.use_domains = Some(true);
+            dhcp.use_mtu = Some(true);
         }
     }
 
@@ -473,10 +516,8 @@ where
         self.network.link_mut().required = Some(Self::dhcp6_required(&dhcp6));
 
         if Self::dhcp6_enabled(&dhcp6) {
-            let dhcp = self.network.dhcp6_mut();
-            // The following ensure DNS comes back with the lease
-            dhcp.use_dns = Some(true);
-            dhcp.use_domains = Some(true);
+            let accept_ra = self.network.ipv6_accept_ra_mut();
+            accept_ra.use_mtu = Some(true);
         }
     }
 

@@ -39,6 +39,8 @@ pub(crate) trait Interfaces {
     /// Does the config contain any interfaces?
     fn has_interfaces(&self) -> bool;
 
+    fn interfaces(&self) -> Vec<InterfaceId>;
+
     /// Converts the network config into a list of `WickedInterface` structs, suitable for writing
     /// to file
     #[cfg(net_backend = "wicked")]
@@ -55,6 +57,10 @@ impl<I: Interfaces> Interfaces for Box<I> {
 
     fn has_interfaces(&self) -> bool {
         (**self).has_interfaces()
+    }
+
+    fn interfaces(&self) -> Vec<InterfaceId> {
+        (**self).interfaces()
     }
 
     #[cfg(net_backend = "wicked")]

@@ -7,5 +7,4 @@ Address=10.0.0.10/24
 Address=11.0.0.11/24
 DHCP=ipv4
 [DHCPv4]
-UseDNS=true
-UseDomains=true
+UseMTU=true

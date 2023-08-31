@@ -1,0 +1,20 @@
+[Unit]
+Description=Write network status
+# Block manual interactions with this service, since it could leave the system in an
+# unexpected state
+RefuseManualStart=true
+RefuseManualStop=true
+Before=early-boot-config.service
+# This service creates a symlink to the resolv.conf systemd-resolved creates
+# and we would like it to exist first
+After=systemd-networkd-wait-online.service systemd-resolved.service
+Wants=systemd-networkd-wait-online.service systemd-resolved.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/netdog write-primary-interface-status
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+WantedBy=network-online.target

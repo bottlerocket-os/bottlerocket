@@ -6,8 +6,8 @@ RequiredForOnline=false
 DHCP=yes
 IPv6AcceptRA=true
 [DHCPv4]
-UseDNS=true
-UseDomains=true
+UseMTU=true
 [DHCPv6]
-UseDNS=true
-UseDomains=true
+WithoutRA=solicit
+[IPv6AcceptRA]
+UseMTU=true

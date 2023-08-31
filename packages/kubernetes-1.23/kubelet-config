@@ -118,7 +118,7 @@ imageGCLowThresholdPercent: {{settings.kubernetes.image-gc-low-threshold-percent
 {{#if settings.kubernetes.provider-id}}
 providerID: {{settings.kubernetes.provider-id}}
 {{/if}}
-resolvConf: "/etc/resolv.conf"
+resolvConf: "/run/netdog/resolv.conf"
 hairpinMode: hairpin-veth
 readOnlyPort: 0
 cgroupDriver: systemd

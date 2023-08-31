@@ -1,10 +1,10 @@
 use super::{
-    error, primary_interface_name, write_primary_interface_sysctl, InterfaceFamily, InterfaceType,
-    Result,
+    error, force_symlink, primary_interface_name, write_primary_interface_sysctl, InterfaceFamily,
+    InterfaceType, Result,
 };
 use crate::dns::DnsSettings;
 use crate::lease::{dhcp_lease_path, static_lease_path, LeaseInfo};
-use crate::CURRENT_IP;
+use crate::{CURRENT_IP, NETDOG_RESOLV_CONF, REAL_RESOLV_CONF};
 use argh::FromArgs;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fs;
@@ -53,10 +53,11 @@ pub(crate) fn run(args: InstallArgs) -> Result<()> {
             InterfaceFamily::Ipv4 | InterfaceFamily::Ipv6,
         ) => {
             let lease = fetch_lease(&primary_interface, interface_type, args.data_file)?;
-            write_resolv_conf(&lease)?;
             write_current_ip(&lease.ip_address.addr())?;
+            write_primary_interface_sysctl(primary_interface)?;
 
-            write_primary_interface_sysctl(primary_interface)?
+            write_resolv_conf(&lease)?;
+            force_symlink(REAL_RESOLV_CONF, NETDOG_RESOLV_CONF)?
         }
     }
     Ok(())

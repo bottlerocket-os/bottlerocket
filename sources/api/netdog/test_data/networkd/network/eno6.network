@@ -7,5 +7,4 @@ RequiredFamilyForOnline=ipv4
 DHCP=ipv4
 [DHCPv4]
 RouteMetric=100
-UseDNS=true
-UseDomains=true
+UseMTU=true

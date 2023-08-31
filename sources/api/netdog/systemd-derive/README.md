@@ -35,6 +35,9 @@ The `SystemdUnitSection` macro requires the following input parameters.
 - `section`: The name of the section this struct represents.  This parameter is set on the struct.
 - `entry`: The configuration entry name (which may be different than the struct member name).  This parameter must be set on each struct member.
 
+The `SystemdUnitSection` macro has the following optional input parameters:
+- `space_separated`: Meant for use with `Vec`s, this boolean parameter will join the items in the `Vec` with a space.  If used on an `Option`, the parameter has no effect and the field is displayed normally without changes.
+
 ## Example
 
 This is an abbreviated set of structs that could represent a `systemd-networkd` .network file.
