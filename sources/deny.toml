@@ -56,12 +56,16 @@ license-files = [
 multiple-versions = "deny"
 wildcards = "deny"
 
-deny = [
-    { name = "structopt" },
-    { name = "clap", wrappers = [ "cargo-readme" ] },
-]
-
 skip = [
+    # Tough is using an older version of globset which is using
+    # an older version of aho-corasick
+    { name = "aho-corasick", version = "=0.7" },
+    # Netdog is using a feature of toml 0.5 that does not exist in
+    # newer versions.
+    # https://github.com/bottlerocket-os/bottlerocket/issues/3422
+    { name = "toml", version = "=0.5" },
+    # Indexmap and cached are using different versions of hashbrown
+    { name = "hashbrown", version = "=0.13" },
 ]
 
 skip-tree = [
@@ -74,13 +78,6 @@ skip-tree = [
     # dependency tree because windows-sys has many sub-crates
     # that differ in major version.
     { name = "windows-sys", version = "=0.42.0" },
-    # generate-readme pulls in an older clap that causes some duplicate
-    # dependencies
-    { name = "generate-readme", version = "=0.1.0" },
-    # serde_yaml actually uses a newer hashbrown dependency,
-    # but several crates in the graph pull in an older one, so skip for now
-    # until they can be updated
-    { name = "hashbrown", version = "=0.13.2" }
 ]
 
 [sources]

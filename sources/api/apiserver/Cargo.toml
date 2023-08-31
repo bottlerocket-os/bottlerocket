@@ -37,4 +37,4 @@ generate-readme = { version = "0.1", path = "../../generate-readme" }
 
 [dev-dependencies]
 maplit = "1"
-toml = "0.5"
+toml = "0.7"

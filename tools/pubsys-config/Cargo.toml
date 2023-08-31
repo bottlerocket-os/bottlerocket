@@ -15,5 +15,5 @@ parse-datetime = { path = "../../sources/parse-datetime", version = "0.1" }
 serde = { version = "1", features = ["derive"]  }
 serde_yaml = "0.9"
 snafu = "0.7"
-toml = "0.5"
+toml = "0.7"
 url = { version = "2", features = ["serde"] }

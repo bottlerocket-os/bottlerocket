@@ -32,7 +32,7 @@ simplelog = "0.12"
 snafu = { version = "0.7", features = ["futures"] }
 tokio = { version = "~1.25", default-features = false, features = ["fs", "io-std", "io-util", "macros", "rt-multi-thread", "time"] }  # LTS
 tokio-tungstenite = { version = "0.16", default-features = false, features = ["connect"] }
-toml = "0.5"
+toml = "0.7"
 unindent = "0.1"
 url = "2"
 

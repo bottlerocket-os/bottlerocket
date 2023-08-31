@@ -12,7 +12,7 @@ log = "0.4"
 serde = { version = "1", features = ["derive"] }
 simplelog = "0.12"
 snafu = { version = "0.7" }
-toml = "0.5"
+toml = "0.7"
 tokio = { version = "~1.25", default-features = false, features = ["macros", "rt-multi-thread"] }
 aws-config = "0.55"
 aws-sdk-cloudformation = "0.28"

@@ -8,4 +8,4 @@ publish = false
 
 [dependencies]
 snafu = "0.7"
-toml = "0.5"
+toml = "0.7"

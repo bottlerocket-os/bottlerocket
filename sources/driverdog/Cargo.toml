@@ -15,7 +15,7 @@ simplelog = "0.12"
 snafu = "0.7"
 serde = { version = "1", features = ["derive"] }
 tempfile = "3"
-toml = "0.5"
+toml = "0.7"
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../generate-readme" }

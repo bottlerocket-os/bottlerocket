@@ -44,7 +44,7 @@ tempfile = "3"
 tinytemplate = "1"
 tokio = { version = "1", features = ["full"] }  # LTS
 tokio-stream = { version = "0.1", features = ["time"] }
-toml = "0.5"
+toml = "0.7"
 tough = { version = "0.14", features = ["http"] }
 tough-kms = "0.6"
 tough-ssm = "0.9"

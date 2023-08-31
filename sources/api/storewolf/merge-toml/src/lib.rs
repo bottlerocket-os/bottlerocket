@@ -71,32 +71,32 @@ type Result<T> = std::result::Result<T, error::Error>;
 #[cfg(test)]
 mod test {
     use super::merge_values;
-    use toml::toml;
+    use toml::{toml, Value};
 
     #[test]
     fn merge() {
-        let mut left = toml! {
+        let mut left = Value::Table(toml! {
             top1 = "left top1"
             top2 = "left top2"
             [settings.inner]
             inner_setting1 = "left inner_setting1"
             inner_setting2 = "left inner_setting2"
-        };
-        let right = toml! {
+        });
+        let right = Value::Table(toml! {
             top1 = "right top1"
             [settings]
             setting = "right setting"
             [settings.inner]
             inner_setting1 = "right inner_setting1"
             inner_setting3 = "right inner_setting3"
-        };
+        });
         // Can't comment inside this toml, unfortunately.
         // "top1" is being overwritten from right.
         // "top2" is only in the left and remains.
         // "setting" is only in the right side.
         // "inner" tests that recursion works; inner_setting1 is replaced, 2 is untouched, and
         // 3 is new.
-        let expected = toml! {
+        let expected = Value::Table(toml! {
             top1 = "right top1"
             top2 = "left top2"
             [settings]
@@ -105,7 +105,7 @@ mod test {
             inner_setting1 = "right inner_setting1"
             inner_setting2 = "left inner_setting2"
             inner_setting3 = "right inner_setting3"
-        };
+        });
         merge_values(&mut left, &right).unwrap();
         assert_eq!(left, expected);
     }

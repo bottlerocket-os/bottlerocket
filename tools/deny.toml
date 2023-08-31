@@ -81,6 +81,14 @@ skip = [
     { name = "tokio-rustls", version = "=0.23" },
     # kube-client uses an old version of redox_syscall
     { name = "redox_syscall", version = "=0.2" },
+    # We are using an older version of toml in testsys-config
+    { name = "toml", version = "=0.5" },
+    # A lot of things use the older version of syn
+    { name = "syn", version = "=1" },
+    # AWS SDK uses an older indexmap
+    { name = "indexmap", version = "=1.9" },
+    # Indexmap v1 is using an older version of hashbrown
+    { name = "hashbrown", version = "=0.12" },
 ]
 
 skip-tree = [
@@ -89,8 +97,6 @@ skip-tree = [
     # dependency tree because windows-sys has many sub-crates
     # that differ in major version.
     { name = "windows-sys" },
-    # generate-readme uses an old version of clap and other dependencies
-    { name = "generate-readme", version = "0.1.0" }
 ]
 
 [sources]

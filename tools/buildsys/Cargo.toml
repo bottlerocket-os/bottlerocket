@@ -20,7 +20,7 @@ serde = { version = "1", features = ["derive"] }
 serde_plain = "1"
 sha2 = "0.10"
 snafu = "0.7"
-toml = "0.5"
+toml = "0.7"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
 nonzero_ext = "0.3"
