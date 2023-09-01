@@ -12,6 +12,7 @@ grub-set-private-var = true
 unified-cgroup-hierarchy = true
 xfs-data-partition = true
 uefi-secure-boot = true
+systemd-networkd = true
 
 [package.metadata.build-variant]
 kernel-parameters = [
