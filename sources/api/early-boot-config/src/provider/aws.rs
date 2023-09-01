@@ -9,7 +9,7 @@ use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::path::Path;
 
-use crate::provider::local_file::{local_file_user_data, USER_DATA_FILE};
+use crate::provider::local_file;
 
 /// Unit struct for AWS so we can implement the PlatformDataProvider trait.
 pub(crate) struct AwsDataProvider;
@@ -92,10 +92,28 @@ impl PlatformDataProvider for AwsDataProvider {
 
         let mut client = ImdsClient::new();
 
-        // Attempt to read from local file first
-        match local_file_user_data()? {
+        // First read from any site-local defaults. For AWS, these would come from the second EBS
+        // volume, which may be a custom snapshot with settings and cached container images that
+        // is used across all variants. Placing it first gives user data from IMDS a chance to
+        // override any settings that don't make sense for this variant.
+        match local_file::user_data_defaults()? {
             Some(s) => output.push(s),
-            None => warn!("No user data found via local file: {}", USER_DATA_FILE),
+            None => info!(
+                "No user data found via site defaults file: {}",
+                local_file::USER_DATA_DEFAULTS_FILE
+            ),
+        }
+
+        // Next, read from any user-data specific to this install. For AWS, these would come from
+        // the first EBS volume containing the OS root filesystem and the private settings
+        // fileystem. It's less convenient to store settings here since the corresponding snapshot
+        // changes with every new version, but still possible.
+        match local_file::user_data()? {
+            Some(s) => output.push(s),
+            None => info!(
+                "No user data found via local file: {}",
+                local_file::USER_DATA_FILE
+            ),
         }
 
         // Instance identity doc next, so the user has a chance to override
@@ -108,6 +126,17 @@ impl PlatformDataProvider for AwsDataProvider {
         match Self::user_data(&mut client).await? {
             Some(s) => output.push(s),
             None => warn!("No user data found."),
+        }
+
+        // Finally, apply any site-local overrides. For AWS, these again come from the second EBS
+        // volume. This file is placed last so that it takes precedence over any other source of
+        // configuration. It's useful for mandatory settings that must always be present.
+        match local_file::user_data_overrides()? {
+            Some(s) => output.push(s),
+            None => info!(
+                "No user data found via site overrides file: {}",
+                local_file::USER_DATA_OVERRIDES_FILE
+            ),
         }
 
         Ok(output)
