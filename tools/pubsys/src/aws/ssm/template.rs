@@ -196,7 +196,7 @@ impl From<&Vec<RenderedParameter>> for RenderedParametersMap {
         for parameter in parameters.iter() {
             parameter_map
                 .entry(parameter.ssm_key.region.to_string())
-                .or_insert(HashMap::new())
+                .or_default()
                 .insert(
                     parameter.ssm_key.name.to_owned(),
                     parameter.value.to_owned(),
