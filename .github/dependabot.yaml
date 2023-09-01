@@ -33,6 +33,7 @@ updates:
     ignore:
       # For AWS SDK for Rust, we'll update when we bump tough/coldsnap
       - dependency-name: "aws-config"
+      - dependency-name: "aws-credential-types"
       - dependency-name: "aws-endpoint"
       - dependency-name: "aws-http"
       - dependency-name: "aws-hyper"
