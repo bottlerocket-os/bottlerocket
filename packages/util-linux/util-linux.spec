@@ -175,6 +175,7 @@ done
 %{_cross_bindir}/ipcs
 %{_cross_bindir}/irqtop
 %{_cross_bindir}/kill
+%{_cross_bindir}/logger
 %{_cross_bindir}/lsblk
 %{_cross_bindir}/lscpu
 %{_cross_bindir}/lsipc
@@ -212,7 +213,6 @@ done
 %exclude %{_cross_bindir}/line
 %exclude %{_cross_bindir}/linux32
 %exclude %{_cross_bindir}/linux64
-%exclude %{_cross_bindir}/logger
 %exclude %{_cross_bindir}/look
 %exclude %{_cross_bindir}/lslogins
 %exclude %{_cross_bindir}/mcookie
