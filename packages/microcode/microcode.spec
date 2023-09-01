@@ -21,6 +21,8 @@ URL: https://github.com/bottlerocket-os/bottlerocket/tree/develop/packages/micro
 Source0: https://www.kernel.org/pub/linux/kernel/firmware/linux-firmware-%{amd_ucode_version}.tar.xz
 Source1: https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/archive/refs/tags/microcode-%{intel_ucode_version}.tar.gz
 
+Patch1: 0001-linux-firmware-Update-AMD-cpu-microcode.patch
+
 # Lets us install "microcode" to pull in the AMD and Intel updates.
 Requires: %{_cross_os}microcode-amd
 Requires: %{_cross_os}microcode-intel
@@ -77,6 +79,23 @@ Requires: %{_cross_os}microcode-intel-license
 mkdir amd intel
 tar -C amd --strip-components=1 -xof %{SOURCE0}
 tar -C intel --strip-components=1 -xof %{SOURCE1}
+# CVE-2023-20569 - "AMD Inception"
+# This is adding new microcode for Zen3/Zen4 AMD cpus. The patch was taken
+# directly from the linux-firmware repository, but has not been part of a
+# release there, yet.
+# Unfortunately the setup here with two separate sources being brought into
+# separate directories and the patch only affecting one of the two is not conducive
+# of using the standard way of applying git binary patches through `autosetup -S git ...`
+# Hence we have to extract some of the parts from that macro to let the patch
+# apply.
+#
+# As soon as we update to a release that includes this patch everything from here...
+pushd amd
+%global __scm git
+%__scm_setup_git
+%autopatch -p1
+popd
+# ... to here can be dropped
 cp {amd/,}LICENSE.amd-ucode
 cp intel/intel-ucode-with-caveats/* intel/intel-ucode
 cp intel/license LICENSE.intel-ucode
