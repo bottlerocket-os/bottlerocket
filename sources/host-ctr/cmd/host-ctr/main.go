@@ -582,6 +582,7 @@ func cleanUp(containerdSocket string, namespace string, containerID string) erro
 func parseImageURISpecialRegions(input string) (ecr.ECRSpec, error) {
 	ecrRefPrefixMapping := map[string]string{
 		"il-central-1": "ecr.aws/arn:aws:ecr:il-central-1:",
+		"ca-west-1": "ecr.aws/arn:aws:ecr:ca-west-1:",
 	}
 	// Matching on account, region
 	matches := ecrRegex.FindStringSubmatch(input)
