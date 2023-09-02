@@ -6,28 +6,40 @@ use snafu::ResultExt;
 use std::path::Path;
 
 pub(crate) const USER_DATA_FILE: &str = "/var/lib/bottlerocket/user-data.toml";
+pub(crate) const USER_DATA_DEFAULTS_FILE: &str = "/local/user-data-defaults.toml";
+pub(crate) const USER_DATA_OVERRIDES_FILE: &str = "/local/user-data-overrides.toml";
 
-pub(crate) fn local_file_user_data(
+pub(crate) fn user_data() -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
+    read_from_file(USER_DATA_FILE)
+}
+
+pub(crate) fn user_data_defaults(
 ) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
-    if !Path::new(USER_DATA_FILE).exists() {
+    read_from_file(USER_DATA_DEFAULTS_FILE)
+}
+
+pub(crate) fn user_data_overrides(
+) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
+    read_from_file(USER_DATA_OVERRIDES_FILE)
+}
+
+fn read_from_file(
+    path: &str,
+) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
+    if !Path::new(path).exists() {
         return Ok(None);
     }
-    info!("'{}' exists, using it", USER_DATA_FILE);
+    info!("'{path}' exists, using it");
 
     // Read the file, decompressing it if compressed.
-    let user_data_str = expand_file_maybe(USER_DATA_FILE).context(error::InputFileReadSnafu {
-        path: USER_DATA_FILE,
-    })?;
+    let user_data_str = expand_file_maybe(path).context(error::InputFileReadSnafu { path })?;
 
     if user_data_str.is_empty() {
         return Ok(None);
     }
 
-    let json = SettingsJson::from_toml_str(&user_data_str, "user data").context(
-        error::SettingsToJSONSnafu {
-            from: USER_DATA_FILE,
-        },
-    )?;
+    let json = SettingsJson::from_toml_str(&user_data_str, "user data")
+        .context(error::SettingsToJSONSnafu { from: path })?;
 
     Ok(Some(json))
 }

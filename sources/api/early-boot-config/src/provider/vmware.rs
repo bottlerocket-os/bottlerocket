@@ -15,7 +15,7 @@ use std::iter::FromIterator;
 use std::path::Path;
 use std::str;
 
-use crate::provider::local_file::{local_file_user_data, USER_DATA_FILE};
+use crate::provider::local_file;
 
 pub(crate) struct VmwareDataProvider;
 
@@ -248,23 +248,48 @@ impl PlatformDataProvider for VmwareDataProvider {
     ) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>> {
         let mut output = Vec::new();
 
-        // Attempt to read from local file first
-        match local_file_user_data()? {
+        // First read from any site-local defaults. It's unlikely that this file will exist, but
+        // this is consistent with other platforms.
+        match local_file::user_data_defaults()? {
             Some(s) => output.push(s),
-            None => warn!("No user data found via local file: {}", USER_DATA_FILE),
+            None => info!(
+                "No user data found via site defaults file: {}",
+                local_file::USER_DATA_DEFAULTS_FILE
+            ),
         }
 
-        // Then look at the CD-ROM for user data
+        // Attempt to read from a local file next. This comes from the private settings filesystem
+        // rather than the data storage filesystem, and is also unlikely to exist.
+        match local_file::user_data()? {
+            Some(s) => output.push(s),
+            None => info!(
+                "No user data found via local file: {}",
+                local_file::USER_DATA_FILE
+            ),
+        }
+
+        // Then look at the CD-ROM for user data. This isn't the preferred method of supplying user
+        // data, but might still be used.
         match Self::cdrom_user_data()? {
             Some(s) => output.push(s),
-            None => warn!("No user data found via CD-ROM"),
+            None => info!("No user data found via CD-ROM"),
         }
 
-        // And finally, check guestinfo.  If guestinfo is populated, it will override any earlier settings
-        // found via CD-ROM
+        // Now, check guestinfo which is the preferred method. If it's populated, it will override
+        // any earlier settings found.
         match Self::guestinfo_user_data()? {
             Some(s) => output.push(s),
             None => warn!("No user data found via guestinfo"),
+        }
+
+        // Finally, apply any site-local overrides. It's unlikely to exist but again, this is
+        // consistent with other platforms.
+        match local_file::user_data_overrides()? {
+            Some(s) => output.push(s),
+            None => info!(
+                "No user data found via site overrides file: {}",
+                local_file::USER_DATA_OVERRIDES_FILE
+            ),
         }
 
         Ok(output)
