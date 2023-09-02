@@ -696,7 +696,7 @@ For AWS variants, these settings allow you to set up CloudFormation signaling to
 Bottlerocket allows you to opt-in to use additional [OCI hooks](https://github.com/opencontainers/runtime-spec/blob/main/runtime.md#lifecycle) for your orchestrated containers.
 Once you opt-in to use additional OCI hooks, any new orchestrated containers will be configured with them, but existing containers won't be changed.
 
-* `settings.oci-hooks.log4j-hotpatch-enabled`: Enables the [hotdog OCI hooks](https://github.com/bottlerocket-os/hotdog), which are used to inject the [Log4j Hot Patch](https://github.com/corretto/hotpatch-for-apache-log4j2) into containers. Defaults to `false`.
+* `settings.oci-hooks.log4j-hotpatch-enabled`: **Deprecated**. This setting is no longer supported by Bottlerocket starting from v1.15.0. Though it is still available for backwards compatibility, enabling it has no effect beyond printing a deprecation warning to the system logs.
 
 #### OCI Defaults settings
 

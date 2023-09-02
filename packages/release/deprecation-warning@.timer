@@ -1,0 +1,14 @@
+[Unit]
+Description=Scheduled deprecation warning for %i
+ConditionFileNotEmpty=/etc/deprecated-settings/%i
+
+[Timer]
+Persistent=false
+# Run immediately on startup
+OnStartupSec=0
+# Run every 6 hours thereafter
+OnUnitActiveSec=21600
+AccuracySec=10
+
+[Install]
+WantedBy=timers.target

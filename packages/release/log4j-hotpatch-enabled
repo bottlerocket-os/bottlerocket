@@ -1,0 +1,3 @@
+{{~#if settings.oci-hooks.log4j-hotpatch-enabled~}}
+DEPRECATED_SETTING=oci-hooks.log4j-hotpatch-enabled
+{{~/if~}}

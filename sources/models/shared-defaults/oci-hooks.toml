@@ -11,3 +11,14 @@ restart-commands = []
 [configuration-files.oci-hooks]
 path = "/etc/shimpei/shimpei-hooks.json"
 template-path = "/usr/share/templates/oci-default-hooks-json"
+
+[metadata.settings.oci-hooks.log4j-hotpatch-enabled]
+affected-services = ["log4j-hotpatch-enabled"]
+
+[services.log4j-hotpatch-enabled]
+configuration-files = ["log4j-hotpatch-enabled-log-message"]
+restart-commands = ["systemctl restart deprecation-warning@log4j-hotpatch-enabled.timer"]
+
+[configuration-files.log4j-hotpatch-enabled-log-message]
+path = "/etc/deprecated-settings/log4j-hotpatch-enabled"
+template-path = "/usr/share/templates/log4j-hotpatch-enabled"

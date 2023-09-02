@@ -269,7 +269,6 @@ Summary: Bottlerocket CloudFormation Stack signaler
 %package -n %{_cross_os}shimpei
 Summary: OCI-compatible shim around oci-add-hooks
 Requires: %{_cross_os}oci-add-hooks
-Requires: %{_cross_os}hotdog
 %description -n %{_cross_os}shimpei
 %{summary}.
 

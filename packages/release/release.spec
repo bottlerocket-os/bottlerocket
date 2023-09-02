@@ -76,6 +76,11 @@ Source1100: systemd-tmpfiles-setup-service-debug.conf
 # systemd-udevd default link
 Source1200: 80-release.link
 
+# Systemd units and configurations for deprecation warnings
+Source1300: deprecation-warning@.service
+Source1301: deprecation-warning@.timer
+Source1302: log4j-hotpatch-enabled
+
 Requires: %{_cross_os}acpid
 Requires: %{_cross_os}audit
 Requires: %{_cross_os}ca-certificates
@@ -94,7 +99,6 @@ Requires: %{_cross_os}glibc
 Requires: %{_cross_os}grep
 Requires: %{_cross_os}grub
 Requires: %{_cross_os}host-ctr
-Requires: %{_cross_os}hotdog
 Requires: %{_cross_os}iproute
 Requires: %{_cross_os}iptables
 Requires: %{_cross_os}kexec-tools
@@ -146,7 +150,7 @@ install -p -m 0644 \
   %{S:1008} %{S:1009} %{S:1010} %{S:1011} %{S:1012} %{S:1013} %{S:1015} \
   %{S:1040} %{S:1041} %{S:1042} %{S:1043} %{S:1044} %{S:1045} %{S:1046} \
   %{S:1047} %{S:1048} %{S:1049} %{S:1060} %{S:1061} %{S:1062} %{S:1080} \
-  %{S:1014} \
+  %{S:1014} %{S:1300} %{S:1301} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
@@ -181,6 +185,7 @@ install -p -m 0644 %{S:204} %{buildroot}%{_cross_templatedir}/modprobe-conf
 install -p -m 0644 %{S:205} %{buildroot}%{_cross_templatedir}/netdog-toml
 install -p -m 0644 %{S:206} %{buildroot}%{_cross_templatedir}/aws-config
 install -p -m 0644 %{S:207} %{buildroot}%{_cross_templatedir}/aws-credentials
+install -p -m 0644 %{S:1302} %{buildroot}%{_cross_templatedir}/log4j-hotpatch-enabled
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
@@ -230,6 +235,8 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_unitdir}/repart-data-preferred.service
 %{_cross_unitdir}/repart-data-fallback.service
 %{_cross_unitdir}/prepare-local-fs.service
+%{_cross_unitdir}/deprecation-warning@.service
+%{_cross_unitdir}/deprecation-warning@.timer
 %dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 %{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 %dir %{_cross_templatedir}
@@ -241,6 +248,7 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_templatedir}/hosts
 %{_cross_templatedir}/aws-config
 %{_cross_templatedir}/aws-credentials
+%{_cross_templatedir}/log4j-hotpatch-enabled
 %{_cross_udevrulesdir}/61-mount-cdrom.rules
 
 %changelog

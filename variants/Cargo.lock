@@ -467,14 +467,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hotdog"
-version = "0.1.0"
-dependencies = [
- "glibc",
- "log4j2-hotpatch",
-]
-
-[[package]]
 name = "iproute"
 version = "0.1.0"
 dependencies = [
@@ -896,10 +888,6 @@ name = "linux-firmware"
 version = "0.1.0"
 
 [[package]]
-name = "log4j2-hotpatch"
-version = "0.1.0"
-
-[[package]]
 name = "login"
 version = "0.0.1"
 dependencies = [
@@ -1109,7 +1097,6 @@ dependencies = [
  "grep",
  "grub",
  "host-ctr",
- "hotdog",
  "iproute",
  "iptables",
  "kexec-tools",
