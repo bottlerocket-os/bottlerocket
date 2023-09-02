@@ -57,6 +57,10 @@ Patch9011: 9011-systemd-networkd-Conditionalize-hostnamed-timezoned-.patch
 # as a kernel command line parameter to override.
 Patch9012: 9012-core-mount-increase-mount-rate-limit-burst-to-25.patch
 
+# Local patch to work around a potentially non-compliant Option 15 in the DHCP
+# lease in EC2.
+Patch9013: 9013-sd-dhcp-lease-parse-multiple-domains-in-option-15.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
