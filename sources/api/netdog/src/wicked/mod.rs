@@ -380,7 +380,7 @@ mod tests {
                 // generated config contains the added IPv6 option
                 interface.accept_ra();
                 let generated = quick_xml::se::to_string(&interface).unwrap();
-                let mut path = wicked_config().join(format!("{}-ra", interface.name.to_string()));
+                let mut path = wicked_config().join(format!("{}-ra", interface.name));
                 path.set_extension("xml");
                 let expected = fs::read_to_string(&path).unwrap();
 

@@ -10,8 +10,6 @@ pub(crate) mod install;
 pub(crate) mod remove;
 
 #[cfg(net_backend = "systemd-networkd")]
-pub(crate) mod primary_interface;
-#[cfg(net_backend = "systemd-networkd")]
 pub(crate) mod write_network_status;
 
 use crate::net_config::{self, Interfaces};
@@ -37,8 +35,6 @@ pub(crate) use install::InstallArgs;
 #[cfg(net_backend = "wicked")]
 pub(crate) use remove::RemoveArgs;
 
-#[cfg(net_backend = "systemd-networkd")]
-pub(crate) use primary_interface::PrimaryInterfaceArgs;
 #[cfg(net_backend = "systemd-networkd")]
 pub(crate) use write_network_status::WriteNetworkStatusArgs;
 
@@ -358,9 +354,6 @@ mod error {
         #[cfg(net_backend = "systemd-networkd")]
         #[snafu(display("Failed to run 'systemctl': {}", source))]
         SystemctlExecution { source: io::Error },
-
-        #[snafu(display("Failed to parse networkctl status for interface: {}", source))]
-        NetworkctlParse { source: io::Error },
 
         #[cfg(net_backend = "systemd-networkd")]
         #[snafu(display("Failed to retrieve networkctl status: {}", source))]

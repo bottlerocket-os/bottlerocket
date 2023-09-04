@@ -623,27 +623,45 @@ mod tests {
     fn network_from_interface(iface: NetworkDInterface) -> NetworkConfig {
         let mut network = NetworkBuilder::new_interface(iface.name);
         network.with_dhcp(iface.dhcp4, iface.dhcp6);
-        iface.static4.map(|s| network.with_static_config(s));
-        iface.static6.map(|s| network.with_static_config(s));
-        iface.routes.map(|r| network.with_routes(r));
+        if let Some(s) = iface.static4 {
+            network.with_static_config(s)
+        }
+        if let Some(s) = iface.static6 {
+            network.with_static_config(s)
+        }
+        if let Some(r) = iface.routes {
+            network.with_routes(r)
+        }
         network.build()
     }
 
     fn network_from_vlan(vlan: NetworkDVlan) -> NetworkConfig {
         let mut network = NetworkBuilder::new_vlan(vlan.name);
         network.with_dhcp(vlan.dhcp4, vlan.dhcp6);
-        vlan.static4.map(|s| network.with_static_config(s));
-        vlan.static6.map(|s| network.with_static_config(s));
-        vlan.routes.map(|r| network.with_routes(r));
+        if let Some(s) = vlan.static4 {
+            network.with_static_config(s)
+        }
+        if let Some(s) = vlan.static6 {
+            network.with_static_config(s)
+        }
+        if let Some(r) = vlan.routes {
+            network.with_routes(r)
+        }
         network.build()
     }
 
     fn network_from_bond(bond: NetworkDBond) -> NetworkConfig {
         let mut network = NetworkBuilder::new_bond(bond.name.clone());
         network.with_dhcp(bond.dhcp4, bond.dhcp6);
-        bond.static4.map(|s| network.with_static_config(s));
-        bond.static6.map(|s| network.with_static_config(s));
-        bond.routes.map(|r| network.with_routes(r));
+        if let Some(s) = bond.static4 {
+            network.with_static_config(s)
+        }
+        if let Some(s) = bond.static6 {
+            network.with_static_config(s)
+        }
+        if let Some(r) = bond.routes {
+            network.with_routes(r)
+        }
         network.build()
     }
 
