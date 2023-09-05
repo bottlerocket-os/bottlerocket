@@ -241,10 +241,12 @@ impl ImdsClient {
     /// potentially return multiple space-delimited hostnames; choose the first one.
     pub async fn fetch_hostname(&mut self) -> Result<Option<String>> {
         let hostname_target = "meta-data/local-hostname";
-        Ok(self
-            .fetch_string(&hostname_target)
-            .await?
-            .and_then(|h| h.split_whitespace().next().map(String::from)))
+        Ok(self.fetch_string(&hostname_target).await?.and_then(|h| {
+            h.split_whitespace()
+                .next()
+                .map(|h| h.trim_end_matches('.'))
+                .map(String::from)
+        }))
     }
 
     /// Helper to fetch bytes from IMDS using the pinned schema version.
@@ -835,6 +837,40 @@ mod test {
         let mut imds_client = ImdsClient::new_impl(base_uri);
         let imds_data = imds_client.fetch_userdata().await.unwrap();
         assert_eq!(imds_data, Some(response_body.as_bytes().to_vec()));
+    }
+
+    #[tokio::test]
+    async fn fetch_hostname() {
+        let server = Server::run();
+        let base_uri = format!("http://{}", server.addr());
+        let token = "some+token";
+        let response_code = 200;
+        let response_body =
+            r#"ip-10-0-13-37.example.com. ip-10-0-13-37.eu-central-1.compute.internal"#;
+        server.expect(
+            Expectation::matching(request::method_path("PUT", "/latest/api/token"))
+                .times(1)
+                .respond_with(
+                    status_code(200)
+                        .append_header("X-aws-ec2-metadata-token-ttl-seconds", "60")
+                        .body(token),
+                ),
+        );
+        server.expect(
+            Expectation::matching(request::method_path(
+                "GET",
+                format!("/{}/meta-data/local-hostname", PINNED_SCHEMA),
+            ))
+            .times(1)
+            .respond_with(
+                status_code(response_code)
+                    .append_header("X-aws-ec2-metadata-token", token)
+                    .body(response_body),
+            ),
+        );
+        let mut imds_client = ImdsClient::new_impl(base_uri);
+        let hostname = imds_client.fetch_hostname().await.unwrap();
+        assert_eq!(hostname, Some(String::from("ip-10-0-13-37.example.com")));
     }
 
     #[test]
