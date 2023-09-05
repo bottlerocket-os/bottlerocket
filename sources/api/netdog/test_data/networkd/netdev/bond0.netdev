@@ -1,6 +1,7 @@
 [NetDev]
 Name=bond0
 Kind=bond
+MACAddress=none
 [Bond]
 Mode=active-backup
 MIIMonitorSec=100

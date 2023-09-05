@@ -1,6 +1,7 @@
 [NetDev]
 Name=bond1
 Kind=bond
+MACAddress=none
 [Bond]
 Mode=active-backup
 ARPIntervalSec=200

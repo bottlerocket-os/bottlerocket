@@ -1,7 +1,7 @@
 use super::private::{Bond, Device, Vlan};
 use super::CONFIG_FILE_PREFIX;
 use crate::bonding::{ArpMonitoringConfigV1, ArpValidateV1, BondModeV1, MiiMonitoringConfigV1};
-use crate::interface_id::InterfaceName;
+use crate::interface_id::{InterfaceName, MacAddress};
 use crate::networkd::{error, Result};
 use crate::vlan_id::VlanId;
 use snafu::{OptionExt, ResultExt};
@@ -26,6 +26,8 @@ struct NetDevSection {
     name: Option<InterfaceName>,
     #[systemd(entry = "Kind")]
     kind: Option<NetDevKind>,
+    #[systemd(entry = "MACAddress")]
+    mac_address: Option<NetDevMacAddress>,
 }
 
 #[derive(Debug, Default, SystemdUnitSection)]
@@ -122,6 +124,23 @@ impl Display for ArpAllTargets {
     }
 }
 
+// NetDev has a special `none` which allows bonds to reuse the permanent address for the bond
+#[derive(Debug)]
+enum NetDevMacAddress {
+    #[allow(dead_code)]
+    MacAddress(MacAddress),
+    Nothing,
+}
+
+impl Display for NetDevMacAddress {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NetDevMacAddress::MacAddress(m) => write!(f, "{}", m.to_string()),
+            NetDevMacAddress::Nothing => write!(f, "none"),
+        }
+    }
+}
+
 impl NetDevConfig {
     const FILE_EXT: &str = "netdev";
 
@@ -192,6 +211,7 @@ impl NetDevBuilder<Bond> {
             netdev: Some(NetDevSection {
                 name: Some(name),
                 kind: Some(NetDevKind::Bond),
+                mac_address: Some(NetDevMacAddress::Nothing),
             }),
             ..Default::default()
         };
@@ -248,6 +268,7 @@ impl NetDevBuilder<Vlan> {
             netdev: Some(NetDevSection {
                 name: Some(name),
                 kind: Some(NetDevKind::Vlan),
+                mac_address: None,
             }),
             ..Default::default()
         };

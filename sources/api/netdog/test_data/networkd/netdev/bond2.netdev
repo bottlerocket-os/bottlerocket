@@ -1,6 +1,7 @@
 [NetDev]
 Name=bond2
 Kind=bond
+MACAddress=none
 [Bond]
 Mode=active-backup
 MinLinks=2
