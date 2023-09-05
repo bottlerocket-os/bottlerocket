@@ -15,6 +15,6 @@ maplit="1"
 testsys-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.8", tag = "v0.0.8"}
 serde = { version = "1", features = ["derive"]  }
 serde_plain = "1"
-serde_yaml = "0.8"
+serde_yaml = "0.9"
 snafu = "0.7"
 toml = "0.5"
