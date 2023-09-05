@@ -143,3 +143,7 @@ CONFIG_MOUSE_PS2=m
 # CONFIG_MOUSE_PS2_SENTELIC is not set
 # CONFIG_MOUSE_PS2_TOUCHKIT is not set
 # CONFIG_MOUSE_PS2_FOCALTECH is not set
+
+# Intel Volume Management Device driver, to support boot disks in a separate
+# PCI domain.
+CONFIG_VMD=y

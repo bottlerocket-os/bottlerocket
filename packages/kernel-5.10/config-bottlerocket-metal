@@ -106,3 +106,7 @@ CONFIG_SCSI_SMARTPQI=y
 
 # Support for virtio scsi boot devices for other cloud providers
 CONFIG_SCSI_VIRTIO=y
+
+# Intel Volume Management Device driver, to support boot disks in a separate
+# PCI domain.
+CONFIG_VMD=y
