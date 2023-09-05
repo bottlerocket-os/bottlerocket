@@ -110,3 +110,6 @@ CONFIG_SCSI_VIRTIO=y
 # Intel Volume Management Device driver, to support boot disks in a separate
 # PCI domain.
 CONFIG_VMD=y
+
+# Support handling of compressed firmware
+CONFIG_FW_LOADER_COMPRESS=y
