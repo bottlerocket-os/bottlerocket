@@ -2,7 +2,7 @@ use snafu::ResultExt;
 use std::path::Path;
 
 /// Handles requesting a CIS benchmark report.
-async fn get_cis_report<P>(
+pub async fn get_cis_report<P>(
     socket_path: P,
     report_type: &str,
     format: Option<String>,
@@ -28,18 +28,6 @@ where
         .context(error::RequestSnafu { uri, method })?;
 
     Ok(body)
-}
-
-/// Requests a Bottlerocket CIS compliance report through the API.
-pub async fn get_bottlerocket_cis_report<P>(
-    socket_path: P,
-    format: Option<String>,
-    level: Option<i32>,
-) -> Result<String>
-where
-    P: AsRef<Path>,
-{
-    get_cis_report(socket_path, "bottlerocket", format, level).await
 }
 
 mod error {

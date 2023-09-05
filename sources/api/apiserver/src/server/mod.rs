@@ -29,6 +29,9 @@ use std::sync;
 use thar_be_updates::status::{UpdateStatus, UPDATE_LOCKFILE};
 use tokio::process::Command as AsyncCommand;
 
+const BLOODHOUND_BIN: &str = "/usr/bin/bloodhound";
+const BLOODHOUND_K8S_CHECKS: &str = "/usr/libexec/cis-checks/kubernetes";
+
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 // sd_notify helper
@@ -561,7 +564,7 @@ async fn list_reports() -> Result<ReportListResponse> {
 
 /// Gets the Bottlerocket CIS benchmark report.
 async fn get_cis_report(query: web::Query<HashMap<String, String>>) -> Result<HttpResponse> {
-    let mut cmd = AsyncCommand::new("/usr/bin/bloodhound");
+    let mut cmd = AsyncCommand::new(BLOODHOUND_BIN);
 
     // Check for requested level, default is 1
     if let Some(level) = query.get("level") {
@@ -571,6 +574,12 @@ async fn get_cis_report(query: web::Query<HashMap<String, String>>) -> Result<Ht
     // Check for requested format, default is text
     if let Some(format) = query.get("format") {
         cmd.arg("-f").arg(format);
+    }
+
+    if let Some(report_type) = query.get("type") {
+        if report_type == "kubernetes" {
+            cmd.arg("-c").arg(BLOODHOUND_K8S_CHECKS);
+        }
     }
 
     let output = cmd.output().await.context(error::ReportExecSnafu)?;

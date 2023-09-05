@@ -103,6 +103,7 @@ enum UpdateSubcommand {
 #[derive(Debug)]
 enum ReportSubcommand {
     Cis(CisReportArgs),
+    CisK8s(CisReportArgs),
 }
 
 /// Stores common user-supplied arguments for the cis report subcommand.
@@ -151,6 +152,7 @@ fn usage() -> ! {
             reboot                     Reboots the host.
             exec                       Execute a command in a host container.
             report cis                 Retrieve a Bottlerocket CIS benchmark compliance report.
+            report cis-k8s             Retrieve a Kubernetes CIS benchmark compliance report.
 
         raw options:
             -u, --uri URI              Required; URI to request from the server, e.g. /tx
@@ -203,6 +205,10 @@ fn usage() -> ! {
             [ ARG ...]                 Any desired arguments to the command.
 
         report cis options:
+            -f, --format               Format of the CIS report (text or json). Default format is text.
+            -l, --level                CIS compliance level to report on (1 or 2). Default is 1.
+
+        report cis-k8s options:
             -f, --format               Format of the CIS report (text or json). Default format is text.
             -l, --level                CIS compliance level to report on (1 or 2). Default is 1."#,
         socket = constants::API_SOCKET,
@@ -579,6 +585,7 @@ fn parse_report_args(args: Vec<String>) -> Subcommand {
         match arg.as_ref() {
             // Subcommands
             "cis" if subcommand.is_none() && !arg.starts_with('-') => subcommand = Some(arg),
+            "cis-k8s" if subcommand.is_none() && !arg.starts_with('-') => subcommand = Some(arg),
 
             // Other arguments are passed to the subcommand parser
             _ => subcommand_args.push(arg),
@@ -587,6 +594,7 @@ fn parse_report_args(args: Vec<String>) -> Subcommand {
 
     let report_type = match subcommand.as_deref() {
         Some("cis") => parse_report_cis_args(subcommand_args),
+        Some("cis-k8s") => parse_report_cis_k8s_args(subcommand_args),
         _ => usage_msg("Missing or unknown subcommand for 'report'"),
     };
 
@@ -595,6 +603,15 @@ fn parse_report_args(args: Vec<String>) -> Subcommand {
 
 /// Parses arguments for the 'report' cis subcommand.
 fn parse_report_cis_args(args: Vec<String>) -> ReportSubcommand {
+    ReportSubcommand::Cis(parse_cis_arguments(args))
+}
+
+/// Parses arguments for the 'report' cis-k8s subcommand.
+fn parse_report_cis_k8s_args(args: Vec<String>) -> ReportSubcommand {
+    ReportSubcommand::CisK8s(parse_cis_arguments(args))
+}
+
+fn parse_cis_arguments(args: Vec<String>) -> CisReportArgs {
     let mut level: Option<i32> = None;
     let mut format = None;
 
@@ -622,7 +639,7 @@ fn parse_report_cis_args(args: Vec<String>) -> ReportSubcommand {
         }
     }
 
-    ReportSubcommand::Cis(CisReportArgs { level, format })
+    CisReportArgs { level, format }
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -813,8 +830,24 @@ async fn run() -> Result<()> {
 
         Subcommand::Report(subcommand) => match subcommand {
             ReportSubcommand::Cis(cis_args) => {
-                let body = report::get_bottlerocket_cis_report(
+                let body = report::get_cis_report(
                     &args.socket_path,
+                    "bottlerocket",
+                    cis_args.format,
+                    cis_args.level,
+                )
+                .await
+                .context(error::ReportSnafu)?;
+
+                if !body.is_empty() {
+                    print!("{}", body);
+                }
+            }
+
+            ReportSubcommand::CisK8s(cis_args) => {
+                let body = report::get_cis_report(
+                    &args.socket_path,
+                    "kubernetes",
                     cis_args.format,
                     cis_args.level,
                 )

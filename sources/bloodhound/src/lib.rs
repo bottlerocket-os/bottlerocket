@@ -1,5 +1,9 @@
+use results::{CheckStatus, CheckerResult};
+use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
-use std::{ffi::OsStr, fs::File, process::Command};
+use std::os::linux::fs::MetadataExt;
+use std::os::unix::fs::PermissionsExt;
+use std::{ffi::OsStr, process::Command};
 
 pub mod args;
 pub mod output;
@@ -47,10 +51,10 @@ macro_rules! check_file_contains {
 
         if let Ok(found) = look_for_strings_in_file($path, $strings_to_match) {
             if found {
-                result.status = results::CheckStatus::PASS;
+                result.status = CheckStatus::PASS;
             } else {
                 result.error = $unable_to_find_error.to_string();
-                result.status = results::CheckStatus::FAIL;
+                result.status = CheckStatus::FAIL;
             }
         } else {
             result.error = $unable_to_check_error.to_string();
@@ -114,10 +118,10 @@ macro_rules! check_output_contains {
 
         if let Some(found) = look_for_strings_in_output($cmd, $args, $strings_to_match) {
             if found {
-                result.status = results::CheckStatus::PASS;
+                result.status = CheckStatus::PASS;
             } else {
                 result.error = $unable_to_find_error.to_string();
-                result.status = results::CheckStatus::FAIL;
+                result.status = CheckStatus::FAIL;
             }
         } else {
             result.error = $unable_to_check_error.to_string();
@@ -127,9 +131,57 @@ macro_rules! check_output_contains {
     }};
 }
 
+/// Tests whether a file has the given permission mode bits set, returning a `Result` based on the results.
+pub fn check_file_not_mode(file_path: &str, mode: u32) -> CheckerResult {
+    let mut result = CheckerResult::default();
+
+    if let Ok(file) = File::open(file_path) {
+        if let Ok(metadata) = file.metadata() {
+            // Extract just the permission bits
+            let file_mode = metadata.permissions().mode() & 0o777;
+
+            if (file_mode & mode) > 0 {
+                result.error = format!(
+                    "file {} has extra permissions: 0x{:o}",
+                    file_path, file_mode
+                );
+                result.status = CheckStatus::FAIL;
+            } else {
+                result.status = CheckStatus::PASS;
+            }
+        } else {
+            result.error = "unable to get file metadata information".to_string();
+        }
+    } else {
+        result.error = format!("unable to inspect '{}'", file_path);
+    }
+
+    result
+}
+
+/// Verifies the file at the given path is owned by root:root, returning a `Results` based on the results.
+pub fn ensure_file_owner_and_group_root(file_path: &str) -> CheckerResult {
+    let mut result = CheckerResult::default();
+
+    if let Ok(metadata) = fs::metadata(file_path) {
+        if metadata.st_uid() != 0 || metadata.st_gid() != 0 {
+            result.error = "File owner is not root:root".to_string();
+            result.status = CheckStatus::FAIL;
+        } else {
+            result.status = CheckStatus::PASS;
+        }
+    } else {
+        result.error = "unable to get file metadata".to_string();
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod test_utils {
+    use std::fs::{self, OpenOptions};
     use std::io::Write;
+    use std::os::unix::fs::OpenOptionsExt;
     use tempfile::NamedTempFile;
 
     use super::*;
@@ -287,5 +339,70 @@ mod test_utils {
     fn test_strings_in_output_bad_cmd() {
         let result = look_for_strings_in_output("ekko", [""], &["blah"]);
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_check_file_not_mode() {
+        // Generate a temp file that will be dropped as unused
+        let test_file_path = NamedTempFile::new()
+            .unwrap()
+            .into_temp_path()
+            .canonicalize()
+            .unwrap()
+            .display()
+            .to_string();
+
+        // Then use that name to create test file with the expected permission mode
+        let _ = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o700)
+            .open(&test_file_path)
+            .unwrap();
+
+        let result = check_file_not_mode(test_file_path.as_str(), 0b111111);
+        assert_eq!(result.status, CheckStatus::PASS);
+
+        // Clean up, fine to ignore errors
+        let _ = fs::remove_file(test_file_path);
+    }
+
+    #[test]
+    fn test_check_file_not_mode_wrong() {
+        // Generate a temp file that will be dropped as unused
+        let test_file_path = NamedTempFile::new()
+            .unwrap()
+            .into_temp_path()
+            .canonicalize()
+            .unwrap()
+            .display()
+            .to_string();
+
+        // Then us that name to create test file with the expected (wrong) permission mode
+        let _ = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o750)
+            .open(&test_file_path)
+            .unwrap();
+
+        let result = check_file_not_mode(test_file_path.as_str(), 0b111111);
+        assert_eq!(result.status, CheckStatus::FAIL);
+
+        // Clean up, fine to ignore errors
+        let _ = fs::remove_file(test_file_path);
+    }
+
+    #[test]
+    fn test_check_file_not_mode_file_not_found() {
+        let test_file_path = "/tmp/whatdoyouwant";
+
+        let result = check_file_not_mode(test_file_path, 0b111111);
+        assert_eq!(result.status, CheckStatus::SKIP);
+
+        // Clean up, fine to ignore errors
+        let _ = fs::remove_file(test_file_path);
     }
 }

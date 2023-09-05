@@ -76,7 +76,11 @@ skip-tree = [
     { name = "windows-sys", version = "=0.42.0" },
     # generate-readme pulls in an older clap that causes some duplicate
     # dependencies
-    { name = "generate-readme", version = "=0.1.0" }
+    { name = "generate-readme", version = "=0.1.0" },
+    # serde_yaml actually uses a newer hashbrown dependency,
+    # but several crates in the graph pull in an older one, so skip for now
+    # until they can be updated
+    { name = "hashbrown", version = "=0.13.2" }
 ]
 
 [sources]
