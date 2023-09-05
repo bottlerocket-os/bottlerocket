@@ -21,7 +21,7 @@ jobs:
       labels: bottlerocket_ubuntu-latest_16-core
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Preflight step to set up the runner
         uses: ./.github/actions/setup-node
         with:

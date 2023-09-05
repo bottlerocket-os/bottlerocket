@@ -33,7 +33,7 @@ jobs:
       variants: ${{ steps.get-variants.outputs.variants }}
       aarch-enemies: ${{ steps.get-variants.outputs.aarch-enemies }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/list-variants
         id: get-variants
 
@@ -56,7 +56,7 @@ jobs:
           delay=$((1 + $RANDOM % 32))
           echo "Waiting ${delay} seconds before execution"
           sleep $delay
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Preflight step to set up the runner
         uses: ./.github/actions/setup-node
       - if: contains(matrix.variant, 'nvidia')

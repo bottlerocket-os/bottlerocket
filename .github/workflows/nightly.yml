@@ -28,7 +28,7 @@ jobs:
       variants: ${{ steps.get-variants.outputs.variants }}
       aarch-enemies: ${{ steps.get-variants.outputs.aarch-enemies }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/list-variants
         id: get-variants
 
@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
     name: "Build ${{ matrix.variant }}-${{ matrix.arch }}"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Preflight step to set up the runner
         uses: ./.github/actions/setup-node
       - if: contains(matrix.variant, 'nvidia')
