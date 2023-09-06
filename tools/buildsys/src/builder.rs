@@ -207,9 +207,7 @@ impl VariantBuilder {
         );
         args.build_arg(
             "KERNEL_PARAMETERS",
-            kernel_parameters
-                .map(|v| v.join(" "))
-                .unwrap_or_else(|| "".to_string()),
+            kernel_parameters.map(|v| v.join(" ")).unwrap_or_default(),
         );
 
         if let Some(image_features) = image_features {
