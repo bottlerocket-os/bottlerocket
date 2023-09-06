@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 // A map of network device -> associated VLANs.  This type exists to assist in generating a
 // device's network configuration, which must contain it's associated VLANs.
-pub(self) type Vlans = HashMap<InterfaceName, Vec<InterfaceName>>;
+type Vlans = HashMap<InterfaceName, Vec<InterfaceName>>;
 
 pub(crate) struct NetworkDConfig {
     devices: Vec<NetworkDDevice>,
@@ -136,8 +136,8 @@ mod tests {
     impl Display for NetworkDConfigFile {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             match self {
-                NetworkDConfigFile::Network(nw) => write!(f, "{}", nw.to_string()),
-                NetworkDConfigFile::NetDev(nd) => write!(f, "{}", nd.to_string()),
+                NetworkDConfigFile::Network(nw) => write!(f, "{}", nw),
+                NetworkDConfigFile::NetDev(nd) => write!(f, "{}", nd),
             }
         }
     }
@@ -250,7 +250,7 @@ mod tests {
 
         // Interfaces should create a single network file with the interface's name
         assert!(networks.len() == 1, "{}", msg);
-        assert!(netdevs.len() == 0, "{}", msg);
+        assert!(netdevs.is_empty(), "{}", msg);
         for network in networks {
             validate_config_file(&i.name.to_string(), network)
         }
@@ -351,7 +351,7 @@ mod tests {
         }
 
         let mut hb = Handlebars::new();
-        hb.register_template_string("template", &template).unwrap();
+        hb.register_template_string("template", template).unwrap();
 
         let context = Context { version: *version };
         let rendered = hb.render("template", &context).unwrap();

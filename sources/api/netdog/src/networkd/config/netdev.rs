@@ -301,7 +301,9 @@ mod tests {
     fn netdev_from_bond(bond: NetworkDBond) -> NetDevConfig {
         let mut netdev = NetDevBuilder::new_bond(bond.name.clone());
         netdev.with_mode(bond.mode);
-        bond.min_links.map(|m| netdev.with_min_links(m));
+        if let Some(m) = bond.min_links {
+            netdev.with_min_links(m)
+        }
         match bond.monitoring_config {
             BondMonitoringConfigV1::MiiMon(miimon) => netdev.with_miimon_config(miimon),
             BondMonitoringConfigV1::ArpMon(arpmon) => netdev.with_arpmon_config(arpmon),

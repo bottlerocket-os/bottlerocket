@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn dns_from_config() {
         let config = test_data().join("netdog.toml");
-        let dns_settings = DnsSettings::from_config_impl(&config).unwrap();
+        let dns_settings = DnsSettings::from_config_impl(config).unwrap();
         assert!(dns_settings.nameservers.is_some());
         assert!(dns_settings.search.is_some());
     }
@@ -270,7 +270,7 @@ mod tests {
     #[test]
     fn missing_config() {
         let missing = "/a/nonexistent/net/config/path";
-        let dns_settings = DnsSettings::from_config_impl(&missing).unwrap();
+        let dns_settings = DnsSettings::from_config_impl(missing).unwrap();
         assert!(dns_settings.nameservers.is_none());
         assert!(dns_settings.search.is_none());
     }
@@ -279,7 +279,7 @@ mod tests {
     #[cfg(net_backend = "wicked")]
     fn dns_from_lease_file() {
         let lease_path = test_data().join("leaseinfo.eth0.dhcp.ipv4");
-        let lease = LeaseInfo::from_lease(&lease_path).unwrap();
+        let lease = LeaseInfo::from_lease(lease_path).unwrap();
         let mut got = DnsSettings::default();
         got.merge_lease(&lease);
 
@@ -298,7 +298,7 @@ mod tests {
     #[cfg(net_backend = "wicked")]
     fn write_resolv_conf_from_lease_single_nameserver() {
         let lease_path = test_data().join("leaseinfo.eth0.dhcp.ipv4");
-        let lease = LeaseInfo::from_lease(&lease_path).unwrap();
+        let lease = LeaseInfo::from_lease(lease_path).unwrap();
 
         let fake_file = tempfile::NamedTempFile::new().unwrap();
         let mut settings = DnsSettings::default();
@@ -313,7 +313,7 @@ mod tests {
     #[cfg(net_backend = "wicked")]
     fn write_resolv_conf_from_lease_multiple_nameservers() {
         let lease_path = test_data().join("leaseinfo.eth0.dhcp.ipv4.multiple-dns");
-        let lease = LeaseInfo::from_lease(&lease_path).unwrap();
+        let lease = LeaseInfo::from_lease(lease_path).unwrap();
 
         let fake_file = tempfile::NamedTempFile::new().unwrap();
         let mut settings = DnsSettings::default();

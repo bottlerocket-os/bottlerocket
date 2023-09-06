@@ -16,23 +16,8 @@ use std::process::Command;
 #[serde(rename_all = "PascalCase")]
 pub(crate) struct NetworkDInterfaceStatus {
     pub(crate) name: InterfaceName,
-    #[serde(rename = "DNS")]
-    pub(crate) dns: Option<Vec<NetworkDDnsConfig>>,
-    pub(crate) search_domains: Option<Vec<SearchDomain>>,
     #[serde(rename = "Addresses", deserialize_with = "from_networkctl_addresses")]
     pub(crate) addresses: Vec<IpAddr>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub(crate) struct NetworkDDnsConfig {
-    #[serde(rename = "Address", deserialize_with = "ipaddr_from_vec_de")]
-    pub(crate) address: IpAddr,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub(crate) struct SearchDomain {
-    #[serde(rename = "Domain")]
-    pub(crate) domain: String,
 }
 
 // get an IpAddr from a Vec<u8> (could be 4 or 16 length)
@@ -52,14 +37,6 @@ fn ipaddr_from_vec(address_vec: Vec<u8>) -> Result<IpAddr> {
         }
         .fail(),
     }
-}
-
-fn ipaddr_from_vec_de<'de, D>(deserializer: D) -> std::result::Result<IpAddr, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let address_vec: Vec<u8> = Deserialize::deserialize(deserializer)?;
-    ipaddr_from_vec(address_vec).map_err(D::Error::custom)
 }
 
 fn from_networkctl_addresses<'de, D>(deserializer: D) -> std::result::Result<Vec<IpAddr>, D::Error>
@@ -194,15 +171,6 @@ mod tests {
             network_status.primary_address().unwrap(),
             Ipv4Addr::new(10, 0, 2, 15)
         );
-
-        if let Some(nameservers) = &network_status.dns {
-            let nameserver: Vec<IpAddr> = nameservers.iter().map(|n| n.address).collect();
-            assert_eq!(nameserver[0], Ipv4Addr::new(10, 0, 2, 3));
-        } else {
-            panic!("Nameservers not found in {}", file_name)
-        };
-
-        assert!(network_status.search_domains.is_none());
     }
 
     #[test]
@@ -222,23 +190,6 @@ mod tests {
             network_status.primary_address().unwrap(),
             Ipv4Addr::new(172, 31, 28, 92)
         );
-
-        if let Some(nameservers) = &network_status.dns {
-            let nameserver: Vec<IpAddr> = nameservers.into_iter().map(|n| n.address).collect();
-            assert_eq!(nameserver[0], Ipv4Addr::new(172, 31, 0, 2));
-        } else {
-            panic!("Nameservers not found in {}", file_name)
-        };
-
-        if let Some(search_domains) = &network_status.search_domains {
-            let search: Vec<String> = search_domains
-                .into_iter()
-                .map(|d| d.domain.clone())
-                .collect();
-            assert_eq!(search[0], "us-west-2.compute.internal".to_string());
-        } else {
-            panic!("Search Domains not found in {}", file_name)
-        }
     }
 
     #[test]
