@@ -581,7 +581,6 @@ func cleanUp(containerdSocket string, namespace string, containerID string) erro
 // Referenced source: https://github.com/awslabs/amazon-ecr-containerd-resolver/blob/a5058cf091f4fc573813a032db37a9820952f1f9/ecr/ref.go#L70-L71
 func parseImageURISpecialRegions(input string) (ecr.ECRSpec, error) {
 	ecrRefPrefixMapping := map[string]string{
-		"il-central-1": "ecr.aws/arn:aws:ecr:il-central-1:",
 		"ca-west-1": "ecr.aws/arn:aws:ecr:ca-west-1:",
 	}
 	// Matching on account, region
