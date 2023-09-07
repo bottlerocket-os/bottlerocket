@@ -4,5 +4,6 @@ Name=eno9
 RequiredForOnline=false
 [Network]
 DHCP=ipv4
+KeepConfiguration=dhcp
 [DHCPv4]
 UseMTU=true

@@ -4,6 +4,7 @@ Name=eno8
 RequiredForOnline=false
 [Network]
 DHCP=yes
+KeepConfiguration=dhcp
 [DHCPv4]
 UseMTU=true
 [IPv6AcceptRA]

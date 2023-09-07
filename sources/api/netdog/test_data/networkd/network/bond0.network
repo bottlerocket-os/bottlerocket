@@ -5,6 +5,7 @@ RequiredForOnline=true
 [Network]
 ConfigureWithoutCarrier=true
 DHCP=ipv4
+KeepConfiguration=dhcp
 BindCarrier=eno51
 BindCarrier=eno52
 [DHCPv4]
