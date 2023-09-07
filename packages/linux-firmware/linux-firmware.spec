@@ -48,17 +48,9 @@ Patch0010: 0010-linux-firmware-amd-ucode-Remove-amd-microcode.patch
 mkdir -p %{buildroot}/%{fwdir}
 mkdir -p %{buildroot}/%{fwdir}/updates
 
-# Here we have potential to shave off some extra space by using `install-xz` of
-# `install-zst` to compress firmware images on disk. However, that functionality
-# relies on kernels being configured with `CONFIG_FW_LOADER_COMPRESS_[ZSTD|XZ]`
-# which we currently do not have.
-make DESTDIR=%{buildroot}/ FIRMWAREDIR=%{fwdir} install
-
-
-# Remove executable bits from random firmware
-pushd %{buildroot}/%{fwdir}
-find . -type f -executable -exec chmod -x {} \;
-popd
+# Use xz compression for firmware files to reduce size on disk. This relies on
+# kernel support through FW_LOADER_COMPRESS (and FW_LOADER_COMPRESS_XZ for kernels >=5.19)
+make DESTDIR=%{buildroot}/ FIRMWAREDIR=%{fwdir} install-xz
 
 %files
 %dir %{fwdir}
