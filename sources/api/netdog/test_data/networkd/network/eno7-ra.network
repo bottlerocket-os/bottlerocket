@@ -6,6 +6,7 @@ RequiredFamilyForOnline=ipv4
 [Network]
 DHCP=yes
 IPv6AcceptRA=true
+KeepConfiguration=dhcp
 [DHCPv4]
 UseMTU=true
 [DHCPv6]
