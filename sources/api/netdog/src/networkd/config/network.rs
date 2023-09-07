@@ -71,6 +71,8 @@ struct NetworkSection {
     primary_bond_worker: Option<bool>,
     #[systemd(entry = "VLAN")]
     vlan: Vec<InterfaceName>,
+    #[systemd(entry = "KeepConfiguration")]
+    keep_configuration: Option<KeepConfiguration>,
 }
 
 #[derive(Debug, Default, SystemdUnitSection)]
@@ -176,6 +178,29 @@ impl Display for WithoutRa {
             WithoutRa::No => write!(f, "no"),
             WithoutRa::Solicit => write!(f, "solicit"),
             WithoutRa::InformationRequest => write!(f, "information-request"),
+        }
+    }
+}
+
+// Only the `Dhcp` variant is currently used.
+#[derive(Debug)]
+#[allow(dead_code)]
+enum KeepConfiguration {
+    Yes,
+    No,
+    Dhcp,
+    DhcpOnStop,
+    Static,
+}
+
+impl Display for KeepConfiguration {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            KeepConfiguration::Yes => write!(f, "yes"),
+            KeepConfiguration::No => write!(f, "no"),
+            KeepConfiguration::Dhcp => write!(f, "dhcp"),
+            KeepConfiguration::DhcpOnStop => write!(f, "dhcp-on-stop"),
+            KeepConfiguration::Static => write!(f, "static"),
         }
     }
 }
@@ -478,15 +503,23 @@ where
             (false, false) => link.required = Some(false),
         }
 
-        if Self::dhcp4_enabled(&dhcp4) {
+        let dhcp4_is_enabled = Self::dhcp4_enabled(&dhcp4);
+        let dhcp6_is_enabled = Self::dhcp6_enabled(&dhcp6);
+        let dhcp_is_enabled = dhcp4_is_enabled || dhcp6_is_enabled;
+
+        if dhcp4_is_enabled {
             let dhcp4_s = self.network.dhcp4_mut();
             dhcp4_s.metric = Self::dhcp4_metric(&dhcp4);
             dhcp4_s.use_mtu = Some(true);
         }
 
-        if Self::dhcp6_enabled(&dhcp6) {
+        if dhcp6_is_enabled {
             let ipv6_accept_ra_s = self.network.ipv6_accept_ra_mut();
             ipv6_accept_ra_s.use_mtu = Some(true);
+        }
+
+        if dhcp_is_enabled {
+            self.network.network_mut().keep_configuration = Some(KeepConfiguration::Dhcp);
         }
     }
 
@@ -503,6 +536,7 @@ where
             let dhcp = self.network.dhcp4_mut();
             dhcp.metric = Self::dhcp4_metric(&dhcp4);
             dhcp.use_mtu = Some(true);
+            self.network.network_mut().keep_configuration = Some(KeepConfiguration::Dhcp);
         }
     }
 
@@ -518,6 +552,7 @@ where
         if Self::dhcp6_enabled(&dhcp6) {
             let accept_ra = self.network.ipv6_accept_ra_mut();
             accept_ra.use_mtu = Some(true);
+            self.network.network_mut().keep_configuration = Some(KeepConfiguration::Dhcp);
         }
     }
 
