@@ -42,13 +42,13 @@ jobs:
     runs-on:
       group: bottlerocket
       labels: bottlerocket_ubuntu-latest_32-core
-    continue-on-error: true
+    continue-on-error: false
     strategy:
       matrix:
         variant: ${{ fromJson(needs.list-variants.outputs.variants) }}
         arch: [x86_64, aarch64]
         exclude: ${{ fromJson(needs.list-variants.outputs.aarch-enemies) }}
-      fail-fast: false
+      fail-fast: true
     name: "Build ${{ matrix.variant }}-${{ matrix.arch }}"
     steps:
       - name: Random delay
