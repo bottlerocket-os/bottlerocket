@@ -5,5 +5,7 @@ RequiredForOnline=true
 [Network]
 ConfigureWithoutCarrier=true
 DHCP=ipv4
+BindCarrier=eno51
+BindCarrier=eno52
 [DHCPv4]
 UseMTU=true

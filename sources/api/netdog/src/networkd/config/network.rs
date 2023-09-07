@@ -73,6 +73,8 @@ struct NetworkSection {
     vlan: Vec<InterfaceName>,
     #[systemd(entry = "KeepConfiguration")]
     keep_configuration: Option<KeepConfiguration>,
+    #[systemd(entry = "BindCarrier")]
+    bind_carrier: Vec<InterfaceName>,
 }
 
 #[derive(Debug, Default, SystemdUnitSection)]
@@ -376,6 +378,11 @@ impl NetworkBuilder<Bond> {
             network,
             spooky: PhantomData,
         }
+    }
+
+    /// Bind workers to bond for carrier detection
+    pub(crate) fn with_bind_carrier(&mut self, interfaces: Vec<InterfaceName>) {
+        self.network.network_mut().bind_carrier = interfaces;
     }
 }
 
@@ -697,6 +704,7 @@ mod tests {
         if let Some(r) = bond.routes {
             network.with_routes(r)
         }
+        network.with_bind_carrier(bond.interfaces);
         network.build()
     }
 

@@ -83,6 +83,8 @@ impl NetworkFileCreator for NetworkDBond {
         maybe_add_some!(network, with_static_config, static6);
         maybe_add_some!(network, with_routes, routes);
 
+        network.with_bind_carrier(interfaces.clone());
+
         // Attach VLANs to this interface, if any
         if let Some(vlans) = vlans.get(name) {
             network.with_vlans(vlans.to_vec())

@@ -5,5 +5,8 @@ RequiredForOnline=true
 [Network]
 ConfigureWithoutCarrier=true
 DHCP=ipv6
+BindCarrier=eno55
+BindCarrier=eno56
+BindCarrier=eno57
 [IPv6AcceptRA]
 UseMTU=true
