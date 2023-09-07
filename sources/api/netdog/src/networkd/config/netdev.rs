@@ -135,7 +135,7 @@ enum NetDevMacAddress {
 impl Display for NetDevMacAddress {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NetDevMacAddress::MacAddress(m) => write!(f, "{}", m.to_string()),
+            NetDevMacAddress::MacAddress(m) => write!(f, "{}", m),
             NetDevMacAddress::Nothing => write!(f, "none"),
         }
     }
