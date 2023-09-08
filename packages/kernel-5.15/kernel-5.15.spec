@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-5.15
-Version: 5.15.122
+Version: 5.15.128
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/d73ac4b2ddb2c5ed91308adfcd7ccf4d7ba53882d31c9a6461e1661766159b62/kernel-5.15.122-77.145.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/d301b89106ee983f8cd5cd0b4d6b4111ea97b7e51ca2892a6d9bbec4eaf18c4f/kernel-5.15.128-80.144.amzn2.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
@@ -21,12 +21,6 @@ Patch1002: 1002-Revert-kbuild-hide-tools-build-targets-from-external.patch
 Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 # Increase default of sysctl net.unix.max_dgram_qlen to 512.
 Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
-
-# Cherry-picked fixes for CVE-2023-20588 ("DIV0"). Can be dropped when moving
-# upstream to 5.15.128 or later.
-Patch5001: 5001-x86-bugs-Increase-the-x86-bugs-vector-size-to-two-u3.patch
-Patch5002: 5002-x86-CPU-AMD-Do-not-leak-quotient-data-after-a-divisi.patch
-Patch5003: 5003-x86-CPU-AMD-Fix-the-DIV-0-initial-fix-attempt.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
