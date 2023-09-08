@@ -10,7 +10,7 @@
 %global gorepo kubernetes
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.28.0
+%global gover 1.28.1
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -54,8 +54,6 @@ Source21: dockershim-symlink.conf
 Source22: make-kubelet-dirs.conf
 
 Source1000: clarify.toml
-
-Patch9001: 0001-Make-gomaxprocs-install-optional-limit-to-tests.patch
 
 BuildRequires: git
 BuildRequires: rsync
