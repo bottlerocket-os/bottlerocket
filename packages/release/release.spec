@@ -9,6 +9,7 @@ License: Apache-2.0 OR MIT
 URL: https://github.com/bottlerocket-os/bottlerocket
 
 Source11: nsswitch.conf
+Source95: release-systemd-networkd.conf
 Source96: release-repart-local.conf
 Source97: release-sysctl.conf
 Source98: release-systemd-system.conf
@@ -124,6 +125,9 @@ Requires: %{_cross_os}xfsprogs
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 install -p -m 0644 %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 
+install -d %{buildroot}%{_cross_libdir}/systemd/networkd.conf.d
+install -p -m 0644 %{S:95} %{buildroot}%{_cross_libdir}/systemd/networkd.conf.d/80-release.conf
+
 install -d %{buildroot}%{_cross_libdir}/repart.d/
 install -p -m 0644 %{S:96} %{buildroot}%{_cross_libdir}/repart.d/80-local.conf
 
@@ -199,8 +203,9 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_libdir}/os-release
 %dir %{_cross_libdir}/repart.d
 %{_cross_libdir}/repart.d/80-local.conf
-%{_cross_libdir}/systemd/system.conf.d/80-release.conf
 %{_cross_libdir}/systemd/network/80-release.link
+%{_cross_libdir}/systemd/networkd.conf.d/80-release.conf
+%{_cross_libdir}/systemd/system.conf.d/80-release.conf
 %{_cross_unitdir}/configured.target
 %{_cross_unitdir}/preconfigured.target
 %{_cross_unitdir}/multi-user.target
