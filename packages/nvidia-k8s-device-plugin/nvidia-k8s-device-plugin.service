@@ -6,7 +6,7 @@ After=kubelet.service
 Wants=kubelet.service
 
 [Service]
-ExecStart=/usr/bin/nvidia-device-plugin
+ExecStart=/usr/bin/nvidia-device-plugin --pass-device-specs=true
 Type=simple
 TimeoutSec=0
 RestartSec=2
