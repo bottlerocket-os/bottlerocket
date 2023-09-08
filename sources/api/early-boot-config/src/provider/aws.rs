@@ -33,6 +33,11 @@ impl AwsDataProvider {
             .context(error::DecompressionSnafu { what: "user data" })?;
         trace!("Received user data: {}", user_data_str);
 
+        // Return early to prevent parsing an empty string
+        if user_data_str.trim().is_empty() {
+            return Ok(None);
+        }
+
         let json = SettingsJson::from_toml_str(&user_data_str, "user data").context(
             error::SettingsToJSONSnafu {
                 from: "instance user data",
