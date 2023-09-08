@@ -4,7 +4,7 @@
 #
 # Common error handling
 #
-#
+
 exit_trap_cmds=()
 
 on_exit() {
@@ -49,8 +49,11 @@ show_usage() {
     echo "\
 usage: ${0##*/} [--arch BUILDSYS_ARCH] [--variant BUILDSYS_VARIANT]
                       [--host-port-forwards HOST_PORT_FWDS]
+                      [--product-name NAME]
                       [--vm-memory VM_MEMORY] [--vm-cpus VM_CPUS]
+                      [--force-extract]
                       [--inject-file LOCAL_PATH[:IMAGE_PATH]]...
+                      [--firmware-code PATH] [--firmware-vars PATH]
 
 Launch a local virtual machine from a Bottlerocket image.
 
@@ -61,10 +64,9 @@ Options:
                         BUILDSYS_ARCH environment variable is set)
     --variant           Bottlerocket variant to run (may be omitted if the
                         BUILDSYS_VARIANT environment variable is set)
-    --product-name
-                        product name used for file and directory naming used when
-                        building with the "-e BUILDSYS_NAME" option; may be omitted if the
-                        BUILDSYS_NAME environment variable is set. Otherwise default is bottlerocket if not defined or empty
+    --product-name      short product name used as prefix for file and directory
+                        names (defaults to the BUILDSYS_NAME environment variable
+                        or 'bottlerocket' when that is unset)
     --host-port-forwards
                         list of host ports to forward to the VM; HOST_PORT_FWDS
                         must be a valid QEMU port forwarding specifier (default
@@ -196,7 +198,7 @@ prepare_raw_images() {
 
 prepare_firmware() {
     # Create local copies of the edk2 firmware variable storage, to help with
-    # faciliate Secure Boot testing where custom variables are needed for both
+    # facilitate Secure Boot testing where custom variables are needed for both
     # architectures, but can't safely be reused across QEMU invocations. Also
     # set reasonable defaults for both firmware files, if nothing more specific
     # was requested.
