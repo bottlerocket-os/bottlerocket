@@ -54,6 +54,7 @@ usage: ${0##*/} [--arch BUILDSYS_ARCH] [--variant BUILDSYS_VARIANT]
                       [--force-extract]
                       [--inject-file LOCAL_PATH[:IMAGE_PATH]]...
                       [--firmware-code PATH] [--firmware-vars PATH]
+                      [--os-image-size SIZE] [--data-image-size SIZE]
 
 Launch a local virtual machine from a Bottlerocket image.
 
@@ -82,6 +83,8 @@ Options:
                         private partition will be lost
     --firmware-code     override the default firmware executable file
     --firmware-vars     override the initial firmware variable storage file
+    --os-image-size     resize the OS disk image to the given size (e.g. 4096M)
+    --data-image-size   resize the data disk image to the given size (e.g. 20G)
     --help              shows this usage text
 
 By default, the virtual machine's port 22 (SSH) will be exposed via the local
@@ -147,6 +150,12 @@ parse_args() {
             --firmware-vars)
                 shift; firmware_vars=$1
                 ;;
+            --os-image-size)
+                shift; os_image_size=$1
+                ;;
+            --data-image-size)
+                shift; data_image_size=$1
+                ;;
             *)
                 usage_error "unknown option '$1'" ;;
         esac
@@ -193,6 +202,20 @@ prepare_raw_images() {
     else
         # Missing data image is fine. This variant may not be a split build.
         readonly data_image=
+    fi
+
+    if [[ -n ${os_image_size} ]]; then
+        truncate --no-create --size "${os_image_size}" "${os_image}" \
+            || bail "Failed to resize OS image '${os_image}'."
+    fi
+
+    if [[ -n ${data_image_size} ]]; then
+        if [[ -e ${data_image} ]]; then
+            truncate --no-create --size "${data_image_size}" "${data_image}" \
+                || bail "Failed to resize data image '${data_image}'."
+        else
+            >&2 echo "Ignoring option --data-image-size ${data_image_size} since no data image was found."
+        fi
     fi
 }
 
