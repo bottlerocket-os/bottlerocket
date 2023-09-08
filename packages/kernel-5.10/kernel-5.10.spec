@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-5.10
-Version: 5.10.186
+Version: 5.10.192
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/e6326ee4512d019820a49568094b3393f82a963a90b4201cbb45eea26a66ce02/kernel-5.10.186-179.751.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/4cbf281b8513ad2257aae8ad983a75fd76cb9c613fe7025822f0f16879cb2e2b/kernel-5.10.192-182.736.amzn2.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
@@ -23,17 +23,6 @@ Patch1003: 1003-af_unix-increase-default-max_dgram_qlen-to-512.patch
 # Add zstd support for compressed kernel modules
 Patch2000: 2000-kbuild-move-module-strip-compression-code-into-scrip.patch
 Patch2001: 2001-kbuild-add-support-for-zstd-compressed-modules.patch
-
-# Cherry-picked fix for CVE-2023-20593 ("Zenbleed"). Can be dropped when moving
-# upstream to 5.10.187 or later.
-Patch5001: 5001-x86-cpu-amd-Move-the-errata-checking-functionality-u.patch
-Patch5002: 5002-x86-cpu-amd-Add-a-Zenbleed-fix.patch
-
-# Cherry-picked fixes for CVE-2023-20588 ("DIV0"). Can be dropped when moving
-# upstream to 5.10.192 or later.
-Patch5011: 5011-x86-bugs-Increase-the-x86-bugs-vector-size-to-two-u3.patch
-Patch5012: 5012-x86-CPU-AMD-Do-not-leak-quotient-data-after-a-divisi.patch
-Patch5013: 5013-x86-CPU-AMD-Fix-the-DIV-0-initial-fix-attempt.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
