@@ -1,0 +1,2 @@
+# This will create /dev/char symlinks to all device nodes
+ACTION=="add", DEVPATH=="/bus/pci/drivers/nvidia", RUN+="/usr/bin/nvidia-ctk system create-dev-char-symlinks --create-all"
