@@ -159,6 +159,21 @@ where
     let mut output = String::new();
     writeln!(output, "{}", ipv4_rp_filter).context(error::SysctlConfBuildSnafu)?;
 
+    #[cfg(net_backend = "systemd-networkd")]
+    // systemd-networkd implements its own RA client, and expects the kernel implementation to be
+    // unused. However, various solutions that run in EC2 might "helpfully" turn it on since it's
+    // required for most non-systemd-networkd systems. Guard against this by explicitly disabling
+    // all of the sysctls that default to enabled when "accept_ra" is enabled.
+    for ipv6_sysctl in [
+        format!("-net.ipv6.conf.{}.accept_ra = 0", interface),
+        format!("-net.ipv6.conf.{}.accept_ra_defrtr = 0", interface),
+        format!("-net.ipv6.conf.{}.accept_ra_pinfo = 0", interface),
+        format!("-net.ipv6.conf.{}.accept_ra_rtr_pref = 0", interface),
+        format!("-net.ipv6.conf.{}.accept_ra_mtu = 0", interface),
+    ] {
+        writeln!(output, "{}", ipv6_sysctl).context(error::SysctlConfBuildSnafu)?;
+    }
+
     fs::write(path, output).context(error::SysctlConfWriteSnafu { path })?;
     Ok(())
 }
