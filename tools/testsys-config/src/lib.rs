@@ -360,6 +360,9 @@ pub struct DeveloperConfig {
     pub keep_tests_running: Option<bool>,
     /// Use an alternate account for image lookup
     pub image_account_id: Option<String>,
+    /// Overrides the EKS service endpoint for TestSys agents gathering EKS cluster metadata
+    /// (only for pre-existing EKS clusters, does not apply to new EKS cluster creation)
+    pub eks_service_endpoint: Option<String>,
 }
 
 impl DeveloperConfig {
@@ -374,6 +377,7 @@ impl DeveloperConfig {
                 .or(other.bottlerocket_destruction_policy),
             keep_tests_running: self.keep_tests_running.or(other.keep_tests_running),
             image_account_id: self.image_account_id.or(other.image_account_id),
+            eks_service_endpoint: self.eks_service_endpoint.or(other.eks_service_endpoint),
         }
     }
 }
