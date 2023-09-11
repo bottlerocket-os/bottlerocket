@@ -3,9 +3,15 @@ use crate::{aws, proxy};
 use aws_smithy_types::error::display::DisplayErrorContext;
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::time::Duration;
+use tokio_retry::{
+    strategy::{jitter, FibonacciBackoff},
+    Retry,
+};
 
-// Limit the timeout for the EC2 describe-instances API call to 5 minutes
-const EC2_DESCRIBE_INSTANCES_TIMEOUT: Duration = Duration::from_secs(300);
+// Limit the timeout for fetching the private DNS name of the EC2 instance to 5 minutes.
+const FETCH_PRIVATE_DNS_NAME_TIMEOUT: Duration = Duration::from_secs(300);
+// Fibonacci backoff base duration when retrying requests
+const FIBONACCI_BACKOFF_BASE_DURATION_MILLIS: u64 = 200;
 
 #[derive(Debug, Snafu)]
 pub(super) enum Error {
@@ -21,8 +27,8 @@ pub(super) enum Error {
         >,
     },
 
-    #[snafu(display("Timed-out waiting for EC2 DescribeInstances API response: {}", source))]
-    DescribeInstancesTimeout { source: tokio::time::error::Elapsed },
+    #[snafu(display("Timed out retrieving private DNS name from EC2: {}", source))]
+    FetchPrivateDnsNameTimeout { source: tokio::time::error::Elapsed },
 
     #[snafu(display("Missing field '{}' in EC2 response", field))]
     Missing { field: &'static str },
@@ -53,26 +59,33 @@ pub(super) async fn get_private_dns_name(region: &str, instance_id: &str) -> Res
     };
 
     tokio::time::timeout(
-        EC2_DESCRIBE_INSTANCES_TIMEOUT,
-        client
-            .describe_instances()
-            .instance_ids(instance_id.to_owned())
-            .send(),
+        FETCH_PRIVATE_DNS_NAME_TIMEOUT,
+        Retry::spawn(
+            FibonacciBackoff::from_millis(FIBONACCI_BACKOFF_BASE_DURATION_MILLIS).map(jitter),
+            || async {
+                client
+                    .describe_instances()
+                    .instance_ids(instance_id.to_owned())
+                    .send()
+                    .await
+                    .context(DescribeInstancesSnafu { instance_id })?
+                    .reservations
+                    .and_then(|reservations| {
+                        reservations.first().and_then(|r| {
+                            r.instances.clone().and_then(|instances| {
+                                instances
+                                    .first()
+                                    .and_then(|i| i.private_dns_name().map(|s| s.to_string()))
+                            })
+                        })
+                    })
+                    .filter(|private_dns_name| !private_dns_name.is_empty())
+                    .context(MissingSnafu {
+                        field: "Reservation.Instance.PrivateDNSName",
+                    })
+            },
+        ),
     )
     .await
-    .context(DescribeInstancesTimeoutSnafu)?
-    .context(DescribeInstancesSnafu { instance_id })?
-    .reservations
-    .and_then(|reservations| {
-        reservations.first().and_then(|r| {
-            r.instances.clone().and_then(|instances| {
-                instances
-                    .first()
-                    .and_then(|i| i.private_dns_name().map(|s| s.to_string()))
-            })
-        })
-    })
-    .context(MissingSnafu {
-        field: "Reservation.Instance.PrivateDNSName",
-    })
+    .context(FetchPrivateDnsNameTimeoutSnafu)?
 }
