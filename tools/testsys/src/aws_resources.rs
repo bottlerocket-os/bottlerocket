@@ -207,7 +207,7 @@ pub(crate) async fn ec2_crd<'a>(
     // Add in the EKS specific configuration.
     if cluster_type == ClusterType::Eks {
         ec2_builder
-            .subnet_ids_template(cluster_name, "privateSubnetIds")
+            .subnet_ids_template(cluster_name, "publicSubnetIds")
             .endpoint_template(cluster_name, "endpoint")
             .certificate_template(cluster_name, "certificate")
             .cluster_dns_ip_template(cluster_name, "clusterDnsIp")
@@ -305,7 +305,7 @@ pub(crate) async fn ec2_karpenter_crd<'a>(
         )
         .cluster_name_template(cluster_name, "clusterName")
         .region_template(cluster_name, "region")
-        .subnet_ids_template(cluster_name, "privateSubnetIds")
+        .subnet_ids_template(cluster_name, "publicSubnetIds")
         .endpoint_template(cluster_name, "endpoint")
         .cluster_sg_template(cluster_name, "clustersharedSg")
         .device_mappings(device_mappings)
