@@ -24,6 +24,9 @@ Patch1003: 1003-af_unix-increase-default-max_dgram_qlen-to-512.patch
 Patch2000: 2000-kbuild-move-module-strip-compression-code-into-scrip.patch
 Patch2001: 2001-kbuild-add-support-for-zstd-compressed-modules.patch
 
+# Fixup unused code inherited from AL
+Patch5001: 5001-Revert-netfilter-nf_tables-drop-map-element-referenc.patch
+
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
