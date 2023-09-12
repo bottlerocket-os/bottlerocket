@@ -35,7 +35,7 @@ vm_cpus=4
 force_extract=
 declare -A extra_files=()
 
-boot_image=
+os_image=
 data_image=
 
 
@@ -177,12 +177,12 @@ extract_image() {
 
 prepare_raw_images() {
     local -r image_dir=build/images/${arch}-${variant}/latest
-    local -r compressed_boot_image=${image_dir}/${product_name}-${variant}-${arch}.img.lz4
+    local -r compressed_os_image=${image_dir}/${product_name}-${variant}-${arch}.img.lz4
     local -r compressed_data_image=${image_dir}/${product_name}-${variant}-${arch}-data.img.lz4
 
-    if [[ -e ${compressed_boot_image} ]]; then
-        readonly boot_image=${compressed_boot_image%*.lz4}
-        extract_image "${compressed_boot_image}" "${boot_image}"
+    if [[ -e ${compressed_os_image} ]]; then
+        readonly os_image=${compressed_os_image%*.lz4}
+        extract_image "${compressed_os_image}" "${os_image}"
     else
         bail 'Boot image not found. Did the last build fail?'
     fi
@@ -261,10 +261,10 @@ inject_files() {
     # absence of actual hardware, assume a traditional sector size of 512 bytes.
     local private_first_sector private_last_sector
     read -r private_first_sector private_last_sector < <(
-        fdisk --list-details "${boot_image}" \
+        fdisk --list-details "${os_image}" \
             | awk '/BOTTLEROCKET-PRIVATE/ { print $2, $3 }')
     if [[ -z ${private_first_sector} ]] || [[ -z ${private_last_sector} ]]; then
-        bail "Failed to find the private partition in '${boot_image}'."
+        bail "Failed to find the private partition in '${os_image}'."
     fi
     local private_size_mib=$(( (private_last_sector - private_first_sector + 1) * 512 / 1024 / 1024 ))
 
@@ -279,11 +279,11 @@ inject_files() {
     done
 
     if ! mkfs.ext4 -d "${private_mount}" "${private_image}" "${private_size_mib}M" \
-    || ! dd if="${private_image}" of="${boot_image}" conv=notrunc bs=512 seek="${private_first_sector}"
+    || ! dd if="${private_image}" of="${os_image}" conv=notrunc bs=512 seek="${private_first_sector}"
     then
         rm -f "${private_image}"
         rm -rf "${private_mount}"
-        bail "Failed to inject files into '${boot_image}'."
+        bail "Failed to inject files into '${os_image}'."
     fi
 }
 
@@ -296,7 +296,7 @@ launch_vm() {
         -m "${vm_mem}"
         -drive if=pflash,format=raw,unit=0,file="${firmware_code}",readonly=on
         -drive if=pflash,format=raw,unit=1,file="${firmware_vars}"
-        -drive index=0,if=virtio,format=raw,file="${boot_image}"
+        -drive index=0,if=virtio,format=raw,file="${os_image}"
     )
 
     # Plug the virtual primary NIC in as BDF 00:10.0 so udev will give it a
