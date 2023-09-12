@@ -90,6 +90,7 @@ Requires: %{_cross_os}shimpei
 Requires: %{_cross_os}signpost
 Requires: %{_cross_os}storewolf
 Requires: %{_cross_os}sundog
+Requires: %{_cross_os}xfscli
 Requires: %{_cross_os}thar-be-settings
 Requires: %{_cross_os}thar-be-updates
 Requires: %{_cross_os}updog
@@ -293,6 +294,11 @@ Summary: Compliance check framework
 %description -n %{_cross_os}bloodhound
 %{summary}.
 
+%package -n %{_cross_os}xfscli
+Summary: XFS progs cli
+%description -n %{_cross_os}xfscli
+%{summary}.
+
 %prep
 %setup -T -c
 %cargo_prep
@@ -352,6 +358,7 @@ echo "** Output from non-static builds:"
     -p certdog \
     -p shimpei \
     -p bloodhound \
+    -p xfscli \
     %{?with_ecs_runtime: -p ecs-settings-applier} \
     %{?with_aws_platform: -p shibaken -p cfsignal} \
     %{?with_aws_k8s_family: -p pluto} \
@@ -389,6 +396,14 @@ done
 %if %{with k8s_runtime}
 install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/kubernetes-checks %{buildroot}%{_cross_bindir}
 %endif
+install -d %{buildroot}%{_cross_sbindir}
+for p in \
+  xfs_admin xfs_info \
+; do
+  install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_sbindir}/
+done
+# Rename fsck_xfs binary to fsck.xfs
+install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/fsck_xfs %{buildroot}%{_cross_sbindir}/fsck.xfs
 
 # Add the bloodhound checker symlinks
 mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket
@@ -666,6 +681,12 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %{_cross_bindir}/bloodhound
 %{_cross_bindir}/bottlerocket-checks
 %{_cross_libexecdir}/cis-checks/bottlerocket
+
+%files -n %{_cross_os}xfscli
+%{_cross_sbindir}/xfs_admin
+%{_cross_sbindir}/xfs_info
+%{_cross_sbindir}/fsck.xfs
+
 %if %{with k8s_runtime}
 %{_cross_bindir}/kubernetes-checks
 %{_cross_libexecdir}/cis-checks/kubernetes

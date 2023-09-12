@@ -103,7 +103,9 @@ members = [
 
     "constants",
 
-    "shimpei"
+    "shimpei",
+
+    "xfscli"
 ]
 
 [profile.release]

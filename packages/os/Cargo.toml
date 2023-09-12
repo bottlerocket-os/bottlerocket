@@ -22,6 +22,7 @@ source-groups = [
     "driverdog",
     "cfsignal",
     "bloodhound",
+    "xfscli",
 ]
 package-features = [ "systemd-networkd" ]
 
