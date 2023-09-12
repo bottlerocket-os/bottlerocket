@@ -115,6 +115,14 @@ impl CrdCreator for MetalK8sCreator {
                         what: "A cluster config is required for Bare Metal testing",
                     })?,
             ))
+            .eks_a_release_manifest_url(
+                cluster_input
+                    .crd_input
+                    .config
+                    .dev
+                    .eks_a_release_manifest_url
+                    .clone(),
+            )
             .set_conflicts_with(Some(existing_clusters))
             .destruction_policy(
                 cluster_input
