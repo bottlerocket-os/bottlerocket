@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-6.1
-Version: 6.1.41
+Version: 6.1.49
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/al2023/blobstore/789848dec5baccf864b022af695a2a3ac1ba52392a2b6aa83f19dc07d050df0a/kernel-6.1.41-63.114.amzn2023.src.rpm
+Source0: https://cdn.amazonlinux.com/al2023/blobstore/b7fd4bb92caacd373bbd4cf41dca8c29736bf229c08ef80c59bb6063654d058b/kernel-6.1.49-69.116.amzn2023.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
@@ -24,12 +24,6 @@ Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
 # Drop AL revert of upstream patch to minimize delta. The necessary dependency
 # options for nvidia are instead included through DRM_SIMPLE
 Patch1005: 1005-Revert-Revert-drm-fb_helper-improve-CONFIG_FB-depend.patch
-
-# Cherry-picked fixes for CVE-2023-20588 ("DIV0"). Can be dropped when moving
-# upstream to 6.1.48 or later
-Patch5001: 5001-x86-bugs-Increase-the-x86-bugs-vector-size-to-two-u3.patch
-Patch5002: 5002-x86-CPU-AMD-Do-not-leak-quotient-data-after-a-divisi.patch
-Patch5003: 5003-x86-CPU-AMD-Fix-the-DIV-0-initial-fix-attempt.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel

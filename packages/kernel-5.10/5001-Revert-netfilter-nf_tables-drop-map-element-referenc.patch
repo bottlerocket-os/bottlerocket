@@ -1,0 +1,75 @@
+From e499042e36f6b00fcf68452c2d7bfdcf124203c5 Mon Sep 17 00:00:00 2001
+From: Leonard Foerster <foersleo@amazon.com>
+Date: Mon, 11 Sep 2023 11:17:18 +0000
+Subject: [PATCH] Revert "netfilter: nf_tables: drop map element references
+ from preparation phase"
+
+This reverts commit 9ff6253cea9cf567bc899164405f437212eb59f2.
+
+This reverts an AL downstream patch that is not adding any value and is
+cluttering the patch queue unnecessarily. This seems to have started as
+a downstream backport of the original commit 628bd3e49cba1 introduced
+upstream in v6.4.13, but ended picking up an extra function
+`nft_setelem_validate` which was introduced in d46fc894147cf in v6.3.20.
+That additional patch has not been backported to the 5.10 series as it
+fixes a bug introduced only in 5.13.
+
+When the original patch was introduced in upstream stable 5.10 series as
+a136b7942ad2a in 5.10.188 that single additional function stayed around
+in AL as this patch I am reverting here. The function it adds is never
+referenced in the assembled linux tree, so remove it in an attempy to
+improve our code hygiene.
+
+Letting it stay in would also confuse here, as before this revert we
+have two patches with the same name and same commit message, but
+completely disjunct diffs claiming to be a backport of 628bd3e49cba1.
+
+Signed-off-by: Leonard Foerster <foersleo@amazon.com>
+---
+ net/netfilter/nf_tables_api.c | 30 ------------------------------
+ 1 file changed, 30 deletions(-)
+
+diff --git a/net/netfilter/nf_tables_api.c b/net/netfilter/nf_tables_api.c
+index 96fd4e68973b..2669999d1bc9 100644
+--- a/net/netfilter/nf_tables_api.c
++++ b/net/netfilter/nf_tables_api.c
+@@ -3311,36 +3311,6 @@ static int nft_table_validate(struct net *net, const struct nft_table *table)
+ 	return 0;
+ }
+ 
+-int nft_setelem_validate(const struct nft_ctx *ctx, struct nft_set *set,
+-			 const struct nft_set_iter *iter,
+-			 struct nft_set_elem *elem)
+-{
+-	const struct nft_set_ext *ext = nft_set_elem_ext(set, elem->priv);
+-	struct nft_ctx *pctx = (struct nft_ctx *)ctx;
+-	const struct nft_data *data;
+-	int err;
+-
+-	if (nft_set_ext_exists(ext, NFT_SET_EXT_FLAGS) &&
+-	    *nft_set_ext_flags(ext) & NFT_SET_ELEM_INTERVAL_END)
+-		return 0;
+-
+-	data = nft_set_ext_data(ext);
+-	switch (data->verdict.code) {
+-	case NFT_JUMP:
+-	case NFT_GOTO:
+-		pctx->level++;
+-		err = nft_chain_validate(ctx, data->verdict.chain);
+-		if (err < 0)
+-			return err;
+-		pctx->level--;
+-		break;
+-	default:
+-		break;
+-	}
+-
+-	return 0;
+-}
+-
+ static struct nft_rule *nft_rule_lookup_byid(const struct net *net,
+ 					     const struct nft_chain *chain,
+ 					     const struct nlattr *nla);
+-- 
+2.40.1
+
