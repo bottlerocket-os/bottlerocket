@@ -120,6 +120,14 @@ impl CrdCreator for VmwareK8sCreator {
             .vcenter_resource_pool(&self.datacenter.resource_pool)
             .vcenter_workload_folder(&self.datacenter.folder)
             .mgmt_cluster_kubeconfig_base64(&self.encoded_mgmt_cluster_kubeconfig)
+            .eks_a_release_manifest_url(
+                cluster_input
+                    .crd_input
+                    .config
+                    .dev
+                    .eks_a_release_manifest_url
+                    .clone(),
+            )
             .set_conflicts_with(Some(existing_clusters))
             .destruction_policy(
                 cluster_input
