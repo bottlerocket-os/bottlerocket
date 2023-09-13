@@ -106,6 +106,14 @@ impl CrdCreator for AwsK8sCreator {
 
         let eks_crd = EksClusterConfig::builder()
             .creation_policy(CreationPolicy::IfNotExists)
+            .eks_service_endpoint(
+                cluster_input
+                    .crd_input
+                    .config
+                    .dev
+                    .eks_service_endpoint
+                    .clone(),
+            )
             .assume_role(cluster_input.crd_input.config.agent_role.clone())
             .config(config)
             .image(
