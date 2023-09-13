@@ -1,7 +1,10 @@
 [package]
 name = "testsys"
 version = "0.1.0"
-authors = ["Ethan Pullen <pullenep@amazon.com>", "Matt Briggs <brigmatt@amazon.com>"]
+authors = [
+    "Ethan Pullen <pullenep@amazon.com>",
+    "Matt Briggs <brigmatt@amazon.com>",
+]
 license = "Apache-2.0 OR MIT"
 edition = "2021"
 publish = false
@@ -11,7 +14,7 @@ async-trait = "0.1"
 aws-config = "0.55"
 aws-sdk-ec2 = "0.28"
 base64 = "0.20"
-bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.8", tag = "v0.0.8"}
+bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.9", tag = "v0.0.9" }
 bottlerocket-variant = { version = "0.1", path = "../../sources/bottlerocket-variant" }
 clap = { version = "4", features = ["derive", "env"] }
 env_logger = "0.10"
@@ -19,7 +22,7 @@ futures = "0.3"
 handlebars = "4"
 log = "0.4"
 maplit = "1"
-testsys-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.8", tag = "v0.0.8"}
+testsys-model = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.9", tag = "v0.0.9" }
 pubsys-config = { path = "../pubsys-config/", version = "0.1.0" }
 fastrand = "1"
 serde = { version = "1", features = ["derive"] }
