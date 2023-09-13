@@ -73,6 +73,7 @@ Source1080: runtime.slice
 
 # Drop-in units to override defaults
 Source1100: systemd-tmpfiles-setup-service-debug.conf
+Source1101: systemd-resolved-service-env.conf
 
 # systemd-udevd default link
 Source1200: 80-release.link
@@ -161,6 +162,10 @@ install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 install -p -m 0644 %{S:1100} \
   %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 
+install -d %{buildroot}%{_cross_unitdir}/systemd-resolved.service.d
+install -p -m 0644 %{S:1101} \
+  %{buildroot}%{_cross_unitdir}/systemd-resolved.service.d/00-env.conf
+
 LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/.overlay/lower)
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1020} > ${LOWERPATH}.mount
 install -p -m 0644 ${LOWERPATH}.mount %{buildroot}%{_cross_unitdir}
@@ -242,6 +247,8 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_unitdir}/prepare-local-fs.service
 %{_cross_unitdir}/deprecation-warning@.service
 %{_cross_unitdir}/deprecation-warning@.timer
+%dir %{_cross_unitdir}/systemd-resolved.service.d
+%{_cross_unitdir}/systemd-resolved.service.d/00-env.conf
 %dir %{_cross_unitdir}/systemd-tmpfiles-setup.service.d
 %{_cross_unitdir}/systemd-tmpfiles-setup.service.d/00-debug.conf
 %dir %{_cross_templatedir}
