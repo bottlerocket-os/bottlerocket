@@ -3,19 +3,38 @@ skip_core_tasks = true
 
 [env]
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
-# The build tool, Twoliter, needs to be installed to run a Bottlerocket build.
-# If you need to build in an offline environment, first you should run `cargo
-# make fetch` in an online environment. Subsequently in the offline environment
-# you need to set this to true. `cargo make -e TWOLITER_SKIP_INSTALL=true build`
-TWOLITER_SKIP_INSTALL = "false"
-# TODO - replace with crates.io version when published
-TWOLITER_GIT = "https://github.com/bottlerocket-os/twoliter"
-TWOLITER_REV = "v0.0.2"
+
+# Skip installing Twoliter if it is already installed its version
+# matches the requested version.
+TWOLITER_REUSE_EXISTING_INSTALL="true"
+
+# Allow Twoliter to be installed Twoliter from a binary distribution if binaries
+# are expected to exist for the host OS and architecture.
+TWOLITER_ALLOW_BINARY_INSTALL="true"
+
+# Allow Twoliter to be installed by building from sourcecode.
+TWOLITER_ALLOW_SOURCE_INSTALL="true"
+
+# Where Twoliter will be installed.
+TWOLITER_INSTALL_DIR = "${BUILDSYS_ROOT_DIR}/tools/twoliter"
+
+# For binary installation, this should be a released version (prefixed with a v,
+# for example v0.1.0). For the git sourcecode installation method, this can be
+# any git rev, e.g. a tag, sha, or branch name.
+TWOLITER_VERSION = "v0.0.3"
+
+# For binary installation method, this is GitHub repository that has binary
+# release artifacts attached to it, for example
+# https://github.com/bottlerocket-os/twoliter For git sourcecode installation,
+# this is any URI that can be used in a git clone command.
+TWOLITER_REPO = "https://github.com/bottlerocket-os/twoliter"
+
+# The logging verbosity for Twoliter: error, warn, info, debug, trace
 TWOLITER_LOG_LEVEL = "info"
-TWOLITER_INSTALL_ROOT = "${BUILDSYS_ROOT_DIR}/tools"
-TWOLITER_BIN_DIR = "${TWOLITER_INSTALL_ROOT}/bin"
-TWOLITER = "${TWOLITER_BIN_DIR}/twoliter"
+
+# The project file that configures Twoliter.
 TWOLITER_PROJECT = "${BUILDSYS_ROOT_DIR}/Twoliter.toml"
+
 BUILDSYS_ARCH = { script = ['echo "${BUILDSYS_ARCH:-$(uname -m)}"'] }
 BUILDSYS_BUILD_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_PACKAGES_DIR = "${BUILDSYS_BUILD_DIR}/rpms"
@@ -150,6 +169,8 @@ TESTSYS_TEST_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Test.toml"
 # Certain variables are defined here to allow us to override a component value
 # on the command line.
 
+TWOLITER = "${TWOLITER_INSTALL_DIR}/twoliter"
+
 # Depends on ${BUILDSYS_ARCH}, ${BUILDSYS_REGISTRY}, ${BUILDSYS_SDK_NAME}, and
 # ${BUILDSYS_SDK_VERSION}.
 BUILDSYS_SDK_IMAGE = { script = [ "echo ${BUILDSYS_REGISTRY}/${BUILDSYS_SDK_NAME}-sdk-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
@@ -250,19 +271,25 @@ fi
 script_runner = "bash"
 script = [
 '''
-if [ "${TWOLITER_SKIP_INSTALL}" = "true" ]; then
-   echo "TWOLITER_SKIP_INSTALL=${TWOLITER_SKIP_INSTALL}"
-   echo "Skipping Twoliter installation"
-   exit 0
+declare -a flags
+
+if [ "${TWOLITER_REUSE_EXISTING_INSTALL}" = "true" ]; then
+   flags+=("--reuse-existing-install")
 fi
 
-cargo install \
-  --locked \
-  --root "${TWOLITER_INSTALL_ROOT}" \
-  --quiet \
-  --git "${TWOLITER_GIT}" \
-  --rev "${TWOLITER_REV}" \
-  twoliter
+if [ "${TWOLITER_ALLOW_BINARY_INSTALL}" = "true" ]; then
+   flags+=("--allow-binary-install")
+fi
+
+if [ "${TWOLITER_ALLOW_SOURCE_INSTALL}" = "true" ]; then
+   flags+=("--allow-from-source")
+fi
+
+"${BUILDSYS_TOOLS_DIR}/install-twoliter.sh" \
+  --repo "${TWOLITER_REPO}" \
+  --version "${TWOLITER_VERSION}" \
+  --directory "${TWOLITER_INSTALL_DIR}" \
+  "${flags[@]}"
 '''
 ]
 
@@ -277,6 +304,17 @@ args = [
     "--cargo-home=${CARGO_HOME}",
     "--",
     "${@}",
+]
+
+[tasks.deprecated]
+dependencies = ["install-twoliter"]
+script_runner = "bash"
+script = [
+'''
+echo "The '${CARGO_MAKE_TASK}' task is deprecated."
+echo "All it does is ensure that Twoliter is installed."
+echo "You should do this with 'cargo make install-twoliter' instead.",
+'''
 ]
 
 [tasks.setup]
@@ -326,18 +364,15 @@ run_task = "run-twoliter"
 run_task = "run-twoliter"
 
 [tasks.build-tools]
-run_task = "run-twoliter"
+run_task = "deprecated"
 
 # Note: this is separate from publish-tools because publish-tools takes a while
 # to build and isn't needed to build an image.
 [tasks.publish-setup-tools]
-run_task = "run-twoliter"
-
-[tasks.infra-tools]
-run_task = "run-twoliter"
+run_task = "deprecated"
 
 [tasks.publish-tools]
-run_task = "run-twoliter"
+run_task = "deprecated"
 
 [tasks.build-sbkeys]
 run_task = "run-twoliter"
@@ -370,10 +405,7 @@ run_task = "run-twoliter"
 run_task = "run-twoliter"
 
 [tasks.tuftool]
-run_task = "run-twoliter"
-
-[tasks.create-infra]
-run_task = "run-twoliter"
+run_task = "deprecated"
 
 [tasks.publish-setup]
 run_task = "run-twoliter"
@@ -472,7 +504,7 @@ run_task = "run-twoliter"
 run_task = "run-twoliter"
 
 [tasks.test-tools]
-run_task = "run-twoliter"
+run_task = "deprecated"
 
 [tasks.setup-test]
 run_task = "run-twoliter"
