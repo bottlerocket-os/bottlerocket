@@ -65,15 +65,13 @@ skip = [
 ]
 
 skip-tree = [
-    # hyper-proxy is using an older hyper-rustls
-    { name = "hyper-proxy", version = "=0.9.1" },
     # tungstenite is using an older sha-1
     { name = "tungstenite", version = "=0.16" },
     # windows-sys is not a direct dependency. mio and schannel
     # are using different versions of windows-sys. we skip the
     # dependency tree because windows-sys has many sub-crates
     # that differ in major version.
-    { name = "windows-sys", version = "=0.42.0" },
+    { name = "windows-sys" },
     # generate-readme pulls in an older clap that causes some duplicate
     # dependencies
     { name = "generate-readme", version = "=0.1.0" },

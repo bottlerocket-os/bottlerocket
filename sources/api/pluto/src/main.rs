@@ -35,6 +35,7 @@ mod api;
 mod aws;
 mod ec2;
 mod eks;
+mod hyper_proxy;
 mod proxy;
 
 use imdsclient::ImdsClient;
