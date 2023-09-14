@@ -1,3 +1,120 @@
+# v1.15.0 (2023-09-18)
+
+## Major Features
+
+This release brings support for Secure Boot on platforms using UEFI boot; the Linux 6.1 kernel; systemd-networkd and systemd-resolved for host networking; and XFS as the filesystem for local storage. 
+
+These features are enabled by default in the new variants. Existing variants will continue to use earlier kernels, `wicked` for host networking, and EXT4 as the filesystem for local storage.
+
+## Known Incompatibilities
+
+* Variants using the 6.1 kernel (`aws-ecs-2`/`aws-ecs-2-nvidia`, `aws-k8s-1.28`/`aws-k8s-1.28-nvidia`, `vmware-k8s-1.28`, and `metal-k8s-1.28`) do not support [LustreFS](https://aws.amazon.com/fsx/lustre/) ([#3459])
+
+## Deprecation Notice
+
+The functionality to apply a hotpatch for log4j CVE-2021-44228 has been removed. The corresponding setting, `settings.oci-hooks.log4j-hotpatch-enabled`, is still available for backwards compatibility. However, it has no effect beyond printing a deprecation warning to the system logs. ([#3401])
+
+## OS Changes
+
+* Add kernel 6.1 ([#3121], [#3441])
+* Update admin and control containers ([#3368])
+* Update third party packages and dependencies ([#3362], [#3369], [#3330], [#3339], [#3355], [#3441], [#3456])
+* Updated to systemd 252 ([#3290])
+* Add support for Secure Boot ([#3097])
+* Add support for XFS ([#3198])
+* Add `apiclient report` command ([#3258]) and Bottlerocket CIS benchmark report ([#2881])
+* Add resource-limit settings for OCI defaults ([#3206])
+* Use `systemd-networkd` and `systemd-resolved` instead of `wicked` for `aws-k8s-*`, `aws-ecs-2`, and `*-dev` variants ([#3134], [#3232], [#3266], [#3311], [#3394], [#3395], [#3451], [#3455])
+
+## Orchestrator Changes
+
+### ECS
+
+* Add `aws-ecs-2` variants ([#3273])
+  * Enables Secure Boot, systemd-networkd, and XFS for the data partition
+* Add support for AppMesh ([#3267])
+
+### Kubernetes
+
+* Add Kubernetes 1.28 variants ([#3329])
+  * Enables Secure Boot, systemd-networkd, and XFS for the data partition
+* Drop Kubernetes 1.22 variants ([#2988])
+* Update to Kubernetes 1.27.4 ([#3319])
+* Update to Kubernetes 1.26.7 ([#3320])
+* Update to Kubernetes 1.25.12 ([#3321])
+* Update to Kubernetes 1.24.16 ([#3322])
+* Add support for SeccompDefault setting for k8s 1.25+ ([#3334])
+* Add Kubernetes CIS benchmark report ([#3239])
+
+## Platform Changes
+
+### AWS
+* Retry on empty PrivateDnsName from EC2 ([#3364])
+
+### Metal
+* Enable Intel VMD driver ([#3419])
+* Add linux-firmware ([#3296], [#3418])
+* Add aws-iam-authenticator to k8s variants ([#3357])
+
+## Build Changes
+
+* Upgrade to Bottlerocket SDK v0.34.1 ([#3445])
+* Use [Twoliter] to enable work on [out-of-tree builds]. Most `tools` have moved to [Twoliter] ([#3379], [#3429], [#3392], [#3342])
+* Only limit concurrency while building RPMs ([#3343])
+
+
+[Twoliter]: https://github.com/bottlerocket-os/twoliter
+[out-of-tree builds]: https://github.com/bottlerocket-os/bottlerocket/issues/2669
+[#2881]: https://github.com/bottlerocket-os/bottlerocket/pull/2881
+[#2988]: https://github.com/bottlerocket-os/bottlerocket/pull/2988
+[#3075]: https://github.com/bottlerocket-os/bottlerocket/pull/3075
+[#3097]: https://github.com/bottlerocket-os/bottlerocket/pull/3097
+[#3121]: https://github.com/bottlerocket-os/bottlerocket/pull/3121
+[#3134]: https://github.com/bottlerocket-os/bottlerocket/pull/3134
+[#3198]: https://github.com/bottlerocket-os/bottlerocket/pull/3198
+[#3206]: https://github.com/bottlerocket-os/bottlerocket/pull/3206
+[#3232]: https://github.com/bottlerocket-os/bottlerocket/pull/3232
+[#3239]: https://github.com/bottlerocket-os/bottlerocket/pull/3239
+[#3258]: https://github.com/bottlerocket-os/bottlerocket/pull/3258
+[#3266]: https://github.com/bottlerocket-os/bottlerocket/pull/3266
+[#3267]: https://github.com/bottlerocket-os/bottlerocket/pull/3267
+[#3273]: https://github.com/bottlerocket-os/bottlerocket/pull/3273
+[#3290]: https://github.com/bottlerocket-os/bottlerocket/pull/3290
+[#3296]: https://github.com/bottlerocket-os/bottlerocket/pull/3296
+[#3311]: https://github.com/bottlerocket-os/bottlerocket/pull/3311
+[#3319]: https://github.com/bottlerocket-os/bottlerocket/pull/3319
+[#3320]: https://github.com/bottlerocket-os/bottlerocket/pull/3320
+[#3321]: https://github.com/bottlerocket-os/bottlerocket/pull/3321
+[#3322]: https://github.com/bottlerocket-os/bottlerocket/pull/3322
+[#3329]: https://github.com/bottlerocket-os/bottlerocket/pull/3329
+[#3330]: https://github.com/bottlerocket-os/bottlerocket/pull/3330
+[#3334]: https://github.com/bottlerocket-os/bottlerocket/pull/3334
+[#3339]: https://github.com/bottlerocket-os/bottlerocket/pull/3339
+[#3342]: https://github.com/bottlerocket-os/bottlerocket/pull/3342
+[#3342]: https://github.com/bottlerocket-os/bottlerocket/pull/3342
+[#3343]: https://github.com/bottlerocket-os/bottlerocket/pull/3343
+[#3355]: https://github.com/bottlerocket-os/bottlerocket/pull/3355
+[#3357]: https://github.com/bottlerocket-os/bottlerocket/pull/3357
+[#3362]: https://github.com/bottlerocket-os/bottlerocket/pull/3362
+[#3364]: https://github.com/bottlerocket-os/bottlerocket/pull/3364
+[#3366]: https://github.com/bottlerocket-os/bottlerocket/pull/3366
+[#3368]: https://github.com/bottlerocket-os/bottlerocket/pull/3368
+[#3369]: https://github.com/bottlerocket-os/bottlerocket/pull/3369
+[#3379]: https://github.com/bottlerocket-os/bottlerocket/pull/3379
+[#3392]: https://github.com/bottlerocket-os/bottlerocket/pull/3392
+[#3394]: https://github.com/bottlerocket-os/bottlerocket/pull/3394
+[#3395]: https://github.com/bottlerocket-os/bottlerocket/pull/3395
+[#3401]: https://github.com/bottlerocket-os/bottlerocket/pull/3401
+[#3418]: https://github.com/bottlerocket-os/bottlerocket/pull/3418
+[#3419]: https://github.com/bottlerocket-os/bottlerocket/pull/3419
+[#3429]: https://github.com/bottlerocket-os/bottlerocket/pull/3429
+[#3441]: https://github.com/bottlerocket-os/bottlerocket/pull/3441
+[#3445]: https://github.com/bottlerocket-os/bottlerocket/pull/3445
+[#3451]: https://github.com/bottlerocket-os/bottlerocket/pull/3451
+[#3455]: https://github.com/bottlerocket-os/bottlerocket/pull/3455
+[#3456]: https://github.com/bottlerocket-os/bottlerocket/pull/3456
+[#3459]: https://github.com/bottlerocket-os/bottlerocket/issues/3459
+
 # v1.14.3 (2023-08-10)
 
 ## OS Changes
