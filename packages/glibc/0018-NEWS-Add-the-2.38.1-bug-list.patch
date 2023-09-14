@@ -1,0 +1,37 @@
+From 89da8bc588c2296252543b049bf6d9272321f90d Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Mon, 11 Sep 2023 10:06:15 +0200
+Subject: [PATCH] NEWS: Add the 2.38.1 bug list
+
+---
+ NEWS | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index f1a14f45dd..64596d5d09 100644
+--- a/NEWS
++++ b/NEWS
+@@ -9,7 +9,10 @@ Version 2.38.1
+ 
+ The following bugs are resolved with this release:
+ 
++  [30723] posix_memalign repeatedly scans long bin lists
+   [30785] Always call destructors in reverse constructor order
++  [30804] F_GETLK, F_SETLK, and F_SETLKW value change for powerpc64 with
++    -D_FILE_OFFSET_BITS=64
+ 
+ 
+ Version 2.38
+@@ -139,9 +142,6 @@ The following bugs are resolved with this release:
+   [30555] string: strerror can incorrectly return NULL
+   [30579] malloc: trim_threshold in realloc lead to high memory usage
+   [30662] nscd: Group and password cache use errno in place of errval
+-  [30723] posix_memalign repeatedly scans long bin lists
+-  [30804] F_GETLK, F_SETLK, and F_SETLKW value change for powerpc64 with
+-    -D_FILE_OFFSET_BITS=64
+ 
+ Version 2.37
+ 
+-- 
+2.41.0
+

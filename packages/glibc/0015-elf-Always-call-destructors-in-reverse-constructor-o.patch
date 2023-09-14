@@ -1,0 +1,669 @@
+From a3189f66a5f2fe86568286fa025fa153be04c6c0 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Fri, 8 Sep 2023 12:32:14 +0200
+Subject: [PATCH] elf: Always call destructors in reverse constructor order
+ (bug 30785)
+
+The current implementation of dlclose (and process exit) re-sorts the
+link maps before calling ELF destructors.  Destructor order is not the
+reverse of the constructor order as a result: The second sort takes
+relocation dependencies into account, and other differences can result
+from ambiguous inputs, such as cycles.  (The force_first handling in
+_dl_sort_maps is not effective for dlclose.)  After the changes in
+this commit, there is still a required difference due to
+dlopen/dlclose ordering by the application, but the previous
+discrepancies went beyond that.
+
+A new global (namespace-spanning) list of link maps,
+_dl_init_called_list, is updated right before ELF constructors are
+called from _dl_init.
+
+In dl_close_worker, the maps variable, an on-stack variable length
+array, is eliminated.  (VLAs are problematic, and dlclose should not
+call malloc because it cannot readily deal with malloc failure.)
+Marking still-used objects uses the namespace list directly, with
+next and next_idx replacing the done_index variable.
+
+After marking, _dl_init_called_list is used to call the destructors
+of now-unused maps in reverse destructor order.  These destructors
+can call dlopen.  Previously, new objects do not have l_map_used set.
+This had to change: There is no copy of the link map list anymore,
+so processing would cover newly opened (and unmarked) mappings,
+unloading them.  Now, _dl_init (indirectly) sets l_map_used, too.
+(dlclose is handled by the existing reentrancy guard.)
+
+After _dl_init_called_list traversal, two more loops follow.  The
+processing order changes to the original link map order in the
+namespace.  Previously, dependency order was used.  The difference
+should not matter because relocation dependencies could already
+reorder link maps in the old code.
+
+The changes to _dl_fini remove the sorting step and replace it with
+a traversal of _dl_init_called_list.  The l_direct_opencount
+decrement outside the loader lock is removed because it appears
+incorrect: the counter manipulation could race with other dynamic
+loader operations.
+
+tst-audit23 needs adjustments to the changes in LA_ACT_DELETE
+notifications.  The new approach for checking la_activity should
+make it clearer that la_activty calls come in pairs around namespace
+updates.
+
+The dependency sorting test cases need updates because the destructor
+order is always the opposite order of constructor order, even with
+relocation dependencies or cycles present.
+
+There is a future cleanup opportunity to remove the now-constant
+force_first and for_fini arguments from the _dl_sort_maps function.
+
+Fixes commit 1df71d32fe5f5905ffd5d100e5e9ca8ad62 ("elf: Implement
+force_first handling in _dl_sort_maps_dfs (bug 28937)").
+
+Reviewed-by: DJ Delorie <dj@redhat.com>
+(cherry picked from commit 6985865bc3ad5b23147ee73466583dd7fdf65892)
+---
+ NEWS                       |   7 ++
+ elf/dl-close.c             | 113 +++++++++++++++++----------
+ elf/dl-fini.c              | 152 +++++++++++++------------------------
+ elf/dl-init.c              |  16 ++++
+ elf/dso-sort-tests-1.def   |  19 ++---
+ elf/tst-audit23.c          |  44 ++++++-----
+ include/link.h             |   4 +
+ sysdeps/generic/ldsodefs.h |   4 +
+ 8 files changed, 186 insertions(+), 173 deletions(-)
+
+diff --git a/NEWS b/NEWS
+index 8156572cdf..f1a14f45dd 100644
+--- a/NEWS
++++ b/NEWS
+@@ -4,6 +4,13 @@ See the end for copying conditions.
+ 
+ Please send GNU C library bug reports via <https://sourceware.org/bugzilla/>
+ using `glibc' in the "product" field.
++
++Version 2.38.1
++
++The following bugs are resolved with this release:
++
++  [30785] Always call destructors in reverse constructor order
++
+ 
+ Version 2.38
+ 
+diff --git a/elf/dl-close.c b/elf/dl-close.c
+index b887a44888..ea62d0e601 100644
+--- a/elf/dl-close.c
++++ b/elf/dl-close.c
+@@ -138,30 +138,31 @@ _dl_close_worker (struct link_map *map, bool force)
+ 
+   bool any_tls = false;
+   const unsigned int nloaded = ns->_ns_nloaded;
+-  struct link_map *maps[nloaded];
+ 
+-  /* Run over the list and assign indexes to the link maps and enter
+-     them into the MAPS array.  */
++  /* Run over the list and assign indexes to the link maps.  */
+   int idx = 0;
+   for (struct link_map *l = ns->_ns_loaded; l != NULL; l = l->l_next)
+     {
+       l->l_map_used = 0;
+       l->l_map_done = 0;
+       l->l_idx = idx;
+-      maps[idx] = l;
+       ++idx;
+     }
+   assert (idx == nloaded);
+ 
+-  /* Keep track of the lowest index link map we have covered already.  */
+-  int done_index = -1;
+-  while (++done_index < nloaded)
++  /* Keep marking link maps until no new link maps are found.  */
++  for (struct link_map *l = ns->_ns_loaded; l != NULL; )
+     {
+-      struct link_map *l = maps[done_index];
++      /* next is reset to earlier link maps for remarking.  */
++      struct link_map *next = l->l_next;
++      int next_idx = l->l_idx + 1; /* next->l_idx, but covers next == NULL.  */
+ 
+       if (l->l_map_done)
+-	/* Already handled.  */
+-	continue;
++	{
++	  /* Already handled.  */
++	  l = next;
++	  continue;
++	}
+ 
+       /* Check whether this object is still used.  */
+       if (l->l_type == lt_loaded
+@@ -171,7 +172,10 @@ _dl_close_worker (struct link_map *map, bool force)
+ 	     acquire is sufficient and correct.  */
+ 	  && atomic_load_acquire (&l->l_tls_dtor_count) == 0
+ 	  && !l->l_map_used)
+-	continue;
++	{
++	  l = next;
++	  continue;
++	}
+ 
+       /* We need this object and we handle it now.  */
+       l->l_map_used = 1;
+@@ -198,8 +202,11 @@ _dl_close_worker (struct link_map *map, bool force)
+ 			 already processed it, then we need to go back
+ 			 and process again from that point forward to
+ 			 ensure we keep all of its dependencies also.  */
+-		      if ((*lp)->l_idx - 1 < done_index)
+-			done_index = (*lp)->l_idx - 1;
++		      if ((*lp)->l_idx < next_idx)
++			{
++			  next = *lp;
++			  next_idx = next->l_idx;
++			}
+ 		    }
+ 		}
+ 
+@@ -219,44 +226,65 @@ _dl_close_worker (struct link_map *map, bool force)
+ 		if (!jmap->l_map_used)
+ 		  {
+ 		    jmap->l_map_used = 1;
+-		    if (jmap->l_idx - 1 < done_index)
+-		      done_index = jmap->l_idx - 1;
++		    if (jmap->l_idx < next_idx)
++		      {
++			  next = jmap;
++			  next_idx = next->l_idx;
++		      }
+ 		  }
+ 	      }
+ 	  }
+-    }
+ 
+-  /* Sort the entries.  We can skip looking for the binary itself which is
+-     at the front of the search list for the main namespace.  */
+-  _dl_sort_maps (maps, nloaded, (nsid == LM_ID_BASE), true);
++      l = next;
++    }
+ 
+-  /* Call all termination functions at once.  */
+-  bool unload_any = false;
+-  bool scope_mem_left = false;
+-  unsigned int unload_global = 0;
+-  unsigned int first_loaded = ~0;
+-  for (unsigned int i = 0; i < nloaded; ++i)
++  /* Call the destructors in reverse constructor order, and remove the
++     closed link maps from the list.  */
++  for (struct link_map **init_called_head = &_dl_init_called_list;
++       *init_called_head != NULL; )
+     {
+-      struct link_map *imap = maps[i];
++      struct link_map *imap = *init_called_head;
+ 
+-      /* All elements must be in the same namespace.  */
+-      assert (imap->l_ns == nsid);
+-
+-      if (!imap->l_map_used)
++      /* _dl_init_called_list is global, to produce a global odering.
++	 Ignore the other namespaces (and link maps that are still used).  */
++      if (imap->l_ns != nsid || imap->l_map_used)
++	init_called_head = &imap->l_init_called_next;
++      else
+ 	{
+ 	  assert (imap->l_type == lt_loaded && !imap->l_nodelete_active);
+ 
+-	  /* Call its termination function.  Do not do it for
+-	     half-cooked objects.  Temporarily disable exception
+-	     handling, so that errors are fatal.  */
+-	  if (imap->l_init_called)
++	  /* _dl_init_called_list is updated at the same time as
++	     l_init_called.  */
++	  assert (imap->l_init_called);
++
++	  if (imap->l_info[DT_FINI_ARRAY] != NULL
++	      || imap->l_info[DT_FINI] != NULL)
+ 	    _dl_catch_exception (NULL, _dl_call_fini, imap);
+ 
+ #ifdef SHARED
+ 	  /* Auditing checkpoint: we remove an object.  */
+ 	  _dl_audit_objclose (imap);
+ #endif
++	  /* Unlink this link map.  */
++	  *init_called_head = imap->l_init_called_next;
++	}
++    }
++
++
++  bool unload_any = false;
++  bool scope_mem_left = false;
++  unsigned int unload_global = 0;
++
++  /* For skipping un-unloadable link maps in the second loop.  */
++  struct link_map *first_loaded = ns->_ns_loaded;
+ 
++  /* Iterate over the namespace to find objects to unload.  Some
++     unloadable objects may not be on _dl_init_called_list due to
++     dlopen failure.  */
++  for (struct link_map *imap = first_loaded; imap != NULL; imap = imap->l_next)
++    {
++      if (!imap->l_map_used)
++	{
+ 	  /* This object must not be used anymore.  */
+ 	  imap->l_removed = 1;
+ 
+@@ -267,8 +295,8 @@ _dl_close_worker (struct link_map *map, bool force)
+ 	    ++unload_global;
+ 
+ 	  /* Remember where the first dynamically loaded object is.  */
+-	  if (i < first_loaded)
+-	    first_loaded = i;
++	  if (first_loaded == NULL)
++	      first_loaded = imap;
+ 	}
+       /* Else imap->l_map_used.  */
+       else if (imap->l_type == lt_loaded)
+@@ -404,8 +432,8 @@ _dl_close_worker (struct link_map *map, bool force)
+ 	    imap->l_loader = NULL;
+ 
+ 	  /* Remember where the first dynamically loaded object is.  */
+-	  if (i < first_loaded)
+-	    first_loaded = i;
++	  if (first_loaded == NULL)
++	      first_loaded = imap;
+ 	}
+     }
+ 
+@@ -476,10 +504,11 @@ _dl_close_worker (struct link_map *map, bool force)
+ 
+   /* Check each element of the search list to see if all references to
+      it are gone.  */
+-  for (unsigned int i = first_loaded; i < nloaded; ++i)
++  for (struct link_map *imap = first_loaded; imap != NULL; )
+     {
+-      struct link_map *imap = maps[i];
+-      if (!imap->l_map_used)
++      if (imap->l_map_used)
++	imap = imap->l_next;
++      else
+ 	{
+ 	  assert (imap->l_type == lt_loaded);
+ 
+@@ -690,7 +719,9 @@ _dl_close_worker (struct link_map *map, bool force)
+ 	  if (imap == GL(dl_initfirst))
+ 	    GL(dl_initfirst) = NULL;
+ 
++	  struct link_map *next = imap->l_next;
+ 	  free (imap);
++	  imap = next;
+ 	}
+     }
+ 
+diff --git a/elf/dl-fini.c b/elf/dl-fini.c
+index 9acb64f47c..e201d36651 100644
+--- a/elf/dl-fini.c
++++ b/elf/dl-fini.c
+@@ -24,116 +24,68 @@
+ void
+ _dl_fini (void)
+ {
+-  /* Lots of fun ahead.  We have to call the destructors for all still
+-     loaded objects, in all namespaces.  The problem is that the ELF
+-     specification now demands that dependencies between the modules
+-     are taken into account.  I.e., the destructor for a module is
+-     called before the ones for any of its dependencies.
+-
+-     To make things more complicated, we cannot simply use the reverse
+-     order of the constructors.  Since the user might have loaded objects
+-     using `dlopen' there are possibly several other modules with its
+-     dependencies to be taken into account.  Therefore we have to start
+-     determining the order of the modules once again from the beginning.  */
+-
+-  /* We run the destructors of the main namespaces last.  As for the
+-     other namespaces, we pick run the destructors in them in reverse
+-     order of the namespace ID.  */
+-#ifdef SHARED
+-  int do_audit = 0;
+- again:
+-#endif
+-  for (Lmid_t ns = GL(dl_nns) - 1; ns >= 0; --ns)
+-    {
+-      /* Protect against concurrent loads and unloads.  */
+-      __rtld_lock_lock_recursive (GL(dl_load_lock));
+-
+-      unsigned int nloaded = GL(dl_ns)[ns]._ns_nloaded;
+-      /* No need to do anything for empty namespaces or those used for
+-	 auditing DSOs.  */
+-      if (nloaded == 0
+-#ifdef SHARED
+-	  || GL(dl_ns)[ns]._ns_loaded->l_auditing != do_audit
+-#endif
+-	  )
+-	__rtld_lock_unlock_recursive (GL(dl_load_lock));
+-      else
+-	{
++  /* Call destructors strictly in the reverse order of constructors.
++     This causes fewer surprises than some arbitrary reordering based
++     on new (relocation) dependencies.  None of the objects are
++     unmapped, so applications can deal with this if their DSOs remain
++     in a consistent state after destructors have run.  */
++
++  /* Protect against concurrent loads and unloads.  */
++  __rtld_lock_lock_recursive (GL(dl_load_lock));
++
++  /* Ignore objects which are opened during shutdown.  */
++  struct link_map *local_init_called_list = _dl_init_called_list;
++
++  for (struct link_map *l = local_init_called_list; l != NULL;
++       l = l->l_init_called_next)
++      /* Bump l_direct_opencount of all objects so that they
++	 are not dlclose()ed from underneath us.  */
++      ++l->l_direct_opencount;
++
++  /* After this point, everything linked from local_init_called_list
++     cannot be unloaded because of the reference counter update.  */
++  __rtld_lock_unlock_recursive (GL(dl_load_lock));
++
++  /* Perform two passes: One for non-audit modules, one for audit
++     modules.  This way, audit modules receive unload notifications
++     for non-audit objects, and the destructors for audit modules
++     still run.  */
+ #ifdef SHARED
+-	  _dl_audit_activity_nsid (ns, LA_ACT_DELETE);
++  int last_pass = GLRO(dl_naudit) > 0;
++  Lmid_t last_ns = -1;
++  for (int do_audit = 0; do_audit <= last_pass; ++do_audit)
+ #endif
+-
+-	  /* Now we can allocate an array to hold all the pointers and
+-	     copy the pointers in.  */
+-	  struct link_map *maps[nloaded];
+-
+-	  unsigned int i;
+-	  struct link_map *l;
+-	  assert (nloaded != 0 || GL(dl_ns)[ns]._ns_loaded == NULL);
+-	  for (l = GL(dl_ns)[ns]._ns_loaded, i = 0; l != NULL; l = l->l_next)
+-	    /* Do not handle ld.so in secondary namespaces.  */
+-	    if (l == l->l_real)
+-	      {
+-		assert (i < nloaded);
+-
+-		maps[i] = l;
+-		l->l_idx = i;
+-		++i;
+-
+-		/* Bump l_direct_opencount of all objects so that they
+-		   are not dlclose()ed from underneath us.  */
+-		++l->l_direct_opencount;
+-	      }
+-	  assert (ns != LM_ID_BASE || i == nloaded);
+-	  assert (ns == LM_ID_BASE || i == nloaded || i == nloaded - 1);
+-	  unsigned int nmaps = i;
+-
+-	  /* Now we have to do the sorting.  We can skip looking for the
+-	     binary itself which is at the front of the search list for
+-	     the main namespace.  */
+-	  _dl_sort_maps (maps, nmaps, (ns == LM_ID_BASE), true);
+-
+-	  /* We do not rely on the linked list of loaded object anymore
+-	     from this point on.  We have our own list here (maps).  The
+-	     various members of this list cannot vanish since the open
+-	     count is too high and will be decremented in this loop.  So
+-	     we release the lock so that some code which might be called
+-	     from a destructor can directly or indirectly access the
+-	     lock.  */
+-	  __rtld_lock_unlock_recursive (GL(dl_load_lock));
+-
+-	  /* 'maps' now contains the objects in the right order.  Now
+-	     call the destructors.  We have to process this array from
+-	     the front.  */
+-	  for (i = 0; i < nmaps; ++i)
+-	    {
+-	      struct link_map *l = maps[i];
+-
+-	      if (l->l_init_called)
+-		{
+-		  _dl_call_fini (l);
++    for (struct link_map *l = local_init_called_list; l != NULL;
++	 l = l->l_init_called_next)
++      {
+ #ifdef SHARED
+-		  /* Auditing checkpoint: another object closed.  */
+-		  _dl_audit_objclose (l);
++	if (GL(dl_ns)[l->l_ns]._ns_loaded->l_auditing != do_audit)
++	  continue;
++
++	/* Avoid back-to-back calls of _dl_audit_activity_nsid for the
++	   same namespace.  */
++	if (last_ns != l->l_ns)
++	  {
++	    if (last_ns >= 0)
++	      _dl_audit_activity_nsid (last_ns, LA_ACT_CONSISTENT);
++	    _dl_audit_activity_nsid (l->l_ns, LA_ACT_DELETE);
++	    last_ns = l->l_ns;
++	  }
+ #endif
+-		}
+ 
+-	      /* Correct the previous increment.  */
+-	      --l->l_direct_opencount;
+-	    }
++	/* There is no need to re-enable exceptions because _dl_fini
++	   is not called from a context where exceptions are caught.  */
++	_dl_call_fini (l);
+ 
+ #ifdef SHARED
+-	  _dl_audit_activity_nsid (ns, LA_ACT_CONSISTENT);
++	/* Auditing checkpoint: another object closed.  */
++	_dl_audit_objclose (l);
+ #endif
+-	}
+-    }
++      }
+ 
+ #ifdef SHARED
+-  if (! do_audit && GLRO(dl_naudit) > 0)
+-    {
+-      do_audit = 1;
+-      goto again;
+-    }
++  if (last_ns >= 0)
++    _dl_audit_activity_nsid (last_ns, LA_ACT_CONSISTENT);
+ 
+   if (__glibc_unlikely (GLRO(dl_debug_mask) & DL_DEBUG_STATISTICS))
+     _dl_debug_printf ("\nruntime linker statistics:\n"
+diff --git a/elf/dl-init.c b/elf/dl-init.c
+index ba4d2fdc85..ffd05b7806 100644
+--- a/elf/dl-init.c
++++ b/elf/dl-init.c
+@@ -21,6 +21,7 @@
+ #include <ldsodefs.h>
+ #include <elf-initfini.h>
+ 
++struct link_map *_dl_init_called_list;
+ 
+ static void
+ call_init (struct link_map *l, int argc, char **argv, char **env)
+@@ -42,6 +43,21 @@ call_init (struct link_map *l, int argc, char **argv, char **env)
+      dependency.  */
+   l->l_init_called = 1;
+ 
++  /* Help an already-running dlclose: The just-loaded object must not
++     be removed during the current pass.  (No effect if no dlclose in
++     progress.)  */
++  l->l_map_used = 1;
++
++  /* Record execution before starting any initializers.  This way, if
++     the initializers themselves call dlopen, their ELF destructors
++     will eventually be run before this object is destructed, matching
++     that their ELF constructors have run before this object was
++     constructed.  _dl_fini uses this list for audit callbacks, so
++     register objects on the list even if they do not have a
++     constructor.  */
++  l->l_init_called_next = _dl_init_called_list;
++  _dl_init_called_list = l;
++
+   /* Check for object which constructors we do not run here.  */
+   if (__builtin_expect (l->l_name[0], 'a') == '\0'
+       && l->l_type == lt_executable)
+diff --git a/elf/dso-sort-tests-1.def b/elf/dso-sort-tests-1.def
+index 4bf9052db1..61dc54f8ae 100644
+--- a/elf/dso-sort-tests-1.def
++++ b/elf/dso-sort-tests-1.def
+@@ -53,21 +53,14 @@ tst-dso-ordering10: {}->a->b->c;soname({})=c
+ output: b>a>{}<a<b
+ 
+ # Complex example from Bugzilla #15311, under-linked and with circular
+-# relocation(dynamic) dependencies. While this is technically unspecified, the
+-# presumed reasonable practical behavior is for the destructor order to respect
+-# the static DT_NEEDED links (here this means the a->b->c->d order).
+-# The older dynamic_sort=1 algorithm does not achieve this, while the DFS-based
+-# dynamic_sort=2 algorithm does, although it is still arguable whether going
+-# beyond spec to do this is the right thing to do.
+-# The below expected outputs are what the two algorithms currently produce
+-# respectively, for regression testing purposes.
++# relocation(dynamic) dependencies. For both sorting algorithms, the
++# destruction order is the reverse of the construction order, and
++# relocation dependencies are not taken into account.
+ tst-bz15311: {+a;+e;+f;+g;+d;%d;-d;-g;-f;-e;-a};a->b->c->d;d=>[ba];c=>a;b=>e=>a;c=>f=>b;d=>g=>c
+-output(glibc.rtld.dynamic_sort=1): {+a[d>c>b>a>];+e[e>];+f[f>];+g[g>];+d[];%d(b(e(a()))a()g(c(a()f(b(e(a()))))));-d[];-g[];-f[];-e[];-a[<a<c<d<g<f<b<e];}
+-output(glibc.rtld.dynamic_sort=2): {+a[d>c>b>a>];+e[e>];+f[f>];+g[g>];+d[];%d(b(e(a()))a()g(c(a()f(b(e(a()))))));-d[];-g[];-f[];-e[];-a[<g<f<a<b<c<d<e];}
++output: {+a[d>c>b>a>];+e[e>];+f[f>];+g[g>];+d[];%d(b(e(a()))a()g(c(a()f(b(e(a()))))));-d[];-g[];-f[];-e[];-a[<g<f<e<a<b<c<d];}
+ 
+ # Test that even in the presence of dependency loops involving dlopen'ed
+ # object, that object is initialized last (and not unloaded prematurely).
+-# Final destructor order is indeterminate due to the cycle.
++# Final destructor order is the opposite of constructor order.
+ tst-bz28937: {+a;+b;-b;+c;%c};a->a1;a->a2;a2->a;b->b1;c->a1;c=>a1
+-output(glibc.rtld.dynamic_sort=1): {+a[a2>a1>a>];+b[b1>b>];-b[<b<b1];+c[c>];%c(a1());}<a<a2<c<a1
+-output(glibc.rtld.dynamic_sort=2): {+a[a2>a1>a>];+b[b1>b>];-b[<b<b1];+c[c>];%c(a1());}<a2<a<c<a1
++output: {+a[a2>a1>a>];+b[b1>b>];-b[<b<b1];+c[c>];%c(a1());}<c<a<a1<a2
+diff --git a/elf/tst-audit23.c b/elf/tst-audit23.c
+index bb7d66c385..503699c36a 100644
+--- a/elf/tst-audit23.c
++++ b/elf/tst-audit23.c
+@@ -98,6 +98,8 @@ do_test (int argc, char *argv[])
+     char *lname;
+     uintptr_t laddr;
+     Lmid_t lmid;
++    uintptr_t cookie;
++    uintptr_t namespace;
+     bool closed;
+   } objs[max_objs] = { [0 ... max_objs-1] = { .closed = false } };
+   size_t nobjs = 0;
+@@ -117,6 +119,9 @@ do_test (int argc, char *argv[])
+   size_t buffer_length = 0;
+   while (xgetline (&buffer, &buffer_length, out))
+     {
++      *strchrnul (buffer, '\n') = '\0';
++      printf ("info: subprocess output: %s\n", buffer);
++
+       if (startswith (buffer, "la_activity: "))
+ 	{
+ 	  uintptr_t cookie;
+@@ -125,29 +130,26 @@ do_test (int argc, char *argv[])
+ 			  &cookie);
+ 	  TEST_COMPARE (r, 2);
+ 
+-	  /* The cookie identifies the object at the head of the link map,
+-	     so we only add a new namespace if it changes from the previous
+-	     one.  This works since dlmopen is the last in the test body.  */
+-	  if (cookie != last_act_cookie && last_act_cookie != -1)
+-	    TEST_COMPARE (last_act, LA_ACT_CONSISTENT);
+-
+ 	  if (this_act == LA_ACT_ADD && acts[nacts] != cookie)
+ 	    {
++	      /* The cookie identifies the object at the head of the
++		 link map, so we only add a new namespace if it
++		 changes from the previous one.  This works since
++		 dlmopen is the last in the test body.  */
++	      if (cookie != last_act_cookie && last_act_cookie != -1)
++		TEST_COMPARE (last_act, LA_ACT_CONSISTENT);
++
+ 	      acts[nacts++] = cookie;
+ 	      last_act_cookie = cookie;
+ 	    }
+-	  /* The LA_ACT_DELETE is called in the reverse order of LA_ACT_ADD
+-	     at program termination (if the tests adds a dlclose or a library
+-	     with extra dependencies this will need to be adapted).  */
++	  /* LA_ACT_DELETE is called multiple times for each
++	     namespace, depending on destruction order.  */
+ 	  else if (this_act == LA_ACT_DELETE)
+-	    {
+-	      last_act_cookie = acts[--nacts];
+-	      TEST_COMPARE (acts[nacts], cookie);
+-	      acts[nacts] = 0;
+-	    }
++	    last_act_cookie = cookie;
+ 	  else if (this_act == LA_ACT_CONSISTENT)
+ 	    {
+ 	      TEST_COMPARE (cookie, last_act_cookie);
++	      last_act_cookie = -1;
+ 
+ 	      /* LA_ACT_DELETE must always be followed by an la_objclose.  */
+ 	      if (last_act == LA_ACT_DELETE)
+@@ -179,6 +181,8 @@ do_test (int argc, char *argv[])
+ 	  objs[nobjs].lname = lname;
+ 	  objs[nobjs].laddr = laddr;
+ 	  objs[nobjs].lmid = lmid;
++	  objs[nobjs].cookie = cookie;
++	  objs[nobjs].namespace = last_act_cookie;
+ 	  objs[nobjs].closed = false;
+ 	  nobjs++;
+ 
+@@ -201,6 +205,12 @@ do_test (int argc, char *argv[])
+ 	      if (strcmp (lname, objs[i].lname) == 0 && lmid == objs[i].lmid)
+ 		{
+ 		  TEST_COMPARE (objs[i].closed, false);
++		  TEST_COMPARE (objs[i].cookie, cookie);
++		  if (objs[i].namespace == -1)
++		    /* No LA_ACT_ADD before the first la_objopen call.  */
++		    TEST_COMPARE (acts[0], last_act_cookie);
++		  else
++		    TEST_COMPARE (objs[i].namespace, last_act_cookie);
+ 		  objs[i].closed = true;
+ 		  break;
+ 		}
+@@ -209,11 +219,7 @@ do_test (int argc, char *argv[])
+ 	  /* la_objclose should be called after la_activity(LA_ACT_DELETE) for
+ 	     the closed object's namespace.  */
+ 	  TEST_COMPARE (last_act, LA_ACT_DELETE);
+-	  if (!seen_first_objclose)
+-	    {
+-	      TEST_COMPARE (last_act_cookie, cookie);
+-	      seen_first_objclose = true;
+-	    }
++	  seen_first_objclose = true;
+ 	}
+     }
+ 
+diff --git a/include/link.h b/include/link.h
+index 1d74feb2bd..69bda3ed17 100644
+--- a/include/link.h
++++ b/include/link.h
+@@ -278,6 +278,10 @@ struct link_map
+     /* List of object in order of the init and fini calls.  */
+     struct link_map **l_initfini;
+ 
++    /* Linked list of objects in reverse ELF constructor execution
++       order.  Head of list is stored in _dl_init_called_list.  */
++    struct link_map *l_init_called_next;
++
+     /* List of the dependencies introduced through symbol binding.  */
+     struct link_map_reldeps
+       {
+diff --git a/sysdeps/generic/ldsodefs.h b/sysdeps/generic/ldsodefs.h
+index e8b7359b04..9ea9389a39 100644
+--- a/sysdeps/generic/ldsodefs.h
++++ b/sysdeps/generic/ldsodefs.h
+@@ -1037,6 +1037,10 @@ extern int _dl_check_map_versions (struct link_map *map, int verbose,
+ extern void _dl_init (struct link_map *main_map, int argc, char **argv,
+ 		      char **env) attribute_hidden;
+ 
++/* List of ELF objects in reverse order of their constructor
++   invocation.  */
++extern struct link_map *_dl_init_called_list attribute_hidden;
++
+ /* Call the finalizer functions of all shared objects whose
+    initializer functions have completed.  */
+ extern void _dl_fini (void) attribute_hidden;
+-- 
+2.41.0
+

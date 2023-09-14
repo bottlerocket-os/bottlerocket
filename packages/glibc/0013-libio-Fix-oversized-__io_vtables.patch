@@ -1,0 +1,51 @@
+From 92201f16cbcfd9eafe314ef6654be2ea7ba25675 Mon Sep 17 00:00:00 2001
+From: Adam Jackson <ajax@redhat.com>
+Date: Fri, 8 Sep 2023 15:55:19 -0400
+Subject: [PATCH] libio: Fix oversized __io_vtables
+
+IO_VTABLES_LEN is the size of the struct array in bytes, not the number
+of __IO_jump_t's in the array. Drops just under 384kb from .rodata on
+LP64 machines.
+
+Fixes: 3020f72618e ("libio: Remove the usage of __libc_IO_vtables")
+Signed-off-by: Adam Jackson <ajax@redhat.com>
+Reviewed-by: Florian Weimer <fweimer@redhat.com>
+Tested-by: Florian Weimer <fweimer@redhat.com>
+(cherry picked from commit 8cb69e054386f980f9ff4d93b157861d72b2019e)
+---
+ libio/vtables.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/libio/vtables.c b/libio/vtables.c
+index 1d8ad612e9..34f7e15f1c 100644
+--- a/libio/vtables.c
++++ b/libio/vtables.c
+@@ -20,6 +20,7 @@
+ #include <libioP.h>
+ #include <stdio.h>
+ #include <ldsodefs.h>
++#include <array_length.h>
+ #include <pointer_guard.h>
+ #include <libio-macros.h>
+ 
+@@ -88,7 +89,7 @@
+ # pragma weak __wprintf_buffer_as_file_xsputn
+ #endif
+ 
+-const struct _IO_jump_t __io_vtables[IO_VTABLES_LEN] attribute_relro =
++const struct _IO_jump_t __io_vtables[] attribute_relro =
+ {
+   /* _IO_str_jumps  */
+   [IO_STR_JUMPS] =
+@@ -485,6 +486,8 @@ const struct _IO_jump_t __io_vtables[IO_VTABLES_LEN] attribute_relro =
+   },
+ #endif
+ };
++_Static_assert (array_length (__io_vtables) == IO_VTABLES_NUM,
++                "initializer count");
+ 
+ #ifdef SHARED
+ 
+-- 
+2.41.0
+

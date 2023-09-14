@@ -1,0 +1,91 @@
+From 5bdef6f27c91f45505ed5444147be4ed0e9bc3c7 Mon Sep 17 00:00:00 2001
+From: Aurelien Jarno <aurelien@aurel32.net>
+Date: Mon, 28 Aug 2023 23:30:37 +0200
+Subject: [PATCH] io: Fix record locking contants for powerpc64 with
+ __USE_FILE_OFFSET64
+
+Commit 5f828ff824e3b7cd1 ("io: Fix F_GETLK, F_SETLK, and F_SETLKW for
+powerpc64") fixed an issue with the value of the lock constants on
+powerpc64 when not using __USE_FILE_OFFSET64, but it ended-up also
+changing the value when using __USE_FILE_OFFSET64 causing an API change.
+
+Fix that by also checking that define, restoring the pre
+4d0fe291aed3a476a commit values:
+
+Default values:
+- F_GETLK: 5
+- F_SETLK: 6
+- F_SETLKW: 7
+
+With -D_FILE_OFFSET_BITS=64:
+- F_GETLK: 12
+- F_SETLK: 13
+- F_SETLKW: 14
+
+At the same time, it has been noticed that there was no test for io lock
+with __USE_FILE_OFFSET64, so just add one.
+
+Tested on x86_64-linux-gnu, i686-linux-gnu and
+powerpc64le-unknown-linux-gnu.
+
+Resolves: BZ #30804.
+Co-authored-by: Adhemerval Zanella  <adhemerval.zanella@linaro.org>
+Signed-off-by: Aurelien Jarno <aurelien@aurel32.net>
+(cherry picked from commit 434bf72a94de68f0cc7fbf3c44bf38c1911b70cb)
+---
+ NEWS                                         | 2 ++
+ io/Makefile                                  | 1 +
+ io/tst-fcntl-lock-lfs.c                      | 2 ++
+ sysdeps/unix/sysv/linux/powerpc/bits/fcntl.h | 2 +-
+ 4 files changed, 6 insertions(+), 1 deletion(-)
+ create mode 100644 io/tst-fcntl-lock-lfs.c
+
+diff --git a/NEWS b/NEWS
+index c339cb444e..8156572cdf 100644
+--- a/NEWS
++++ b/NEWS
+@@ -133,6 +133,8 @@ The following bugs are resolved with this release:
+   [30579] malloc: trim_threshold in realloc lead to high memory usage
+   [30662] nscd: Group and password cache use errno in place of errval
+   [30723] posix_memalign repeatedly scans long bin lists
++  [30804] F_GETLK, F_SETLK, and F_SETLKW value change for powerpc64 with
++    -D_FILE_OFFSET_BITS=64
+ 
+ Version 2.37
+ 
+diff --git a/io/Makefile b/io/Makefile
+index 6ccc0e8691..8a3c83a3bb 100644
+--- a/io/Makefile
++++ b/io/Makefile
+@@ -192,6 +192,7 @@ tests := \
+   tst-fchownat \
+   tst-fcntl \
+   tst-fcntl-lock \
++  tst-fcntl-lock-lfs \
+   tst-fstatat \
+   tst-fts \
+   tst-fts-lfs \
+diff --git a/io/tst-fcntl-lock-lfs.c b/io/tst-fcntl-lock-lfs.c
+new file mode 100644
+index 0000000000..f2a909fb02
+--- /dev/null
++++ b/io/tst-fcntl-lock-lfs.c
+@@ -0,0 +1,2 @@
++#define _FILE_OFFSET_BITS 64
++#include <io/tst-fcntl-lock.c>
+diff --git a/sysdeps/unix/sysv/linux/powerpc/bits/fcntl.h b/sysdeps/unix/sysv/linux/powerpc/bits/fcntl.h
+index f7615a447e..d8a291a331 100644
+--- a/sysdeps/unix/sysv/linux/powerpc/bits/fcntl.h
++++ b/sysdeps/unix/sysv/linux/powerpc/bits/fcntl.h
+@@ -33,7 +33,7 @@
+ # define __O_LARGEFILE	0200000
+ #endif
+ 
+-#if __WORDSIZE == 64
++#if __WORDSIZE == 64 && !defined __USE_FILE_OFFSET64
+ # define F_GETLK	5
+ # define F_SETLK	6
+ # define F_SETLKW	7
+-- 
+2.41.0
+
