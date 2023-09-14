@@ -1,0 +1,41 @@
+From d3ba6c1333b10680ce5900a628108507d9d4b844 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Mon, 11 Sep 2023 09:17:52 +0200
+Subject: [PATCH] elf: Move l_init_called_next to old place of l_text_end in
+ link map
+
+This preserves all member offsets and the GLIBC_PRIVATE ABI
+for backporting.
+---
+ include/link.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/include/link.h b/include/link.h
+index c6af095d87..686813f281 100644
+--- a/include/link.h
++++ b/include/link.h
+@@ -254,6 +254,10 @@ struct link_map
+        need not be the same as l_addr.  */
+     ElfW(Addr) l_map_start, l_map_end;
+ 
++    /* Linked list of objects in reverse ELF constructor execution
++       order.  Head of list is stored in _dl_init_called_list.  */
++    struct link_map *l_init_called_next;
++
+     /* Default array for 'l_scope'.  */
+     struct r_scope_elem *l_scope_mem[4];
+     /* Size of array allocated for 'l_scope'.  */
+@@ -276,10 +280,6 @@ struct link_map
+     /* List of object in order of the init and fini calls.  */
+     struct link_map **l_initfini;
+ 
+-    /* Linked list of objects in reverse ELF constructor execution
+-       order.  Head of list is stored in _dl_init_called_list.  */
+-    struct link_map *l_init_called_next;
+-
+     /* List of the dependencies introduced through symbol binding.  */
+     struct link_map_reldeps
+       {
+-- 
+2.41.0
+

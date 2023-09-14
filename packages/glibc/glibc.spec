@@ -29,6 +29,14 @@ Patch0008: 0008-malloc-Remove-bin-scanning-from-memalign-bug-30723.patch
 Patch0009: 0009-sysdeps-tst-bz21269-fix-test-parameter.patch
 Patch0010: 0010-sysdeps-tst-bz21269-handle-ENOSYS-skip-appropriately.patch
 Patch0011: 0011-sysdeps-tst-bz21269-fix-Wreturn-type.patch
+Patch0012: 0012-io-Fix-record-locking-contants-for-powerpc64-with-__.patch
+Patch0013: 0013-libio-Fix-oversized-__io_vtables.patch
+Patch0014: 0014-elf-Do-not-run-constructors-for-proxy-objects.patch
+Patch0015: 0015-elf-Always-call-destructors-in-reverse-constructor-o.patch
+Patch0016: 0016-elf-Remove-unused-l_text_end-field-from-struct-link_.patch
+Patch0017: 0017-elf-Move-l_init_called_next-to-old-place-of-l_text_e.patch
+Patch0018: 0018-NEWS-Add-the-2.38.1-bug-list.patch
+Patch0019: 0019-CVE-2023-4527-Stack-read-overflow-with-large-TCP-res.patch
 
 # Fedora patches
 Patch1001: glibc-cs-path.patch

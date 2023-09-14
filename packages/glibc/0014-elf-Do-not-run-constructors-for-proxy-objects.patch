@@ -1,0 +1,37 @@
+From 7ae211a01b085d0bde54bd13b887ce8f9d57c2b4 Mon Sep 17 00:00:00 2001
+From: Florian Weimer <fweimer@redhat.com>
+Date: Tue, 22 Aug 2023 13:56:25 +0200
+Subject: [PATCH] elf: Do not run constructors for proxy objects
+
+Otherwise, the ld.so constructor runs for each audit namespace
+and each dlmopen namespace.
+
+(cherry picked from commit f6c8204fd7fabf0cf4162eaf10ccf23258e4d10e)
+---
+ elf/dl-init.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/elf/dl-init.c b/elf/dl-init.c
+index 5b0732590f..ba4d2fdc85 100644
+--- a/elf/dl-init.c
++++ b/elf/dl-init.c
+@@ -25,10 +25,14 @@
+ static void
+ call_init (struct link_map *l, int argc, char **argv, char **env)
+ {
++  /* Do not run constructors for proxy objects.  */
++  if (l != l->l_real)
++    return;
++
+   /* If the object has not been relocated, this is a bug.  The
+      function pointers are invalid in this case.  (Executables do not
+-     need relocation, and neither do proxy objects.)  */
+-  assert (l->l_real->l_relocated || l->l_real->l_type == lt_executable);
++     need relocation.)  */
++  assert (l->l_relocated || l->l_type == lt_executable);
+ 
+   if (l->l_init_called)
+     /* This object is all done.  */
+-- 
+2.41.0
+
