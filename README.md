@@ -1164,6 +1164,17 @@ Here are the metrics settings:
   allowed = false
   ```
 
+* `settings.kernel.modules.<name>.autoload`: Whether the named kernel modules shall be loaded automatically.
+  **Important note:** this setting needs to be used in conjunction with the `allowed` setting for the same module to ensure we are not auto-loading a module that is blocked.
+
+  Example user data for auto-loading a kernel module on boot:
+
+  ```toml
+  [settings.kernel.modules.ip_vs_lc]
+  allowed = true
+  autoload = true
+  ```
+
 * `settings.kernel.sysctl`: Key/value pairs representing Linux kernel parameters.
   Remember to quote keys (since they often contain ".") and to quote all values.
 

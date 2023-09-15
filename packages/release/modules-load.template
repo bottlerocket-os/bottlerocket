@@ -1,0 +1,9 @@
+{{#if settings.kernel.modules}}
+{{#each settings.kernel.modules}}
+{{#if this.allowed}}
+{{#if this.autoload}}
+{{@key}}
+{{/if}}
+{{/if}}
+{{/each}}
+{{/if}}

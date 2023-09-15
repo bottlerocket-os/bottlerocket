@@ -422,6 +422,7 @@ struct KernelSettings {
 #[model]
 struct KmodSetting {
     allowed: bool,
+    autoload: bool,
 }
 
 // Kernel boot settings
