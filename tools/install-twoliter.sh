@@ -146,7 +146,8 @@ else
 fi
 
 if [ "${from_source}" = "true" ] ; then
-   cargo install \
+   cargo +nightly install \
+     -Z bindeps \
      --locked \
      --root "${workdir}" \
      --git "${repo}" \
