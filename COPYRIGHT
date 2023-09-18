@@ -14,10 +14,6 @@ operating system images.
 
 =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-macros/rust and macros/cargo (used during build) are derived from the Fedora Rust SIG's rust2rpm.
-https://pagure.io/fedora-rust/rust2rpm
-Copyright (c) 2017 Igor Gnatenko
-
 Contains modified hyper-proxy files [mod.rs, stream.rs, tunnel.rs] from
 https://github.com/tafia/hyper-proxy 2021-09-20.
 Copyright (c) 2017 Johann Tuffe. Licensed under the MIT License.
