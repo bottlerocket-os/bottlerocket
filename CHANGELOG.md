@@ -24,7 +24,7 @@ The functionality to apply a hotpatch for log4j CVE-2021-44228 has been removed.
 * Add support for XFS ([#3198])
 * Add `apiclient report` command ([#3258]) and Bottlerocket CIS benchmark report ([#2881])
 * Add resource-limit settings for OCI defaults ([#3206])
-* Use `systemd-networkd` and `systemd-resolved` instead of `wicked` for `aws-k8s-*`, `aws-ecs-2`, and `*-dev` variants ([#3134], [#3232], [#3266], [#3311], [#3394], [#3395], [#3451], [#3455])
+* Use `systemd-networkd` and `systemd-resolved` instead of `wicked` for `aws-k8s-1.28`, `aws-ecs-2`, and `*-dev` variants ([#3134], [#3232], [#3266], [#3311], [#3394], [#3395], [#3451], [#3455])
 
 ## Orchestrator Changes
 
