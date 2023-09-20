@@ -1,1 +1,11 @@
 schema-version = 1
+
+[sdk]
+registry = "public.ecr.aws/bottlerocket"
+name = "bottlerocket-sdk"
+version = "v0.34.1"
+
+[toolchain]
+registry = "public.ecr.aws/bottlerocket"
+name = "bottlerocket-toolchain"
+version = "v0.34.1"
