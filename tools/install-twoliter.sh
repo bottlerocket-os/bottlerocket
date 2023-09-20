@@ -110,6 +110,10 @@ on_exit "rm -rf ${workdir}"
 
 if [ "${reuse_existing}" = "true" ] ; then
    if [ -x "${dir}/twoliter" ] ; then
+      if [ "${allow_bin}" != "true" ]; then
+        echo "Twoliter binary found and --allow-binary-install is false. Skipping install."
+        exit 0
+      fi
       version_output="$("${dir}/twoliter" --version)"
       found_version=v$(echo $version_output | awk '{print $2}')
       echo "Found twoliter ${found_version} installed."
