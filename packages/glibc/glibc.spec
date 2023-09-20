@@ -8,6 +8,7 @@ Source0: https://ftp.gnu.org/gnu/glibc/glibc-%{version}.tar.xz
 Source1: glibc-tmpfiles.conf
 Source2: ld.so.conf
 Source3: ldconfig-service.conf
+Source4: tz-utc.txt
 
 # We include this patch as a source file to have more control over how it's
 # applied and reverted during the build.
@@ -139,6 +140,9 @@ chmod 644 %{buildroot}%{_cross_libdir}/gconv/gconv-modules.cache
 truncate -s 0 %{buildroot}%{_cross_datadir}/locale/locale.alias
 chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 
+install -d %{buildroot}%{_cross_datadir}/zoneinfo
+base64 --decode %{S:4} > %{buildroot}%{_cross_datadir}/zoneinfo/UTC
+
 %files
 %license COPYING COPYING.LIB LICENSES
 %{_cross_attribution_file}
@@ -207,6 +211,8 @@ chmod 644 %{buildroot}%{_cross_datadir}/locale/locale.alias
 %dir %{_cross_datadir}/i18n/locales
 %dir %{_cross_datadir}/locale
 %{_cross_datadir}/locale/locale.alias
+%dir %{_cross_datadir}/zoneinfo
+%{_cross_datadir}/zoneinfo/UTC
 %exclude %{_cross_datadir}/i18n/charmaps/*
 %exclude %{_cross_datadir}/i18n/locales/*
 %exclude %{_cross_datadir}/locale/*
