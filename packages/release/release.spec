@@ -23,6 +23,7 @@ Source204: modprobe-conf.template
 Source205: netdog.template
 Source206: aws-config
 Source207: aws-credentials
+Source208: modules-load.template
 
 Source1001: multi-user.target
 Source1002: configured.target
@@ -194,6 +195,7 @@ install -p -m 0644 %{S:204} %{buildroot}%{_cross_templatedir}/modprobe-conf
 install -p -m 0644 %{S:205} %{buildroot}%{_cross_templatedir}/netdog-toml
 install -p -m 0644 %{S:206} %{buildroot}%{_cross_templatedir}/aws-config
 install -p -m 0644 %{S:207} %{buildroot}%{_cross_templatedir}/aws-credentials
+install -p -m 0644 %{S:208} %{buildroot}%{_cross_templatedir}/modules-load
 install -p -m 0644 %{S:1302} %{buildroot}%{_cross_templatedir}/log4j-hotpatch-enabled
 
 install -d %{buildroot}%{_cross_udevrulesdir}
@@ -260,6 +262,7 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_templatedir}/hosts
 %{_cross_templatedir}/aws-config
 %{_cross_templatedir}/aws-credentials
+%{_cross_templatedir}/modules-load
 %{_cross_templatedir}/log4j-hotpatch-enabled
 %{_cross_udevrulesdir}/61-mount-cdrom.rules
 

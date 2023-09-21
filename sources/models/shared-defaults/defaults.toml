@@ -129,12 +129,16 @@ restart-commands = ["/usr/bin/corndog sysctl"]
 affected-services = ["sysctl"]
 
 [services.kernel-modules]
-configuration-files = ["modprobe-conf"]
-restart-commands = []
+configuration-files = ["modprobe-conf", "modules-load"]
+restart-commands = ["/usr/bin/systemctl try-restart systemd-modules-load"]
 
 [configuration-files.modprobe-conf]
 path = "/etc/modprobe.d/modprobe.conf"
 template-path = "/usr/share/templates/modprobe-conf"
+
+[configuration-files.modules-load]
+path = "/etc/modules-load.d/modules-load.conf"
+template-path = "/usr/share/templates/modules-load"
 
 [metadata.settings.kernel.modules]
 affected-services = ["kernel-modules"]

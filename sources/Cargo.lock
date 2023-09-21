@@ -2326,6 +2326,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "kernel-modules-autoload-configs"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+ "serde_json",
+]
+
+[[package]]
+name = "kernel-modules-autoload-files"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+ "serde_json",
+]
+
+[[package]]
+name = "kernel-modules-autoload-restart"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+ "serde_json",
+]
+
+[[package]]
+name = "kernel-modules-autoload-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubelet-config-settings"
 version = "0.1.0"
 dependencies = [
