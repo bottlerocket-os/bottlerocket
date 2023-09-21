@@ -6,11 +6,25 @@ inputs:
     required: false
     default: false
     type: boolean
+  read-only-cache:
+    description: "Whether to update the cache (false) or not (true)"
+    required: false
+    default: false
+    type: boolean
+  cache-arch:
+    description: "The platform architecture for this cache"
+    required: false
+    default: ""
 runs:
   using: "composite"
   steps:
     - run: |
         echo "OS_ARCH=`uname -m`" >> $GITHUB_ENV
+        if [[ "${{ inputs.cache-arch }}" == "" ]]; then
+          echo "CACHE_ARCH=`uname -m`" >> $GITHUB_ENV
+        else
+          echo "CACHE_ARCH=${{ inputs.cache-arch }}" >> $GITHUB_ENV
+        fi
         sudo apt -y install build-essential openssl libssl-dev pkg-config liblz4-tool
       shell: bash
     - uses: actions/cache@v3
@@ -18,13 +32,45 @@ runs:
       with:
         path: |
           ~/.cargo
-        key: ${{ hashFiles('.github/**/*.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}
+        key: home-cargo-${{ env.CACHE_ARCH }}-${{ hashFiles('.github/**/*.yml') }}
+      if: ${{ inputs.read-only-cache != 'true' }}
     - uses: actions/cache@v3
       # Cache first-party code dependencies
       with:
         path: |
           .cargo
-        key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('sources/Cargo.lock') }}
+        key: cargo-${{ env.CACHE_ARCH }}-${{ hashFiles('.github/**/*.yml') }}${{ hashFiles('sources/Cargo.lock') }}
+      if: ${{ inputs.read-only-cache != 'true' }}
+    - uses: actions/cache@v3
+      # Cache build artifacts in 'variants/target/' to reduce rebuilds
+      with:
+        path: |
+          variants/target
+          build
+        key: target-${{ env.CACHE_ARCH }}-${{ hashFiles('.github/**/*.yml') }}${{ hashFiles('packages/**/Cargo.toml', 'packages/**/*.spec') }}
+      if: ${{ inputs.read-only-cache != 'true' }}
+    - uses: actions/cache/restore@v3
+      # Cache `cargo-make`, `cargo-cache`, `cargo-sweep`
+      with:
+        path: |
+          ~/.cargo
+        key: home-cargo-${{ env.CACHE_ARCH }}-${{ hashFiles('.github/**/*.yml') }}
+      if: ${{ inputs.read-only-cache == 'true' }}
+    - uses: actions/cache/restore@v3
+      # Cache first-party code dependencies
+      with:
+        path: |
+          .cargo
+        key: cargo-${{ env.CACHE_ARCH }}-${{ hashFiles('.github/**/*.yml') }}${{ hashFiles('sources/Cargo.lock') }}
+      if: ${{ inputs.read-only-cache == 'true' }}
+    - uses: actions/cache/restore@v3
+      # Cache build artifacts in 'variants/target/' to reduce rebuilds
+      with:
+        path: |
+          variants/target
+          build
+        key: target-${{ env.CACHE_ARCH }}-${{ hashFiles('.github/**/*.yml') }}${{ hashFiles('packages/**/Cargo.toml', 'packages/**/*.spec') }}
+      if: ${{ inputs.read-only-cache == 'true' }}
     - run: cargo install cargo-make
       shell: bash
     - if: ${{ inputs.perform-cache-cleanup }}

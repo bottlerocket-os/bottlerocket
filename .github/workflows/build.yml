@@ -37,8 +37,37 @@ jobs:
       - uses: ./.github/actions/list-variants
         id: get-variants
 
-  build:
+  package-prep:
     needs: list-variants
+    runs-on:
+      group: bottlerocket
+      labels: bottlerocket_ubuntu-latest_32-core
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+      fail-fast: false
+    name: "Prebuild ${{ matrix.arch }} packages"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preflight step to set up the runner
+        uses: ./.github/actions/setup-node
+        with:
+          cache-arch: ${{ matrix.arch }}
+      # Build some of the most common packages so later builds pick them up from the cache and don't rebuild
+      # TODO: Make some of this dynamic like we do with discovering variants
+      - run: |
+          cargo make -e BUILDSYS_ARCH=${{ matrix.arch }} -e PACKAGE=kernel-5_10 build-package
+        shell: bash
+      - run: |
+          cargo make -e BUILDSYS_ARCH=${{ matrix.arch }} -e PACKAGE=kernel-5_15 build-package
+        shell: bash
+      - run: |
+          cargo make -e BUILDSYS_ARCH=${{ matrix.arch }} -e PACKAGE=kernel-6_1 build-package
+        shell: bash
+
+  build:
+    needs: [list-variants, package-prep]
     runs-on:
       group: bottlerocket
       labels: bottlerocket_ubuntu-latest_32-core
@@ -59,6 +88,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Preflight step to set up the runner
         uses: ./.github/actions/setup-node
+        with:
+          read-only-cache: true
+          cache-arch: ${{ matrix.arch }}
       - if: contains(matrix.variant, 'nvidia')
         run: |
           cat <<-EOF > Licenses.toml
