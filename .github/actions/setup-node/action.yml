@@ -18,7 +18,7 @@ runs:
       with:
         path: |
           ~/.cargo
-        key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}
+        key: ${{ hashFiles('.github/**/*.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}
     - uses: actions/cache@v3
       # Cache first-party code dependencies
       with:
