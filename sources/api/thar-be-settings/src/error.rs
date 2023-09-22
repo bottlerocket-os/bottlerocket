@@ -50,8 +50,8 @@ pub enum Error {
     #[snafu(display("Configuration file '{}' failed to render: {}", template, source))]
     TemplateRender {
         template: String,
-        #[snafu(source(from(handlebars::RenderError, Box::new)))]
-        source: Box<handlebars::RenderError>,
+        #[snafu(source(from(schnauzer::RenderError, Box::new)))]
+        source: Box<schnauzer::RenderError>,
     },
 
     #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
@@ -85,6 +85,6 @@ pub enum Error {
     #[snafu(display("Error GETing JSON from '{}': {}", uri, source))]
     GetJson {
         uri: String,
-        source: schnauzer::Error,
+        source: schnauzer::v1::Error,
     },
 }

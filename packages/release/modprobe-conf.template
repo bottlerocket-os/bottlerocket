@@ -1,3 +1,6 @@
+[required-extensions]
+kernel = "v1"
++++
 {{#if settings.kernel.modules}}
 {{#each settings.kernel.modules}}
 {{#unless this.allowed }}

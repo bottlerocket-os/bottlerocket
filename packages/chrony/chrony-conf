@@ -1,3 +1,6 @@
+[required-extensions]
+ntp = "v1"
++++
 {{#each settings.ntp.time-servers}}
 pool {{this}} iburst
 {{/each}}

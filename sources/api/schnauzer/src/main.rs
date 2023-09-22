@@ -64,10 +64,10 @@ mod error {
         },
 
         #[snafu(display("Failed to build template registry: {}", source))]
-        BuildTemplateRegistry { source: schnauzer::Error },
+        BuildTemplateRegistry { source: schnauzer::v1::Error },
 
         #[snafu(display("Failed to get settings from API: {}", source))]
-        GetSettings { source: schnauzer::Error },
+        GetSettings { source: schnauzer::v1::Error },
 
         #[snafu(display(
             "Failed to render setting '{}' from template '{}': {}",
@@ -145,9 +145,9 @@ async fn run() -> Result<()> {
     let setting_name = parse_args(env::args());
 
     let registry =
-        schnauzer::build_template_registry().context(error::BuildTemplateRegistrySnafu)?;
+        schnauzer::v1::build_template_registry().context(error::BuildTemplateRegistrySnafu)?;
     let template = get_metadata(&setting_name, "templates").await?;
-    let settings = schnauzer::get_settings(constants::API_SOCKET)
+    let settings = schnauzer::v1::get_settings(constants::API_SOCKET)
         .await
         .context(error::GetSettingsSnafu)?;
 

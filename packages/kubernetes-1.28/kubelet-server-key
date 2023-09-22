@@ -1,3 +1,7 @@
+[required-extensions]
+kubernetes = "v1"
+std = { version = "v1", helpers = ["base64_decode"] }
++++
 {{~#if settings.kubernetes.server-key~}}
 {{base64_decode settings.kubernetes.server-key}}
 {{~/if~}}

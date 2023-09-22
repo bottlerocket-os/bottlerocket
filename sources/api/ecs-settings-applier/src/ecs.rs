@@ -107,7 +107,7 @@ async fn run() -> Result<()> {
 
     // Get all ecs and autoscaling settings values for config file templates
     debug!("Requesting ecs and autoscaling settings values");
-    let settings = schnauzer::get_settings(&args.socket_path)
+    let settings = schnauzer::v1::get_settings(&args.socket_path)
         .await
         .context(error::SettingsSnafu)?;
 
@@ -247,7 +247,7 @@ mod error {
     pub(super) enum Error {
         #[snafu(display("Failed to read settings: {}", source))]
         Settings {
-            source: schnauzer::Error,
+            source: schnauzer::v1::Error,
         },
 
         #[snafu(display("Logger setup error: {}", source))]

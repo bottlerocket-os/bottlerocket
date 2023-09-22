@@ -135,6 +135,7 @@ fn succeeds_04_comments() {
             name: "labrador".to_string(),
             version: "v1".to_string(),
             helpers: vec!["woof".to_string()],
+            ..Default::default()
         },
     };
     let expected_body = "# comments are included in template\n{{ woof }}\n".to_string();
@@ -163,10 +164,12 @@ fn succeeds_05_unambiguous_delims() {
             name: "beagle".to_string(),
             version: "+++\n".to_string(),
             helpers: vec![],
+            ..Default::default()
         }, ExtensionRequirement {
             name: "std".to_string(),
             version: "v1".to_string(),
             helpers: vec!["join_map".to_string()],
+            ..Default::default()
         }
     };
     let expected_body = r#"{{ join_map "=" "," "fail-if-missing" settings.beagle }}
@@ -219,11 +222,13 @@ fn succeeds_07_aws_config() {
             name: "aws".to_string(),
             version: "v1".to_string(),
             helpers: vec![],
+            ..Default::default()
         },
         ExtensionRequirement {
             name: "std".to_string(),
             version: "v1".to_string(),
             helpers: vec!["base64_decode".to_string()],
+            ..Default::default()
         },
     };
     let expected_body =

@@ -57,7 +57,7 @@ pub(super) enum Error {
     },
 
     #[snafu(display("Failed to retrieve settings: {}", source))]
-    RetrieveSettings { source: schnauzer::Error },
+    RetrieveSettings { source: schnauzer::v1::Error },
 
     #[snafu(display("Failed to convert usize to u32: {}", source))]
     UsizeToU32 { source: std::num::TryFromIntError },

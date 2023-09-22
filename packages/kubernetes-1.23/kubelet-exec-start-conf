@@ -1,3 +1,7 @@
+[required-extensions]
+kubernetes = "v1"
+std = { version = "v1", helpers = ["any_enabled", "default"] }
++++
 [Service]
 ExecStart=
 ExecStart=/usr/bin/kubelet \
