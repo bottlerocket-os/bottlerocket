@@ -58,6 +58,46 @@ The original schnauzer library is deprecated, but continues to be made available
 be safely removed. The original schnauzer settings generator is still provided as `schnauzer`, until it can be
 removed and replaced with the `schnauzer-v2` generator.
 
+#### Migrating Templates from v1 to v2
+To migrate a template from schnauzer v1 to schnauzer v2, you must first identify each of the
+settings and helpers used in the template. With the introduction of settings extensions to
+Bottlerocket, all settings and helpers are owned by a settings extension, and each used extension
+(including the version used) must be explicitly specified in frontmatter.
+
+For each setting, the top-level key in the setting name will be the same as the extension name.
+The version of the extension can be discovered via that extension's documentation.
+
+For example, if your template uses `settings.foo.bar` and `settings.foo.baz`, then the extension
+must be imported as `foo`:
+
+```toml
+[required-extensions]
+foo = "v1"
++++
+# The rest of the template now goes after the `+++` frontmatter delimiter.
+```
+
+For each helper used in your v1 template, you must determine the extension that owns it, and
+then similarly declare them in frontmatter.
+
+To expand on the previous example, suppose we are using `barify` and `bazify` helpers in our v1
+template, and we know that these are both owned by the `fooify` extension. We can modify the
+frontmatter like so:
+
+```toml
+[required-extensions]
+foo = "v1"
+fooify = { version = "v1", helpers = ["barify", "bazify"] }
++++
+# The rest of the template now goes after the `+++` frontmatter delimiter.
+```
+
+NOTE: `schnauzer-v2` was merged into Bottlerocket prior to the complete introduction of settings
+extensions. Until these are merged, all extensions will be imported as "v1". Determining the
+ownership of a helper can be discovered by checking `schnauzer`'s [`v2::import::helpers`]
+module.
+
+
 ## Colophon
 
 This text was generated from `README.tpl` using [cargo-readme](https://crates.io/crates/cargo-readme), and includes the rustdoc from `src/main.rs`.
