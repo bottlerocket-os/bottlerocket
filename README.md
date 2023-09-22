@@ -1317,6 +1317,7 @@ There are a few important caveats to understand about host containers:
 * They run in a separate instance of containerd than the one used for orchestrated containers like Kubernetes pods.
 * They're not updated automatically. You need to update the `source` and commit those changes.
 * If you set `superpowered` to true, they'll essentially have root access to the host.
+* If the container exits for any reason, Bottlerocket will attempt to restart it after 45 seconds.
 
 Because of these caveats, host containers are only intended for special use cases.
 We use them for the control container because it needs to be available early to give you access to the OS, and for the admin container because it needs high levels of privilege and because you need it to debug when orchestration isn't working.
