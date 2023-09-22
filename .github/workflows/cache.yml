@@ -7,18 +7,15 @@ on:
     paths:
       - '.github/**'
       - 'sources/Cargo.lock'
-      - 'tools/buildsys/**'
       - 'tools/pubsys*/**'
       - '!tools/pubsys/policies/**'
       - '!tools/pubsys/**.example'
-      - '!tools/pubsys/**.template'
-      - 'tools/Cargo.lock'
 jobs:
   cache:
     if: github.repository == 'bottlerocket-os/bottlerocket'
     runs-on:
       group: bottlerocket
-      labels: bottlerocket_ubuntu-latest_16-core
+      labels: bottlerocket_ubuntu-latest_8-core
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -26,8 +23,6 @@ jobs:
         uses: ./.github/actions/setup-node
         with:
           perform-cache-cleanup: true
-      - run: cargo make publish-setup-tools
-      - run: cargo make publish-tools
-      - run: cargo make build-tools
+      - run: cargo make install-twoliter
       # This cleans the cargo cache in ~/.cargo
       - run: cargo-cache
