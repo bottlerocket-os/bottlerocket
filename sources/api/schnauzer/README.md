@@ -36,6 +36,10 @@ std = { version = "v1", helpers = ["base64_decode"] } # or use the object form t
 }
 ```
 
+Templates can also be passed as a string to the schnauzer settings generator binary. In this
+case the frontmatter is omitted, and requirements are passed via the CLI. See the
+[settings generator docs](#the-schnauzer-settings-generator) for more information.
+
 ### The schnauzer Library
 The primary user interface is provided via `schnauzer::render_template` and
 `schnauzer::render_template_file`. These functions require the user to pass the template, as
