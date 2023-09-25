@@ -4,7 +4,17 @@ skip_core_tasks = true
 [env]
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 
-# Skip installing Twoliter if it is already installed its version
+# For binary installation, this should be a released version (prefixed with a v,
+# for example v0.1.0). For the git sourcecode installation method, this can be
+# any git rev, e.g. a tag, sha, or branch name.
+TWOLITER_VERSION = "v0.0.3"
+
+# For binary installation, this is the GitHub repository that has binary release artifacts attached
+# to it, for example https://github.com/bottlerocket-os/twoliter. For git sourcecode installation,
+# this is any URI that can be used in a git clone command.
+TWOLITER_REPO = "https://github.com/bottlerocket-os/twoliter"
+
+# Skip installing Twoliter if it is already installed and its version
 # matches the requested version.
 TWOLITER_REUSE_EXISTING_INSTALL="true"
 
@@ -15,18 +25,12 @@ TWOLITER_ALLOW_BINARY_INSTALL="true"
 # Allow Twoliter to be installed by building from sourcecode.
 TWOLITER_ALLOW_SOURCE_INSTALL="true"
 
+# If you know the version string returned by Twoliter will not match TWOLITER_VERSION (e.g. when you
+# are testing changes to Twoliter itself), set this to true to prevent re-installation.
+TWOLITER_SKIP_VERSION_CHECK="false"
+
 # Where Twoliter will be installed.
 TWOLITER_INSTALL_DIR = "${BUILDSYS_ROOT_DIR}/tools/twoliter"
-
-# For binary installation, this should be a released version (prefixed with a v,
-# for example v0.1.0). For the git sourcecode installation method, this can be
-# any git rev, e.g. a tag, sha, or branch name.
-TWOLITER_VERSION = "v0.0.3"
-
-# For binary installation, this is the GitHub repository that has binary release artifacts attached
-# to it, for example https://github.com/bottlerocket-os/twoliter. For git sourcecode installation,
-# this is any URI that can be used in a git clone command.
-TWOLITER_REPO = "https://github.com/bottlerocket-os/twoliter"
 
 # The logging verbosity for Twoliter: error, warn, info, debug, trace
 TWOLITER_LOG_LEVEL = "info"
@@ -282,6 +286,10 @@ fi
 
 if [ "${TWOLITER_ALLOW_SOURCE_INSTALL}" = "true" ]; then
    flags+=("--allow-from-source")
+fi
+
+if [ "${TWOLITER_SKIP_VERSION_CHECK}" = "true" ]; then
+   flags+=("--skip-version-check")
 fi
 
 "${BUILDSYS_TOOLS_DIR}/install-twoliter.sh" \
