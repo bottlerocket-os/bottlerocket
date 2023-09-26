@@ -25,8 +25,8 @@ runs:
         path: |
           .cargo
         key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}-${{ hashFiles('sources/Cargo.lock') }}
-    - run: cargo install --locked --version 0.36.0 cargo-make
+    - run: cargo install cargo-make
       shell: bash
     - if: ${{ inputs.perform-cache-cleanup }}
-      run: cargo install --locked --version 0.8.3 --no-default-features --features ci-autoclean cargo-cache
+      run: cargo install --no-default-features --features ci-autoclean cargo-cache
       shell: bash
