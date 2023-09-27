@@ -36,6 +36,7 @@ kernel-parameters = [
 ]
 
 [lib]
+# REMOVE: test change
 path = "../variants.rs"
 
 [build-dependencies]

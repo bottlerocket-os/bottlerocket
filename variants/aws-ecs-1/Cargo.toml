@@ -27,6 +27,7 @@ included-packages = [
 ]
 
 [lib]
+# REMOVE: test change
 path = "../variants.rs"
 
 [build-dependencies]
