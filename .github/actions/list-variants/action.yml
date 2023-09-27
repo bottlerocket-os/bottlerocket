@@ -1,5 +1,13 @@
 name: "List active variants"
 description: "Dynamically determines current Bottlerocket variants based on repo contents."
+inputs:
+  filter-variants:
+    description: "Filter the variant list based on whether the modified files affect them."
+    required: false
+    default: false
+  token:
+    description: "GitHub auth token to use for querying API. Only needed if filter-variants = true"
+    required: false
 outputs:
   variants:
     description: A list of all variants defined in the repo
@@ -11,14 +19,13 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v3
+    - uses: lots0logs/gh-action-get-changed-files@2.2.2
+      with:
+        token: ${{ inputs.token }}
+      if: ${{ inputs.filter-variants }} == 'true'
     - id: get-variants
       name: Determine variants
       shell: bash
       run: |
-        cd variants
-        output="variants=$(ls -d */ | cut -d'/' -f 1 | grep -vE '^(shared|target)$' | jq -R -s -c 'split("\n")[:-1]')"
-        echo $output
-        echo $output >> $GITHUB_OUTPUT
-        output="aarch-enemies=$(ls -d */ | cut -d'/' -f 1 | grep -E '(^(metal|vmware)|\-dev$)' | jq -R -s -c 'split("\n")[:-1] | [ .[] | {"variant": ., "arch": "aarch64"}]')"
-        echo $output
-        echo $output >> $GITHUB_OUTPUT
+        bash -c "${GITHUB_ACTION_PATH}/check-variants.sh ${{ inputs.filter-variants }}"
+        cat /tmp/ghoutput >> $GITHUB_OUTPUT
