@@ -10,6 +10,7 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
+base64 = "0.21"
 constants = { path = "../../constants", version = "0.1" }
 datastore = { path = "../datastore", version = "0.1" }
 futures = { version = "0.3", default-features = false }
@@ -31,7 +32,7 @@ signal-hook = "0.3"
 simplelog = "0.12"
 snafu = { version = "0.7", features = ["futures"] }
 tokio = { version = "~1.25", default-features = false, features = ["fs", "io-std", "io-util", "macros", "rt-multi-thread", "time"] }  # LTS
-tokio-tungstenite = { version = "0.16", default-features = false, features = ["connect"] }
+tokio-tungstenite = { version = "0.20", default-features = false, features = ["connect"] }
 toml = "0.5"
 unindent = "0.1"
 url = "2"

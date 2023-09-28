@@ -65,8 +65,6 @@ skip = [
 ]
 
 skip-tree = [
-    # tungstenite is using an older sha-1
-    { name = "tungstenite", version = "=0.16" },
     # windows-sys is not a direct dependency. mio and schannel
     # are using different versions of windows-sys. we skip the
     # dependency tree because windows-sys has many sub-crates
@@ -78,7 +76,10 @@ skip-tree = [
     # serde_yaml actually uses a newer hashbrown dependency,
     # but several crates in the graph pull in an older one, so skip for now
     # until they can be updated
-    { name = "hashbrown", version = "=0.13.2" }
+    { name = "hashbrown", version = "=0.13.2" },
+    # tungstenite uses a newer version of base64, but many of the
+    # first party crates are still in this version
+    { name = "base64", version = "=0.13.1" }
 ]
 
 [sources]
