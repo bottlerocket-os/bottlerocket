@@ -1,9 +1,13 @@
 //! The 'connect' module provides a function for connecting to a WebSocket over a Unix-domain
 //! socket, which is a bit more finicky than normal.
 
+use base64::{engine, Engine as _};
+use http::header::{CONNECTION, HOST, SEC_WEBSOCKET_KEY, SEC_WEBSOCKET_VERSION, UPGRADE};
+use httparse::Header;
 use hyper::service::Service;
 use hyper_unix_connector::{UnixClient, Uri, UDS};
 use log::debug;
+use rand::{thread_rng, Rng};
 use snafu::{ensure, ResultExt};
 use std::path::Path;
 use tokio_tungstenite::{client_async, tungstenite::http::StatusCode, WebSocketStream};
@@ -37,6 +41,32 @@ where
         .build()
     })?;
 
+    // The base64 websocket key for the connection
+    let ws_key = engine::general_purpose::STANDARD_NO_PAD.encode(thread_rng().gen::<[u8; 16]>());
+    // Create the headers required for a valid client handshake and websocket upgrade request
+    let mut headers = [
+        Header {
+            name: HOST.as_str(),
+            value: "localhost".as_bytes(),
+        },
+        Header {
+            name: CONNECTION.as_str(),
+            value: "Upgrade".as_bytes(),
+        },
+        Header {
+            name: UPGRADE.as_str(),
+            value: "websocket".as_bytes(),
+        },
+        Header {
+            name: SEC_WEBSOCKET_VERSION.as_str(),
+            value: "13".as_bytes(),
+        },
+        Header {
+            name: SEC_WEBSOCKET_KEY.as_str(),
+            value: ws_key.as_bytes(),
+        },
+    ];
+
     // Create a request object that tokio-tungstenite understands, pointed at a local WebSocket
     // URI.  This is used to create the WebSocket client.
     let ws_uri = format!("ws://localhost{}", path);
@@ -44,7 +74,7 @@ where
         method: Some("GET"),
         path: Some(&ws_uri),
         version: Some(1), // HTTP/1.1
-        headers: &mut [],
+        headers: &mut headers,
     };
 
     // Now we can use tokio-tungstenite to upgrade the connection to a WebSocket.  We get back a
