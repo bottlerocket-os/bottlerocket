@@ -113,6 +113,7 @@ set -e
 
 workdir="$(mktemp -d)"
 on_exit "rm -rf ${workdir}"
+mkdir -p "${dir}"
 
 if [ "${reuse_existing}" = "true" ] ; then
    if [ -x "${dir}/twoliter" ] ; then
@@ -143,7 +144,6 @@ if [ "${allow_bin}" = "true" ] ; then
       cd "${workdir}"
       curl -sSL "${twoliter_release}/twoliter-${twoliter_target}.tar.xz" -o "twoliter.tar.xz"
       tar xf twoliter.tar.xz
-      mkdir -p "${dir}"
       mv "./twoliter-${twoliter_target}/twoliter" "${dir}"
       exit 0
       ;;
