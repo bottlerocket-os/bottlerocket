@@ -1,3 +1,24 @@
+# v1.15.1 (2023-10-9)
+
+## OS Changes
+
+* Allow older ext4 snapshot volumes to be mounted in newer variants that default to xfs ([#3499])
+* Update `apiclient` Rust dependencies ([#3491])
+* Update `pluto` Rust dependencies ([#3439])
+* Patch glibc to address CVE-2023-4806, CVE-2023-4911, and CVE-2023-5156 ([#3501])
+* Update open-vm-tools to 12.3.0 to address CVE-2023-20900 ([#3500])
+
+## Build Changes
+
+* Update `twoliter` to v0.0.4 ([#3480])
+
+[#3439]: https://github.com/bottlerocket-os/bottlerocket/pull/3439
+[#3480]: https://github.com/bottlerocket-os/bottlerocket/pull/3480
+[#3491]: https://github.com/bottlerocket-os/bottlerocket/pull/3491
+[#3499]: https://github.com/bottlerocket-os/bottlerocket/pull/3499
+[#3500]: https://github.com/bottlerocket-os/bottlerocket/pull/3500
+[#3501]: https://github.com/bottlerocket-os/bottlerocket/pull/3501
+
 # v1.15.0 (2023-09-18)
 
 ## Major Features
