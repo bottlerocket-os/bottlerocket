@@ -1,0 +1,32 @@
+From 63250e9c571314b6daa2c949ea0af335ee766751 Mon Sep 17 00:00:00 2001
+From: Andreas Schwab <schwab@suse.de>
+Date: Tue, 1 Aug 2023 17:01:37 +0200
+Subject: [PATCH] iconv: restore verbosity with unrecognized encoding names
+ (bug 30694)
+
+Commit 91927b7c76 ("Rewrite iconv option parsing [BZ #19519]") changed the
+iconv program to call __gconv_open directly instead of the iconv_open
+wrapper, but the former does not set errno.  Update the caller to
+interpret the return codes like iconv_open does.
+
+(cherry picked from commit fc72b6d7d818ab2868920af956d1542d03342a4d)
+---
+ iconv/iconv_prog.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/iconv/iconv_prog.c b/iconv/iconv_prog.c
+index bee898c63c..cf32cf9b44 100644
+--- a/iconv/iconv_prog.c
++++ b/iconv/iconv_prog.c
+@@ -187,7 +187,7 @@ main (int argc, char *argv[])
+ 
+       if (res != __GCONV_OK)
+ 	{
+-	  if (errno == EINVAL)
++	  if (res == __GCONV_NOCONV || res == __GCONV_NODB)
+ 	    {
+ 	      /* Try to be nice with the user and tell her which of the
+ 		 two encoding names is wrong.  This is possible because
+-- 
+2.42.0
+

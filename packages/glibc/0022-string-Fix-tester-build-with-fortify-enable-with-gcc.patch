@@ -1,0 +1,49 @@
+From d94461bb86ba176b9390c0015bb612a528e22d95 Mon Sep 17 00:00:00 2001
+From: Mahesh Bodapati <bmahi496@linux.ibm.com>
+Date: Fri, 11 Aug 2023 10:38:25 -0500
+Subject: [PATCH] string: Fix tester build with fortify enable with gcc < 12
+
+When building with fortify enabled, GCC < 12 issues a warning on the
+fortify strncat wrapper might overflow the destination buffer (the
+failure is tied to -Werror).
+
+Checked on ppc64 and x86_64.
+Reviewed-by: Adhemerval Zanella  <adhemerval.zanella@linaro.org>
+
+(cherry picked from commit f1c7ed0859a45929136836341741c7cd70f428cb)
+---
+ string/tester.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/string/tester.c b/string/tester.c
+index f7d4bac5a8..824cf315ff 100644
+--- a/string/tester.c
++++ b/string/tester.c
+@@ -34,6 +34,14 @@
+ DIAG_IGNORE_NEEDS_COMMENT (8, "-Wstringop-truncation");
+ #endif
+ 
++/* When building with fortify enabled, GCC < 12 issues a warning on the
++   fortify strncat wrapper might overflow the destination buffer (the
++   failure is tied to -Werror).
++   Triggered by strncat fortify wrapper when it is enabled.  */
++#if __GNUC_PREREQ (11, 0)
++DIAG_IGNORE_NEEDS_COMMENT (11, "-Wstringop-overread");
++#endif
++
+ #include <errno.h>
+ #include <stdint.h>
+ #include <stdio.h>
+@@ -52,9 +60,6 @@ DIAG_IGNORE_NEEDS_COMMENT (5.0, "-Wmemset-transposed-args");
+ DIAG_IGNORE_NEEDS_COMMENT (9, "-Wrestrict");
+ DIAG_IGNORE_NEEDS_COMMENT (7, "-Wstringop-overflow=");
+ #endif
+-#if __GNUC_PREREQ (11, 0)
+-DIAG_IGNORE_NEEDS_COMMENT (11, "-Wstringop-overread");
+-#endif
+ 
+ 
+ #define	STREQ(a, b)	(strcmp((a), (b)) == 0)
+-- 
+2.42.0
+

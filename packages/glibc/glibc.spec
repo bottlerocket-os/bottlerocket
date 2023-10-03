@@ -38,6 +38,14 @@ Patch0016: 0016-elf-Remove-unused-l_text_end-field-from-struct-link_.patch
 Patch0017: 0017-elf-Move-l_init_called_next-to-old-place-of-l_text_e.patch
 Patch0018: 0018-NEWS-Add-the-2.38.1-bug-list.patch
 Patch0019: 0019-CVE-2023-4527-Stack-read-overflow-with-large-TCP-res.patch
+Patch0020: 0020-getaddrinfo-Fix-use-after-free-in-getcanonname-CVE-2.patch
+Patch0021: 0021-iconv-restore-verbosity-with-unrecognized-encoding-n.patch
+Patch0022: 0022-string-Fix-tester-build-with-fortify-enable-with-gcc.patch
+Patch0023: 0023-manual-jobs.texi-Add-missing-item-EPERM-for-getpgid.patch
+Patch0024: 0024-Fix-leak-in-getaddrinfo-introduced-by-the-fix-for-CV.patch
+Patch0025: 0025-Document-CVE-2023-4806-and-CVE-2023-5156-in-NEWS.patch
+Patch0026: 0026-Propagate-GLIBC_TUNABLES-in-setxid-binaries.patch
+Patch0027: 0027-tunables-Terminate-if-end-of-input-is-reached-CVE-20.patch
 
 # Fedora patches
 Patch1001: glibc-cs-path.patch

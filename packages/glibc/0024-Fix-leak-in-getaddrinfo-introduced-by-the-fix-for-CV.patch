@@ -1,0 +1,98 @@
+From 5ee59ca371b99984232d7584fe2b1a758b4421d3 Mon Sep 17 00:00:00 2001
+From: Romain Geissler <romain.geissler@amadeus.com>
+Date: Mon, 25 Sep 2023 01:21:51 +0100
+Subject: [PATCH] Fix leak in getaddrinfo introduced by the fix for
+ CVE-2023-4806 [BZ #30843]
+
+This patch fixes a very recently added leak in getaddrinfo.
+
+This was assigned CVE-2023-5156.
+
+Resolves: BZ #30884
+Related: BZ #30842
+
+Reviewed-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+(cherry picked from commit ec6b95c3303c700eb89eebeda2d7264cc184a796)
+---
+ nss/Makefile                    | 20 ++++++++++++++++++++
+ nss/tst-nss-gai-hv2-canonname.c |  3 +++
+ sysdeps/posix/getaddrinfo.c     |  4 +---
+ 3 files changed, 24 insertions(+), 3 deletions(-)
+
+diff --git a/nss/Makefile b/nss/Makefile
+index 8a5126ecf3..668ba34b18 100644
+--- a/nss/Makefile
++++ b/nss/Makefile
+@@ -149,6 +149,15 @@ endif
+ extra-test-objs		+= nss_test1.os nss_test2.os nss_test_errno.os \
+ 			   nss_test_gai_hv2_canonname.os
+ 
++ifeq ($(run-built-tests),yes)
++ifneq (no,$(PERL))
++tests-special += $(objpfx)mtrace-tst-nss-gai-hv2-canonname.out
++endif
++endif
++
++generated += mtrace-tst-nss-gai-hv2-canonname.out \
++		tst-nss-gai-hv2-canonname.mtrace
++
+ include ../Rules
+ 
+ ifeq (yes,$(have-selinux))
+@@ -217,6 +226,17 @@ endif
+ $(objpfx)tst-nss-files-alias-leak.out: $(objpfx)/libnss_files.so
+ $(objpfx)tst-nss-files-alias-truncated.out: $(objpfx)/libnss_files.so
+ 
++tst-nss-gai-hv2-canonname-ENV = \
++		MALLOC_TRACE=$(objpfx)tst-nss-gai-hv2-canonname.mtrace \
++		LD_PRELOAD=$(common-objpfx)/malloc/libc_malloc_debug.so
++$(objpfx)mtrace-tst-nss-gai-hv2-canonname.out: \
++  $(objpfx)tst-nss-gai-hv2-canonname.out
++	{ test -r $(objpfx)tst-nss-gai-hv2-canonname.mtrace \
++	|| ( echo "tst-nss-gai-hv2-canonname.mtrace does not exist"; exit 77; ) \
++	&& $(common-objpfx)malloc/mtrace \
++	$(objpfx)tst-nss-gai-hv2-canonname.mtrace; } > $@; \
++	$(evaluate-test)
++
+ # Disable DT_RUNPATH on NSS tests so that the glibc internal NSS
+ # functions can load testing NSS modules via DT_RPATH.
+ LDFLAGS-tst-nss-test1 = -Wl,--disable-new-dtags
+diff --git a/nss/tst-nss-gai-hv2-canonname.c b/nss/tst-nss-gai-hv2-canonname.c
+index d5f10c07d6..7db53cf09d 100644
+--- a/nss/tst-nss-gai-hv2-canonname.c
++++ b/nss/tst-nss-gai-hv2-canonname.c
+@@ -21,6 +21,7 @@
+ #include <netdb.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <mcheck.h>
+ #include <support/check.h>
+ #include <support/xstdio.h>
+ #include "nss/tst-nss-gai-hv2-canonname.h"
+@@ -41,6 +42,8 @@ static void do_prepare (int a, char **av)
+ static int
+ do_test (void)
+ {
++  mtrace ();
++
+   __nss_configure_lookup ("hosts", "test_gai_hv2_canonname");
+ 
+   struct addrinfo hints = {};
+diff --git a/sysdeps/posix/getaddrinfo.c b/sysdeps/posix/getaddrinfo.c
+index b2236b105c..13082305d3 100644
+--- a/sysdeps/posix/getaddrinfo.c
++++ b/sysdeps/posix/getaddrinfo.c
+@@ -1196,9 +1196,7 @@ free_and_return:
+   if (malloc_name)
+     free ((char *) name);
+   free (addrmem);
+-  if (res.free_at)
+-    free (res.at);
+-  free (res.canon);
++  gaih_result_reset (&res);
+ 
+   return result;
+ }
+-- 
+2.42.0
+
