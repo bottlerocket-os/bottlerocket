@@ -1,0 +1,30 @@
+From 0e1ef6779a90bc0f8a05bc367796df2793deecaa Mon Sep 17 00:00:00 2001
+From: Mark Wielaard <mark@klomp.org>
+Date: Thu, 24 Aug 2023 21:36:34 +0200
+Subject: [PATCH] manual/jobs.texi: Add missing @item EPERM for getpgid
+
+The missing @item makes it look like errno will be set to ESRCH
+if a cross-session getpgid is not permitted.
+
+Found by ulfvonbelow on irc.
+
+(cherry picked from commit 5a21cefd5abab1b99eda1fbf84204a9bf41662ab)
+---
+ manual/job.texi | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/manual/job.texi b/manual/job.texi
+index 42cb9fb26d..8157f13a1c 100644
+--- a/manual/job.texi
++++ b/manual/job.texi
+@@ -1133,6 +1133,7 @@ following @code{errno} error conditions are defined for this function:
+ @table @code
+ @item ESRCH
+ There is no process with the given process ID @var{pid}.
++@item EPERM
+ The calling process and the process specified by @var{pid} are in
+ different sessions, and the implementation doesn't allow to access the
+ process group ID of the process with ID @var{pid} from the calling
+-- 
+2.42.0
+
