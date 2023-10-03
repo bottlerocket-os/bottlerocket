@@ -4712,6 +4712,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "xfscli"
+version = "0.1.0"
+dependencies = [
+ "argh",
+ "snafu",
+ "tempfile",
+]
+
+[[package]]
 name = "xml-rs"
 version = "0.8.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
