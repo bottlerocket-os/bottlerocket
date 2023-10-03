@@ -1,0 +1,32 @@
+From 73e3fcd1a552783e66ff1f65c5f322e2f17a81d1 Mon Sep 17 00:00:00 2001
+From: Siddhesh Poyarekar <siddhesh@sourceware.org>
+Date: Tue, 19 Sep 2023 13:25:40 -0400
+Subject: [PATCH] Propagate GLIBC_TUNABLES in setxid binaries
+
+GLIBC_TUNABLES scrubbing happens earlier than envvar scrubbing and some
+tunables are required to propagate past setxid boundary, like their
+env_alias.  Rely on tunable scrubbing to clean out GLIBC_TUNABLES like
+before, restoring behaviour in glibc 2.37 and earlier.
+
+Signed-off-by: Siddhesh Poyarekar <siddhesh@sourceware.org>
+Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+(cherry picked from commit 0d5f9ea97f1b39f2a855756078771673a68497e1)
+---
+ sysdeps/generic/unsecvars.h | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/sysdeps/generic/unsecvars.h b/sysdeps/generic/unsecvars.h
+index 81397fb90b..8278c50a84 100644
+--- a/sysdeps/generic/unsecvars.h
++++ b/sysdeps/generic/unsecvars.h
+@@ -4,7 +4,6 @@
+ #define UNSECURE_ENVVARS \
+   "GCONV_PATH\0"							      \
+   "GETCONF_DIR\0"							      \
+-  "GLIBC_TUNABLES\0"							      \
+   "HOSTALIASES\0"							      \
+   "LD_AUDIT\0"								      \
+   "LD_DEBUG\0"								      \
+-- 
+2.42.0
+
