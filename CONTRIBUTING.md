@@ -57,7 +57,7 @@ Bottlerocket follows a few basic filename case conventions:
 
 ## Finding contributions to work on
 Looking at the existing issues is a great way to find something to contribute on.
-As this repository uses GitHub issue [labels](https://github.com/bottlerocket-os/bottlerocket/labels), looking at any ['status/helpwelcome'](https://github.com/bottlerocket-os/bottlerocket/labels/status%2Fhelpwelcome) issues is a great place to start.
+As this repository uses GitHub issue [labels](https://github.com/bottlerocket-os/bottlerocket/labels), looking through issues labeled ['good first issue'](https://github.com/bottlerocket-os/bottlerocket/labels/good%20first%20issue) or ['help wanted'](https://github.com/bottlerocket-os/bottlerocket/labels/help%20wanted) is a great place to start.
 
 
 ## Code of Conduct
