@@ -7,12 +7,11 @@ After=prepare-local-fs.service
 Requires=prepare-local-fs.service
 
 [Mount]
-EnvironmentFile=/usr/share/bottlerocket/image-features.env
 What=/dev/disk/by-partlabel/BOTTLEROCKET-DATA
 Where=/local
-Type=${DATA_PARTITION_FILESYSTEM}
 # "noexec" omitted to allow containers and migrations to run
 Options=defaults,nosuid,nodev,noatime,private
+StandardError=journal+console
 
 [Install]
 WantedBy=preconfigured.target

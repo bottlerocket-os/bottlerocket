@@ -1,5 +1,5 @@
+use crate::hyper_proxy::{Proxy, ProxyConnector};
 use hyper::Uri;
-use hyper_proxy::{Proxy, ProxyConnector};
 use hyper_rustls::HttpsConnectorBuilder;
 use snafu::{ResultExt, Snafu};
 use std::env;

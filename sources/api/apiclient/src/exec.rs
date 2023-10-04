@@ -313,6 +313,11 @@ impl ReadFromServer {
                                 }
                             }
                         }
+                        // The API server doesn't use frames, but still logging out a
+                        // warning in case a message of this type is received
+                        Message::Frame(_) => {
+                            warn!("Received an unexpected frame message");
+                        }
                     }
                     Ok(())
                 }

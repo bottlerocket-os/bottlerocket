@@ -4,7 +4,17 @@ skip_core_tasks = true
 [env]
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 
-# Skip installing Twoliter if it is already installed its version
+# For binary installation, this should be a released version (prefixed with a v,
+# for example v0.1.0). For the git sourcecode installation method, this can be
+# any git rev, e.g. a tag, sha, or branch name.
+TWOLITER_VERSION = "v0.0.4"
+
+# For binary installation, this is the GitHub repository that has binary release artifacts attached
+# to it, for example https://github.com/bottlerocket-os/twoliter. For git sourcecode installation,
+# this is any URI that can be used in a git clone command.
+TWOLITER_REPO = "https://github.com/bottlerocket-os/twoliter"
+
+# Skip installing Twoliter if it is already installed and its version
 # matches the requested version.
 TWOLITER_REUSE_EXISTING_INSTALL="true"
 
@@ -15,18 +25,12 @@ TWOLITER_ALLOW_BINARY_INSTALL="true"
 # Allow Twoliter to be installed by building from sourcecode.
 TWOLITER_ALLOW_SOURCE_INSTALL="true"
 
+# If you know the version string returned by Twoliter will not match TWOLITER_VERSION (e.g. when you
+# are testing changes to Twoliter itself), set this to true to prevent re-installation.
+TWOLITER_SKIP_VERSION_CHECK="false"
+
 # Where Twoliter will be installed.
 TWOLITER_INSTALL_DIR = "${BUILDSYS_ROOT_DIR}/tools/twoliter"
-
-# For binary installation, this should be a released version (prefixed with a v,
-# for example v0.1.0). For the git sourcecode installation method, this can be
-# any git rev, e.g. a tag, sha, or branch name.
-TWOLITER_VERSION = "v0.0.3"
-
-# For binary installation, this is the GitHub repository that has binary release artifacts attached
-# to it, for example https://github.com/bottlerocket-os/twoliter. For git sourcecode installation,
-# this is any URI that can be used in a git clone command.
-TWOLITER_REPO = "https://github.com/bottlerocket-os/twoliter"
 
 # The logging verbosity for Twoliter: error, warn, info, debug, trace
 TWOLITER_LOG_LEVEL = "info"
@@ -58,12 +62,6 @@ BUILDSYS_NAME = "bottlerocket"
 # If you're building a Bottlerocket remix, you'd want to set this to something like
 # "Bottlerocket Remix by ${CORP}" or "${CORP}'s Bottlerocket Remix"
 BUILDSYS_PRETTY_NAME = "Bottlerocket OS"
-# SDK name used for building
-BUILDSYS_SDK_NAME="bottlerocket"
-# SDK version used for building
-BUILDSYS_SDK_VERSION="v0.34.1"
-# Site for fetching the SDK
-BUILDSYS_REGISTRY="public.ecr.aws/bottlerocket"
 
 # These can be overridden with -e to change configuration for pubsys (`cargo
 # make repo`).  In addition, you can set RELEASE_START_TIME to determine when
@@ -169,11 +167,6 @@ TESTSYS_TEST_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Test.toml"
 # on the command line.
 
 TWOLITER = "${TWOLITER_INSTALL_DIR}/twoliter"
-
-# Depends on ${BUILDSYS_ARCH}, ${BUILDSYS_REGISTRY}, ${BUILDSYS_SDK_NAME}, and
-# ${BUILDSYS_SDK_VERSION}.
-BUILDSYS_SDK_IMAGE = { script = [ "echo ${BUILDSYS_REGISTRY}/${BUILDSYS_SDK_NAME}-sdk-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
-BUILDSYS_TOOLCHAIN = { script = [ "echo ${BUILDSYS_REGISTRY}/${BUILDSYS_SDK_NAME}-toolchain-${BUILDSYS_ARCH}:${BUILDSYS_SDK_VERSION}" ] }
 
 # Depends on ${BUILDSYS_JOBS}.
 CARGO_MAKE_CARGO_LIMIT_JOBS = "--jobs ${BUILDSYS_JOBS}"
@@ -282,6 +275,10 @@ fi
 
 if [ "${TWOLITER_ALLOW_SOURCE_INSTALL}" = "true" ]; then
    flags+=("--allow-from-source")
+fi
+
+if [ "${TWOLITER_SKIP_VERSION_CHECK}" = "true" ]; then
+   flags+=("--skip-version-check")
 fi
 
 "${BUILDSYS_TOOLS_DIR}/install-twoliter.sh" \
