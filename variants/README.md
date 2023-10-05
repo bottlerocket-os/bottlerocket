@@ -33,6 +33,8 @@ For example, in a VMware variant, settings read from the guestinfo interface wil
 
 ## Variants
 
+See [_Update Policy_ in the Security Features document](../SECURITY_FEATURES.md) for information on when and how Bottlerocket applies security patches to variants.
+
 ### aws-k8s-1.23: Kubernetes 1.23 node
 
 The [aws-k8s-1.23](aws-k8s-1.23/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
