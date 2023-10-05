@@ -58,7 +58,9 @@ We recommend deploying it on your Kubernetes clusters.
 
 ##### ECS variant
 
-Newer LTS releases of the kernel may be introduced in newer `aws-ecs-*` variants, but not in the same one.
+Bottlerocket provides updates for each ECS variant for at least one year after the first release of each variant.
+Because the ECS agent is backwards compatible, there is no need for to create new variants on a regular cadence.
+ECS variants will be added as necessary to introduce newer LTS kernels or potentially breaking changes.
 
 We provide [an updater](https://github.com/bottlerocket-os/bottlerocket-ecs-updater) for automated updates to Bottlerocket.
 We recommend deploying it on your ECS clusters.
