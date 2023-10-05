@@ -59,7 +59,7 @@ We recommend deploying it on your Kubernetes clusters.
 ##### ECS variant
 
 Bottlerocket provides updates for each ECS variant for at least one year after the first release of each variant.
-Because the ECS agent is backwards compatible, there is no need for to create new variants on a regular cadence.
+Because the ECS agent is backwards compatible, there is no need to create new variants on a regular cadence.
 ECS variants will be added as necessary to introduce newer LTS kernels or potentially breaking changes.
 
 We provide [an updater](https://github.com/bottlerocket-os/bottlerocket-ecs-updater) for automated updates to Bottlerocket.
