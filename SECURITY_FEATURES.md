@@ -50,7 +50,7 @@ However, in a situation where security patches are no longer available for the k
 
 ##### Kubernetes variants
 
-Bottlerocket provides updates for each Kubernetes variant for approximately 12 months after the first release of each variant.
+Bottlerocket provides updates for each Kubernetes variant for approximately 14 months after the first release of each variant.
 For `aws-k8s-*` variants, Bottlerocket follows the [Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) support policy, including extended support beyond the typical 12 months support period.
 
 We provide [a Kubernetes operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) for automated updates to Bottlerocket.
