@@ -41,25 +41,27 @@ This is achieved through the following mechanisms:
 Using partition sets and modeled settings removes the dependency on correct local state for reliable updates.
 There is no package manager database or shared filesystem tree that can become corrupted and make the process non-deterministic.
 
+#### Update Policy
+
 Our philosophy for variants is that the right time for an unexpected major version update to the kernel or orchestrator agent is "never".
+New variants can introduce newer LTS kernels or GPU drivers.
+On release, variants peg to a kernel and GPU driver version and relevant security patches are applied.
+However, in a situation where security patches are no longer available for the kernel or GPU driver, an existing variant may adopt a new version to address security vulnerabilities.
 
-#### Kubernetes variants
+##### Kubernetes variants
 
-Each Kubernetes variant will be supported for approximately one year after it is first released.
-This follows the [Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) support policy.
-Newer LTS releases of the kernel may be introduced in newer variants, but not in older ones.
+Bottlerocket provides updates for each Kubernetes variant for approximately 12 months after the first release of each variant.
+For `aws-k8s-*` variants, Bottlerocket follows the [Amazon EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) support policy, including extended support beyond the typical 12 months support period.
 
 We provide [a Kubernetes operator](https://github.com/bottlerocket-os/bottlerocket-update-operator) for automated updates to Bottlerocket.
 We recommend deploying it on your Kubernetes clusters.
 
-#### ECS variant
+##### ECS variant
 
-We currently have a single variant for Amazon ECS.
-Newer LTS releases of the kernel may be introduced in newer variants, but not in the current one.
+Newer LTS releases of the kernel may be introduced in newer `aws-ecs-*` variants, but not in the same one.
 
 We provide [an updater](https://github.com/bottlerocket-os/bottlerocket-ecs-updater) for automated updates to Bottlerocket.
 We recommend deploying it on your ECS clusters.
-
 
 ### Immutable rootfs backed by dm-verity
 
