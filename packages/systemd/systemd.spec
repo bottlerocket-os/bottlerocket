@@ -14,6 +14,15 @@ Source3: journald.conf
 Source4: issue
 Source5: systemd-journald.conf
 
+# Backport of upstream patches that make the netlink default timeout
+# configurable.  Bottlerocket carries this patch and configures the timeout in
+# an effort to avoid a situation where a network link becomes unusable if the
+# system is under load and doesn't process the RTM_NEWROUTE acknowledgement
+# within the default timeout of 25 seconds.
+# Reference issue: github.com/systemd/systemd/issues/25441
+Patch1001: 1001-sd-netlink-make-calc_elapse-return-USEC_INFINITY-whe.patch
+Patch1002: 1002-sd-netlink-make-the-default-timeout-configurable-by-.patch
+
 # Local patch to work around the fact that /var is a bind mount from
 # /local/var, and we want the /local/var/run symlink to point to /run.
 Patch9001: 9001-use-absolute-path-for-var-run-symlink.patch
