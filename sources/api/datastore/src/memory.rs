@@ -132,7 +132,7 @@ impl DataStore for MemoryDataStore {
             // Clone data key because we want the HashMap key type to be Key, not &Key, and we
             // can't pass ownership because we only have a reference from our parameters.
             .entry(data_key.clone())
-            .or_insert_with(HashMap::new);
+            .or_default();
 
         metadata_for_data.insert(metadata_key.clone(), value.as_ref().to_owned());
         Ok(())

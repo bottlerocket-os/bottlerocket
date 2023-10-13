@@ -284,7 +284,7 @@ fn main_inner() -> Result<()> {
     match cmd.cmd {
         Command::Init(args) => {
             match update_metadata::write_file(&args.file, &Manifest::default()) {
-                Ok(_) => Ok(()),
+                Ok(()) => Ok(()),
                 Err(e) => Err(error::Error::UpdateMetadata { source: e }),
             }
         }
