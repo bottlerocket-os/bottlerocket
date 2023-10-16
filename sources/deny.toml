@@ -64,6 +64,13 @@ deny = [
 skip = [
     # several dependencies use an older version of socket2
     { name = "socket2", version = "=0.4.9" },
+    # several dependencies use an older version of toml
+    { name = "toml", version = "=0.5.11" },
+    # tungstenite uses a newer version of base64, but many of the
+    # first party crates are still in this version
+    { name = "base64", version = "=0.13.1" },
+    # AWS SDK for rust uses an older version of fastrand
+    { name = "fastrand", version = "=1.9.0" },
 ]
 
 skip-tree = [
@@ -72,16 +79,12 @@ skip-tree = [
     # dependency tree because windows-sys has many sub-crates
     # that differ in major version.
     { name = "windows-sys" },
-    # generate-readme pulls in an older clap that causes some duplicate
-    # dependencies
-    { name = "generate-readme", version = "=0.1.0" },
     # serde_yaml actually uses a newer hashbrown dependency,
     # but several crates in the graph pull in an older one, so skip for now
     # until they can be updated
     { name = "hashbrown", version = "=0.13.2" },
-    # tungstenite uses a newer version of base64, but many of the
-    # first party crates are still in this version
-    { name = "base64", version = "=0.13.1" },
+    # httptest uses an older version of bstr
+    { name = "httptest", version = "=0.15.4" },
 ]
 
 [sources]
