@@ -68,6 +68,11 @@ Source300: ephemeral-storage.rules
 Source301: ebs-volumes.rules
 Source302: supplemental-storage.rules
 
+# 4xx sources: Bottlerocket licenses
+Source400: COPYRIGHT
+Source401: LICENSE-MIT
+Source402: LICENSE-APACHE
+
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}apiclient
 Requires: %{_cross_os}apiserver
@@ -520,8 +525,15 @@ install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
 %cross_scan_attribution --clarify %{_builddir}/sources/clarify.toml \
     cargo --offline --locked %{_builddir}/sources/Cargo.toml
 
+# Install licenses
+install -d %{buildroot}%{_cross_licensedir}
+install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
+
 %files
 %{_cross_attribution_vendor_dir}
+%{_cross_licensedir}/COPYRIGHT
+%{_cross_licensedir}/LICENSE-MIT
+%{_cross_licensedir}/LICENSE-APACHE
 
 %files -n %{_cross_os}apiserver
 %{_cross_bindir}/apiserver
