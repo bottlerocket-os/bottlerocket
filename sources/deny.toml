@@ -79,10 +79,6 @@ skip-tree = [
     # dependency tree because windows-sys has many sub-crates
     # that differ in major version.
     { name = "windows-sys" },
-    # serde_yaml actually uses a newer hashbrown dependency,
-    # but several crates in the graph pull in an older one, so skip for now
-    # until they can be updated
-    { name = "hashbrown", version = "=0.13.2" },
     # httptest uses an older version of bstr
     { name = "httptest", version = "=0.15.4" },
 ]
