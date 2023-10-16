@@ -21,7 +21,7 @@ base64 = "0.13"
 cached = { version = "0.46", features = ["async"] }
 constants = { path = "../../constants", version = "0.1" }
 bottlerocket-release = { path = "../../bottlerocket-release", version = "0.1" }
-dns-lookup = "1"
+dns-lookup = "2"
 handlebars = "4"
 http = "0.2"
 lazy_static = "1"

@@ -10,7 +10,7 @@ exclude = ["README.md"]
 
 [dependencies]
 argh = "0.1"
-dns-lookup = "1"
+dns-lookup = "2"
 ipnet = { version = "2", features = ["serde"] }
 imdsclient = { path = "../../imdsclient", version = "0.1" }
 indexmap = { version = "1", features = ["serde"]}
