@@ -30,7 +30,7 @@ serde_json = "1"
 simplelog = "0.12"
 snafu = "0.7"
 thar-be-updates = { path = "../thar-be-updates", version = "0.1" }
-tokio = { version = "~1.25", default-features = false, features = ["process"] }
+tokio = { version = "~1.32", default-features = false, features = ["process"] }
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../../generate-readme" }

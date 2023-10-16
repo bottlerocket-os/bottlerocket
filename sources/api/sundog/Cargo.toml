@@ -20,7 +20,7 @@ serde_json = "1"
 simplelog = "0.12"
 shlex = "1"
 snafu = "0.7"
-tokio = { version = "~1.25", default-features = false, features = ["process", "macros", "rt-multi-thread"] }  # LTS
+tokio = { version = "~1.32", default-features = false, features = ["process", "macros", "rt-multi-thread"] }  # LTS
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../../generate-readme" }

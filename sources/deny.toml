@@ -62,6 +62,8 @@ deny = [
 ]
 
 skip = [
+    # several dependencies use an older version of socket2
+    { name = "socket2", version = "=0.4.9" },
 ]
 
 skip-tree = [
@@ -79,7 +81,7 @@ skip-tree = [
     { name = "hashbrown", version = "=0.13.2" },
     # tungstenite uses a newer version of base64, but many of the
     # first party crates are still in this version
-    { name = "base64", version = "=0.13.1" }
+    { name = "base64", version = "=0.13.1" },
 ]
 
 [sources]

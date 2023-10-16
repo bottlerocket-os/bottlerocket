@@ -29,7 +29,7 @@ signpost = { path = "../../updater/signpost", version = "0.1" }
 simplelog = "0.12"
 snafu = "0.7"
 tempfile = "3"
-tokio = { version = "~1.25", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
+tokio = { version = "~1.32", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
 update_metadata = { path = "../../updater/update_metadata", version = "0.1" }
 
 [build-dependencies]
