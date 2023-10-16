@@ -81,7 +81,6 @@ The following variants support ECS:
 
 We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
-* `vmware-k8s-1.23`
 * `vmware-k8s-1.24`
 * `vmware-k8s-1.25`
 * `vmware-k8s-1.26`
@@ -90,7 +89,6 @@ We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
 The following variants are designed to be Kubernetes worker nodes on bare metal:
 
-* `metal-k8s-1.23`
 * `metal-k8s-1.24`
 * `metal-k8s-1.25`
 * `metal-k8s-1.26`
