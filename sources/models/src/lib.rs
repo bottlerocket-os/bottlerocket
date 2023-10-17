@@ -109,11 +109,6 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 * [Model](src/vmware-dev/mod.rs)
 * [Default settings](src/vmware-dev/defaults.d/)
 
-## vmware-k8s-1.23: VMware Kubernetes 1.23
-
-* [Model](src/vmware-k8s-1.28/mod.rs)
-* [Default settings](src/vmware-k8s-1.28/defaults.d/)
-
 ## vmware-k8s-1.24: VMware Kubernetes 1.24
 
 * [Model](src/vmware-k8s-1.28/mod.rs)
@@ -143,11 +138,6 @@ The `#[model]` attribute on Settings and its sub-structs reduces duplication and
 
 * [Model](src/metal-dev/mod.rs)
 * [Default settings](src/metal-dev/defaults.d/)
-
-## metal-k8s-1.23: Metal Kubernetes 1.23
-
-* [Model](src/metal-k8s-1.28/mod.rs)
-* [Default settings](src/metal-k8s-1.28/defaults.d/)
 
 ## metal-k8s-1.24: Metal Kubernetes 1.24
 
