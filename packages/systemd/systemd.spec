@@ -2,7 +2,7 @@
 %global __brp_check_rpaths %{nil}
 
 Name: %{_cross_os}systemd
-Version: 252.13
+Version: 252.18
 Release: 1%{?dist}
 Summary: System and Service Manager
 License: GPL-2.0-or-later AND GPL-2.0-only AND LGPL-2.1-or-later
