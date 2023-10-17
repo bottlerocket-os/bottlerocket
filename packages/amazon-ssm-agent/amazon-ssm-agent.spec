@@ -8,7 +8,7 @@
 %global goimport %{goproject}/%{gorepo}
 
 Name: %{_cross_os}amazon-ssm-agent
-Version: 3.2.1478.0
+Version: 3.2.1630.0
 Release: 1%{?dist}
 Summary: An agent to enable remote management of EC2 instances
 License: Apache-2.0
