@@ -2,7 +2,7 @@
 %global agent_gorepo amazon-ecs-agent
 %global agent_goimport %{agent_goproject}/%{agent_gorepo}
 
-%global agent_gover 1.75.0
+%global agent_gover 1.77.0
 
 # git rev-parse --short=8
 %global agent_gitrev 06008fa1
@@ -15,7 +15,7 @@
 %global vpccni_goproject github.com/aws
 %global vpccni_gorepo amazon-vpc-cni-plugins
 %global vpccni_goimport %{vpccni_goproject}/%{vpccni_gorepo}
-%global vpccni_gitrev a83b66349768e020487a00e31767fc2e6fc88136
+%global vpccni_gitrev be5214353252f8315a1341f4df9ffbd8cf69000c
 %global vpccni_gover 1.3
 
 # Construct reproducible tar archives
@@ -227,18 +227,19 @@ cd "${BUILD_TOP}"
 LD_VPC_CNI_VERSION="-X github.com/aws/amazon-vpc-cni-plugins/version.Version=%{vpccni_gover}"
 VPC_CNI_HASH="%{vpccni_gitrev}"
 LD_VPC_CNI_SHORT_HASH="-X github.com/aws/amazon-vpc-cni-plugins/version.GitShortHash=${VPC_CNI_HASH::8}"
-go build -a \
+
+for p in \
+  vpc-branch-eni \
+  aws-appmesh \
+  vpc-eni \
+; do
+  go build -a \
   -buildmode=pie \
   -ldflags "${GOLDFLAGS} ${LD_VPC_CNI_VERSION} ${LD_VPC_CNI_SHORT_HASH} ${LD_VPC_CNI_PORCELAIN}" \
   -mod=vendor \
-  -o vpc-branch-eni \
-  ./plugins/vpc-branch-eni
-go build -a \
-  -buildmode=pie \
-  -ldflags "${GOLDFLAGS} ${LD_VPC_CNI_VERSION} ${LD_VPC_CNI_SHORT_HASH} ${LD_VPC_CNI_PORCELAIN}" \
-  -mod=vendor \
-  -o aws-appmesh \
-  ./plugins/aws-appmesh
+  -o ${p} \
+  ./plugins/${p}
+done
 
 %install
 install -D -p -m 0755 %{agent_gorepo}-%{agent_gover}/amazon-ecs-agent %{buildroot}%{_cross_bindir}/amazon-ecs-agent
@@ -248,6 +249,7 @@ install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-eni %{buildroot}%{_c
 install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-ipam %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
 install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/vpc-branch-eni %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
 install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/aws-appmesh %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/aws-appmesh
+install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/vpc-eni %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/vpc-eni
 
 install -d %{buildroot}%{_cross_unitdir}
 install -D -p -m 0644 %{S:101} %{S:200} %{buildroot}%{_cross_unitdir}
@@ -319,6 +321,7 @@ mv %{vpccni_gorepo}-%{vpccni_gitrev}/vendor go-vendor/%{vpccni_gorepo}
 %{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
 %{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
 %{_cross_libexecdir}/amazon-ecs-agent/aws-appmesh
+%{_cross_libexecdir}/amazon-ecs-agent/vpc-eni
 %{_cross_libexecdir}/amazon-ecs-agent/managed-agents
 %{_cross_unitdir}/ecs.service
 %{_cross_unitdir}/etc-ecs.mount
