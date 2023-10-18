@@ -21,7 +21,7 @@ shell-words = "1"
 snafu = { version = "0.7", features = ["backtraces-impl-backtrace-crate"] }
 tar = { version = "0.4", default-features = false }
 tempfile = { version = "3", default-features = false }
-tokio = { version = "~1.25", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
+tokio = { version = "~1.32", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
 url = "2"
 walkdir = "2"
 
