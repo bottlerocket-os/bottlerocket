@@ -36,7 +36,7 @@ Examples include stripping debug symbols, collecting software license informatio
 
 A key aspect of building RPMs - or any software - is providing a consistent and clean build environment.
 Otherwise, a prior build on the same host can change the result in surprising ways.
-[mock](https://github.com/rpm-software-management/mock/wiki) is often used for this, either directly or by services such as [Koji](https://fedoraproject.org/wiki/Koji).
+[mock](https://rpm-software-management.github.io/mock/) is often used for this, either directly or by services such as [Koji](https://fedoraproject.org/wiki/Koji).
 
 Bottlerocket uses Docker and containers to accomplish this instead.
 Every package build starts from a container with the [Bottlerocket SDK](https://github.com/bottlerocket-os/bottlerocket-sdk) and zero or more other packages installed as dependencies.
@@ -57,7 +57,7 @@ packages/libwoof/
 
 Each package has a `Cargo.toml` file that lists its build dependencies, runtime dependencies, and metadata such as external files and the expected hashes.
 
-It also refers to a `build.rs` [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html) which tells Cargo to invoke our [buildsys](../tools/buildsys/) tool.
+It also refers to a `build.rs` [build script](https://doc.rust-lang.org/cargo/reference/build-scripts.html) which tells Cargo to invoke our [buildsys](https://github.com/bottlerocket-os/twoliter/tree/develop/tools/buildsys) tool.
 The RPM packages we want are built as a side effect of Cargo running the script.
 
 It points to `/dev/null` for the actual crate, since Cargo expects some Rust code to build, and is happy with an empty file.
