@@ -261,11 +261,12 @@
 ; successful, suppress this particular audit message.
 (dontaudit container_t any_t (file (relabelfrom)))
 
-; No components are allowed to block access to files by using
-; fanotify permission events. Fanotify only sends events for
-; accesses from within the mount namespace, so it's unlikely to
-; be useful for containers, and we don't use it in the host.
-(neverallow all_s global (files (block)))
+; Trusted components are allowed to block access to objects with
+; fanotify permission events.
+(allow trusted_s all_o (files (block)))
+
+; Untrusted components are not allowed to block any files.
+(neverallow untrusted_s global (files (block)))
 
 ; All subject labels can be used for files on /proc.
 (allow all_s proc_t (filesystem (associate)))
