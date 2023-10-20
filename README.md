@@ -557,7 +557,8 @@ The following settings are optional and allow you to further configure your clus
   It can be very difficult to recover from configuration errors.
   Use the memory reservation information from `kubectl describe node` and make sure you understand the Kubernetes documentation related to the [memory manager](https://kubernetes.io/docs/tasks/administer-cluster/memory-manager/) and how to [reserve compute resources for system daemons](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/).
 
-* `settings.kubernetes.pod-pids-limit`: The maximum number of processes per pod.
+* `settings.kubernetes.pod-pids-limit`: The maximum number of processes per pod applied to the cgroup slice of the pod. Container slices have their own maximum number of processes. The maximum number of processes per container defaults to [DefaultsTasksMax](https://www.freedesktop.org/software/systemd/man/latest/systemd-system.conf.html#DefaultTasksMax=) of systemd:
+    > Defaults to 15% of the minimum of kernel.pid_max=, kernel.threads-max= and root cgroup pids.max.
 * `settings.kubernetes.provider-id`: This sets the unique ID of the instance that an external provider (i.e. cloudprovider) can use to identify a specific node.
 * `settings.kubernetes.registry-burst`: The maximum size of bursty pulls.
 * `settings.kubernetes.registry-qps`: The registry pull QPS.
