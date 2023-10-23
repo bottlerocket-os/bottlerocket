@@ -12,8 +12,8 @@ path = "../packages.rs"
 releases-url = "https://strace.io/files"
 
 [[package.metadata.build-package.external-files]]
-url = "https://strace.io/files/6.4/strace-6.4.tar.xz"
-sha512 = "29f47195b2766dc0d2907aba2d561e87ec87939251d07fd82d22ffdd3c864944ab0c47eabd7b13272345dfc5dfae7ca435c94fd5ccc297dd46e0747c6d463e01"
+url = "https://strace.io/files/6.5/strace-6.5.tar.xz"
+sha512 = "7edf7b00b5ad91be2df4e44b63df7f88376f3e6a8f078dfccf307a6a5003ad25d9cf233f2a32139e00fe399494ce6a8f67728bf9dfeb9bb5958ed08ce25e9e01"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
