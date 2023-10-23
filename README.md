@@ -389,7 +389,7 @@ See the ["Capabilities Settings" section in the `settings.oci-defaults.*` refere
 
 ##### OCI Defaults: Resource Limits
 
-See the ["Resource LImits Settings" section in the `settings.oci-defaults.*` reference](https://bottlerocket.dev/en/os/latest/#/api/settings/oci-defaults/).
+See the ["Resource Limits Settings" section in the `settings.oci-defaults.*` reference](https://bottlerocket.dev/en/os/latest/#/api/settings/oci-defaults/).
   
 #### Container image registry settings
 
