@@ -857,7 +857,13 @@ pub struct BR04010200Checker {}
 
 impl Checker for BR04010200Checker {
     fn execute(&self) -> CheckerResult {
-        let mut result = CheckerResult::default();
+        // Default the result to report success
+        let mut result = {
+            CheckerResult {
+                status: CheckStatus::PASS,
+                ..Default::default()
+            }
+        };
 
         // Recursively walk over all files in /var/log/journal and check perms
         for file in WalkDir::new("/var/log/journal")
