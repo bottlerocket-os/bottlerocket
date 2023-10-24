@@ -240,5 +240,7 @@ version = "1.16.0"
     "migrate_v1.16.0_kernel-modules-autoload-files.lz4",
     "migrate_v1.16.0_kernel-modules-autoload-restart.lz4",
     "migrate_v1.16.0_kernel-modules-autoload-settings.lz4",
+    "migrate_v1.16.0_aws-admin-container-v0-11-1.lz4",
+    "migrate_v1.16.0_public-admin-container-v0-11-1.lz4",
     "migrate_v1.16.0_schnauzer-v2-generators.lz4",
 ]
