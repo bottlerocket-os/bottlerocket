@@ -14,13 +14,13 @@ fn build_metadata_migrations() -> Vec<MetadataReplacement> {
                 setting: "settings.host-containers.admin.source",
                 metadata: "setting-generator",
                 old_val: "schnauzer settings.host-containers.admin.source",
-                new_val: "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.11.0'",
+                new_val: "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.11.1'",
             },
             MetadataReplacement {
                 setting: "settings.host-containers.control.source",
                 metadata: "setting-generator",
                 old_val: "schnauzer settings.host-containers.control.source",
-                new_val: "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-control:v0.7.4'",
+                new_val: "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-control:v0.7.5'",
             },
             MetadataReplacement {
                 setting: "settings.updates.metadata-base-url",
