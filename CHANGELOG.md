@@ -1,3 +1,42 @@
+# v1.16.0 (2023-10-25)
+
+## OS Changes
+
+* Adjust netlink timeout to prevent interfaces from entering a failed state ([#3520])
+* Update third-party packages ([#3535])
+* Add XFS CLI utilities for managing XFS-formatted storage ([#3444])
+* Add facilities to auto-load kernel modules ([#3460])
+* Update to kernels 5.10.197, 5.15.134, and 6.1.55 ([#3509] [#3542])
+* Fix reporting for Bottlerocket CIS Benchmark 4.1.2 ([#3547])
+* Update systemd to 252.18 ([#3533])
+* Allow fanotify permission events for trusted subjects in SELinux policy ([#3540])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Drop Kubernetes 1.23 Metal and VMware variants ([#3531])
+
+### ECS
+
+* Update ecs-agent ([#3535])
+
+## Build Changes
+
+* Update to Bottlerocket SDK v0.35.0 ([#3528])
+
+[#3444]: https://github.com/bottlerocket-os/bottlerocket/pull/3444
+[#3460]: https://github.com/bottlerocket-os/bottlerocket/pull/3460
+[#3509]: https://github.com/bottlerocket-os/bottlerocket/pull/3509
+[#3520]: https://github.com/bottlerocket-os/bottlerocket/pull/3520
+[#3528]: https://github.com/bottlerocket-os/bottlerocket/pull/3528
+[#3531]: https://github.com/bottlerocket-os/bottlerocket/pull/3531
+[#3533]: https://github.com/bottlerocket-os/bottlerocket/pull/3533
+[#3535]: https://github.com/bottlerocket-os/bottlerocket/pull/3535
+[#3540]: https://github.com/bottlerocket-os/bottlerocket/pull/3540
+[#3542]: https://github.com/bottlerocket-os/bottlerocket/pull/3542
+[#3547]: https://github.com/bottlerocket-os/bottlerocket/pull/3547
+
 # v1.15.1 (2023-10-9)
 
 ## OS Changes
