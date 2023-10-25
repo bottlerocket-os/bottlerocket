@@ -25,7 +25,7 @@ included-packages = [
     "release",
     "nvidia-container-toolkit",
     "nvidia-k8s-device-plugin",
-    "kmod-5.15-nvidia-tesla-515",
+    "kmod-5.15-nvidia-tesla-535",
 ]
 kernel-parameters = [
     "console=tty0",
