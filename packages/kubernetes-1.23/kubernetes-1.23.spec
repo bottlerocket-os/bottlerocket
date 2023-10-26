@@ -39,6 +39,7 @@ Source11: kubelet-server-crt
 Source12: kubelet-server-key
 Source13: etc-kubernetes-pki-private.mount
 Source14: credential-provider-config-yaml
+Source15: logdog.kubelet.conf
 
 # ExecStartPre drop-ins
 Source20: prestart-pull-pause-ctr.conf
@@ -121,6 +122,9 @@ ln -rs \
 
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
+install -d %{buildroot}%{_cross_datadir}/logdog.d
+install -p -m 0644 %{S:15} %{buildroot}%{_cross_datadir}/logdog.d
+
 %files -n %{_cross_os}kubelet-1.23
 %license LICENSE LICENSE.gonum.graph LICENSE.shell2junit LICENSE.golang PATENTS.golang
 %{_cross_attribution_file}
@@ -147,5 +151,6 @@ ln -rs \
 %{_cross_sysctldir}/90-kubelet.conf
 %dir %{_cross_libexecdir}/kubernetes
 %{_cross_libexecdir}/kubernetes/kubelet-plugins
+%{_cross_datadir}/logdog.d/logdog.kubelet.conf
 
 %changelog

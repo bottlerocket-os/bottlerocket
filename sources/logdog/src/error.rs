@@ -3,6 +3,7 @@
 use std::io;
 use std::path::PathBuf;
 
+use crate::log_request::REQUESTS_DIR;
 use datastore::{deserialization, serialization};
 use reqwest::Url;
 use snafu::{Backtrace, Snafu};
@@ -102,6 +103,12 @@ pub(crate) enum Error {
 
     #[snafu(display("Output filename is missing in request: '{}'", request))]
     FilenameMissing { request: String },
+
+    #[snafu(display("Unable to read file from '{}': {}", from.display(), source))]
+    FileRead {
+        source: std::io::Error,
+        from: PathBuf,
+    },
 
     #[snafu(display("Unable to write to file '{}': {}", path.display(), source))]
     FileWrite {
@@ -206,6 +213,12 @@ pub(crate) enum Error {
 
     #[snafu(display("Unknown request type '{}' in '{}'", mode, request))]
     UnhandledRequest { mode: String, request: String },
+
+    #[snafu(
+        display("Unable to walk directory '{}': {}", REQUESTS_DIR, source),
+        context(false)
+    )]
+    WalkDir { source: walkdir::Error },
 }
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;
