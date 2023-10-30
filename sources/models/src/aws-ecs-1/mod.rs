@@ -13,7 +13,7 @@ use crate::{
 // that uses its name in serialization; internal structures use the field name that points to it
 #[model(rename = "settings", impl_default = true)]
 struct Settings {
-    motd: String,
+    motd: settings_extension_motd::MotdV1,
     updates: UpdatesSettings,
     host_containers: HashMap<Identifier, HostContainer>,
     bootstrap_containers: HashMap<Identifier, BootstrapContainer>,

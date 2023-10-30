@@ -29,6 +29,9 @@ toml = "0.5"
 x509-parser = "0.15"
 url = "2"
 
+# settings extensions
+settings-extension-motd = { path = "../settings-extensions/motd", version = "0.1" }
+
 [build-dependencies]
 bottlerocket-variant = { version = "0.1", path = "../bottlerocket-variant" }
 generate-readme = { version = "0.1", path = "../generate-readme" }

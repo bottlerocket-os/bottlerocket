@@ -2677,6 +2677,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
+ "settings-extension-motd",
  "snafu",
  "string_impls_for",
  "toml 0.5.11",
