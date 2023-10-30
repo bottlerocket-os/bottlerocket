@@ -1135,6 +1135,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "bottlerocket-settings-sdk"
+version = "0.1.0-alpha.1"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.1#6a7e2915f1ac3f70e839b8394256bc59f86f626e"
+dependencies = [
+ "argh",
+ "bottlerocket-template-helper",
+ "serde",
+ "serde_json",
+ "snafu",
+ "tracing",
+]
+
+[[package]]
+name = "bottlerocket-template-helper"
+version = "0.1.0-alpha.0"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.1#6a7e2915f1ac3f70e839b8394256bc59f86f626e"
+dependencies = [
+ "darling 0.20.3",
+ "proc-macro2",
+ "quote",
+ "serde_json",
+ "syn 2.0.38",
+]
+
+[[package]]
 name = "bottlerocket-variant"
 version = "0.1.0"
 dependencies = [
@@ -3692,6 +3717,16 @@ dependencies = [
  "simplelog",
  "snafu",
  "tokio",
+]
+
+[[package]]
+name = "settings-extension-motd"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "serde",
+ "serde_json",
+ "string_impls_for",
 ]
 
 [[package]]
