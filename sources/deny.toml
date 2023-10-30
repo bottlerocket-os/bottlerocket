@@ -81,6 +81,8 @@ skip-tree = [
     { name = "windows-sys" },
     # httptest uses an older version of bstr
     { name = "httptest", version = "=0.15.4" },
+    # schnauzer uses cached, which uses an older version of darling
+    { name = "darling", version = "=0.14.4" },
 ]
 
 [sources]

@@ -14,9 +14,9 @@ path = "src/lib.rs"
 proc-macro = true
 
 [dependencies]
-darling = "0.14"
+darling = "0.20"
 quote = "1"
-syn = { version = "1", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "visit-mut"] }
+syn = { version = "2", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "visit-mut"] }
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../../generate-readme" }

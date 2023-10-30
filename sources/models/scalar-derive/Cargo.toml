@@ -14,13 +14,13 @@ path = "src/lib.rs"
 proc-macro = true
 
 [dependencies]
-darling = "0.14"
+darling = "0.20"
 proc-macro2 = "1"
 quote = "1"
 scalar = { path = "../scalar", version = "0.1" }
 serde = { version = "1", features = ["derive"] }
 serde_plain = "1"
-syn = { version = "1", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "visit-mut"] }
+syn = { version = "2", default-features = false, features = ["full", "parsing", "printing", "proc-macro", "visit-mut"] }
 
 [build-dependencies]
 generate-readme = { path = "../../generate-readme", version = "0.1" }
