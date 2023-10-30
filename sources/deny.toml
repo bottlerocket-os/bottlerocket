@@ -58,7 +58,11 @@ wildcards = "deny"
 
 deny = [
     { name = "structopt" },
-    { name = "clap", wrappers = [ "cargo-readme" ] },
+
+    # The bottlerocket-settings-sdk uses clap, but plans to migrate to argh
+    # We will provide an exception until the following is resolved:
+    # https://github.com/bottlerocket-os/bottlerocket-settings-sdk/issues/23
+    { name = "clap", wrappers = [ "cargo-readme", "bottlerocket-settings-sdk" ] },
 ]
 
 skip = [
@@ -89,3 +93,10 @@ skip-tree = [
 # Deny crates from unknown registries or git repositories.
 unknown-registry = "deny"
 unknown-git = "deny"
+
+allow-git = [
+    # The settings SDK is currently provided as a git dependency,
+    # We will allow it as an exception until the following is resolved:
+    # https://github.com/bottlerocket-os/bottlerocket-settings-sdk/issues/18
+    "https://github.com/bottlerocket-os/bottlerocket-settings-sdk",
+]
