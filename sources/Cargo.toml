@@ -101,6 +101,8 @@ members = [
 
     "models",
 
+    "models/settings-extensions/motd",
+
     "parse-datetime",
 
     "retry-read",

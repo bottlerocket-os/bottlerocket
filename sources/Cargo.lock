@@ -1135,6 +1135,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "bottlerocket-settings-sdk"
+version = "0.1.0-alpha.0"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.0#efd1ebeed2f8cbe84b99eabf3df0251285ed8a81"
+dependencies = [
+ "bottlerocket-template-helper",
+ "clap",
+ "serde",
+ "serde_json",
+ "snafu",
+ "tracing",
+]
+
+[[package]]
+name = "bottlerocket-template-helper"
+version = "0.1.0-alpha.0"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.0#efd1ebeed2f8cbe84b99eabf3df0251285ed8a81"
+dependencies = [
+ "darling 0.20.3",
+ "proc-macro2",
+ "quote",
+ "serde_json",
+ "syn 2.0.38",
+]
+
+[[package]]
 name = "bottlerocket-variant"
 version = "0.1.0"
 dependencies = [
@@ -2656,6 +2681,15 @@ dependencies = [
  "toml 0.5.11",
  "url",
  "x509-parser",
+]
+
+[[package]]
+name = "motd"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
