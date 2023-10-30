@@ -2669,6 +2669,7 @@ dependencies = [
  "lazy_static",
  "libc",
  "model-derive",
+ "motd",
  "rand",
  "regex",
  "scalar",
