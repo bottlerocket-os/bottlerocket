@@ -287,8 +287,8 @@ impl Checker for BR02010101Checker {
 
         check_output_contains!(
             SYSTEMCTL_CMD,
-            ["is-active", "chronyd"],
-            &["active"],
+            ["show", "--property", "ActiveState", "chronyd"],
+            &["ActiveState=active"],
             "unable to verify chronyd service enabled",
             "chronyd NTP service is not enabled"
         )
