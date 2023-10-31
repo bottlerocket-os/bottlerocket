@@ -1,5 +1,5 @@
 {
     "name": "CIS Kubernetes Benchmark (Worker Node)",
-    "version": "v1.7.1",
+    "version": "v1.8.0",
     "url": "https://www.cisecurity.org/benchmark/kubernetes"
 }
