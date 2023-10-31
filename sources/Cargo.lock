@@ -2653,6 +2653,7 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "snafu",
+ "string_impls_for",
  "toml 0.5.11",
  "url",
  "x509-parser",
@@ -3900,6 +3901,14 @@ dependencies = [
  "snafu",
  "toml 0.5.11",
  "walkdir",
+]
+
+[[package]]
+name = "string_impls_for"
+version = "0.1.0"
+dependencies = [
+ "generate-readme",
+ "serde",
 ]
 
 [[package]]

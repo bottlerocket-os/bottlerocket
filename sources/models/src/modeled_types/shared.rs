@@ -5,15 +5,12 @@ use scalar::traits::{Scalar, Validate};
 use scalar::ValidationError;
 use scalar_derive::Scalar;
 use semver::Version;
-use serde::de::Error as _;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use snafu::{ensure, ResultExt};
-use std::borrow::Borrow;
 use std::convert::TryFrom;
-use std::fmt;
 use std::net::IpAddr;
-use std::ops::Deref;
 use std::str::FromStr;
+use string_impls_for::string_impls_for;
 use url::Host;
 use x509_parser;
 
