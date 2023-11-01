@@ -2,12 +2,12 @@
 # to try to catch errors close to their introduction due to yanked Go modules. These
 # could otherwise be covered up by caching and not discovered until much later when
 # bypassing the main cache.
-name: Nightly
+name: Weekly
 on:
   schedule:
-    # Run once a day at 02:15 UTC. Randomly chosen as a "quiet" time for this to run.
+    # Run Monday at 02:15 UTC. Randomly chosen as a "quiet" time for this to run.
     # See syntax for format details: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onschedule
-    - cron: '15 2 * * *'
+    - cron: '15 2 * * 1'
 
 env:
   # When Go packages are built, buildsys will vendor in dependent Go code for
