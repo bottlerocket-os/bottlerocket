@@ -1,0 +1,29 @@
+[package]
+name = "modeled-types"
+version = "0.1.0"
+authors = []
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+base64 = "0.13"
+indexmap = { version = "1", features = ["serde"] }
+lazy_static = "1"
+regex = "1"
+scalar = { path = "../scalar", version = "0.1" }
+scalar-derive = { path = "../scalar-derive", version = "0.1" }
+semver = "1"
+serde = "1"
+serde_json = "1"
+serde_plain = "1"
+snafu = "0.7"
+string_impls_for = { path = "../string_impls_for", version = "0.1" }
+url = "2"
+x509-parser = "0.15"
+
+[build-dependencies]
+generate-readme = { path = "../../generate-readme", version = "0.1" }

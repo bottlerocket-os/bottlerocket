@@ -1,10 +1,10 @@
-use crate::modeled_types::Identifier;
 use crate::{
     AutoScalingSettings, AwsSettings, BootSettings, BootstrapContainer, CloudFormationSettings,
     ContainerRuntimeSettings, DnsSettings, HostContainer, KernelSettings, KubernetesSettings,
     MetricsSettings, NetworkSettings, NtpSettings, OciDefaults, OciHooks, PemCertificate,
     RegistrySettings, UpdatesSettings,
 };
+use modeled_types::Identifier;
 
 use model_derive::model;
 use serde::{Deserialize, Serialize};

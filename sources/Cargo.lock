@@ -2657,19 +2657,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "models"
+name = "modeled-types"
 version = "0.1.0"
 dependencies = [
  "base64 0.13.1",
- "bottlerocket-release",
- "bottlerocket-variant",
- "filetime",
  "generate-readme",
  "indexmap 1.9.3",
  "lazy_static",
- "libc",
- "model-derive",
- "rand",
  "regex",
  "scalar",
  "scalar-derive",
@@ -2677,12 +2671,28 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "settings-extension-motd",
  "snafu",
  "string_impls_for",
- "toml 0.5.11",
  "url",
  "x509-parser",
+]
+
+[[package]]
+name = "models"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-release",
+ "bottlerocket-variant",
+ "filetime",
+ "generate-readme",
+ "libc",
+ "model-derive",
+ "modeled-types",
+ "rand",
+ "serde",
+ "serde_json",
+ "settings-extension-motd",
+ "toml 0.5.11",
 ]
 
 [[package]]
