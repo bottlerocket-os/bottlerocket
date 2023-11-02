@@ -24,6 +24,7 @@ extern crate log;
 use args::Args;
 use direction::Direction;
 use error::Result;
+use futures::{StreamExt, TryStreamExt};
 use nix::{dir::Dir, fcntl::OFlag, sys::stat::Mode, unistd::fsync};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use semver::Version;
@@ -31,11 +32,15 @@ use simplelog::{Config as LogConfig, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::convert::TryInto;
 use std::env;
-use std::fs::{self, File};
+use std::io::ErrorKind;
 use std::os::unix::fs::symlink;
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process;
+use tokio::fs;
+use tokio::runtime::Handle;
+use tokio_util::compat::FuturesAsyncReadCompatExt;
+use tokio_util::io::SyncIoBridge;
 use tough::{ExpirationEnforcement, FilesystemTransport, RepositoryLoader};
 use update_metadata::Manifest;
 use url::Url;
@@ -49,20 +54,21 @@ mod test;
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Args::from_env(env::args());
     // SimpleLogger will send errors to stderr and anything less to stdout.
     if let Err(e) = SimpleLogger::init(args.log_level, LogConfig::default()) {
         eprintln!("{}", e);
         process::exit(1);
     }
-    if let Err(e) = run(&args) {
+    if let Err(e) = run(&args).await {
         eprintln!("{}", e);
         process::exit(1);
     }
 }
 
-fn get_current_version<P>(datastore_dir: P) -> Result<Version>
+async fn get_current_version<P>(datastore_dir: P) -> Result<Version>
 where
     P: AsRef<Path>,
 {
@@ -70,12 +76,21 @@ where
 
     // Find the current patch version link, which contains our full version number
     let current = datastore_dir.join("current");
-    let major = datastore_dir
-        .join(fs::read_link(&current).context(error::LinkReadSnafu { link: current })?);
-    let minor =
-        datastore_dir.join(fs::read_link(&major).context(error::LinkReadSnafu { link: major })?);
-    let patch =
-        datastore_dir.join(fs::read_link(&minor).context(error::LinkReadSnafu { link: minor })?);
+    let major = datastore_dir.join(
+        fs::read_link(&current)
+            .await
+            .context(error::LinkReadSnafu { link: current })?,
+    );
+    let minor = datastore_dir.join(
+        fs::read_link(&major)
+            .await
+            .context(error::LinkReadSnafu { link: major })?,
+    );
+    let patch = datastore_dir.join(
+        fs::read_link(&minor)
+            .await
+            .context(error::LinkReadSnafu { link: minor })?,
+    );
 
     // Pull out the basename of the path, which contains the version
     let version_os_str = patch
@@ -93,7 +108,7 @@ where
     Version::parse(version_str).context(error::InvalidDataStoreVersionSnafu { path: &patch })
 }
 
-pub(crate) fn run(args: &Args) -> Result<()> {
+pub(crate) async fn run(args: &Args) -> Result<()> {
     // Get the directory we're working in.
     let datastore_dir = args
         .datastore_path
@@ -102,7 +117,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
             path: &args.datastore_path,
         })?;
 
-    let current_version = get_current_version(datastore_dir)?;
+    let current_version = get_current_version(datastore_dir).await?;
     let direction = Direction::from_versions(&current_version, &args.migrate_to_version)
         .unwrap_or_else(|| {
             info!(
@@ -127,9 +142,11 @@ pub(crate) fn run(args: &Args) -> Result<()> {
         })?;
 
     // open a reader to the root.json file
-    let root_file = File::open(&args.root_path).with_context(|_| error::OpenRootSnafu {
-        path: args.root_path.clone(),
-    })?;
+    let root_bytes = fs::read(&args.root_path)
+        .await
+        .with_context(|_| error::OpenRootSnafu {
+            path: args.root_path.clone(),
+        })?;
 
     // We will load the locally cached TUF repository to obtain the manifest. The Repository is
     // loaded using a `TempDir` for its internal Datastore (this is the default). Part of using a
@@ -143,7 +160,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
 
     // Failure to load the TUF repo at the expected location is a serious issue because updog should
     // always create a TUF repo that contains at least the manifest, even if there are no migrations.
-    let repo = RepositoryLoader::new(root_file, metadata_base_url, targets_base_url)
+    let repo = RepositoryLoader::new(&root_bytes, metadata_base_url, targets_base_url)
         .transport(FilesystemTransport)
         // The threats TUF mitigates are more than the threats we are attempting to mitigate
         // here by caching signatures for migrations locally and using them after a reboot but
@@ -154,8 +171,9 @@ pub(crate) fn run(args: &Args) -> Result<()> {
         // if the targets expired between updog downloading them and now.
         .expiration_enforcement(ExpirationEnforcement::Unsafe)
         .load()
+        .await
         .context(error::RepoLoadSnafu)?;
-    let manifest = load_manifest(&repo)?;
+    let manifest = load_manifest(repo.clone()).await?;
     let migrations =
         update_metadata::find_migrations(&current_version, &args.migrate_to_version, &manifest)
             .context(error::FindMigrationsSnafu)?;
@@ -165,7 +183,7 @@ pub(crate) fn run(args: &Args) -> Result<()> {
         // change, we can just link to the last version rather than making a copy.
         // (Note: we link to the fully resolved directory, args.datastore_path,  so we don't
         // have a chain of symlinks that could go past the maximum depth.)
-        flip_to_new_version(&args.migrate_to_version, &args.datastore_path)?;
+        flip_to_new_version(&args.migrate_to_version, &args.datastore_path).await?;
     } else {
         let copy_path = run_migrations(
             &repo,
@@ -173,8 +191,9 @@ pub(crate) fn run(args: &Args) -> Result<()> {
             &migrations,
             &args.datastore_path,
             &args.migrate_to_version,
-        )?;
-        flip_to_new_version(&args.migrate_to_version, copy_path)?;
+        )
+        .await?;
+        flip_to_new_version(&args.migrate_to_version, copy_path).await?;
     }
     Ok(())
 }
@@ -220,7 +239,7 @@ where
 ///
 /// The given data store is used as a starting point; each migration is given the output of the
 /// previous migration, and the final output becomes the new data store.
-fn run_migrations<P, S>(
+async fn run_migrations<P, S>(
     repository: &tough::Repository,
     direction: Direction,
     migrations: &[S],
@@ -249,44 +268,58 @@ where
             .context(error::TargetNameSnafu { target: migration })?;
 
         // get the migration from the repo
-        let lz4_bytes = repository
+        let lz4_byte_stream = repository
             .read_target(&migration)
+            .await
             .context(error::LoadMigrationSnafu {
                 migration: migration.raw(),
             })?
             .context(error::MigrationNotFoundSnafu {
                 migration: migration.raw(),
-            })?;
+            })?
+            .map(|entry| {
+                let annotated: std::result::Result<bytes::Bytes, tough::error::Error> = entry;
+                annotated.map_err(|tough_error| std::io::Error::new(ErrorKind::Other, tough_error))
+            });
+
+        // Convert the stream to a blocking Read object.
+        let lz4_async_read = lz4_byte_stream.into_async_read().compat();
+        let lz4_bytes = SyncIoBridge::new(lz4_async_read);
 
         // Add an LZ4 decoder so the bytes will be deflated on read
         let mut reader = lz4::Decoder::new(lz4_bytes).context(error::Lz4DecodeSnafu {
             migration: migration.raw(),
         })?;
 
-        // Create a sealed command with pentacle, so we can run the verified bytes from memory
-        let mut command =
-            pentacle::SealedCommand::new(&mut reader).context(error::SealMigrationSnafu)?;
-
-        // Point each migration in the right direction, and at the given data store.
-        command.arg(direction.to_string());
-        command.args(&[
+        let mut command_args = vec![
+            direction.to_string(),
             "--source-datastore".to_string(),
             source_datastore.display().to_string(),
-        ]);
+        ];
 
         // Create a new output location for this migration.
         target_datastore = new_datastore_location(source_datastore, new_version)?;
 
-        command.args(&[
-            "--target-datastore".to_string(),
-            target_datastore.display().to_string(),
-        ]);
+        command_args.push("--target-datastore".to_string());
+        command_args.push(target_datastore.display().to_string());
 
         info!("Running migration '{}'", migration.raw());
-        debug!("Migration command: {:?}", command);
 
-        let output = command.output().context(error::StartMigrationSnafu)?;
+        // Run this blocking IO in a thread so it doesn't block the scheduler.
+        let rt = Handle::current();
+        let task = rt.spawn_blocking(move || {
+            // Create a sealed command with pentacle, so we can run the verified bytes from memory
+            let mut command =
+                pentacle::SealedCommand::new(&mut reader).context(error::SealMigrationSnafu)?;
+            command.args(command_args);
 
+            debug!("Migration command: {:?}", command);
+
+            let output = command.output().context(error::StartMigrationSnafu)?;
+            Ok(output)
+        });
+
+        let output = task.await.expect("TODO - snafu error for this")?;
         if !output.stdout.is_empty() {
             debug!(
                 "Migration stdout: {}",
@@ -310,7 +343,7 @@ where
 
         // If an intermediate datastore exists from a previous loop, delete it.
         if let Some(path) = &intermediate_datastore {
-            delete_intermediate_datastore(path);
+            delete_intermediate_datastore(path).await;
         }
 
         // Remember the location of the target_datastore to delete it in the next loop iteration
@@ -323,11 +356,11 @@ where
 }
 
 // Try to delete an intermediate datastore if it exists. If it fails to delete, print an error.
-fn delete_intermediate_datastore(path: &PathBuf) {
+async fn delete_intermediate_datastore(path: &PathBuf) {
     // Even if we fail to remove an intermediate data store, we don't want to fail the upgrade -
     // just let someone know for later cleanup.
     trace!("Removing intermediate data store at {}", path.display());
-    if let Err(e) = fs::remove_dir_all(path) {
+    if let Err(e) = fs::remove_dir_all(path).await {
         error!(
             "Failed to remove intermediate data store at '{}': {}",
             path.display(),
@@ -344,7 +377,7 @@ fn delete_intermediate_datastore(path: &PathBuf) {
 /// * pointing the major version to the minor version
 /// * pointing the 'current' link to the major version
 /// * fsyncing the directory to disk
-fn flip_to_new_version<P>(version: &Version, to_datastore: P) -> Result<()>
+async fn flip_to_new_version<P>(version: &Version, to_datastore: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
@@ -426,9 +459,11 @@ where
     symlink(to_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that the patch version link points to the new data
     // store copy.
-    fs::rename(&temp_link, &patch_version_link).context(error::LinkSwapSnafu {
-        link: &patch_version_link,
-    })?;
+    fs::rename(&temp_link, &patch_version_link)
+        .await
+        .context(error::LinkSwapSnafu {
+            link: &patch_version_link,
+        })?;
 
     // =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -443,9 +478,11 @@ where
     symlink(patch_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that the minor version link points to the new patch
     // version.
-    fs::rename(&temp_link, &minor_version_link).context(error::LinkSwapSnafu {
-        link: &minor_version_link,
-    })?;
+    fs::rename(&temp_link, &minor_version_link)
+        .await
+        .context(error::LinkSwapSnafu {
+            link: &minor_version_link,
+        })?;
 
     // =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -460,9 +497,11 @@ where
     symlink(minor_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that the major version link points to the new minor
     // version.
-    fs::rename(&temp_link, &major_version_link).context(error::LinkSwapSnafu {
-        link: &major_version_link,
-    })?;
+    fs::rename(&temp_link, &major_version_link)
+        .await
+        .context(error::LinkSwapSnafu {
+            link: &major_version_link,
+        })?;
 
     // =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -476,9 +515,11 @@ where
     // This will point at, for example, /path/to/datastore/v1
     symlink(major_target, &temp_link).context(error::LinkCreateSnafu { path: &temp_link })?;
     // Atomically swap the link into place, so that 'current' points to the new major version.
-    fs::rename(&temp_link, &current_version_link).context(error::LinkSwapSnafu {
-        link: &current_version_link,
-    })?;
+    fs::rename(&temp_link, &current_version_link)
+        .await
+        .context(error::LinkSwapSnafu {
+            link: &current_version_link,
+        })?;
 
     // =^..^=   =^..^=   =^..^=   =^..^=
 
@@ -496,16 +537,29 @@ where
     Ok(())
 }
 
-fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
+async fn load_manifest(repository: tough::Repository) -> Result<Manifest> {
     let target = "manifest.json";
     let target = target
         .try_into()
         .context(error::TargetNameSnafu { target })?;
-    Manifest::from_json(
-        repository
-            .read_target(&target)
-            .context(error::ManifestLoadSnafu)?
-            .context(error::ManifestNotFoundSnafu)?,
-    )
-    .context(error::ManifestParseSnafu)
+
+    let stream = repository
+        .read_target(&target)
+        .await
+        .context(error::ManifestLoadSnafu)?
+        .context(error::ManifestNotFoundSnafu)?
+        .map(|entry| {
+            let annotated: std::result::Result<bytes::Bytes, tough::error::Error> = entry;
+            annotated.map_err(|tough_error| std::io::Error::new(ErrorKind::Other, tough_error))
+        });
+
+    // Convert the stream to a blocking Read object.
+    let async_read = stream.into_async_read().compat();
+    let reader = SyncIoBridge::new(async_read);
+
+    // Run this blocking Read object in a thread so it doesn't block the scheduler.
+    let rt = Handle::current();
+    let task =
+        rt.spawn_blocking(move || Manifest::from_json(reader).context(error::ManifestParseSnafu));
+    task.await.expect("TODO - create snafu join handle error")
 }

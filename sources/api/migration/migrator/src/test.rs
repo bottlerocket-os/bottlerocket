@@ -4,10 +4,10 @@ use crate::args::Args;
 use crate::run;
 use chrono::{DateTime, Utc};
 use semver::Version;
-use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
+use tokio::fs;
 
 /// Provides the path to a folder where test data files reside.
 fn test_data() -> PathBuf {
@@ -115,7 +115,8 @@ struct TestRepo {
 
 /// LZ4 compresses `source` bytes to a new file at `destination`.
 fn compress(source: &[u8], destination: &Path) {
-    let output_file = File::create(destination).unwrap();
+    // It is easier to use blocking IO here and in test code is fine as long as it works.
+    let output_file = std::fs::File::create(destination).unwrap();
     let mut encoder = lz4::EncoderBuilder::new()
         .level(4)
         .build(output_file)
@@ -127,7 +128,7 @@ fn compress(source: &[u8], destination: &Path) {
 
 /// Creates a test repository with a couple of versions defined in the manifest and a couple of
 /// migrations. See the test description for for more info.
-fn create_test_repo(test_type: TestType) -> TestRepo {
+async fn create_test_repo(test_type: TestType) -> TestRepo {
     // This is where the signed TUF repo will exist when we are done. It is the
     // root directory of the `TestRepo` we will return when we are done.
     let test_repo_dir = TempDir::new().unwrap();
@@ -165,7 +166,7 @@ fn create_test_repo(test_type: TestType) -> TestRepo {
     }
 
     // Create and sign the TUF repository.
-    let mut editor = tough::editor::RepositoryEditor::new(root()).unwrap();
+    let mut editor = tough::editor::RepositoryEditor::new(root()).await.unwrap();
     let long_ago: DateTime<Utc> = DateTime::parse_from_rfc3339("1970-01-01T00:00:00Z")
         .unwrap()
         .into();
@@ -180,16 +181,17 @@ fn create_test_repo(test_type: TestType) -> TestRepo {
         .timestamp_version(one)
         .timestamp_expires(long_ago);
 
-    list_dir_files(tuf_indir).into_iter().for_each(|path| {
+    for path in list_dir_files(tuf_indir).await {
         editor
             .add_target(
                 path.file_name().unwrap().to_str().unwrap(),
-                tough::schema::Target::from_path(&path).unwrap(),
+                tough::schema::Target::from_path(&path).await.unwrap(),
             )
             .unwrap();
-    });
+    }
     let signed_repo = editor
         .sign(&[Box::new(tough::key_source::LocalKeySource { path: pem() })])
+        .await
         .unwrap();
     signed_repo
         .link_targets(
@@ -197,8 +199,9 @@ fn create_test_repo(test_type: TestType) -> TestRepo {
             &targets_path,
             tough::editor::signed::PathExists::Fail,
         )
+        .await
         .unwrap();
-    signed_repo.write(&metadata_path).unwrap();
+    signed_repo.write(&metadata_path).await.unwrap();
 
     TestRepo {
         _tuf_dir: test_repo_dir,
@@ -209,12 +212,12 @@ fn create_test_repo(test_type: TestType) -> TestRepo {
 
 /// Asserts that the expected directories and files are in the datastore directory after a
 /// failed migration. Returns the absolute path that the `current` symlink is pointing to.
-fn assert_directory_structure_with_failed_migration(
+async fn assert_directory_structure_with_failed_migration(
     dir: &Path,
     from: &Version,
     to: &Version,
 ) -> PathBuf {
-    let paths = list_dir_entries(dir);
+    let paths = list_dir_entries(dir).await;
     let from_ver = format!("v{}", from);
     let from_ver_unique_prefix = format!("v{}_", from);
     let to_ver_unique_prefix = format!("v{}_", to);
@@ -259,8 +262,8 @@ fn assert_directory_structure_with_failed_migration(
 
 /// Asserts that the expected directories and files are in the datastore directory after a
 /// successful migration. Returns the absolute path that the `current` symlink is pointing to.
-fn assert_directory_structure(dir: &Path) -> PathBuf {
-    let paths = list_dir_entries(dir);
+async fn assert_directory_structure(dir: &Path) -> PathBuf {
+    let paths = list_dir_entries(dir).await;
     assert_eq!(paths.len(), 8);
     assert_dir_entry_exists(&paths, "current");
     assert_dir_entry_exists(&paths, "result.txt");
@@ -301,18 +304,18 @@ fn assert_dir_starting_with_exists(dir_entries: &[PathBuf], starts_with: &str) {
     );
 }
 
-fn list_dir_entries(dir: impl AsRef<Path>) -> Vec<PathBuf> {
-    fs::read_dir(dir)
-        .unwrap()
-        .map(|dir_entry_result| {
-            let dir_entry = dir_entry_result.unwrap();
-            dir_entry.path()
-        })
-        .collect()
+async fn list_dir_entries(dir: impl AsRef<Path>) -> Vec<PathBuf> {
+    let mut paths = Vec::new();
+    let mut read_dir = fs::read_dir(dir).await.unwrap();
+    while let Some(entry) = read_dir.next_entry().await.unwrap() {
+        paths.push(entry.path())
+    }
+    paths
 }
 
-fn list_dir_files(dir: impl AsRef<Path>) -> Vec<PathBuf> {
+async fn list_dir_files(dir: impl AsRef<Path>) -> Vec<PathBuf> {
     list_dir_entries(dir)
+        .await
         .into_iter()
         .filter(|path| path.is_file())
         .collect()
@@ -332,12 +335,12 @@ fn list_dir_files(dir: impl AsRef<Path>) -> Vec<PathBuf> {
 /// (i.e. since migrations run in the context of the datastore directory, `result.txt` is
 /// written one directory above the datastore.) We can then inspect the contents of `result.txt`
 /// to see that the expected migrations ran in the correct order.
-#[test]
-fn migrate_forward() {
+#[tokio::test]
+async fn migrate_forward() {
     let from_version = Version::parse("0.99.0").unwrap();
     let to_version = Version::parse("0.99.1").unwrap();
     let test_datastore = TestDatastore::new(from_version);
-    let test_repo = create_test_repo(TestType::Success);
+    let test_repo = create_test_repo(TestType::Success).await;
     let args = Args {
         datastore_path: test_datastore.datastore.clone(),
         log_level: log::LevelFilter::Info,
@@ -346,7 +349,7 @@ fn migrate_forward() {
         root_path: root(),
         metadata_directory: test_repo.metadata_path.clone(),
     };
-    run(&args).unwrap();
+    run(&args).await.unwrap();
     // the migrations should write to a file named result.txt.
     let output_file = test_datastore.tmp.path().join("result.txt");
     let contents = std::fs::read_to_string(&output_file).unwrap();
@@ -366,7 +369,7 @@ fn migrate_forward() {
     assert_eq!(got, want);
 
     // Check the directory.
-    let current = assert_directory_structure(test_datastore.tmp.path());
+    let current = assert_directory_structure(test_datastore.tmp.path()).await;
 
     // We have successfully migrated so current should be pointing to a directory that starts with
     // v0.99.1.
@@ -380,12 +383,12 @@ fn migrate_forward() {
 
 /// This test ensures that migrations run when migrating from a newer to an older version.
 /// See `migrate_forward` for a description of how these tests work.
-#[test]
-fn migrate_backward() {
+#[tokio::test]
+async fn migrate_backward() {
     let from_version = Version::parse("0.99.1").unwrap();
     let to_version = Version::parse("0.99.0").unwrap();
     let test_datastore = TestDatastore::new(from_version);
-    let test_repo = create_test_repo(TestType::Success);
+    let test_repo = create_test_repo(TestType::Success).await;
     let args = Args {
         datastore_path: test_datastore.datastore.clone(),
         log_level: log::LevelFilter::Info,
@@ -394,7 +397,7 @@ fn migrate_backward() {
         root_path: root(),
         metadata_directory: test_repo.metadata_path.clone(),
     };
-    run(&args).unwrap();
+    run(&args).await.unwrap();
     let output_file = test_datastore.tmp.path().join("result.txt");
     let contents = std::fs::read_to_string(&output_file).unwrap();
     let lines: Vec<&str> = contents.split('\n').collect();
@@ -413,7 +416,7 @@ fn migrate_backward() {
     assert_eq!(got, want);
 
     // Check the directory.
-    let current = assert_directory_structure(test_datastore.tmp.path());
+    let current = assert_directory_structure(test_datastore.tmp.path()).await;
 
     // We have successfully migrated so current should be pointing to a directory that starts with
     // v0.99.0.
@@ -425,12 +428,12 @@ fn migrate_backward() {
         .starts_with("v0.99.0"));
 }
 
-#[test]
-fn migrate_forward_with_failed_migration() {
+#[tokio::test]
+async fn migrate_forward_with_failed_migration() {
     let from_version = Version::parse("0.99.0").unwrap();
     let to_version = Version::parse("0.99.1").unwrap();
     let test_datastore = TestDatastore::new(from_version.clone());
-    let test_repo = create_test_repo(TestType::ForwardFailure);
+    let test_repo = create_test_repo(TestType::ForwardFailure).await;
     let args = Args {
         datastore_path: test_datastore.datastore.clone(),
         log_level: log::LevelFilter::Info,
@@ -439,7 +442,7 @@ fn migrate_forward_with_failed_migration() {
         root_path: root(),
         metadata_directory: test_repo.metadata_path.clone(),
     };
-    let result = run(&args);
+    let result = run(&args).await;
     assert!(result.is_err());
 
     // the migrations should write to a file named result.txt.
@@ -465,7 +468,8 @@ fn migrate_forward_with_failed_migration() {
         test_datastore.tmp.path(),
         &from_version,
         &to_version,
-    );
+    )
+    .await;
 
     // We have not successfully migrated to v0.99.1 so we should still be pointing at the "from"
     // version.
@@ -477,12 +481,12 @@ fn migrate_forward_with_failed_migration() {
         .starts_with("v0.99.0"));
 }
 
-#[test]
-fn migrate_backward_with_failed_migration() {
+#[tokio::test]
+async fn migrate_backward_with_failed_migration() {
     let from_version = Version::parse("0.99.1").unwrap();
     let to_version = Version::parse("0.99.0").unwrap();
     let test_datastore = TestDatastore::new(from_version.clone());
-    let test_repo = create_test_repo(TestType::BackwardFailure);
+    let test_repo = create_test_repo(TestType::BackwardFailure).await;
     let args = Args {
         datastore_path: test_datastore.datastore.clone(),
         log_level: log::LevelFilter::Info,
@@ -491,7 +495,7 @@ fn migrate_backward_with_failed_migration() {
         root_path: root(),
         metadata_directory: test_repo.metadata_path.clone(),
     };
-    let result = run(&args);
+    let result = run(&args).await;
     assert!(result.is_err());
 
     let output_file = test_datastore.tmp.path().join("result.txt");
@@ -516,7 +520,8 @@ fn migrate_backward_with_failed_migration() {
         test_datastore.tmp.path(),
         &from_version,
         &to_version,
-    );
+    )
+    .await;
 
     // We have not successfully migrated to v0.99.0 so we should still be pointing at the "from"
     // version.
