@@ -2666,7 +2666,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-util",
- "tough 0.15.0",
+ "tough",
  "update_metadata",
  "url",
 ]
@@ -3044,33 +3044,6 @@ name = "paste"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
-
-[[package]]
-name = "path-absolutize"
-version = "3.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4af381fe79fa195b4909485d99f73a80792331df0625188e707854f0b3383f5"
-dependencies = [
- "path-dedot",
-]
-
-[[package]]
-name = "path-dedot"
-version = "3.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07ba0ad7e047712414213ff67533e6dd477af0a4e1d14fb52343e53d30ea9397"
-dependencies = [
- "once_cell",
-]
-
-[[package]]
-name = "pem"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8835c273a76a90455d7344889b0964598e3316e2a79ede8e36f16bdcf2228b8"
-dependencies = [
- "base64 0.13.1",
-]
 
 [[package]]
 name = "pem"
@@ -4411,33 +4384,6 @@ dependencies = [
 
 [[package]]
 name = "tough"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eda3efa9005cf9c1966984c3b9a44c3f37b7ed2c95ba338d6ad51bba70e989a0"
-dependencies = [
- "chrono",
- "dyn-clone",
- "globset",
- "hex",
- "log",
- "olpc-cjson",
- "path-absolutize",
- "pem 1.1.1",
- "percent-encoding",
- "reqwest",
- "ring",
- "serde",
- "serde_json",
- "serde_plain",
- "snafu",
- "tempfile",
- "untrusted",
- "url",
- "walkdir",
-]
-
-[[package]]
-name = "tough"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d16dc5f42fc7ce7cb51eebc7a6ef91f4d69a6d41bb13f34a09674ec47e454d9b"
@@ -4453,7 +4399,7 @@ dependencies = [
  "hex",
  "log",
  "olpc-cjson",
- "pem 3.0.2",
+ "pem",
  "percent-encoding",
  "reqwest",
  "ring",
@@ -4638,8 +4584,12 @@ name = "updog"
 version = "0.1.0"
 dependencies = [
  "argh",
+ "async-trait",
  "bottlerocket-release",
+ "bytes",
  "chrono",
+ "futures",
+ "futures-core",
  "log",
  "lz4",
  "models",
@@ -4652,8 +4602,10 @@ dependencies = [
  "simplelog",
  "snafu",
  "tempfile",
+ "tokio",
+ "tokio-util",
  "toml 0.5.11",
- "tough 0.14.0",
+ "tough",
  "update_metadata",
  "url",
 ]
