@@ -12,7 +12,6 @@ use std::net::IpAddr;
 use std::str::FromStr;
 use string_impls_for::string_impls_for;
 use url::Host;
-use x509_parser;
 
 /// ValidBase64 can only be created by deserializing from valid base64 text.  It stores the
 /// original text, not the decoded form.  Its purpose is input validation, namely being used as a

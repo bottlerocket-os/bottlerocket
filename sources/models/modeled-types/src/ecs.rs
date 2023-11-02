@@ -13,6 +13,7 @@ use string_impls_for::string_impls_for;
 /// ECSAttributeKey represents a string that contains a valid ECS attribute key.  It stores
 /// the original string and makes it accessible through standard traits.
 // https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_Attribute.html
+#[allow(clippy::derived_hash_with_manual_eq)]
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Scalar)]
 pub struct ECSAttributeKey {
     inner: String,

@@ -10,24 +10,12 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-base64 = "0.13"
 bottlerocket-release = { path = "../bottlerocket-release", version = "0.1" }
-indexmap = { version = "1", features = ["serde"] }
-lazy_static = "1"
 libc = "0.2"
 model-derive = { path = "model-derive", version = "0.1" }
-regex = "1"
-scalar = { path = "scalar", version = "0.1" }
-scalar-derive = { path = "scalar-derive", version = "0.1" }
-semver = "1"
+modeled-types = { path = "modeled-types", version = "0.1" }
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-serde_plain = "1"
-snafu = "0.7"
-string_impls_for = { path = "./string_impls_for", version = "0.1" }
 toml = "0.5"
-x509-parser = "0.15"
-url = "2"
 
 # settings extensions
 settings-extension-motd = { path = "../settings-extensions/motd", version = "0.1" }

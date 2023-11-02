@@ -188,15 +188,13 @@ Note: all models share the same `Cargo.toml`.
 // Clippy has a false positive in the presence of the Scalar macro.
 #![allow(clippy::derived_hash_with_manual_eq)]
 
-// "Modeled types" are types with special ser/de behavior used for validation.
-pub mod modeled_types;
-
 // The "variant" module is just a directory where we symlink in the user's requested build
 // variant; each variant defines a top-level Settings structure and we re-export the current one.
 mod variant;
 // The "de" module contains custom deserialization trait implementation for models.
 mod de;
 
+pub use modeled_types;
 use modeled_types::KubernetesCPUManagerPolicyOption;
 use modeled_types::KubernetesEvictionKey;
 use modeled_types::KubernetesMemoryManagerPolicy;
@@ -217,7 +215,7 @@ use std::collections::HashMap;
 use std::net::IpAddr;
 
 use crate::de::{deserialize_limit, deserialize_mirrors, deserialize_node_taints};
-use crate::modeled_types::{
+use modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, CredentialProvider,
     DNSDomain, ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
     ECSDurationValue, EtcHostsEntries, FriendlyVersion, Identifier, IntegerPercent, KmodKey,
