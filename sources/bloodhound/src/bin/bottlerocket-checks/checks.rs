@@ -22,15 +22,22 @@ pub struct BR01010101Checker {}
 
 impl Checker for BR01010101Checker {
     fn execute(&self) -> CheckerResult {
-        let module_result = check_file_contains!(
-            PROC_MODULES_FILE,
-            &[" udf,"],
-            "unable to parse modules to check for udf",
-            "udf is currently loaded"
-        );
-        if module_result.status != CheckStatus::PASS {
+        let mut module_result = CheckerResult::default();
+
+        // Make sure UDF isn't already loaded
+        if let Ok(found) = look_for_word_in_file(PROC_MODULES_FILE, "udf") {
+            if found {
+                module_result.error = "udf is currently loaded".to_string();
+                module_result.status = CheckStatus::FAIL;
+                return module_result;
+            }
+        } else {
+            module_result.error =
+                "unable to parse modprobe output to check if udf is enabled".to_string();
             return module_result;
         }
+
+        // Make sure the ability to load UDF is disabled
         check_output_contains!(
             MODPROBE_CMD,
             ["-n", "-v", "udf"],
