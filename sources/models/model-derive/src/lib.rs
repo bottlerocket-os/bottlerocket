@@ -39,13 +39,11 @@ Similar to the `serde` attribute added to fields, this is because we don't want 
 
 extern crate proc_macro;
 
-use darling::FromMeta;
+use darling::{ast::NestedMeta, FromMeta};
 use proc_macro::TokenStream;
 use quote::ToTokens;
 use syn::visit_mut::{self, VisitMut};
-use syn::{
-    parse_macro_input, parse_quote, Attribute, AttributeArgs, Field, ItemStruct, Visibility,
-};
+use syn::{parse_quote, Attribute, Field, ItemStruct, Visibility};
 
 /// Define a `#[model]` attribute that can be placed on structs to be used in an API model.
 /// Model requirements are automatically applied to the struct and its fields.
@@ -54,9 +52,11 @@ use syn::{
 #[proc_macro_attribute]
 pub fn model(args: TokenStream, input: TokenStream) -> TokenStream {
     // Parse args
-    let attr_args = parse_macro_input!(args as AttributeArgs);
-    let args =
-        ParsedArgs::from_list(&attr_args).expect("Unable to parse arguments to `model` macro");
+    let args: ParsedArgs = ParsedArgs::from_list(
+        &NestedMeta::parse_meta_list(args.into())
+            .expect("Unable to parse arguments to `model` macro"),
+    )
+    .expect("Unable to parse arguments to `model` macro");
     let mut helper = ModelHelper::from(args);
 
     // Parse and modify source
@@ -165,7 +165,7 @@ impl VisitMut for ModelHelper {
 /// `syn::Attribute`s.
 fn is_attr_set(attr_name: &'static str, attrs: &[Attribute]) -> bool {
     for attr in attrs {
-        if let Some(name) = attr.path.get_ident() {
+        if let Some(name) = attr.path().get_ident() {
             if name == attr_name {
                 return true;
             }

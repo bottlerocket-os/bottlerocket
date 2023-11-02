@@ -81,9 +81,18 @@ skip-tree = [
     { name = "windows-sys" },
     # httptest uses an older version of bstr
     { name = "httptest", version = "=0.15.4" },
+    # schnauzer uses cached, which uses an older version of darling
+    { name = "darling", version = "=0.14.4" },
 ]
 
 [sources]
 # Deny crates from unknown registries or git repositories.
 unknown-registry = "deny"
 unknown-git = "deny"
+
+allow-git = [
+    # The settings SDK is currently provided as a git dependency,
+    # We will allow it as an exception until the following is resolved:
+    # https://github.com/bottlerocket-os/bottlerocket-settings-sdk/issues/18
+    "https://github.com/bottlerocket-os/bottlerocket-settings-sdk",
+]

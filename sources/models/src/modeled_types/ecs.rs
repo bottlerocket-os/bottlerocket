@@ -1,17 +1,14 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 // Just need serde's Error in scope to get its trait methods
 use super::error::{self, big_pattern_error};
 use scalar::traits::{Scalar, Validate};
 use scalar::ValidationError;
 use scalar_derive::Scalar;
-use serde::de::Error as _;
 use snafu::ensure;
-use std::borrow::Borrow;
 use std::convert::TryFrom;
-use std::fmt;
-use std::ops::Deref;
+use string_impls_for::string_impls_for;
 
 /// ECSAttributeKey represents a string that contains a valid ECS attribute key.  It stores
 /// the original string and makes it accessible through standard traits.

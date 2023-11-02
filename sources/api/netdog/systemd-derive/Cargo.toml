@@ -14,10 +14,10 @@ path = "src/lib.rs"
 proc-macro = true
 
 [dependencies]
-darling = { version = "0.14", default-features = false }
+darling = { version = "0.20", default-features = false }
 proc-macro2 = "1"
 quote = "1"
-syn = { version = "1", default-features = false, features = ["derive"] }
+syn = { version = "2", default-features = false, features = ["derive"] }
 
 [build-dependencies]
 generate-readme = { path = "../../../generate-readme", version = "0.1" }
