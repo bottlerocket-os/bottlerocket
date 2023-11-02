@@ -4,8 +4,7 @@ use crate::args::Args;
 use crate::run;
 use chrono::{DateTime, Utc};
 use semver::Version;
-use std::fs;
-use std::fs::{DirEntry, File};
+use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::TempDir;
@@ -181,23 +180,14 @@ fn create_test_repo(test_type: TestType) -> TestRepo {
         .timestamp_version(one)
         .timestamp_expires(long_ago);
 
-    fs::read_dir(tuf_indir)
-        .unwrap()
-        .filter(|dir_entry_result| {
-            if let Ok(dir_entry) = dir_entry_result {
-                return dir_entry.path().is_file();
-            }
-            false
-        })
-        .for_each(|dir_entry_result| {
-            let dir_entry = dir_entry_result.unwrap();
-            editor
-                .add_target(
-                    dir_entry.file_name().to_str().unwrap(),
-                    tough::schema::Target::from_path(dir_entry.path()).unwrap(),
-                )
-                .unwrap();
-        });
+    list_dir_files(tuf_indir).into_iter().for_each(|path| {
+        editor
+            .add_target(
+                path.file_name().unwrap().to_str().unwrap(),
+                tough::schema::Target::from_path(&path).unwrap(),
+            )
+            .unwrap();
+    });
     let signed_repo = editor
         .sign(&[Box::new(tough::key_source::LocalKeySource { path: pem() })])
         .unwrap();
@@ -224,31 +214,26 @@ fn assert_directory_structure_with_failed_migration(
     from: &Version,
     to: &Version,
 ) -> PathBuf {
-    let dir_entries: Vec<DirEntry> = fs::read_dir(dir)
-        .unwrap()
-        .map(|item| item.unwrap())
-        .collect();
-
+    let paths = list_dir_entries(dir);
     let from_ver = format!("v{}", from);
     let from_ver_unique_prefix = format!("v{}_", from);
     let to_ver_unique_prefix = format!("v{}_", to);
 
-    assert_eq!(dir_entries.len(), 8);
-    assert_dir_entry_exists(&dir_entries, "current");
-    assert_dir_entry_exists(&dir_entries, "result.txt");
-    assert_dir_entry_exists(&dir_entries, "v0");
-    assert_dir_entry_exists(&dir_entries, "v0.99");
-    assert_dir_entry_exists(&dir_entries, &from_ver);
-    assert_dir_starting_with_exists(&dir_entries, &from_ver_unique_prefix);
+    assert_eq!(paths.len(), 8);
+    assert_dir_entry_exists(&paths, "current");
+    assert_dir_entry_exists(&paths, "result.txt");
+    assert_dir_entry_exists(&paths, "v0");
+    assert_dir_entry_exists(&paths, "v0.99");
+    assert_dir_entry_exists(&paths, &from_ver);
+    assert_dir_starting_with_exists(&paths, &from_ver_unique_prefix);
 
     // There are two datastores that start with the target version followed by an underscore. This
     // is because the datastore we intended to promote (target_datastore) and one intermediate
     // datastore are expected to be left behind for debugging after a migration failure.
-    let left_behind_count = dir_entries
+    let left_behind_count = paths
         .iter()
         .filter_map(|entry| {
             entry
-                .path()
                 .file_name()
                 .unwrap()
                 .to_str()
@@ -265,54 +250,47 @@ fn assert_directory_structure_with_failed_migration(
         left_behind_count
     );
 
-    let symlink = dir_entries
+    let symlink = paths
         .iter()
-        .find(|entry| entry.path().file_name().unwrap().to_str().unwrap() == "current")
-        .unwrap()
-        .path();
+        .find(|entry| entry.file_name().unwrap().to_str().unwrap() == "current")
+        .unwrap();
     symlink.canonicalize().unwrap()
 }
 
 /// Asserts that the expected directories and files are in the datastore directory after a
 /// successful migration. Returns the absolute path that the `current` symlink is pointing to.
 fn assert_directory_structure(dir: &Path) -> PathBuf {
-    let dir_entries: Vec<DirEntry> = fs::read_dir(dir)
-        .unwrap()
-        .map(|item| item.unwrap())
-        .collect();
+    let paths = list_dir_entries(dir);
+    assert_eq!(paths.len(), 8);
+    assert_dir_entry_exists(&paths, "current");
+    assert_dir_entry_exists(&paths, "result.txt");
+    assert_dir_entry_exists(&paths, "v0");
+    assert_dir_entry_exists(&paths, "v0.99");
+    assert_dir_entry_exists(&paths, "v0.99.0");
+    assert_dir_entry_exists(&paths, "v0.99.1");
+    assert_dir_starting_with_exists(&paths, "v0.99.0_");
+    assert_dir_starting_with_exists(&paths, "v0.99.1_");
 
-    assert_eq!(dir_entries.len(), 8);
-    assert_dir_entry_exists(&dir_entries, "current");
-    assert_dir_entry_exists(&dir_entries, "result.txt");
-    assert_dir_entry_exists(&dir_entries, "v0");
-    assert_dir_entry_exists(&dir_entries, "v0.99");
-    assert_dir_entry_exists(&dir_entries, "v0.99.0");
-    assert_dir_entry_exists(&dir_entries, "v0.99.1");
-    assert_dir_starting_with_exists(&dir_entries, "v0.99.0_");
-    assert_dir_starting_with_exists(&dir_entries, "v0.99.1_");
-
-    let symlink = dir_entries
+    let symlink = paths
         .iter()
-        .find(|entry| entry.path().file_name().unwrap().to_str().unwrap() == "current")
-        .unwrap()
-        .path();
+        .find(|entry| entry.file_name().unwrap().to_str().unwrap() == "current")
+        .unwrap();
     symlink.canonicalize().unwrap()
 }
 
-fn assert_dir_entry_exists(dir_entries: &[DirEntry], exact_name: &str) {
+fn assert_dir_entry_exists(dir_entries: &[PathBuf], exact_name: &str) {
     assert!(
         dir_entries
             .iter()
-            .any(|entry| entry.path().file_name().unwrap().to_str().unwrap() == exact_name),
+            .any(|entry| entry.file_name().unwrap().to_str().unwrap() == exact_name),
         "'{}' not found",
         exact_name
     );
 }
 
-fn assert_dir_starting_with_exists(dir_entries: &[DirEntry], starts_with: &str) {
+fn assert_dir_starting_with_exists(dir_entries: &[PathBuf], starts_with: &str) {
     assert!(
         dir_entries.iter().any(|entry| entry
-            .path()
             .file_name()
             .unwrap()
             .to_str()
@@ -321,6 +299,23 @@ fn assert_dir_starting_with_exists(dir_entries: &[DirEntry], starts_with: &str) 
         "entry starting with '{}' not found",
         starts_with
     );
+}
+
+fn list_dir_entries(dir: impl AsRef<Path>) -> Vec<PathBuf> {
+    fs::read_dir(dir)
+        .unwrap()
+        .map(|dir_entry_result| {
+            let dir_entry = dir_entry_result.unwrap();
+            dir_entry.path()
+        })
+        .collect()
+}
+
+fn list_dir_files(dir: impl AsRef<Path>) -> Vec<PathBuf> {
+    list_dir_entries(dir)
+        .into_iter()
+        .filter(|path| path.is_file())
+        .collect()
 }
 
 /// Tests the migrator program end-to-end using the `run` function. Creates a TUF repo in a
