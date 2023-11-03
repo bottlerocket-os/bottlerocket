@@ -1,5 +1,4 @@
 use model_derive::model;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::{

@@ -7,7 +7,6 @@ use crate::{
 use modeled_types::Identifier;
 
 use model_derive::model;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
