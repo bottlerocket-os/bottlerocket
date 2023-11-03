@@ -3741,6 +3741,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-extension-ntp"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
+ "string_impls_for",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
