@@ -123,9 +123,9 @@ impl VisitMut for ModelHelper {
         if !is_attr_set("derive", &node.attrs) {
             // Derive Default, if the user requested
             let attr = if self.impl_default {
-                parse_quote!(#[derive(Debug, Default, PartialEq, Serialize, Deserialize)])
+                parse_quote!(#[derive(Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)])
             } else {
-                parse_quote!(#[derive(Debug, PartialEq, Serialize, Deserialize)])
+                parse_quote!(#[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)])
             };
             // Rust 1.52 added a legacy_derive_helpers warning (soon to be an error) that yells if
             // you use an attribute macro before the derive macro that introduces it.  We should

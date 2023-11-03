@@ -4,7 +4,6 @@
 use crate::{ConfigurationFiles, Services};
 use bottlerocket_release::BottlerocketRelease;
 use model_derive::model;
-use serde::{Deserialize, Serialize};
 
 // We expose anything defined by the current variant.
 mod current;
