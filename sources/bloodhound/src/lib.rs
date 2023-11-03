@@ -9,6 +9,16 @@ pub mod args;
 pub mod output;
 pub mod results;
 
+/// Reads a file and checks if the given `search_word` is present in its contents.
+pub fn look_for_word_in_file(path: &str, search_word: &str) -> Result<bool, io::Error> {
+    let reader = BufReader::new(File::open(path)?);
+    Ok(reader.lines().any(|line| {
+        line.unwrap_or_default()
+            .split_ascii_whitespace()
+            .any(|word| word == search_word)
+    }))
+}
+
 /// Reads a file and checks if the given `search_str` is present in its contents.
 pub fn look_for_string_in_file(path: &str, search_str: &str) -> Result<bool, io::Error> {
     let reader = BufReader::new(File::open(path)?);
@@ -195,6 +205,63 @@ mod test_utils {
                 .to_str()
                 .unwrap()
         }};
+    }
+
+    #[test]
+    fn test_look_for_word_in_file_found() {
+        let mut test_file = NamedTempFile::new().unwrap();
+        writeln!(
+            test_file,
+            concat!(
+                "udf 139264 0 - Live 0xffffffffc05e1000\n",
+                "crc_itu_t 16384 1 udf, Live 0xffffffffc05dc000\n",
+                "configfs 57344 1 - Live 0xffffffffc0320000\n"
+            )
+        )
+        .unwrap();
+
+        let found = look_for_word_in_file(temp_file_path!(test_file), "udf").unwrap();
+        assert!(found);
+    }
+
+    #[test]
+    fn test_look_for_word_in_file_not_found() {
+        let mut test_file = NamedTempFile::new().unwrap();
+        writeln!(
+            test_file,
+            concat!(
+                "crypto_simd 16384 1 aesni_intel, Live 0xffffffffc034f000\n",
+                "cryptd 28672 2 ghash_clmulni_intel,crypto_simd, Live 0xffffffffc0335000\n",
+                "configfs 57344 1 - Live 0xffffffffc0320000\n"
+            )
+        )
+        .unwrap();
+
+        let found = look_for_word_in_file(temp_file_path!(test_file), "udf").unwrap();
+        assert!(!found);
+    }
+
+    #[test]
+    fn test_look_for_word_in_file_partial_not_found() {
+        let mut test_file = NamedTempFile::new().unwrap();
+        writeln!(
+            test_file,
+            concat!(
+                "my-udf 139264 0 - Live 0xffffffffc05e1000\n",
+                "crc_itu_t 16384 1 udf, Live 0xffffffffc05dc000\n",
+                "configfs 57344 1 - Live 0xffffffffc0320000\n"
+            )
+        )
+        .unwrap();
+
+        let found = look_for_word_in_file(temp_file_path!(test_file), "udf").unwrap();
+        assert!(!found);
+    }
+
+    #[test]
+    fn test_look_for_word_in_file_bad_path() {
+        let result = look_for_word_in_file("/not/a/real/path", "search_str");
+        assert!(result.is_err());
     }
 
     #[test]
