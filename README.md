@@ -78,6 +78,8 @@ The following variants support ECS:
 
 * `aws-ecs-1`
 * `aws-ecs-1-nvidia`
+* `aws-ecs-2`
+* `aws-ecs-2-nvidia`
 
 We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
@@ -337,7 +339,7 @@ If your user data is over the size limit of the platform (e.g. 16KiB for EC2) yo
 
 Here we'll describe each setting you can change.
 
-**Note:** You can see the default values (for any settings that are not generated at runtime) by looking in the `defaults.d` directory for a variant, for example [aws-ecs-1](sources/models/src/aws-ecs-1/defaults.d/).
+**Note:** You can see the default values (for any settings that are not generated at runtime) by looking in the `defaults.d` directory for a variant, for example [aws-ecs-2](sources/models/src/aws-ecs-2/defaults.d/).
 
 When you're sending settings to the API, or receiving settings from the API, they're in a structured JSON format.
 This allows modification of any number of keys at once.
