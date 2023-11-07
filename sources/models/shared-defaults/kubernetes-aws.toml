@@ -20,7 +20,7 @@ affected-services = ["kubernetes", "containerd"]
 service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kubelet"]
 
 [metadata.settings.network]
-affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers"]
+affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers", "updog"]
 
 [services.autoscaling-warm-pool]
 configuration-files = ["warm-pool-wait-toml"]

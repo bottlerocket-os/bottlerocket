@@ -78,7 +78,7 @@ path = "/etc/network/proxy.env"
 template-path = "/usr/share/templates/proxy-env"
 
 [metadata.settings.network]
-affected-services = ["containerd", "host-containerd", "host-containers"]
+affected-services = ["containerd", "host-containerd", "host-containers", "updog"]
 
 [metadata.settings.network.hostname]
 affected-services = ["hostname", "hosts"]
