@@ -17,6 +17,26 @@ package-name = "kubernetes-1.23"
 url = "https://distro.eks.amazonaws.com/kubernetes-1-23/releases/28/artifacts/kubernetes/v1.23.17/kubernetes-src.tar.gz"
 sha512 = "31fd414bebe6ec71682c65256373a99467f558340739739df3f332d6bf1cfef2a2c0b39b337f3f0ed56ae72a4ae083f4fdbe6ad8e964b86c2c9e144aa1f748ab"
 
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0026-EKS-PATCH-Cherry-pick-119832-Fix-the-problem-Pod-ter.patch"
+sha512 = "0406fad037a41750310bcc7e75dceaa65cb6d9ffd8e324541068d25074386ff5fbfdb3e6b4d429704e692a39624377483ecd8ed7fcc16d54ba68d81c97d5d270"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0027-EKS-PATCH-Prevent-rapid-reset-http2-DOS-on-API-serve.patch"
+sha512 = "d36a581ec2b4622da52d25e942fc063c7fcccbba08ee3c9d0dd52366ca6cd80300ced9c807ef786544b83e7d1dddcf88e24b478a4a4f32e864e9e8edaea8940d"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0028-EKS-PATCH-bump-golang.org-x-net-to-v0.17.patch"
+sha512 = "b9a87cc4d8d37af308ef0d65cf270b120da6b75aeeed4011f14a2a62e194b0ef509df687d1f7c75e4656606b7e9d7fff4162d3277d1150e3df27d8fca14c83fe"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0029-EKS-PATCH-Add-ephemeralcontainer-to-imagepolicy-secu.patch"
+sha512 = "3b68bc637648a1fff3f2acdbe370689f09c74b465ac1124d62bb99deefb691eb15f88fae4cf4da66c67fca6888513134b5012e5f48cd58f6632360465d8e38cb"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0030-EKS-PATCH-go-Bump-images-dependencies-and-versions-t.patch"
+sha512 = "66bcd6602e974e237c083fafc24e68b88a0010db1e2fe30c1ea41ef3c112d94c639ae87c3f7cc9a0142d823ea44cce2aa71476ca01bf2efc1ad3f00454df627f"
+
 # RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
