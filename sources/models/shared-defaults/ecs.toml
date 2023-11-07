@@ -22,7 +22,7 @@ service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "dock
 
 # Network
 [metadata.settings.network]
-affected-services = ["containerd", "docker", "ecs", "host-containerd", "host-containers"]
+affected-services = ["containerd", "docker", "ecs", "host-containerd", "host-containers", "updog"]
 
 # Image registry credentials
 [metadata.settings.container-registry.credentials]

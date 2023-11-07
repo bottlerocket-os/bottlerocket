@@ -4535,6 +4535,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "updog-network-affected"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "url"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

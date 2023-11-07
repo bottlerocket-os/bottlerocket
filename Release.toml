@@ -246,3 +246,6 @@ version = "1.16.0"
     "migrate_v1.16.0_public-control-container-v0-7-5.lz4",
     "migrate_v1.16.0_schnauzer-v2-generators.lz4",
 ]
+"(1.16.0, 1.16.1)" = [
+    "migrate_v1.16.1_updog-network-affected.lz4",
+]

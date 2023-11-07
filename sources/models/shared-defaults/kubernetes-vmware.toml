@@ -16,4 +16,4 @@ service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kube
 
 # Network
 [metadata.settings.network]
-affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers"]
+affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers", "updog"]
