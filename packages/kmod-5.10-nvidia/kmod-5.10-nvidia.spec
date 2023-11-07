@@ -1,4 +1,4 @@
-%global tesla_470 470.161.03
+%global tesla_470 470.223.02
 %global tesla_470_libdir %{_cross_libdir}/nvidia/tesla/%{tesla_470}
 %global tesla_470_bindir %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_470}
 %global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
