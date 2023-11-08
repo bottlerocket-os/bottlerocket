@@ -78,6 +78,7 @@ members = [
     "api/migration/migrations/v1.16.0/aws-control-container-v0-7-5",
     "api/migration/migrations/v1.16.0/public-control-container-v0-7-5",
     "api/migration/migrations/v1.16.0/schnauzer-v2-generators",
+    "api/migration/migrations/v1.16.1/updog-network-affected",
 
     "bloodhound",
 
