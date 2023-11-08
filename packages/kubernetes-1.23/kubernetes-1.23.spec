@@ -47,6 +47,13 @@ Source22: make-kubelet-dirs.conf
 
 Source1000: clarify.toml
 
+# Additional patches on top of last 1.23 point release
+Patch0001: 0026-EKS-PATCH-Cherry-pick-119832-Fix-the-problem-Pod-ter.patch
+Patch0002: 0027-EKS-PATCH-Prevent-rapid-reset-http2-DOS-on-API-serve.patch
+Patch0003: 0028-EKS-PATCH-bump-golang.org-x-net-to-v0.17.patch
+Patch0004: 0029-EKS-PATCH-Add-ephemeralcontainer-to-imagepolicy-secu.patch
+Patch0005: 0030-EKS-PATCH-go-Bump-images-dependencies-and-versions-t.patch
+
 BuildRequires: git
 BuildRequires: rsync
 BuildRequires: %{_cross_os}glibc-devel
