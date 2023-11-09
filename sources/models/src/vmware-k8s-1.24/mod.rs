@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::{
     AwsSettings, BootSettings, BootstrapContainer, ContainerRuntimeSettings, DnsSettings,
     HostContainer, KernelSettings, KubernetesSettings, MetricsSettings, NetworkSettings,
-    NtpSettings, OciDefaults, OciHooks, PemCertificate, RegistrySettings, UpdatesSettings,
+    OciDefaults, OciHooks, PemCertificate, RegistrySettings, UpdatesSettings,
 };
 use modeled_types::Identifier;
 
@@ -17,7 +17,7 @@ struct Settings {
     updates: UpdatesSettings,
     host_containers: HashMap<Identifier, HostContainer>,
     bootstrap_containers: HashMap<Identifier, BootstrapContainer>,
-    ntp: NtpSettings,
+    ntp: settings_extension_ntp::NtpSettingsV1,
     network: NetworkSettings,
     kernel: KernelSettings,
     aws: AwsSettings,

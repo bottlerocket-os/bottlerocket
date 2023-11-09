@@ -2692,6 +2692,7 @@ dependencies = [
  "serde",
  "serde_json",
  "settings-extension-motd",
+ "settings-extension-ntp",
  "toml 0.5.11",
 ]
 
