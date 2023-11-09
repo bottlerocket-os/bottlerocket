@@ -193,3 +193,14 @@ CONFIG_ISCSI_TARGET=m
 
 # Disable DAMON subsystem. We currently do not have a good use-case for DAMON.
 # CONFIG_DAMON is not set
+
+# Disable unnecessary keyboard and mouse drivers.
+# CONFIG_MOUSE_PS2 is not set
+# CONFIG_SERIO is not set
+# CONFIG_KEYBOARD_ATKBD is not set
+
+# Disable unnecessary framebuffer/drm drivers
+# CONFIG_DRM_BOCHS is not set
+# CONFIG_DRM_SIMPLEDRM is not set
+# CONFIG_SYSFB_SIMPLEFB is not set
+
