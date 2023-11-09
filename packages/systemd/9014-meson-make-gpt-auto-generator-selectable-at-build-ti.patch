@@ -1,0 +1,66 @@
+From 33a689a000d56444ed47803b2fbec4376814e633 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Thu, 9 Nov 2023 15:02:14 +0000
+Subject: [PATCH] meson: make gpt-auto-generator selectable at build-time
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ meson.build       | 21 ++++++++++++---------
+ meson_options.txt |  2 ++
+ 2 files changed, 14 insertions(+), 9 deletions(-)
+
+diff --git a/meson.build b/meson.build
+index 3bef553..16421ce 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1851,6 +1851,7 @@ foreach term : ['analyze',
+                 'efi',
+                 'environment-d',
+                 'firstboot',
++                'gpt-auto-generator',
+                 'gshadow',
+                 'hibernate',
+                 'hostnamed',
+@@ -2424,15 +2425,17 @@ if conf.get('ENABLE_HIBERNATE') == 1
+ endif
+ 
+ if conf.get('HAVE_BLKID') == 1
+-        executable(
+-                'systemd-gpt-auto-generator',
+-                'src/gpt-auto-generator/gpt-auto-generator.c',
+-                include_directories : includes,
+-                link_with : [libshared],
+-                dependencies : libblkid,
+-                install_rpath : rootpkglibdir,
+-                install : true,
+-                install_dir : systemgeneratordir)
++        if conf.get('ENABLE_GPT_AUTO_GENERATOR') == 1
++                executable(
++                        'systemd-gpt-auto-generator',
++                        'src/gpt-auto-generator/gpt-auto-generator.c',
++                        include_directories : includes,
++                        link_with : [libshared],
++                        dependencies : libblkid,
++                        install_rpath : rootpkglibdir,
++                        install : true,
++                        install_dir : systemgeneratordir)
++        endif
+ 
+         public_programs += executable(
+                 'systemd-dissect',
+diff --git a/meson_options.txt b/meson_options.txt
+index 26dfab5..2df5361 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -176,6 +176,8 @@ option('html', type : 'combo', choices : ['auto', 'true', 'false'],
+        description : 'build and install html pages')
+ option('translations', type : 'boolean', value : true,
+        description : 'build and install translations')
++option('gpt-auto-generator', type : 'boolean', value : true,
++       description : 'build and install systemd-gpt-auto-generator')
+ 
+ option('certificate-root', type : 'string', value : '/etc/ssl',
+        description : 'the prefix for TLS certificates')
+-- 
+2.40.1
+

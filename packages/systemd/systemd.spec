@@ -70,6 +70,10 @@ Patch9012: 9012-core-mount-increase-mount-rate-limit-burst-to-25.patch
 # lease in EC2.
 Patch9013: 9013-sd-dhcp-lease-parse-multiple-domains-in-option-15.patch
 
+# Local patch that allows to deselect systemd-gpt-auto-generator. We deselect
+# it since prairiedog mounts /boot depending on the partition bank in use.
+Patch9014: 9014-meson-make-gpt-auto-generator-selectable-at-build-ti.patch
+
 BuildRequires: gperf
 BuildRequires: intltool
 BuildRequires: meson
@@ -192,6 +196,7 @@ CONFIGURE_OPTS=(
  -Dman=false
  -Dhtml=false
  -Dtranslations=false
+ -Dgpt-auto-generator=false
  -Dlog-message-verification=false
 
  -Dcertificate-root='%{_cross_sysconfdir}/ssl'
