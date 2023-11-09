@@ -1,3 +1,29 @@
+# v1.16.1 (2023-11-13)
+
+## OS Changes
+
+* Update open-vm-tools to 12.3.5 to address CVE-2023-34058 and CVE-2023-34059 ([#3553])
+* Update NVIDIA drivers to 470.223.02 and 535.129.03 to address CVE‑2023‑31022 and CVE‑2023‑31018 ([#3561])
+* Improvements to Bottlerocket CIS benchmark checks ([#3552] [#3562] [#3564])
+* Regenerate updog proxy configuration when settings.network.proxy gets updated ([#3578])
+* kernel: Update to 5.10.198, 5.15.136, and 6.1.59 ([#3572])
+
+## Orchestrator Changes
+
+### Kubernetes
+* Update Kubernetes versions to address HTTP v2 x/net CVE-2023-39325 ([#3581])
+* Avoid specifying `hostname-override` kubelet option if `cloud-provider` is set to `aws` ([#3582])
+
+[#3552]: https://github.com/bottlerocket-os/bottlerocket/pull/3552
+[#3553]: https://github.com/bottlerocket-os/bottlerocket/pull/3553
+[#3561]: https://github.com/bottlerocket-os/bottlerocket/pull/3561
+[#3562]: https://github.com/bottlerocket-os/bottlerocket/pull/3562
+[#3564]: https://github.com/bottlerocket-os/bottlerocket/pull/3564
+[#3572]: https://github.com/bottlerocket-os/bottlerocket/pull/3572
+[#3578]: https://github.com/bottlerocket-os/bottlerocket/pull/3578
+[#3581]: https://github.com/bottlerocket-os/bottlerocket/pull/3581
+[#3582]: https://github.com/bottlerocket-os/bottlerocket/pull/3582
+
 # v1.16.0 (2023-10-25)
 
 ## OS Changes
