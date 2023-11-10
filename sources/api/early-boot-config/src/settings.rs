@@ -6,9 +6,9 @@ use snafu::{OptionExt, ResultExt};
 
 /// SettingsJson represents a change that a provider would like to make in the API.
 #[derive(Debug)]
-pub(crate) struct SettingsJson {
-    pub(crate) json: String,
-    pub(crate) desc: String,
+pub struct SettingsJson {
+    pub json: String,
+    pub desc: String,
 }
 
 impl SettingsJson {

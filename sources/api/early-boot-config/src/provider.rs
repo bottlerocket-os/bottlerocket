@@ -8,21 +8,21 @@ mod local_file;
 #[cfg(variant_platform = "aws")]
 mod aws;
 #[cfg(variant_platform = "aws")]
-pub(crate) use aws::AwsDataProvider as Platform;
+pub use aws::AwsDataProvider as Platform;
 
 #[cfg(variant_platform = "vmware")]
 mod vmware;
 #[cfg(variant_platform = "vmware")]
-pub(crate) use vmware::VmwareDataProvider as Platform;
+pub use vmware::VmwareDataProvider as Platform;
 
 #[cfg(variant_platform = "metal")]
 mod metal;
 #[cfg(variant_platform = "metal")]
-pub(crate) use metal::MetalDataProvider as Platform;
+pub use metal::MetalDataProvider as Platform;
 
 /// Support for new platforms can be added by implementing this trait.
 #[async_trait]
-pub(crate) trait PlatformDataProvider {
+pub trait PlatformDataProvider {
     /// You should return a list of SettingsJson, representing the settings changes you want to
     /// send to the API.
     ///

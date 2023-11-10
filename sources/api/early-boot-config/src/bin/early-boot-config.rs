@@ -13,16 +13,12 @@ Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be ta
 #[macro_use]
 extern crate log;
 
+use early_boot_config::provider::{Platform, PlatformDataProvider};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, ResultExt};
 use std::fs;
 use std::str::FromStr;
 use std::{env, process};
-
-mod compression;
-mod provider;
-mod settings;
-use crate::provider::{Platform, PlatformDataProvider};
 
 // TODO
 // Tests!

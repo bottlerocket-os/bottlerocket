@@ -12,7 +12,7 @@ use std::path::Path;
 use crate::provider::local_file;
 
 /// Unit struct for AWS so we can implement the PlatformDataProvider trait.
-pub(crate) struct AwsDataProvider;
+pub struct AwsDataProvider;
 
 impl AwsDataProvider {
     const IDENTITY_DOCUMENT_FILE: &'static str = "/etc/early-boot-config/identity-document";

@@ -15,5 +15,5 @@ fn main() {
     };
     variant.emit_cfgs();
 
-    generate_readme::from_main().unwrap();
+    generate_readme::from_file("src/bin/early-boot-config.rs").unwrap();
 }
