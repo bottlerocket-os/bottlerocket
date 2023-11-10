@@ -1,8 +1,8 @@
 /// The ntp settings can be used to specify time servers with which to synchronize the instance's
 /// clock.
 use bottlerocket_settings_sdk::{GenerateResult, LinearlyMigrateable, NoMigration, SettingsModel};
-use modeled_types::Url;
 use model_derive::model;
+use modeled_types::Url;
 use std::convert::Infallible;
 
 #[model(impl_default = true)]
@@ -23,8 +23,7 @@ impl SettingsModel for NtpSettingsV1 {
     }
 
     fn set(_current_value: Option<Self>, _target: Self) -> Result<()> {
-        // TODO: add additional validation -- legal for this to be set to any URL or do we need to
-        // check that it is a valid time server?
+        // Anything that parses as a list of URLs is ok
         Ok(())
     }
 
@@ -38,8 +37,7 @@ impl SettingsModel for NtpSettingsV1 {
     }
 
     fn validate(_value: Self, _validated_settings: Option<serde_json::Value>) -> Result<()> {
-        // TODO: add additional validation -- legal for this to be set to any URL or do we need to
-        // check that it is a valid time server?
+        // Anything that parses as a list of URLs is ok
         Ok(())
     }
 }

@@ -3,6 +3,8 @@ use settings_extension_ntp::NtpSettingsV1;
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
+    env_logger::init();
+
     match LinearMigratorExtensionBuilder::with_name("ntp")
         .with_models(vec![BottlerocketSetting::<NtpSettingsV1>::model()])
         .build()
