@@ -6,7 +6,7 @@ use async_trait::async_trait;
 
 use crate::provider::local_file;
 
-pub(crate) struct MetalDataProvider;
+pub struct MetalDataProvider;
 
 #[async_trait]
 impl PlatformDataProvider for MetalDataProvider {

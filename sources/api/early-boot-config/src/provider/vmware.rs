@@ -18,7 +18,7 @@ use std::str;
 
 use crate::provider::local_file;
 
-pub(crate) struct VmwareDataProvider;
+pub struct VmwareDataProvider;
 
 impl VmwareDataProvider {
     // This program expects that the CD-ROM is already mounted.  Mounting happens elsewhere in a

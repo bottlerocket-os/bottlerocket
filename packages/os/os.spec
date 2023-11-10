@@ -336,7 +336,6 @@ static_pid="$!"
 echo "** Output from non-static builds:"
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
     -p apiserver \
-    -p early-boot-config \
     -p netdog \
     -p sundog \
     -p schnauzer \
@@ -364,6 +363,11 @@ echo "** Output from non-static builds:"
     %{?with_k8s_runtime: -p static-pods} \
     %{?with_nvidia_flavor: -p driverdog} \
     %{nil}
+
+# Build just the early-boot-config binary and not the user data providers, as
+# they are built and packaged separately
+%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
+    -p early-boot-config --bin early-boot-config
 
 # Wait for static builds from the background, if they're not already done.
 set +e; wait "${static_pid}"; static_rc="${?}"; set -e
