@@ -4,7 +4,7 @@ Release: 1%{?dist}
 Summary: Library for Zstandard compression
 License: BSD-3-Clause AND GPL-2.0-only
 URL: https://github.com/facebook/zstd/
-Source0: https://github.com/faceboot/zstd/releases/download/v%{version}/zstd-%{version}.tar.gz
+Source0: https://github.com/facebook/zstd/releases/download/v%{version}/zstd-%{version}.tar.gz
 BuildRequires: %{_cross_os}glibc-devel
 
 %description
