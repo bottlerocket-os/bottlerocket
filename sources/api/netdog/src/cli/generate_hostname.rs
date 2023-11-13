@@ -54,8 +54,8 @@ pub(crate) async fn run() -> Result<()> {
     } else {
         hostname
     }
-    // If no hostname has been determined we return the IP address of the host.
-    .unwrap_or(ip_string);
+    // If no hostname has been determined we return the IP address of the host, replacing invalid ipv6 chars.
+    .unwrap_or(ip_string.replace(":", "-"));
 
     // sundog expects JSON-serialized output
     print_json(hostname)
