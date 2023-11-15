@@ -72,8 +72,9 @@ ADMIN_USER_DATA="$(echo '{"ssh": {"authorized-keys": ["'"${PUBKEY}"'"]}}' | base
 cat <<EOF >>user-data.toml
 [settings.host-containers.admin]
 enabled = true
+superpowered = true
 user-data = "${ADMIN_USER_DATA}"
-source = "public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.0"
+source = "public.ecr.aws/bottlerocket/bottlerocket-admin:v0.11.1"
 EOF
 ```
 
