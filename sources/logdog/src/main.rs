@@ -111,8 +111,21 @@ pub(crate) async fn collect_logs<P: AsRef<Path>>(log_requests: &[&str], outdir: 
     Ok(())
 }
 
-/// Runs the bulk of the program's logic, main wraps this.
-async fn run(outfile: &Path, commands: &[&str]) -> Result<()> {
+/// Runs the program's logic, main wraps this.
+async fn run(outfile: &Path) -> Result<()> {
+    run_inner(
+        outfile,
+        log_requests()?
+            .iter()
+            .map(String::as_ref)
+            .collect::<Vec<&str>>()
+            .as_slice(),
+    )
+    .await
+}
+
+/// Runs the bulk of the program's logic given a set of commands.
+async fn run_inner(outfile: &Path, commands: &[&str]) -> Result<()> {
     let temp_dir = TempDir::new().context(error::TempDirCreateSnafu)?;
     collect_logs(commands, &temp_dir.path().to_path_buf()).await?;
     create_tarball(temp_dir.path(), outfile)?;
@@ -123,8 +136,7 @@ async fn run(outfile: &Path, commands: &[&str]) -> Result<()> {
 #[tokio::main]
 async fn main() -> ! {
     let outpath = parse_args(env::args());
-    let log_requests = log_requests();
-    process::exit(match run(&outpath, &log_requests).await {
+    process::exit(match run(&outpath).await {
         Ok(()) => 0,
         Err(err) => {
             eprintln!("{}", err);
@@ -154,7 +166,7 @@ mod tests {
 
         // we assume that `echo` will not do something unexpected on the machine running this test.
         let commands = vec!["exec hello.txt echo hello world"];
-        run(&outfile, &commands).await.unwrap();
+        run_inner(&outfile, &commands).await.unwrap();
 
         // this function will panic if the given path is not found in the tarball.
         let find = |path_to_find: &PathBuf| {

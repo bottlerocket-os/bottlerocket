@@ -22,10 +22,8 @@ use std::process::{Command, Stdio};
 use url::Url;
 use walkdir::WalkDir;
 
-/// The `logdog` log requests that all variants have in common.
-const COMMON_REQUESTS: &str = include_str!("../conf/logdog.common.conf");
-/// The `logdog` log requests that are specific to the current variant.
-const VARIANT_REQUESTS: &str = include_str!("../conf/current/logdog.conf");
+/// The directory containing all `logdog` log requests.
+pub(crate) const REQUESTS_DIR: &str = "/usr/share/logdog.d";
 
 /// Patterns to filter from settings output.  These follow the Unix shell style pattern outlined
 /// here: https://docs.rs/glob/0.3.0/glob/struct.Pattern.html.
@@ -44,12 +42,25 @@ const SENSITIVE_SETTINGS_PATTERNS: &[&str] = &[
 /// Returns the list of log requests to run by combining `VARIANT_REQUESTS` and `COMMON_REQUESTS`.
 /// These are read at compile time from files named `logdog.conf` and `logdog.common.conf`
 /// respectively.
-pub(crate) fn log_requests() -> Vec<&'static str> {
-    COMMON_REQUESTS
-        .lines()
-        .chain(VARIANT_REQUESTS.lines())
-        .filter(|&command| !command.is_empty() && !command.trim_start().starts_with('#'))
-        .collect()
+pub(crate) fn log_requests() -> Result<Vec<String>> {
+    Ok(WalkDir::new(REQUESTS_DIR)
+        .max_depth(1)
+        .min_depth(1)
+        .sort_by_file_name()
+        .into_iter()
+        .collect::<std::result::Result<Vec<_>, _>>()?
+        .into_iter()
+        .filter(|entry| entry.path().is_file())
+        .map(|entry| {
+            eprintln!("Checking: {}", entry.path().display());
+            fs::read_to_string(entry.path()).context(error::FileReadSnafu { from: entry.path() })
+        })
+        .collect::<std::result::Result<Vec<_>, _>>()?
+        .iter()
+        .flat_map(|commands| commands.lines())
+        .map(std::borrow::ToOwned::to_owned)
+        .filter(|command| !command.is_empty() && !command.trim_start().starts_with('#'))
+        .collect())
 }
 
 /// A logdog `LogRequest` represents a line from the config file. It starts with a "mode" that

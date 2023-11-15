@@ -33,6 +33,9 @@ Source22: wickedd-dhcp4.service
 Source23: wickedd-dhcp6.service
 Source24: wickedd-nanny.service
 
+# Logdog configuration for Wicked
+Source30: logdog.wicked.conf
+
 %if %{without bootstrap}
 Source99: constants.xml
 %endif
@@ -109,6 +112,10 @@ install -p -m 0644 %{S:20} %{S:21} %{S:22} %{S:23} %{S:24} \
 install -p -m 0644 %{S:99} %{buildroot}%{_cross_datadir}/wicked/schema/constants.xml
 %endif
 
+# install logdog configuration file
+install -d %{buildroot}%{_cross_datadir}/logdog.d
+install -p -m 0644 %{S:30} %{buildroot}%{_cross_datadir}/logdog.d
+
 %files
 %license COPYING
 %{_cross_attribution_file}
@@ -146,6 +153,7 @@ install -p -m 0644 %{S:99} %{buildroot}%{_cross_datadir}/wicked/schema/constants
 %{_cross_factorydir}%{_cross_sysconfdir}/wicked/nanny.xml
 %{_cross_factorydir}%{_cross_sysconfdir}/wicked/server.xml
 %{_cross_tmpfilesdir}/wicked.conf
+%{_cross_datadir}/logdog.d/logdog.wicked.conf
 
 %files devel
 %{_cross_libdir}/libwicked.so

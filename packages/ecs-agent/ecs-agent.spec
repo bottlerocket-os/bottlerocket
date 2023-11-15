@@ -46,6 +46,9 @@ Source109: version.go
 # Mount for writing ECS agent configuration
 Source200: etc-ecs.mount
 
+# Ecs logdog configuration
+Source300: logdog.ecs.conf
+
 # Patches are numbered according to which source they apply to
 # Patches 0000 - 0999 apply to Source0
 # Patches 1000 - 1999 apply to Source1
@@ -289,6 +292,9 @@ mv %{ecscni_gorepo}-%{ecscni_gitrev}/vendor go-vendor/%{ecscni_gorepo}
 mv %{vpccni_gorepo}-%{vpccni_gitrev}/vendor go-vendor/%{vpccni_gorepo}
 %cross_scan_attribution go-vendor go-vendor
 
+install -d %{buildroot}%{_cross_datadir}/logdog.d
+install -p -m 0644 %{S:300} %{buildroot}%{_cross_datadir}/logdog.d
+
 %files
 # License and attribution files are installed into /usr/share/licenses with a
 # directory structure as follows:
@@ -329,5 +335,6 @@ mv %{vpccni_gorepo}-%{vpccni_gitrev}/vendor go-vendor/%{vpccni_gorepo}
 %{_cross_sysctldir}/90-ecs.conf
 %{_cross_templatedir}/ecs.config
 %{_cross_libdir}/amazon-ecs-agent/amazon-ecs-pause.tar
+%{_cross_datadir}/logdog.d/logdog.ecs.conf
 
 %changelog
