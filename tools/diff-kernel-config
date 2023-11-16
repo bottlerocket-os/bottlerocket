@@ -270,7 +270,7 @@ for config_diff in "${output_dir}"/config-*-diff; do
         / -> / { changed += 1 }
         END    { printf \"${config_base}:\t%3d removed, %3d added, %3d changed\n\", removed, added, changed }
     " "${config_diff}"
-done | sort -V
+done | sort -V | tee "${output_dir}"/diff-summary
 echo
 
 # Generate combined report of changes
