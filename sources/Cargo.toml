@@ -103,6 +103,7 @@ members = [
     "models",
 
     "settings-extensions/motd",
+    "settings-extensions/ntp",
 
     "parse-datetime",
 
