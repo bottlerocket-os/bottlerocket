@@ -34,11 +34,13 @@ sha512sum -c <<<"a3c58bc73999264f6f28f3ed9bfcb325a5be943a782852c7d53e803881968e0
 
 Next, set your desired version and variant, and use `tuftool` to download the image:
 To install `tuftool` you'll need to install Rust (via [rustup](https://rustup.rs/) or the official site), and then you can run `cargo install tuftool`.
+The VERSION corresponds to the [Bottlerocket version](https://github.com/bottlerocket-os/bottlerocket/releases/latest), the latest release is almost always what you want.
+You might need to install `jq` to fetch the VERSION.
 
 ```shell
 ARCH="x86_64"
-VERSION="v1.12.0"
-VARIANT="metal-k8s-1.23"
+VERSION=$(curl -s https://api.github.com/repos/bottlerocket-os/bottlerocket/releases/latest | jq -r '.name')
+VARIANT="metal-k8s-1.28"
 IMAGE="bottlerocket-${VARIANT}-${ARCH}-${VERSION}.img.lz4"
 OUTDIR="${VARIANT}-${VERSION}"
 
