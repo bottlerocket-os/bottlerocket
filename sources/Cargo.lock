@@ -1694,6 +1694,7 @@ dependencies = [
  "base64",
  "bottlerocket-variant",
  "constants",
+ "env_logger",
  "flate2",
  "generate-readme",
  "hex-literal",
