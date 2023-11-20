@@ -1,4 +1,5 @@
 //! The provider module owns the `PlatformDataProvider` trait
+mod local_defaults;
 mod local_file;
 
 use crate::compression::expand_file_maybe;
@@ -6,6 +7,7 @@ use crate::settings::SettingsJson;
 use crate::LOG_LEVEL_ENV_VAR;
 use async_trait::async_trait;
 use env_logger::{Env, Target, WriteStyle};
+pub use local_defaults::LocalDefaults;
 use snafu::ResultExt;
 use std::path::Path;
 use std::process::ExitCode;
