@@ -5,7 +5,7 @@ use serde::Serialize;
 use snafu::{OptionExt, ResultExt};
 
 /// SettingsJson represents a change that a provider would like to make in the API.
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct SettingsJson {
     pub json: String,
     pub desc: String,
