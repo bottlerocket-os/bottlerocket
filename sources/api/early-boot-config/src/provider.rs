@@ -1,4 +1,5 @@
 //! The provider module owns the `PlatformDataProvider` trait
+mod ec2_identity_doc;
 mod local_defaults;
 mod local_file;
 mod local_user_data;
@@ -7,6 +8,7 @@ use crate::compression::expand_file_maybe;
 use crate::settings::SettingsJson;
 use crate::LOG_LEVEL_ENV_VAR;
 use async_trait::async_trait;
+pub use ec2_identity_doc::Ec2IdentityDoc;
 use env_logger::{Env, Target, WriteStyle};
 pub use local_defaults::LocalDefaults;
 pub use local_user_data::LocalUserData;
