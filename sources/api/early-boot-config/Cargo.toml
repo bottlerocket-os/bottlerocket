@@ -9,6 +9,10 @@ build = "build.rs"
 # Don't rebuild crate just because of changes to README.
 exclude = ["README.md"]
 
+[[bin]]
+name = "local-defaults-provider"
+path = "src/bin/user-data-providers/local_defaults.rs"
+
 [dependencies]
 apiclient = { path = "../apiclient", version = "0.1" }
 async-trait = "0.1"
