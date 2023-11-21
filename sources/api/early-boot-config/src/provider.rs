@@ -3,6 +3,7 @@ mod ec2_identity_doc;
 mod local_defaults;
 mod local_file;
 mod local_user_data;
+mod vmware_cd_rom;
 
 use crate::compression::expand_file_maybe;
 use crate::settings::SettingsJson;
@@ -15,6 +16,7 @@ pub use local_user_data::LocalUserData;
 use snafu::ResultExt;
 use std::path::Path;
 use std::process::ExitCode;
+pub use vmware_cd_rom::VmwareCdRom;
 
 #[cfg(variant_platform = "aws")]
 mod aws;
