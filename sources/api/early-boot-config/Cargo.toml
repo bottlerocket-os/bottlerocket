@@ -21,6 +21,10 @@ path = "src/bin/user-data-providers/local_user_data.rs"
 name = "ec2-identity-doc-provider"
 path = "src/bin/user-data-providers/ec2_identity_doc.rs"
 
+[[bin]]
+name = "vmware-cd-rom-provider"
+path = "src/bin/user-data-providers/vmware_cd_rom.rs"
+
 [dependencies]
 apiclient = { path = "../apiclient", version = "0.1" }
 async-trait = "0.1"
