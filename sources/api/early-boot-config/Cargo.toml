@@ -18,6 +18,10 @@ name = "local-user-data-provider"
 path = "src/bin/user-data-providers/local_user_data.rs"
 
 [[bin]]
+name = "ec2-imds-provider"
+path = "src/bin/user-data-providers/ec2_imds.rs"
+
+[[bin]]
 name = "ec2-identity-doc-provider"
 path = "src/bin/user-data-providers/ec2_identity_doc.rs"
 
