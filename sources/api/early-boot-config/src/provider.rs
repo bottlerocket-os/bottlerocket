@@ -5,6 +5,8 @@ mod local_defaults;
 mod local_file;
 mod local_user_data;
 mod vmware_cd_rom;
+#[cfg(target_arch = "x86_64")]
+mod vmware_guestinfo;
 
 use crate::compression::expand_file_maybe;
 use crate::settings::SettingsJson;
@@ -19,6 +21,8 @@ use snafu::ResultExt;
 use std::path::Path;
 use std::process::ExitCode;
 pub use vmware_cd_rom::VmwareCdRom;
+#[cfg(target_arch = "x86_64")]
+pub use vmware_guestinfo::VmwareGuestinfo;
 
 #[cfg(variant_platform = "aws")]
 mod aws;
