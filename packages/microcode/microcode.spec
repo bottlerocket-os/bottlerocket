@@ -3,8 +3,8 @@
 
 # These are specific to the upstream source RPM, and will likely need to be
 # updated for each new version.
-%global amd_ucode_version 20230804
-%global intel_ucode_version 20230808
+%global amd_ucode_version 20231111
+%global intel_ucode_version 20231114
 
 Name: %{_cross_os}microcode
 Version: 0.0
@@ -20,8 +20,6 @@ URL: https://github.com/bottlerocket-os/bottlerocket/tree/develop/packages/micro
 
 Source0: https://www.kernel.org/pub/linux/kernel/firmware/linux-firmware-%{amd_ucode_version}.tar.xz
 Source1: https://github.com/intel/Intel-Linux-Processor-Microcode-Data-Files/archive/refs/tags/microcode-%{intel_ucode_version}.tar.gz
-
-Patch1: 0001-linux-firmware-Update-AMD-cpu-microcode.patch
 
 # Lets us install "microcode" to pull in the AMD and Intel updates.
 Requires: %{_cross_os}microcode-amd
