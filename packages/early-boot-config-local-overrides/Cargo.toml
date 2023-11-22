@@ -1,0 +1,21 @@
+[package]
+name = "early-boot-config-local-overrides"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[lib]
+path = "../packages.rs"
+
+[package.metadata.build-package]
+source-groups = [
+    "api/early-boot-config",
+]
+
+# RPM BuildRequires
+[build-dependencies]
+glibc = { path = "../glibc" }
+
+# RPM Requires
+[dependencies]
