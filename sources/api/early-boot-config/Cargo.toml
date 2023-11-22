@@ -14,6 +14,10 @@ name = "local-defaults-provider"
 path = "src/bin/user-data-providers/local_defaults.rs"
 
 [[bin]]
+name = "local-overrides-provider"
+path = "src/bin/user-data-providers/local_overrides.rs"
+
+[[bin]]
 name = "local-user-data-provider"
 path = "src/bin/user-data-providers/local_user_data.rs"
 
