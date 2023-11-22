@@ -3,6 +3,7 @@ mod ec2_identity_doc;
 mod ec2_imds;
 mod local_defaults;
 mod local_file;
+mod local_overrides;
 mod local_user_data;
 mod vmware_cd_rom;
 #[cfg(target_arch = "x86_64")]
@@ -16,6 +17,7 @@ pub use ec2_identity_doc::Ec2IdentityDoc;
 pub use ec2_imds::Ec2Imds;
 use env_logger::{Env, Target, WriteStyle};
 pub use local_defaults::LocalDefaults;
+pub use local_overrides::LocalOverrides;
 pub use local_user_data::LocalUserData;
 use snafu::ResultExt;
 use std::path::Path;
