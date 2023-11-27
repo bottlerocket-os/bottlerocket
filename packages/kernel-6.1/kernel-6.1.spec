@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-6.1
-Version: 6.1.59
+Version: 6.1.61
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/al2023/blobstore/7f6b70d0766761e79bb6dae9a840ac4fb6ca95c78dad994ea97abac37dd2a061/kernel-6.1.59-84.139.amzn2023.src.rpm
+Source0: https://cdn.amazonlinux.com/al2023/blobstore/64195460250d20bac796e24a69da55beb4bdd09fb3ed41f8d4c9ef984bd35f7c/kernel-6.1.61-85.141.amzn2023.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
