@@ -1,11 +1,13 @@
 #[cfg(feature = "testfakes")]
 pub mod fake;
 pub mod helpers;
+pub mod json_settings;
 pub mod settings;
 
 use std::path::PathBuf;
 
 pub use helpers::{HelperResolver, StaticHelperResolver};
+pub use json_settings::JsonSettingsResolver;
 pub use settings::{BottlerocketSettingsResolver, SettingsResolver};
 
 /// Used to register helpers and fetch settings during template rendering.
@@ -17,8 +19,8 @@ pub trait TemplateImporter {
     fn helper_resolver(&self) -> &Self::HelperResolver;
 }
 
-#[macro_export]
 /// Implements the `TemplateImporter` trait for a type, given the resolver types used to fetch settings and helpers.
+#[macro_export]
 macro_rules! impl_template_importer {
     ($t:ty, $s:ty, $h:ty) => {
         impl $crate::v2::import::TemplateImporter for $t {

@@ -2,15 +2,16 @@
 //!
 //! A settings generator for rendering handlebars templates using data from the Bottlerocket API.
 use self::clirequirements::CLIExtensionRequirement;
-use argh::FromArgs;
-use schnauzer::{
+use crate::import::{HelperResolver, SettingsResolver, TemplateImporter};
+use crate::{
     render_template, render_template_file,
     template::{ExtensionRequirement, Template, TemplateFrontmatter},
     BottlerocketTemplateImporter,
 };
+use argh::FromArgs;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
-use snafu::ResultExt;
-use std::{path::PathBuf, process};
+use snafu::{OptionExt, ResultExt};
+use std::path::PathBuf;
 
 mod clirequirements;
 
@@ -58,14 +59,16 @@ struct RenderFileArgs {
     path: PathBuf,
 }
 
-async fn run() -> Result<()> {
-    let args: Args = argh::from_env();
-
-    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggingSetupSnafu)?;
-
-    let importer = BottlerocketTemplateImporter::new(args.api_socket);
-
-    let rendered_template = match args.subcommand {
+/// Run the schnauzer-v2 CLI from a set of parsed arguments and a custom importer.
+async fn run_with_parsed_args<SR, HR>(
+    args: Args,
+    template_importer: &dyn TemplateImporter<SettingsResolver = SR, HelperResolver = HR>,
+) -> Result<String>
+where
+    SR: SettingsResolver,
+    HR: HelperResolver,
+{
+    match args.subcommand {
         Subcommand::Render(RenderArgs { requires, template }) => {
             // let frontmatter: TemplateFrontmatter = requires.try_into()?;
             let frontmatter: TemplateFrontmatter = requires
@@ -80,14 +83,55 @@ async fn run() -> Result<()> {
                 body: template,
             };
 
-            render_template(&importer, &template)
+            render_template(template_importer, &template)
                 .await
-                .context(error::RenderTemplateSnafu)?
+                .context(error::RenderTemplateSnafu)
         }
-        Subcommand::RenderFile(RenderFileArgs { path }) => render_template_file(&importer, &path)
-            .await
-            .context(error::RenderTemplateSnafu)?,
-    };
+        Subcommand::RenderFile(RenderFileArgs { path }) => {
+            render_template_file(template_importer, &path)
+                .await
+                .context(error::RenderTemplateSnafu)
+        }
+    }
+}
+
+/// Run the schnauzer-v2 CLI, parsing arguments from the given set of strings and a given template
+/// importer.
+pub async fn run_with_args<I, T, SR, HR>(
+    iter: I,
+    template_importer: &dyn TemplateImporter<SettingsResolver = SR, HelperResolver = HR>,
+) -> Result<String>
+where
+    I: IntoIterator<Item = T>,
+    T: AsRef<str>,
+    SR: SettingsResolver,
+    HR: HelperResolver,
+{
+    let all_inputs: Vec<String> = iter.into_iter().map(|s| s.as_ref().to_string()).collect();
+
+    let mut input_iter = all_inputs.iter().map(AsRef::as_ref);
+    let command_name = [input_iter.next().context(error::ParseCLICommandSnafu)?];
+    let args: Vec<&str> = input_iter.collect();
+
+    let args =
+        Args::from_args(&command_name, &args).map_err(|e| error::CLIError::ParseCLIArgs {
+            parser_output: e.output,
+        })?;
+
+    run_with_parsed_args(args, template_importer).await
+}
+
+/// Run the schnauzer-v2 CLI, parsing arguments from the command line.
+///
+/// Uses the BottlerocketTemplateImporter, which reads settings and helpers from the Bottlerocket
+/// API.
+pub async fn run() -> Result<()> {
+    let args: Args = argh::from_env();
+    SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggingSetupSnafu)?;
+
+    let template_importer = BottlerocketTemplateImporter::new(args.api_socket.clone());
+
+    let rendered_template = run_with_parsed_args(args, &template_importer).await?;
 
     println!(
         "{}",
@@ -96,25 +140,14 @@ async fn run() -> Result<()> {
     Ok(())
 }
 
-// Returning a Result from main makes it print a Debug representation of the error, but with Snafu
-// we have nice Display representations of the error, so we wrap "main" (run) and print any error.
-// https://github.com/shepmaster/snafu/issues/110
-#[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
-        eprintln!("{}", e);
-        process::exit(1);
-    }
-}
-
 pub mod error {
     use snafu::Snafu;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub))]
-    pub enum Error {
+    pub enum CLIError {
         #[snafu(display("Failed to parse template requirements: '{}'", source))]
-        FrontmatterParse { source: schnauzer::template::Error },
+        FrontmatterParse { source: crate::template::Error },
 
         #[snafu(display("Failed to write output to JSON: '{}'", source))]
         JSONSerialize { source: serde_json::Error },
@@ -122,8 +155,14 @@ pub mod error {
         #[snafu(display("Failed to initialize logging: '{}'", source))]
         LoggingSetup { source: log::SetLoggerError },
 
+        #[snafu(display("Failed to parse CLI arguments: {}", parser_output))]
+        ParseCLIArgs { parser_output: String },
+
+        #[snafu(display("Failed to parse CLI arguments: No CLI command given"))]
+        ParseCLICommand,
+
         #[snafu(display("Failed to render template: '{}'", source))]
-        RenderTemplate { source: schnauzer::RenderError },
+        RenderTemplate { source: crate::RenderError },
 
         #[snafu(display(
             "Could not parse extension requirement from '{}': {}'",
@@ -137,5 +176,5 @@ pub mod error {
     }
 }
 
-pub use error::Error;
-type Result<T> = std::result::Result<T, error::Error>;
+pub use error::CLIError;
+type Result<T> = std::result::Result<T, error::CLIError>;

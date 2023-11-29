@@ -1,18 +1,17 @@
 //! Provides a helpful "fake" implementation of TemplateImporter to use in test scenarios.
-use super::{HelperResolver, SettingsResolver};
+use super::{HelperResolver, JsonSettingsResolver};
 use crate::v2::ExtensionRequirement;
 use async_trait::async_trait;
 use handlebars::Handlebars;
-
 pub struct FakeImporter {
-    settings_resolver: FakeSettingsResolver,
+    settings_resolver: JsonSettingsResolver,
     helper_resolver: FakeHelperResolver,
 }
 
 impl FakeImporter {
     pub fn new(settings: serde_json::Value, helpers: Vec<(&'static str, StaticHelper)>) -> Self {
         Self {
-            settings_resolver: FakeSettingsResolver::new(settings),
+            settings_resolver: JsonSettingsResolver::new(settings),
             helper_resolver: FakeHelperResolver::new(helpers),
         }
     }
@@ -20,29 +19,7 @@ impl FakeImporter {
 
 crate::impl_template_importer!(FakeImporter, FakeSettingsResolver, FakeHelperResolver);
 
-/// A `SettingsResolver` implementation for test scenarios that use explicit in-memory data.
-pub struct FakeSettingsResolver {
-    settings: serde_json::Value,
-}
-
-impl FakeSettingsResolver {
-    pub fn new(settings: serde_json::Value) -> Self {
-        Self { settings }
-    }
-}
-
-#[async_trait]
-impl SettingsResolver for FakeSettingsResolver {
-    async fn fetch_settings<I>(
-        &self,
-        _extension_requirements: I,
-    ) -> std::result::Result<serde_json::Value, Box<dyn std::error::Error>>
-    where
-        I: Iterator<Item = ExtensionRequirement> + Send,
-    {
-        Ok(self.settings.clone())
-    }
-}
+pub type FakeSettingsResolver = JsonSettingsResolver;
 
 /// A handlebars helper defined by a static function.
 type StaticHelper = fn(

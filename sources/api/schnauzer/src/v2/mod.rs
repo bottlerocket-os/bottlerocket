@@ -2,6 +2,7 @@ use self::import::{HelperResolver, SettingsResolver, TemplateImporter};
 use snafu::ResultExt;
 use std::path::Path;
 
+pub mod cli;
 pub mod import;
 mod registry;
 pub mod template;
