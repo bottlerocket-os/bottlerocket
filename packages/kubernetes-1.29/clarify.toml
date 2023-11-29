@@ -1,0 +1,62 @@
+[clarify."github.com/JeffAshton/win_pdh"]
+expression = "BSD-3-Clause"
+license-files = [
+    { path = "LICENSE", hash = 0xb221dcc9 },
+]
+
+[clarify."github.com/daviddengcn/go-colortext"]
+expression = "BSD-3-Clause AND MIT"
+license-files = [
+    { path = "LICENSE", hash = 0x9769fae1 },
+]
+
+[clarify."github.com/ghodss/yaml"]
+expression = "MIT AND BSD-3-Clause"
+license-files = [
+    { path = "LICENSE", hash = 0xcdf3ae00 },
+]
+
+[clarify."github.com/heketi/heketi"]
+# kubernetes only uses code that is under LGPLv3+/Apache 2.0, not the code that is GPLv2+/LGPLv3+
+expression = "LGPL-3.0-or-later OR Apache-2.0"
+license-files = [
+    { path = "LICENSE", hash = 0x3c4b96d1 },
+    { path = "LICENSE-APACHE2", hash = 0x438c8616 },
+    { path = "COPYING-LGPLV3", hash = 0xf0bccb3a },
+]
+skip-files = [ "COPYING-GPLV2" ]
+
+[clarify."github.com/go-bindata/go-bindata"]
+expression = "CC0-1.0"
+license-files = [
+    { path = "LICENSE", hash = 0x393fafd6 },
+]
+
+[clarify."github.com/miekg/dns"]
+expression = "BSD-3-Clause"
+license-files = [
+    { path = "COPYRIGHT", hash = 0xe41dd36c },
+    { path = "LICENSE", hash = 0xfc8f12ff },
+]
+
+[clarify."sigs.k8s.io/yaml"]
+expression = "MIT AND BSD-3-Clause"
+license-files = [
+    { path = "LICENSE", hash = 0xcdf3ae00 },
+]
+
+[clarify."honnef.co/go/tools"]
+expression = "MIT AND BSD-3-Clause AND Apache-2.0"
+license-files = [
+    { path = "LICENSE", hash = 0xad378ed2 },
+    { path = "LICENSE-THIRD-PARTY", hash = 0x546425eb },
+    { path = "lint/LICENSE", hash = 0xc6b58232 },
+    { path = "ssa/LICENSE", hash = 0xe656fb62 },
+]
+
+[clarify."github.com/storageos/go-api"]
+expression = "MIT AND BSD-2-Clause"
+license-files = [
+    { path = "LICENCE", hash = 0x67a6861e },
+]
+skip-files = ["licence.go", "types/licence.go"]
