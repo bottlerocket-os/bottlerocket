@@ -1,6 +1,14 @@
-use std::sync::{Arc, RwLock};
-
+use async_trait::async_trait;
+use bytes::Bytes;
+use futures::StreamExt;
+use futures::TryStreamExt;
+use futures_core::Stream;
 use log::error;
+use std::io::{ErrorKind, Read};
+use std::pin::Pin;
+use std::sync::{Arc, RwLock};
+use tokio_util::compat::FuturesAsyncReadCompatExt;
+use tokio_util::io::SyncIoBridge;
 use tough::{HttpTransport, Transport, TransportError};
 use url::Url;
 
@@ -67,11 +75,24 @@ impl HttpQueryTransport {
     }
 }
 
+pub(crate) type TransportStream = Pin<Box<dyn Stream<Item = Result<Bytes, TransportError>> + Send>>;
+
+#[async_trait]
 impl Transport for HttpQueryTransport {
-    fn fetch(
-        &self,
-        url: Url,
-    ) -> std::result::Result<Box<dyn std::io::Read + Send + '_>, TransportError> {
-        self.inner.fetch(self.parameters.add_params_to_url(url))
+    /// Send a GET request to the URL. The returned `TransportStream` will retry as necessary per
+    /// the `ClientSettings`.
+    async fn fetch(&self, url: Url) -> Result<TransportStream, TransportError> {
+        self.inner
+            .fetch(self.parameters.add_params_to_url(url))
+            .await
     }
+}
+
+pub(crate) fn reader_from_stream<S>(stream: S) -> impl Read
+where
+    S: Stream<Item = Result<Bytes, tough::error::Error>> + Send + Unpin,
+{
+    let mapped_err = stream.map(|next| next.map_err(|e| std::io::Error::new(ErrorKind::Other, e)));
+    let async_read = mapped_err.into_async_read().compat();
+    SyncIoBridge::new(async_read)
 }

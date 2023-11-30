@@ -4,7 +4,7 @@ mod error;
 mod transport;
 
 use crate::error::Result;
-use crate::transport::{HttpQueryTransport, QueryParams};
+use crate::transport::{reader_from_stream, HttpQueryTransport, QueryParams};
 use bottlerocket_release::BottlerocketRelease;
 use chrono::Utc;
 use log::debug;
@@ -17,12 +17,12 @@ use signpost::State;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ErrorCompat, OptionExt, ResultExt};
 use std::convert::{TryFrom, TryInto};
-use std::fs::{self, File, OpenOptions};
-use std::io;
 use std::path::Path;
-use std::process;
+use std::process::ExitCode;
 use std::str::FromStr;
 use std::thread;
+use tokio::runtime::Handle;
+use tokio::{fs, process};
 use tough::{Repository, RepositoryLoader};
 use update_metadata::{find_migrations, Manifest, Update};
 use url::Url;
@@ -108,21 +108,29 @@ GLOBAL OPTIONS:
     std::process::exit(1)
 }
 
-fn load_config() -> Result<Config> {
+async fn load_config() -> Result<Config> {
     let path = "/etc/updog.toml";
-    let s = fs::read_to_string(path).context(error::ConfigReadSnafu { path })?;
+    let s = fs::read_to_string(path)
+        .await
+        .context(error::ConfigReadSnafu { path })?;
     let config: Config = toml::from_str(&s).context(error::ConfigParseSnafu { path })?;
     Ok(config)
 }
 
-fn load_repository(transport: HttpQueryTransport, config: &Config) -> Result<Repository> {
-    fs::create_dir_all(METADATA_PATH).context(error::CreateMetadataCacheSnafu {
-        path: METADATA_PATH,
-    })?;
-    RepositoryLoader::new(
-        File::open(TRUSTED_ROOT_PATH).context(error::OpenRootSnafu {
+async fn load_repository(transport: HttpQueryTransport, config: &Config) -> Result<Repository> {
+    fs::create_dir_all(METADATA_PATH)
+        .await
+        .context(error::CreateMetadataCacheSnafu {
+            path: METADATA_PATH,
+        })?;
+    let root_bytes = fs::read(TRUSTED_ROOT_PATH)
+        .await
+        .context(error::OpenRootSnafu {
             path: TRUSTED_ROOT_PATH,
-        })?,
+        })?;
+
+    RepositoryLoader::new(
+        &root_bytes,
         Url::parse(&config.metadata_base_url).context(error::UrlParseSnafu {
             url: &config.metadata_base_url,
         })?,
@@ -132,6 +140,7 @@ fn load_repository(transport: HttpQueryTransport, config: &Config) -> Result<Rep
     )
     .transport(transport)
     .load()
+    .await
     .context(error::MetadataSnafu)
 }
 
@@ -210,7 +219,7 @@ fn update_required<'a>(
     Ok(None)
 }
 
-fn write_target_to_disk<P: AsRef<Path>>(
+async fn write_target_to_disk<P: AsRef<Path>>(
     repository: &Repository,
     target: &str,
     disk_path: P,
@@ -218,31 +227,38 @@ fn write_target_to_disk<P: AsRef<Path>>(
     let target = target
         .try_into()
         .context(error::TargetNameSnafu { target })?;
-    let reader = repository
+    let stream = repository
         .read_target(&target)
+        .await
         .context(error::MetadataSnafu)?
         .context(error::TargetNotFoundSnafu {
             target: target.raw(),
         })?;
-    // Note: the file extension for the compression type we're using should be removed in
-    // retrieve_migrations below.
-    let mut reader = lz4::Decoder::new(reader).context(error::Lz4DecodeSnafu {
-        target: target.raw(),
-    })?;
-    let mut f = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .open(disk_path.as_ref())
-        .context(error::OpenPartitionSnafu {
-            path: disk_path.as_ref(),
+    let reader = reader_from_stream(stream);
+
+    // Run blocking IO without blocking the scheduler.
+    let disk_path = disk_path.as_ref().to_path_buf();
+    let rt = Handle::current();
+    let task = rt.spawn_blocking(move || {
+        // Note: the file extension for the compression type we're using should be removed in
+        // retrieve_migrations below.
+        let mut reader = lz4::Decoder::new(reader).context(error::Lz4DecodeSnafu {
+            target: target.raw(),
         })?;
-    io::copy(&mut reader, &mut f).context(error::WriteUpdateSnafu)?;
-    Ok(())
+        let mut f = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&disk_path)
+            .context(error::OpenPartitionSnafu { path: disk_path })?;
+        std::io::copy(&mut reader, &mut f).context(error::WriteUpdateSnafu)?;
+        Ok(())
+    });
+    task.await.expect("TODO - snafu error for this")
 }
 
 /// Store required migrations for an update in persistent storage. All intermediate migrations
 /// between the current version and the target version must be retrieved.
-fn retrieve_migrations(
+async fn retrieve_migrations(
     repository: &Repository,
     query_params: &mut QueryParams,
     manifest: &Manifest,
@@ -257,7 +273,9 @@ fn retrieve_migrations(
 
     let dir = Path::new(MIGRATION_PATH);
     if !dir.exists() {
-        fs::create_dir(dir).context(error::DirCreateSnafu { path: &dir })?;
+        fs::create_dir(dir)
+            .await
+            .context(error::DirCreateSnafu { path: &dir })?;
     }
 
     // find the list of migrations in the manifest based on our from and to versions.
@@ -268,13 +286,14 @@ fn retrieve_migrations(
     targets.push("manifest.json".to_owned());
     repository
         .cache(METADATA_PATH, MIGRATION_PATH, Some(&targets), true)
+        .await
         .context(error::RepoCacheMigrationsSnafu)?;
     // Set a query parameter listing the required migrations
     query_params.add("migrations", targets.join(","));
     Ok(())
 }
 
-fn update_image(update: &Update, repository: &Repository) -> Result<()> {
+async fn update_image(update: &Update, repository: &Repository) -> Result<()> {
     let mut gpt_state = State::load().context(error::PartitionTableReadSnafu)?;
     gpt_state.clear_inactive();
     // Write out the clearing of the inactive partition immediately, because we're about to
@@ -285,9 +304,9 @@ fn update_image(update: &Update, repository: &Repository) -> Result<()> {
     let inactive = gpt_state.inactive_set();
 
     // TODO Do we want to recover the inactive side on an error?
-    write_target_to_disk(repository, &update.images.root, &inactive.root)?;
-    write_target_to_disk(repository, &update.images.boot, &inactive.boot)?;
-    write_target_to_disk(repository, &update.images.hash, &inactive.hash)?;
+    write_target_to_disk(repository, &update.images.root, &inactive.root).await?;
+    write_target_to_disk(repository, &update.images.boot, &inactive.boot).await?;
+    write_target_to_disk(repository, &update.images.hash, &inactive.hash).await?;
 
     gpt_state.mark_inactive_valid();
     gpt_state.write().context(error::PartitionTableWriteSnafu)?;
@@ -441,11 +460,11 @@ fn output<T: Serialize>(json: bool, object: T, string: &str) -> Result<()> {
     Ok(())
 }
 
-fn initiate_reboot() -> Result<()> {
+async fn initiate_reboot() -> Result<()> {
     // Set up signal handler for termination signals
     let mut signals = Signals::new([SIGTERM]).context(error::SignalSnafu)?;
     let signals_handle = signals.handle();
-    thread::spawn(move || {
+    let _ = thread::spawn(move || {
         for _sig in signals.forever() {
             // Ignore termination signals in case updog gets terminated
             // before getting to exit normally by itself after invoking
@@ -455,6 +474,7 @@ fn initiate_reboot() -> Result<()> {
     if let Err(err) = process::Command::new("shutdown")
         .arg("-r")
         .status()
+        .await
         .context(error::RebootFailureSnafu)
     {
         // Kill the signal handling thread
@@ -489,7 +509,7 @@ fn set_https_proxy_environment_variables(
 }
 
 #[allow(clippy::too_many_lines)]
-fn main_inner() -> Result<()> {
+async fn main_inner() -> Result<()> {
     // Parse and store the arguments passed to the program
     let arguments = parse_args(std::env::args());
 
@@ -499,7 +519,7 @@ fn main_inner() -> Result<()> {
     let command =
         serde_plain::from_str::<Command>(&arguments.subcommand).unwrap_or_else(|_| usage());
 
-    let config = load_config()?;
+    let config = load_config().await?;
     set_https_proxy_environment_variables(&config.https_proxy, &config.no_proxy);
     let current_release = BottlerocketRelease::new().context(error::ReleaseVersionSnafu)?;
     let variant = arguments.variant.unwrap_or(current_release.variant_id);
@@ -508,8 +528,8 @@ fn main_inner() -> Result<()> {
     // the transport's HTTP calls.
     let mut query_params = transport.query_params();
     set_common_query_params(&mut query_params, &current_release.version_id, &config);
-    let repository = load_repository(transport, &config)?;
-    let manifest = load_manifest(&repository)?;
+    let repository = load_repository(transport, &config).await?;
+    let manifest = load_manifest(&repository).await?;
     let ignore_waves = arguments.ignore_waves || config.ignore_waves;
     match command {
         Command::CheckUpdate | Command::Whats => {
@@ -554,12 +574,13 @@ fn main_inner() -> Result<()> {
                     &manifest,
                     u,
                     &current_release.version_id,
-                )?;
-                update_image(u, &repository)?;
+                )
+                .await?;
+                update_image(u, &repository).await?;
                 if command == Command::Update {
                     update_flags()?;
                     if arguments.reboot {
-                        initiate_reboot()?;
+                        initiate_reboot().await?;
                     }
                 }
                 output(
@@ -574,7 +595,7 @@ fn main_inner() -> Result<()> {
         Command::UpdateApply => {
             update_flags()?;
             if arguments.reboot {
-                initiate_reboot()?;
+                initiate_reboot().await?;
             }
         }
         Command::UpdateRevert => {
@@ -588,23 +609,28 @@ fn main_inner() -> Result<()> {
     Ok(())
 }
 
-fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
+async fn load_manifest(repository: &tough::Repository) -> Result<Manifest> {
     let target = "manifest.json";
     let target = target
         .try_into()
         .context(error::TargetNameSnafu { target })?;
-    Manifest::from_json(
-        repository
-            .read_target(&target)
-            .context(error::ManifestLoadSnafu)?
-            .context(error::ManifestNotFoundSnafu)?,
-    )
-    .context(error::ManifestParseSnafu)
+    let stream = repository
+        .read_target(&target)
+        .await
+        .context(error::ManifestLoadSnafu)?
+        .context(error::ManifestNotFoundSnafu)?;
+    let reader = reader_from_stream(stream);
+
+    // Run blocking IO on a thread.
+    let rt = Handle::current();
+    let task = rt.spawn_blocking(|| Manifest::from_json(reader).context(error::ManifestParseSnafu));
+    task.await.expect("TODO - snafu error for this")
 }
 
-fn main() -> ! {
-    std::process::exit(match main_inner() {
-        Ok(()) => 0,
+#[tokio::main]
+async fn main() -> ExitCode {
+    match main_inner().await {
+        Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
             eprintln!("{err}");
             if let Some(var) = std::env::var_os("RUST_BACKTRACE") {
@@ -614,9 +640,9 @@ fn main() -> ! {
                     }
                 }
             }
-            1
+            ExitCode::from(1)
         }
-    })
+    }
 }
 
 #[cfg(test)]
@@ -635,7 +661,8 @@ mod tests {
         // - the image:datastore mappings exist
         // - there is a mapping between 1.11.0 and 1.0
         let path = "tests/data/example.json";
-        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let manifest: Manifest =
+            serde_json::from_reader(std::fs::File::open(path).unwrap()).unwrap();
         assert!(
             !manifest.updates.is_empty(),
             "Failed to parse update manifest"
@@ -659,7 +686,8 @@ mod tests {
         // A basic manifest with a single update, no migrations, and two
         // image:datastore mappings
         let path = "tests/data/example_2.json";
-        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let manifest: Manifest =
+            serde_json::from_reader(std::fs::File::open(path).unwrap()).unwrap();
         assert!(!manifest.updates.is_empty());
     }
 
@@ -670,7 +698,8 @@ mod tests {
         // - version: 1.25.0
         // - max_version: 1.20.0
         let path = "tests/data/regret.json";
-        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let manifest: Manifest =
+            serde_json::from_reader(std::fs::File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
@@ -704,7 +733,8 @@ mod tests {
         // A manifest with two updates, both less than 0.1.3.
         // Use a architecture specific JSON payload, otherwise updog will ignore the update
         let path = format!("tests/data/example_3_{TARGET_ARCH}.json");
-        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let manifest: Manifest =
+            serde_json::from_reader(std::fs::File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
@@ -742,7 +772,8 @@ mod tests {
         // upgrading from the version 1.10.0 results in updating to 1.15.0
         // instead of 1.13.0 (lower), 1.25.0 (too high), or 1.16.0 (wrong arch).
         let path = format!("tests/data/multiple_{TARGET_ARCH}.json");
-        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let manifest: Manifest =
+            serde_json::from_reader(std::fs::File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
@@ -784,7 +815,8 @@ mod tests {
         // a downgrade to 1.13.0, instead of 1.15.0 like it would be in the
         // above test, test_multiple.
         let path = format!("tests/data/multiple_{TARGET_ARCH}.json");
-        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let manifest: Manifest =
+            serde_json::from_reader(std::fs::File::open(path).unwrap()).unwrap();
         let config = Config {
             metadata_base_url: String::from("foo"),
             targets_base_url: String::from("bar"),
@@ -841,7 +873,8 @@ mod tests {
     fn serialize_metadata() {
         // A basic manifest with a single update
         let path = "tests/data/example_2.json";
-        let manifest: Manifest = serde_json::from_reader(File::open(path).unwrap()).unwrap();
+        let manifest: Manifest =
+            serde_json::from_reader(std::fs::File::open(path).unwrap()).unwrap();
         assert!(serde_json::to_string_pretty(&manifest)
             .context(error::UpdateSerializeSnafu)
             .is_ok());

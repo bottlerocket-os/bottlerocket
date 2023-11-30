@@ -9,9 +9,13 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
+async-trait = "0.1"
 argh = "0.1"
 bottlerocket-release = { path = "../../bottlerocket-release", version = "0.1" }
+bytes = "1"
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+futures = "0.3"
+futures-core = "0.3"
 log = "0.4"
 lz4 = "1"
 semver = "1"
@@ -21,8 +25,10 @@ serde_plain = "1"
 signpost = { path = "../signpost", version = "0.1" }
 simplelog = "0.12"
 snafu = "0.7"
+tokio = { version = "~1.32", default-features = false, features = ["fs", "macros", "process", "rt-multi-thread"] }  # LTS
+tokio-util = { version = "0.7", features = ["compat", "io-util"] }
 toml = "0.5"
-tough = { version = "0.14", features = ["http"] }
+tough = { version = "0.15", features = ["http"] }
 update_metadata = { path = "../update_metadata", version = "0.1" }
 url = "2"
 signal-hook = "0.3"
