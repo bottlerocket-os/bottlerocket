@@ -2466,7 +2466,9 @@ dependencies = [
  "schnauzer",
  "serde",
  "serde_json",
+ "shlex",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
