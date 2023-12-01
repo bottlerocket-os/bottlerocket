@@ -32,6 +32,7 @@ included-packages = [
     "early-boot-config",
     "release",
     "kernel-6.1",
+    "metal-data-providers",
     # k8s
     "aws-iam-authenticator",
     "cni",
@@ -45,6 +46,10 @@ path = "../variants.rs"
 [build-dependencies]
 # core
 early-boot-config = { path = "../../packages/early-boot-config" }
+early-boot-config-local-defaults = { path = "../../packages/early-boot-config-local-defaults" }
+early-boot-config-local-overrides = { path = "../../packages/early-boot-config-local-overrides" }
+early-boot-config-local = { path = "../../packages/early-boot-config-local" }
+early-boot-config-providers = { path = "../../packages/early-boot-config-providers" }
 release = { path = "../../packages/release" }
 kernel-6_1 = { path = "../../packages/kernel-6.1" }
 # k8s
