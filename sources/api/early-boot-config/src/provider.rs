@@ -1,8 +1,7 @@
-//! The provider module owns the `PlatformDataProvider` trait
+//! The provider module owns the `UserDataProvider` trait
 mod ec2_identity_doc;
 mod ec2_imds;
 mod local_defaults;
-mod local_file;
 mod local_overrides;
 mod local_user_data;
 mod vmware_cd_rom;
@@ -25,34 +24,6 @@ use std::process::ExitCode;
 pub use vmware_cd_rom::VmwareCdRom;
 #[cfg(target_arch = "x86_64")]
 pub use vmware_guestinfo::VmwareGuestinfo;
-
-#[cfg(variant_platform = "aws")]
-mod aws;
-#[cfg(variant_platform = "aws")]
-pub use aws::AwsDataProvider as Platform;
-
-#[cfg(variant_platform = "vmware")]
-mod vmware;
-#[cfg(variant_platform = "vmware")]
-pub use vmware::VmwareDataProvider as Platform;
-
-#[cfg(variant_platform = "metal")]
-mod metal;
-#[cfg(variant_platform = "metal")]
-pub use metal::MetalDataProvider as Platform;
-
-/// Support for new platforms can be added by implementing this trait.
-#[async_trait]
-pub trait PlatformDataProvider {
-    /// You should return a list of SettingsJson, representing the settings changes you want to
-    /// send to the API.
-    ///
-    /// This is a list so that handling multiple data sources within a platform can feel more
-    /// natural; you can also send all changes in one entry if you like.
-    async fn platform_data(
-        &self,
-    ) -> std::result::Result<Vec<SettingsJson>, Box<dyn std::error::Error>>;
-}
 
 /// Support for user data providers can be added by implementing this trait, and adding an
 /// additional binary using the implementor and common functions below.

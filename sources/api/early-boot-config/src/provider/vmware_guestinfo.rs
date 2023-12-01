@@ -96,7 +96,10 @@ impl UserDataProvider for VmwareGuestinfo {
             UserDataEncoding::Base64 | UserDataEncoding::GzipBase64 => {
                 info!("Decoding user data");
                 let mut reader = Cursor::new(user_data_bytes);
-                let decoder = base64::read::DecoderReader::new(&mut reader, base64::STANDARD);
+                let decoder = base64::read::DecoderReader::new(
+                    &mut reader,
+                    &base64::engine::general_purpose::STANDARD,
+                );
 
                 // Decompresses the data if it is gzip'ed
                 let mut output = String::new();

@@ -1692,7 +1692,6 @@ dependencies = [
  "apiclient",
  "async-trait",
  "base64",
- "bottlerocket-variant",
  "constants",
  "env_logger",
  "flate2",
