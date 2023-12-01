@@ -1,13 +1,13 @@
 //! The settings module owns the `SettingsJson` struct which contains the JSON settings data being
 //! sent to the API.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
 /// SettingsJson represents a change that a provider would like to make in the API.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SettingsJson {
-    pub json: String,
+    pub json: serde_json::Value,
     pub desc: String,
 }
 
@@ -23,7 +23,7 @@ impl SettingsJson {
         S: Into<String>,
     {
         Ok(Self {
-            json: serde_json::to_string(&data).context(error::SettingsToJSONSnafu)?,
+            json: serde_json::to_value(data).context(error::SettingsToJSONSnafu)?,
             desc: desc.into(),
         })
     }

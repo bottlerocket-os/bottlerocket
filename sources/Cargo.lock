@@ -1712,6 +1712,7 @@ dependencies = [
  "tokio",
  "toml",
  "vmw_backdoor",
+ "walkdir",
 ]
 
 [[package]]

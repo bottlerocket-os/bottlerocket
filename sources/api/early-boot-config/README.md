@@ -4,13 +4,11 @@ Current version: 0.1.0
 
 ## Introduction
 
-early-boot-config sends provider-specific platform data to the Bottlerocket API.
+early-boot-config sends user data to the Bottlerocket API.
 
-For most providers this means configuration from user data and platform metadata, taken from
-something like an instance metadata service.
+Variants include their required user data provider binaries via packages.  early-boot-config discovers these binaries at runtime in /usr/share/early-boot-config/data-providers.d and runs them in order, sending any user data found to the API.
 
-Currently, Amazon EC2 is supported through the IMDSv1 HTTP API.  Data will be taken from files in
-/etc/early-boot-config instead, if available, for testing purposes.
+User data provider binaries each implement the ability to obtain user data from a single source.  Sources include local files, AWS Instance Metadata Service (IMDS), among others.
 
 ## Colophon
 
