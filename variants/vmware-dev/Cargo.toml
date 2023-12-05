@@ -30,6 +30,7 @@ kernel-parameters = [
 ]
 included-packages = [
 # core
+    "early-boot-config",
     "release",
     "kernel-6.1",
     "open-vm-tools",
@@ -49,6 +50,7 @@ path = "../variants.rs"
 
 [build-dependencies]
 # core
+early-boot-config = { path = "../../packages/early-boot-config" }
 release = { path = "../../packages/release" }
 kernel-6_1 = { path = "../../packages/kernel-6.1" }
 open-vm-tools = { path = "../../packages/open-vm-tools" }

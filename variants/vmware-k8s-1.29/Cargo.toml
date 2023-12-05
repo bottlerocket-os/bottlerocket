@@ -39,6 +39,7 @@ included-packages = [
     "cni-plugins",
     "kubelet-1.29",
     # vmware
+    "early-boot-config",
     "open-vm-tools",
 ]
 
@@ -54,4 +55,5 @@ cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
 kubernetes-1_29 = { path = "../../packages/kubernetes-1.29" }
 # vmware
+early-boot-config = { path = "../../packages/early-boot-config" }
 open-vm-tools = { path = "../../packages/open-vm-tools" }
