@@ -3175,6 +3175,7 @@ dependencies = [
  "tokio",
  "tokio-retry",
  "tokio-rustls",
+ "url",
 ]
 
 [[package]]

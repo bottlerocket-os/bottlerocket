@@ -1,8 +1,10 @@
 use crate::hyper_proxy::{Proxy, ProxyConnector};
+use headers::Authorization;
 use hyper::Uri;
 use hyper_rustls::HttpsConnectorBuilder;
 use snafu::{ResultExt, Snafu};
 use std::env;
+use url::Url;
 
 #[derive(Debug, Snafu)]
 pub(super) enum Error {
@@ -10,6 +12,12 @@ pub(super) enum Error {
     UriParse {
         input: String,
         source: hyper::http::uri::InvalidUri,
+    },
+
+    #[snafu(display("Unable to parse '{}' as URL: {}", input, source))]
+    UrlParse {
+        input: String,
+        source: url::ParseError,
     },
 
     #[snafu(display("Failed to create proxy creator: {}", source))]
@@ -75,7 +83,19 @@ pub(crate) fn setup_http_client(
                 input: &https_proxy,
             })?;
     }
-    let proxy = Proxy::new(intercept, proxy_uri);
+    let mut proxy = Proxy::new(intercept, proxy_uri);
+    // Parse https_proxy as URL to extract out auth information if any
+    let proxy_url = Url::parse(&https_proxy).context(UrlParseSnafu {
+        input: &https_proxy,
+    })?;
+
+    if !proxy_url.username().is_empty() || proxy_url.password().is_some() {
+        proxy.set_authorization(Authorization::basic(
+            proxy_url.username(),
+            proxy_url.password().unwrap_or_default(),
+        ));
+    }
+
     let https_connector = HttpsConnectorBuilder::new()
         .with_native_roots()
         .https_or_http()
