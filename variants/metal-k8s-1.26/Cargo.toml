@@ -28,6 +28,7 @@ included-packages = [
     "aws-iam-authenticator",
     "cni",
     "cni-plugins",
+    "early-boot-config",
     "kernel-5.15",
     "linux-firmware",
     "kubelet-1.26",
@@ -41,6 +42,7 @@ path = "../variants.rs"
 aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
+early-boot-config = { path = "../../packages/early-boot-config" }
 kernel-5_15 = { path = "../../packages/kernel-5.15" }
 linux-firmware = { path = "../../packages/linux-firmware" }
 kubernetes-1_26 = { path = "../../packages/kubernetes-1.26" }

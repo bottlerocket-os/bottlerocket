@@ -15,6 +15,7 @@ kernel-parameters = [
 ]
 included-packages = [
 # core
+    "early-boot-config",
     "release",
     "kernel-5.10",
 # docker
@@ -30,6 +31,7 @@ path = "../variants.rs"
 
 [build-dependencies]
 # core
+early-boot-config = { path = "../../packages/early-boot-config" }
 release = { path = "../../packages/release" }
 kernel-5_10 = { path = "../../packages/kernel-5.10" }
 # docker

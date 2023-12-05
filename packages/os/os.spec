@@ -40,7 +40,6 @@ Source19: host-containers-toml
 
 # 1xx sources: systemd units
 Source100: apiserver.service
-Source101: early-boot-config.service
 Source102: sundog.service
 Source103: storewolf.service
 Source105: settings-applier.service
@@ -87,7 +86,6 @@ Requires: %{_cross_os}bootstrap-containers
 Requires: %{_cross_os}bork
 Requires: %{_cross_os}corndog
 Requires: %{_cross_os}certdog
-Requires: %{_cross_os}early-boot-config
 Requires: %{_cross_os}ghostdog
 Requires: %{_cross_os}host-containers
 Requires: %{_cross_os}logdog
@@ -134,11 +132,6 @@ Summary: Bottlerocket API server
 %package -n %{_cross_os}apiclient
 Summary: Bottlerocket API client
 %description -n %{_cross_os}apiclient
-%{summary}.
-
-%package -n %{_cross_os}early-boot-config
-Summary: Bottlerocket userdata configuration system
-%description -n %{_cross_os}early-boot-config
 %{summary}.
 
 %package -n %{_cross_os}netdog
@@ -364,11 +357,6 @@ echo "** Output from non-static builds:"
     %{?with_nvidia_flavor: -p driverdog} \
     %{nil}
 
-# Build just the early-boot-config binary and not the user data providers, as
-# they are built and packaged separately
-%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
-    -p early-boot-config --bin early-boot-config
-
 # Wait for static builds from the background, if they're not already done.
 set +e; wait "${static_pid}"; static_rc="${?}"; set -e
 echo -e "\n** Output from static builds:"
@@ -381,7 +369,7 @@ fi
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
-  early-boot-config netdog sundog schnauzer schnauzer-v2 bork \
+  netdog sundog schnauzer schnauzer-v2 bork \
   corndog thar-be-settings thar-be-updates host-containers \
   storewolf settings-committer \
   migrator prairiedog certdog \
@@ -474,10 +462,10 @@ install -p -m 0644 %{S:5} %{S:6} %{S:7} %{S:8} %{S:14} %{S:15} %{S:16} %{S:17} %
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:100} %{S:101} %{S:102} %{S:103} %{S:105} \
-  %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
-  %{S:113} %{S:114} %{S:118} %{S:119} %{S:122} \
-  %{S:123} \
+  %{S:100} %{S:102} %{S:103} %{S:105} \
+  %{S:106} %{S:107} %{S:110} %{S:111} \
+  %{S:112} %{S:113} %{S:114} %{S:118} \
+  %{S:119} %{S:122} %{S:123} \
   %{buildroot}%{_cross_unitdir}
 
 %if %{with systemd_networkd}
@@ -541,10 +529,6 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 
 %files -n %{_cross_os}apiclient
 %{_cross_bindir}/apiclient
-
-%files -n %{_cross_os}early-boot-config
-%{_cross_bindir}/early-boot-config
-%{_cross_unitdir}/early-boot-config.service
 
 %files -n %{_cross_os}netdog
 %{_cross_bindir}/netdog

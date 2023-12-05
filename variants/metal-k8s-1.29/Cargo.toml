@@ -36,6 +36,7 @@ included-packages = [
     "cni",
     "cni-plugins",
     "kubelet-1.29",
+    "early-boot-config",
 ]
 
 [lib]
@@ -50,3 +51,4 @@ aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
 kubernetes-1_29 = { path = "../../packages/kubernetes-1.29" }
+early-boot-config = { path = "../../packages/early-boot-config" }

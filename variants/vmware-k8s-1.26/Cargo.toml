@@ -30,6 +30,7 @@ kernel-parameters = [
 included-packages = [
     "cni",
     "cni-plugins",
+    "early-boot-config",
     "kernel-5.15",
     "kubelet-1.26",
     "open-vm-tools",
@@ -42,6 +43,7 @@ path = "../variants.rs"
 [build-dependencies]
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
+early-boot-config = { path = "../../packages/early-boot-config" }
 kernel-5_15 = { path = "../../packages/kernel-5.15" }
 kubernetes-1_26 = { path = "../../packages/kubernetes-1.26" }
 open-vm-tools = { path = "../../packages/open-vm-tools" }
