@@ -1,5 +1,5 @@
 Name: %{_cross_os}libseccomp
-Version: 2.5.4
+Version: 2.5.5
 Release: 1%{?dist}
 Summary: Library for enhanced seccomp
 License: LGPL-2.1-only
