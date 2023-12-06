@@ -73,6 +73,7 @@ members = [
 
     "settings-extensions/motd",
     "settings-extensions/ntp",
+    "settings-extensions/container-registry",
 
     "parse-datetime",
 
