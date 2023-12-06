@@ -1,5 +1,5 @@
 Name: %{_cross_os}bash
-Version: 5.1.16
+Version: 5.2.21
 Release: 1%{?dist}
 Summary: The GNU Bourne Again shell
 License: GPL-3.0-or-later
