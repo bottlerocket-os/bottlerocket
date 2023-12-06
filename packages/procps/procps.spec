@@ -29,6 +29,7 @@ Requires: %{name}
   --enable-skill \
   --disable-kill \
   --disable-modern-top \
+  --disable-nls \
   --disable-w-from \
   --without-ncurses \
   --without-systemd \
