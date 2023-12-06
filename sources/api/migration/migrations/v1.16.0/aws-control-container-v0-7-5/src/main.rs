@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use migration_helpers::common_migrations::ReplaceTemplateMigration;
 use migration_helpers::{migrate, Result};
 use std::process;

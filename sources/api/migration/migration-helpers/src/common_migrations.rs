@@ -1,5 +1,7 @@
 use crate::{error, Migration, MigrationData, Result};
+use schnauzer::import::{json_settings::JsonSettingsResolver, StaticHelperResolver};
 use serde::Serialize;
+use shlex::Shlex;
 use snafu::{OptionExt, ResultExt};
 use std::collections::HashMap;
 
@@ -518,13 +520,18 @@ mod test_replace_list {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
-/// We use this migration when we replace an existing template for generating some setting.
+/// We used this migration when we replaced an existing template for generating some setting.
+///
+/// With schnauzer-v2, we now use `ReplaceSchnauzerMigration.` This code remains to build historical
+/// migrations until they have been archived.
+#[deprecated(note = "Please use `ReplaceSchnauzerMigration`")]
 pub struct ReplaceTemplateMigration {
     pub setting: &'static str,
     pub old_template: &'static str,
     pub new_template: &'static str,
 }
 
+#[allow(deprecated)]
 impl ReplaceTemplateMigration {
     /// Helper to retrieve a setting's template
     fn get_setting_template(&self, input: &MigrationData) -> Option<String> {
@@ -545,45 +552,6 @@ impl ReplaceTemplateMigration {
             eprintln!("'{}' has no metadata", self.setting);
         }
         None
-    }
-
-    /// This helper function takes `MigrationData.data`, which is a mapping of dotted keys ->
-    /// scalar values, and converts it into the hierarchical representation needed by handlebars templates.
-    fn structure_migration_data(
-        &self,
-        input: &HashMap<String, serde_json::Value>,
-    ) -> Result<impl Serialize> {
-        let mut datastore: HashMap<datastore::Key, String> = HashMap::new();
-        for (k, v) in input.iter() {
-            // The prefixes we want to make available; these each have to be deserialized below.
-            if k.starts_with("settings.") || k.starts_with("os.") {
-                datastore.insert(
-                    datastore::Key::new(datastore::KeyType::Data, k).context(error::NewKeySnafu)?,
-                    // We want the serialized form here, to work with the datastore deserialization code.
-                    // to_string on a Value gives the serialized form.
-                    v.to_string(),
-                );
-            }
-        }
-        // Note this is a workaround because we don't have a top level model structure that encompasses 'settings'.
-        // We need to use `from_map_with_prefix` because we don't have a struct; it strips away the
-        // "settings" layer, which we then add back on with a wrapping HashMap.
-        let settings_data: HashMap<String, serde_json::Value> =
-            datastore::deserialization::from_map_with_prefix(
-                Some("settings".to_string()),
-                &datastore,
-            )
-            .context(error::DeserializeDatastoreSnafu)?;
-        // Same for "os.*"
-        let os_data: HashMap<String, serde_json::Value> =
-            datastore::deserialization::from_map_with_prefix(Some("os".to_string()), &datastore)
-                .context(error::DeserializeDatastoreSnafu)?;
-
-        let mut structured_data = HashMap::new();
-        structured_data.insert("settings", settings_data);
-        structured_data.insert("os", os_data);
-
-        Ok(structured_data)
     }
 
     /// This handles the common behavior of the forward and backward migrations.
@@ -611,7 +579,7 @@ impl ReplaceTemplateMigration {
                 let registry = schnauzer::v1::build_template_registry()
                     .context(error::BuildTemplateRegistrySnafu)?;
                 // Structure the input migration data into its hierarchical representation needed by render_template
-                let input_data = self.structure_migration_data(&input.data)?;
+                let input_data = structure_migration_data_for_templates(&input.data)?;
                 // Generate settings data using the setting's outgoing template  so we can confirm
                 // it matches our expected value; if not, the user has changed it and we should stop.
                 let generated_old_data = registry
@@ -649,6 +617,7 @@ impl ReplaceTemplateMigration {
     }
 }
 
+#[allow(deprecated)]
 impl Migration for ReplaceTemplateMigration {
     fn forward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
         if let Some(input_value) = input.data.get(self.setting) {
@@ -700,6 +669,489 @@ impl Migration for ReplaceTemplateMigration {
             println!("Found no '{}' to change on downgrade", self.setting);
         }
         Ok(input)
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// We use this migration when we replace an existing template for generating some setting.
+pub struct ReplaceSchnauzerMigration {
+    pub setting: &'static str,
+    pub old_schnauzer_cmdline: &'static str,
+    pub new_schnauzer_cmdline: &'static str,
+}
+
+/// This helper function takes `MigrationData.data`, which is a mapping of dotted keys ->
+/// scalar values, and converts it into the hierarchical representation needed by handlebars templates.
+fn structure_migration_data_for_templates(
+    input: &HashMap<String, serde_json::Value>,
+) -> Result<impl Serialize> {
+    let mut datastore: HashMap<datastore::Key, String> = HashMap::new();
+    for (k, v) in input.iter() {
+        // The prefixes we want to make available; these each have to be deserialized below.
+        if k.starts_with("settings.") || k.starts_with("os.") {
+            datastore.insert(
+                datastore::Key::new(datastore::KeyType::Data, k).context(error::NewKeySnafu)?,
+                // We want the serialized form here, to work with the datastore deserialization code.
+                // to_string on a Value gives the serialized form.
+                v.to_string(),
+            );
+        }
+    }
+    // Note this is a workaround because we don't have a top level model structure that encompasses 'settings'.
+    // We need to use `from_map_with_prefix` because we don't have a struct; it strips away the
+    // "settings" layer, which we then add back on with a wrapping HashMap.
+    let settings_data: HashMap<String, serde_json::Value> =
+        datastore::deserialization::from_map_with_prefix(Some("settings".to_string()), &datastore)
+            .context(error::DeserializeDatastoreSnafu)?;
+    // Same for "os.*"
+    let os_data: HashMap<String, serde_json::Value> =
+        datastore::deserialization::from_map_with_prefix(Some("os".to_string()), &datastore)
+            .context(error::DeserializeDatastoreSnafu)?;
+
+    let mut structured_data = HashMap::new();
+    structured_data.insert("settings", settings_data);
+    structured_data.insert("os", os_data);
+
+    Ok(structured_data)
+}
+
+/// Schnauzer's renderer requires a `TemplateImporter` which tells the renderer how to find settings
+/// and helpers. We define our own importer which uses our in-memory copy of the datastore to find
+/// settings, and the current static set of helpers.
+#[derive(Debug, Clone)]
+struct SchnauzerMigrationTemplateImporter {
+    settings_resolver: JsonSettingsResolver,
+    helper_resolver: StaticHelperResolver,
+}
+
+impl SchnauzerMigrationTemplateImporter {
+    fn new(settings: serde_json::Value) -> Self {
+        Self {
+            settings_resolver: JsonSettingsResolver::new(settings),
+            helper_resolver: StaticHelperResolver,
+        }
+    }
+}
+
+schnauzer::impl_template_importer!(
+    SchnauzerMigrationTemplateImporter,
+    JsonSettingsResolver,
+    StaticHelperResolver
+);
+
+impl ReplaceSchnauzerMigration {
+    fn get_setting_schnauzer_cmdline(&self, input: &MigrationData) -> Option<String> {
+        input
+            .metadata
+            .get(self.setting)
+            .or_else(|| {
+                eprintln!("'{}' has no metadata", self.setting);
+                None
+            })
+            .and_then(|metadata| {
+                let setting_generator = metadata.get("setting-generator");
+                if setting_generator.is_none() {
+                    eprintln!(
+                        "'{}' has no 'setting-generator' key in metadata",
+                        self.setting
+                    );
+                }
+                setting_generator
+            })
+            .and_then(|setting_generator_value| {
+                let setting_generator = setting_generator_value.as_str();
+                if setting_generator.is_none() {
+                    eprintln!(
+                        "'{}' has non-string setting-generator value '{}'",
+                        self.setting, setting_generator_value
+                    );
+                }
+                setting_generator
+            })
+            .and_then(|schnauzer_cmdline| {
+                if !schnauzer_cmdline.trim().starts_with("schnauzer-v2") {
+                    eprintln!(
+                        "'{}' has non-schnauzer setting-generator value '{}'",
+                        self.setting, schnauzer_cmdline
+                    );
+                    None
+                } else {
+                    Some(schnauzer_cmdline.to_string())
+                }
+            })
+    }
+
+    fn update_schnauzer_cmdline_and_data(
+        &self,
+        current_schnauzer_cmdline: &str,
+        outgoing_setting_data: &str,
+        outgoing_schnauzer_cmdline: &str,
+        incoming_schnauzer_cmdline: &str,
+        input: &mut MigrationData,
+    ) -> Result<()> {
+        if current_schnauzer_cmdline == outgoing_schnauzer_cmdline {
+            println!(
+                "Updating schnauzer cmdline of '{}' from '{}' to '{}'",
+                self.setting, outgoing_schnauzer_cmdline, incoming_schnauzer_cmdline
+            );
+            // Update the schnauzer cmdline
+            let metadata = input.metadata.entry(self.setting.to_string()).or_default();
+            metadata.insert(
+                "setting-generator".to_string(),
+                serde_json::Value::String(incoming_schnauzer_cmdline.to_string()),
+            );
+
+            let input_data = structure_migration_data_for_templates(&input.data)?;
+            let input_data =
+                serde_json::to_value(input_data).context(error::SerializeTemplateDataSnafu)?;
+
+            // Generate settings data using the setting's outgoing template  so we can confirm
+            // it matches our expected value; if not, the user has changed it and we should stop.
+            let template_importer = SchnauzerMigrationTemplateImporter::new(input_data);
+            let outgoing_command_args = Shlex::new(outgoing_schnauzer_cmdline);
+
+            let tokio_runtime = tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .context(error::CreateTokioRuntimeSnafu)?;
+
+            let generated_old_data = tokio_runtime
+                .block_on(async {
+                    schnauzer::v2::cli::run_with_args(outgoing_command_args, &template_importer)
+                        .await
+                })
+                .with_context(|_| error::RenderSchnauzerV2TemplateSnafu {
+                    cmdline: outgoing_schnauzer_cmdline.to_string(),
+                })?;
+
+            if generated_old_data == *outgoing_setting_data {
+                // Generate settings data using the setting's incoming template
+                let incoming_command_args = Shlex::new(incoming_schnauzer_cmdline);
+                let generated_new_data = tokio_runtime
+                    .block_on(async {
+                        schnauzer::v2::cli::run_with_args(incoming_command_args, &template_importer)
+                            .await
+                    })
+                    .with_context(|_| error::RenderSchnauzerV2TemplateSnafu {
+                        cmdline: incoming_schnauzer_cmdline.to_string(),
+                    })?;
+                println!(
+                    "Changing value of '{}' from '{}' to '{}'",
+                    self.setting, outgoing_setting_data, generated_new_data
+                );
+                // Update settings value with new generated value
+                input.data.insert(
+                    self.setting.to_string(),
+                    serde_json::Value::String(generated_new_data),
+                );
+            } else {
+                println!(
+                    "'{}' is not set to '{}', leaving alone",
+                    self.setting, generated_old_data
+                );
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl Migration for ReplaceSchnauzerMigration {
+    fn forward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        if let Some(input_value) = input.data.get(self.setting) {
+            let data = input_value
+                .as_str()
+                .context(error::NonStringSettingDataTypeSnafu {
+                    setting: self.setting,
+                })?;
+            println!(
+                "Updating schnauzer template and value of '{}' on upgrade",
+                self.setting
+            );
+            if let Some(schnauzer_cmdline) = &self.get_setting_schnauzer_cmdline(&input) {
+                if schnauzer_cmdline == self.old_schnauzer_cmdline {
+                    self.update_schnauzer_cmdline_and_data(
+                        schnauzer_cmdline,
+                        // Clone the input string; we need to give the function mutable access to
+                        // the structure that contains the string, so we can't pass a reference into the
+                        // structure.
+                        #[allow(clippy::unnecessary_to_owned)]
+                        &data.to_owned(),
+                        self.old_schnauzer_cmdline,
+                        self.new_schnauzer_cmdline,
+                        &mut input,
+                    )?;
+                } else {
+                    println!(
+                        "Generator for '{}' is not set to '{}', leaving alone",
+                        self.setting, self.old_schnauzer_cmdline
+                    );
+                }
+            }
+        } else {
+            println!("Found no '{}' to change on upgrade", self.setting);
+        }
+
+        Ok(input)
+    }
+
+    fn backward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        if let Some(input_value) = input.data.get(self.setting) {
+            let data = input_value
+                .as_str()
+                .context(error::NonStringSettingDataTypeSnafu {
+                    setting: self.setting,
+                })?;
+            println!(
+                "Updating schnauzer template and value of '{}' on downgrade",
+                self.setting
+            );
+            if let Some(schnauzer_cmdline) = &self.get_setting_schnauzer_cmdline(&input) {
+                self.update_schnauzer_cmdline_and_data(
+                    schnauzer_cmdline,
+                    // Clone the input string; we need to give the function mutable access to
+                    // the structure that contains the string, so we can't pass a reference into the
+                    // structure.
+                    #[allow(clippy::unnecessary_to_owned)]
+                    &data.to_owned(),
+                    self.new_schnauzer_cmdline,
+                    self.old_schnauzer_cmdline,
+                    &mut input,
+                )?;
+            }
+        } else {
+            println!("Found no '{}' to change on downgrade", self.setting);
+        }
+
+        Ok(input)
+    }
+}
+
+#[cfg(test)]
+mod test_replace_schnauzer_migration {
+    use super::ReplaceSchnauzerMigration;
+    use crate::{Migration, MigrationData};
+    use maplit::hashmap;
+    use serde_json::json;
+
+    #[test]
+    fn test_replaces_data_and_generator() {
+        // Given a schnauzer migration where the settings generator and generated data are both set
+        // to the input values,
+        // When the ReplaceSchnauzerMigration is performed,
+        // Both the generator and data are updated.
+        let mut migration = ReplaceSchnauzerMigration {
+            setting: "settings.output",
+            old_schnauzer_cmdline:
+                "schnauzer-v2 render --requires 'input@v1' --template '{{ settings.input }}'",
+            new_schnauzer_cmdline:
+                "schnauzer-v2 render --requires 'input@v1' --template '{{ settings.input }}, world'",
+        };
+
+        let input = MigrationData {
+            data: hashmap! {
+                "settings.input".into() => json!("hello"),
+                "settings.output".into() => json!("hello"),
+                "os".into() => json!({}),
+            },
+            metadata: hashmap! {
+                "settings.output".into() => hashmap!{"setting-generator".into() => migration.old_schnauzer_cmdline.into()}
+            },
+        };
+
+        let forward_result = migration.forward(input.clone());
+        println!("{:?}", forward_result);
+        let forward_result = forward_result.unwrap();
+
+        assert_eq!(
+            forward_result
+                .data
+                .get("settings.output")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "hello, world"
+        );
+        assert_eq!(
+            forward_result
+                .metadata
+                .get("settings.output")
+                .unwrap()
+                .get("setting-generator")
+                .unwrap(),
+            migration.new_schnauzer_cmdline
+        );
+
+        let backward_result = migration.backward(forward_result);
+        println!("{:?}", backward_result);
+        let backward_result = backward_result.unwrap();
+
+        assert_eq!(
+            backward_result
+                .data
+                .get("settings.output")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "hello"
+        );
+        assert_eq!(
+            backward_result
+                .metadata
+                .get("settings.output")
+                .unwrap()
+                .get("setting-generator")
+                .unwrap(),
+            migration.old_schnauzer_cmdline
+        );
+    }
+
+    #[test]
+    fn test_replaces_generator_not_data() {
+        // Given a schnauzer migration where the settings generator is the same but the generated
+        // setting has changed,
+        // When the ReplaceSchnauzerMigration is performed,
+        // Only the generator is updated. The overwritten data remains.
+        let mut migration = ReplaceSchnauzerMigration {
+            setting: "settings.output",
+            old_schnauzer_cmdline:
+                "schnauzer-v2 render --requires 'input@v1' --template '{{ settings.input }}, world'",
+            new_schnauzer_cmdline:
+                "schnauzer-v2 render --requires 'input@v1' --template '{{ settings.input }}'",
+        };
+
+        let input = MigrationData {
+            data: hashmap! {
+                "settings.input".into() => json!("hello"),
+                "settings.output".into() => json!("overwritten!"),
+                "os".into() => json!({}),
+            },
+            metadata: hashmap! {
+                "settings.output".into() => hashmap!{"setting-generator".into() => migration.old_schnauzer_cmdline.into()}
+            },
+        };
+
+        let forward_result = migration.forward(input.clone());
+        println!("{:?}", forward_result);
+        let forward_result = forward_result.unwrap();
+
+        assert_eq!(
+            forward_result
+                .data
+                .get("settings.output")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "overwritten!"
+        );
+        assert_eq!(
+            forward_result
+                .metadata
+                .get("settings.output")
+                .unwrap()
+                .get("setting-generator")
+                .unwrap(),
+            migration.new_schnauzer_cmdline
+        );
+
+        let backward_result = migration.backward(forward_result);
+        println!("{:?}", backward_result);
+        let backward_result = backward_result.unwrap();
+
+        assert_eq!(
+            backward_result
+                .data
+                .get("settings.output")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "overwritten!"
+        );
+        assert_eq!(
+            backward_result
+                .metadata
+                .get("settings.output")
+                .unwrap()
+                .get("setting-generator")
+                .unwrap(),
+            migration.old_schnauzer_cmdline
+        );
+    }
+
+    #[test]
+    fn test_replaces_nothing() {
+        // Given a schnauzer migration where the settings generator is not what's expected,
+        // When the ReplaceSchnauzerMigration is performed,
+        // Then nothing is changed, leaving user settings intact.
+        let mut migration = ReplaceSchnauzerMigration {
+            setting: "settings.output",
+            old_schnauzer_cmdline:
+                "schnauzer-v2 render --requires 'input@v1' --template '{{ settings.input }}, world'",
+            new_schnauzer_cmdline:
+                "schnauzer-v2 render --requires 'input@v1' --template '{{ settings.input }}'",
+        };
+
+        let overwritten_cmdline = "schnauzer-v2 render --template 'something new!'";
+
+        let input = MigrationData {
+            data: hashmap! {
+                "settings.input".into() => json!("hello"),
+                "settings.output".into() => json!("something new!"),
+                "os".into() => json!({}),
+            },
+            metadata: hashmap! {
+                "settings.output".into() => hashmap!{
+                    "setting-generator".into() => overwritten_cmdline.into()
+                }
+            },
+        };
+
+        let forward_result = migration.forward(input.clone());
+        println!("{:?}", forward_result);
+        let forward_result = forward_result.unwrap();
+
+        assert_eq!(
+            forward_result
+                .data
+                .get("settings.output")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "something new!"
+        );
+        assert_eq!(
+            forward_result
+                .metadata
+                .get("settings.output")
+                .unwrap()
+                .get("setting-generator")
+                .unwrap(),
+            overwritten_cmdline
+        );
+
+        let backward_result = migration.backward(forward_result);
+        println!("{:?}", backward_result);
+        let backward_result = backward_result.unwrap();
+
+        assert_eq!(
+            backward_result
+                .data
+                .get("settings.output")
+                .unwrap()
+                .as_str()
+                .unwrap(),
+            "something new!"
+        );
+        assert_eq!(
+            backward_result
+                .metadata
+                .get("settings.output")
+                .unwrap()
+                .get("setting-generator")
+                .unwrap(),
+            overwritten_cmdline
+        );
     }
 }
 

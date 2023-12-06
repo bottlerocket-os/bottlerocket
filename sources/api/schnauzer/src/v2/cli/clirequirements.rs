@@ -1,9 +1,9 @@
 //! Provides utilities for specifying `ExtensionRequirement`s via the command line.
 //! Extension requirements on the command line are passed in the form `extension@version(helpers=[helper1, helper2, ...])`
-use super::{error, Error, Result};
+use super::{error, CLIError, Result};
+use crate::template::ExtensionRequirement;
 use lazy_static::lazy_static;
 use regex::Regex;
-use schnauzer::template::ExtensionRequirement;
 use snafu::OptionExt;
 use std::str::FromStr;
 
@@ -46,7 +46,7 @@ fn split_helpers(helpers: &str) -> Vec<&str> {
 }
 
 impl FromStr for CLIExtensionRequirement {
-    type Err = Error;
+    type Err = CLIError;
 
     fn from_str(s: &str) -> Result<Self> {
         let re_captures =
@@ -97,9 +97,7 @@ impl FromStr for CLIExtensionRequirement {
 
 #[cfg(test)]
 mod test {
-    use schnauzer::v2::ExtensionRequirement;
-
-    use super::CLIExtensionRequirement;
+    use super::*;
 
     #[test]
     fn test_requirements_parse_succeeds() {

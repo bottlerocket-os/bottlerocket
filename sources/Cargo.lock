@@ -218,36 +218,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "add-hostname-override"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "add-hostname-override-metadata"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "add-k8s-autoscaling-warm-pool-setting"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
-name = "add-k8s-autoscaling-warm-pool-setting-metadata"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -543,27 +513,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "aws-admin-container-v0-10-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-10-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-10-2"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "aws-admin-container-v0-11-0"
 version = "0.1.0"
 dependencies = [
@@ -572,13 +521,6 @@ dependencies = [
 
 [[package]]
 name = "aws-admin-container-v0-11-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-9-4"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
@@ -612,34 +554,6 @@ dependencies = [
  "tower",
  "tracing",
  "zeroize",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-2"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-3"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -701,20 +615,6 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "tracing",
-]
-
-[[package]]
-name = "aws-k8s-provider-id-gen"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-profile-cred-provider"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -1728,13 +1628,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ecs-images-cleanup"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "ecs-settings-applier"
 version = "0.1.0"
 dependencies = [
@@ -2401,29 +2294,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "k8s-private-pki-path"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
-]
-
-[[package]]
-name = "k8s-registry"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "k8s-services-mode"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
-]
-
-[[package]]
 name = "kernel-modules-autoload-configs"
 version = "0.1.0"
 dependencies = [
@@ -2452,28 +2322,6 @@ name = "kernel-modules-autoload-settings"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-config-settings"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubelet-prefix-config-settings"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "kubernetes-gc-percent-type-change"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
 ]
 
 [[package]]
@@ -2642,7 +2490,9 @@ dependencies = [
  "schnauzer",
  "serde",
  "serde_json",
+ "shlex",
  "snafu",
+ "tokio",
 ]
 
 [[package]]
@@ -2955,22 +2805,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oci-defaults-setting"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
-name = "oci-defaults-setting-metadata"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
 name = "oid-registry"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3220,27 +3054,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "public-admin-container-v0-10-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-10-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-10-2"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "public-admin-container-v0-11-0"
 version = "0.1.0"
 dependencies = [
@@ -3249,41 +3062,6 @@ dependencies = [
 
 [[package]]
 name = "public-admin-container-v0-11-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-9-4"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-2"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-3"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",

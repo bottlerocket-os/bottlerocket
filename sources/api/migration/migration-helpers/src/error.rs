@@ -32,6 +32,9 @@ pub enum Error {
     #[snafu(display("Unable to serialize Value: {}", source))]
     Serialize { source: datastore::ScalarError },
 
+    #[snafu(display("Unable to serialize datastore for rendering templates: {}", source))]
+    SerializeTemplateData { source: serde_json::Error },
+
     #[snafu(display("Unable to serialize release data: {}", source))]
     SerializeRelease {
         source: datastore::serialization::Error,
@@ -85,6 +88,12 @@ pub enum Error {
         source: Box<handlebars::RenderError>,
     },
 
+    #[snafu(display("Unable to render template command '{}': {}", cmdline, source))]
+    RenderSchnauzerV2Template {
+        cmdline: String,
+        source: schnauzer::v2::cli::CLIError,
+    },
+
     #[snafu(display("'{}' is set to non-string value", setting))]
     NonStringSettingDataType { setting: String },
 
@@ -119,6 +128,9 @@ pub enum Error {
         path: PathBuf,
         source: std::io::Error,
     },
+
+    #[snafu(display("Failed to create async runtime: {}", source))]
+    CreateTokioRuntime { source: std::io::Error },
 }
 
 /// Result alias containing our Error type.
