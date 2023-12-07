@@ -2600,6 +2600,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "settings-extension-container-registry",
  "settings-extension-motd",
  "settings-extension-ntp",
  "toml 0.5.11",
@@ -3554,17 +3555,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "settings-extension-motd"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-settings-sdk",
- "serde",
- "serde_json",
- "string_impls_for",
-]
-
-[[package]]
-name = "settings-extension-ntp"
+name = "settings-extension-container-registry"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-settings-sdk",
@@ -3576,7 +3567,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "settings-extension-registry"
+name = "settings-extension-motd"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "serde",
+ "serde_json",
+ "string_impls_for",
+]
+
+[[package]]
+name = "settings-extension-ntp"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-settings-sdk",
