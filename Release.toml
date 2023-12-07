@@ -1,4 +1,4 @@
-version = "1.16.1"
+version = "1.17.0"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -248,4 +248,6 @@ version = "1.16.1"
 ]
 "(1.16.0, 1.16.1)" = [
     "migrate_v1.16.1_updog-network-affected.lz4",
+]
+"(1.16.1, 1.17.0)" = [
 ]
