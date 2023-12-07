@@ -1,3 +1,48 @@
+# v1.17.0 (2023-12-12)
+
+## OS Changes
+
+* Generate valid hostname when IPv6 reverse lookup fails ([#3592])
+* Avoid mounting the EFI system partition at `/boot` ([#3591])
+* Update kernel to 5.10.201, 5.15.139, 6.1.61 ([#3611], [#3643])
+* Switch to async `tough` ([#3566])
+* Update host containers ([#3646])
+* Move template migrations to `schnauzer` v2 ([#3633])
+* Handle proxy credentials properly in `pluto` ([#3639], [#3667])
+* Update third party packages ([#3612], [#3642])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Update `nvidia-k8s-device-plugin` to address CVEs ([#3612])
+* Update to Kubernetes 1.28.4 ([#3612])
+* Update to Kubernetes 1.27.8 ([#3612])
+* Update to Kubernetes 1.26.11 ([#3612])
+* Update to Kubernetes 1.25.16 ([#3612])
+
+
+### ECS
+
+* Update `ecs-agent` to address CVEs ([#3612])
+
+## Build Changes
+
+* Update to Bottlerocket SDK v0.36.0 ([#3640])
+
+[#3566]: https://github.com/bottlerocket-os/bottlerocket/pull/3566
+[#3591]: https://github.com/bottlerocket-os/bottlerocket/pull/3591
+[#3592]: https://github.com/bottlerocket-os/bottlerocket/pull/3592
+[#3611]: https://github.com/bottlerocket-os/bottlerocket/pull/3611
+[#3612]: https://github.com/bottlerocket-os/bottlerocket/pull/3612
+[#3633]: https://github.com/bottlerocket-os/bottlerocket/pull/3633
+[#3639]: https://github.com/bottlerocket-os/bottlerocket/pull/3639
+[#3640]: https://github.com/bottlerocket-os/bottlerocket/pull/3640
+[#3642]: https://github.com/bottlerocket-os/bottlerocket/pull/3642
+[#3643]: https://github.com/bottlerocket-os/bottlerocket/pull/3643
+[#3646]: https://github.com/bottlerocket-os/bottlerocket/pull/3646
+[#3667]: https://github.com/bottlerocket-os/bottlerocket/pull/3667
+
 # v1.16.1 (2023-11-13)
 
 ## OS Changes
