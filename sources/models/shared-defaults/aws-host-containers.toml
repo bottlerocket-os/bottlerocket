@@ -3,7 +3,7 @@ enabled = false
 superpowered = true
 
 [metadata.settings.host-containers.admin.source]
-setting-generator = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.11.1'"
+setting-generator = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.11.2'"
 
 [metadata.settings.host-containers.admin.user-data]
 setting-generator = "shibaken generate-admin-userdata"
