@@ -252,4 +252,6 @@ version = "1.17.0"
 "(1.16.1, 1.17.0)" = [
     "migrate_v1.17.0_aws-admin-container-v0-11-2.lz4",
     "migrate_v1.17.0_public-admin-container-v0-11-2.lz4",
+    "migrate_v1.17.0_aws-control-container-v0-7-6.lz4",
+    "migrate_v1.17.0_public-control-container-v0-7-6.lz4",
 ]
