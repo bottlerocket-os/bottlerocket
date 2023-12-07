@@ -527,6 +527,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-admin-container-v0-11-2"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-config"
 version = "0.55.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3062,6 +3069,13 @@ dependencies = [
 
 [[package]]
 name = "public-admin-container-v0-11-1"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "public-admin-container-v0-11-2"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
