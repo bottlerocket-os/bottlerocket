@@ -48,6 +48,10 @@ members = [
     "api/migration/migrations/v1.16.0/public-control-container-v0-7-5",
     "api/migration/migrations/v1.16.0/schnauzer-v2-generators",
     "api/migration/migrations/v1.16.1/updog-network-affected",
+    "api/migration/migrations/v1.17.0/aws-admin-container-v0-11-2",
+    "api/migration/migrations/v1.17.0/public-admin-container-v0-11-2",
+    "api/migration/migrations/v1.17.0/aws-control-container-v0-7-6",
+    "api/migration/migrations/v1.17.0/public-control-container-v0-7-6",
 
     "bloodhound",
 
