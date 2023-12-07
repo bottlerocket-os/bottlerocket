@@ -5,10 +5,10 @@
 
 mod stream;
 mod tunnel;
+use futures_util::future::TryFutureExt;
+use headers::{authorization::Credentials, Authorization, HeaderMapExt, ProxyAuthorization};
 use http::header::HeaderMap;
 use hyper::{service::Service, Uri};
-
-use futures_util::future::TryFutureExt;
 use std::{fmt, io, sync::Arc};
 use std::{
     future::Future,
@@ -27,7 +27,12 @@ type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
 /// The Intercept enum to filter connections
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum Intercept {
+    /// Only https connections will go through proxy
+    Https,
+    /// No connection will go through this proxy
+    None,
     /// A custom intercept
     Custom(Custom),
 }
@@ -84,7 +89,9 @@ impl Intercept {
     /// A function to check if given `Uri` is proxied
     pub fn matches<D: Dst>(&self, uri: &D) -> bool {
         match (self, uri.scheme()) {
+            (&Intercept::Https, Some("https")) => true,
             (&Intercept::Custom(Custom(ref f)), _) => f(uri.scheme(), uri.host(), uri.port()),
+            _ => false,
         }
     }
 }
@@ -114,6 +121,20 @@ impl Proxy {
             uri,
             headers: HeaderMap::new(),
             force_connect: false,
+        }
+    }
+
+    /// Set `Proxy` authorization
+    pub fn set_authorization<C: Credentials + Clone>(&mut self, credentials: Authorization<C>) {
+        match self.intercept {
+            Intercept::Https => {
+                self.headers.typed_insert(ProxyAuthorization(credentials.0));
+            }
+            _ => {
+                self.headers
+                    .typed_insert(Authorization(credentials.0.clone()));
+                self.headers.typed_insert(ProxyAuthorization(credentials.0));
+            }
         }
     }
 }
