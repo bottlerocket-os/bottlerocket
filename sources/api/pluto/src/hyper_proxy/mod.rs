@@ -126,15 +126,12 @@ impl Proxy {
 
     /// Set `Proxy` authorization
     pub fn set_authorization<C: Credentials + Clone>(&mut self, credentials: Authorization<C>) {
+        // In pluto, we use custom intercept for HTTPS traffic we might proxy based on the no proxy specification.
         match self.intercept {
-            Intercept::Https => {
+            Intercept::Custom(_) | Intercept::Https => {
                 self.headers.typed_insert(ProxyAuthorization(credentials.0));
             }
-            _ => {
-                self.headers
-                    .typed_insert(Authorization(credentials.0.clone()));
-                self.headers.typed_insert(ProxyAuthorization(credentials.0));
-            }
+            _ => {}
         }
     }
 }
