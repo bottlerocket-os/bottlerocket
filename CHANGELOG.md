@@ -28,7 +28,7 @@
 
 ## Build Changes
 
-* Update to Bottlerocket SDK v0.36.0 ([#3640])
+* Update to Bottlerocket SDK v0.36.1 ([#3640], [#3670])
 
 [#3566]: https://github.com/bottlerocket-os/bottlerocket/pull/3566
 [#3591]: https://github.com/bottlerocket-os/bottlerocket/pull/3591
@@ -42,6 +42,7 @@
 [#3643]: https://github.com/bottlerocket-os/bottlerocket/pull/3643
 [#3646]: https://github.com/bottlerocket-os/bottlerocket/pull/3646
 [#3667]: https://github.com/bottlerocket-os/bottlerocket/pull/3667
+[#3670]: https://github.com/bottlerocket-os/bottlerocket/pull/3670
 
 # v1.16.1 (2023-11-13)
 
