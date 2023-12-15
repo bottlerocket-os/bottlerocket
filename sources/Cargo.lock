@@ -3618,6 +3618,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-extension-updates"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "rand",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
