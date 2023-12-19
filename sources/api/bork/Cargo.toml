@@ -9,5 +9,7 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-rand = "0.8"
 serde_json = "1"
+
+# generation logic moved to updates settings extension
+settings-extension-updates = { path = "../../settings-extensions/updates", version = "0.1" }
