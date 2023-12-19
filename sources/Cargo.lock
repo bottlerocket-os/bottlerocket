@@ -2617,6 +2617,7 @@ dependencies = [
  "settings-extension-container-registry",
  "settings-extension-motd",
  "settings-extension-ntp",
+ "settings-extension-updates",
  "toml 0.5.11",
 ]
 
