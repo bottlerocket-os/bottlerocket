@@ -21,7 +21,7 @@ cp -r %{_builddir}/sources/%{workspace_name}/* .
 %set_cross_go_flags
 # We don't set `-Wl,-z,now`, because the binary uses lazy loading
 # to load the NVIDIA libraries in the host
-export CGO_LDFLAGS="-Wl,-z,relro"
+export CGO_LDFLAGS="-Wl,-z,relro,-export-dynamic"
 go build -buildmode=pie -ldflags="${GOLDFLAGS}" -o ecs-gpu-init ./cmd/ecs-gpu-init
 
 %install

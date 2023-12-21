@@ -27,7 +27,7 @@ BuildRequires: %{_cross_os}glibc-devel
 %cross_go_configure %{goimport}
 # We don't set `-Wl,-z,now`, because the binary uses lazy loading
 # to load the NVIDIA libraries in the host
-export CGO_LDFLAGS="-Wl,-z,relro"
+export CGO_LDFLAGS="-Wl,-z,relro,-export-dynamic"
 go build -ldflags="${GOLDFLAGS}" -o nvidia-device-plugin ./cmd/nvidia-device-plugin/
 
 %install
