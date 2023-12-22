@@ -20,6 +20,7 @@ toml = "0.5"
 # settings extensions
 settings-extension-motd = { path = "../settings-extensions/motd", version = "0.1" }
 settings-extension-ntp = { path = "../settings-extensions/ntp", version = "0.1" }
+settings-extension-container-registry = { path = "../settings-extensions/container-registry", version = "0.1" }
 
 [build-dependencies]
 bottlerocket-variant = { version = "0.1", path = "../bottlerocket-variant" }

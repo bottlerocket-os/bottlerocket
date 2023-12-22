@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::{
     AwsSettings, BootSettings, BootstrapContainer, CloudFormationSettings, DnsSettings,
     HostContainer, KernelSettings, MetricsSettings, NetworkSettings, OciHooks, PemCertificate,
-    RegistrySettings, UpdatesSettings,
+    UpdatesSettings,
 };
 use modeled_types::Identifier;
 
@@ -23,7 +23,7 @@ struct Settings {
     aws: AwsSettings,
     metrics: MetricsSettings,
     pki: HashMap<Identifier, PemCertificate>,
-    container_registry: RegistrySettings,
+    container_registry: settings_extension_container_registry::RegistrySettingsV1,
     oci_hooks: OciHooks,
     cloudformation: CloudFormationSettings,
     dns: DnsSettings,

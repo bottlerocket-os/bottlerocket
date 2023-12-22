@@ -1062,8 +1062,8 @@ dependencies = [
 
 [[package]]
 name = "bottlerocket-settings-sdk"
-version = "0.1.0-alpha.1"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.1#6a7e2915f1ac3f70e839b8394256bc59f86f626e"
+version = "0.1.0-alpha.2"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.2#7a138e9de9d99944fbedc6a35c4d08607e459b24"
 dependencies = [
  "argh",
  "bottlerocket-template-helper",
@@ -1076,7 +1076,7 @@ dependencies = [
 [[package]]
 name = "bottlerocket-template-helper"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.1#6a7e2915f1ac3f70e839b8394256bc59f86f626e"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.2#7a138e9de9d99944fbedc6a35c4d08607e459b24"
 dependencies = [
  "darling 0.20.3",
  "proc-macro2",
@@ -2614,6 +2614,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "settings-extension-container-registry",
  "settings-extension-motd",
  "settings-extension-ntp",
  "toml 0.5.11",
@@ -3580,6 +3581,18 @@ dependencies = [
  "simplelog",
  "snafu",
  "tokio",
+]
+
+[[package]]
+name = "settings-extension-container-registry"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
