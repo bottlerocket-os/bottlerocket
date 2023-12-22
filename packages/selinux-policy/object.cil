@@ -34,7 +34,7 @@
 (roletype object_r bus_exec_t)
 (context bus_exec (system_u object_r bus_exec_t s0))
 
-; Executable files for container runtimes such as /usr/sbin/runc.
+; Executable files for container runtimes such as /usr/bin/containerd.
 (type runtime_exec_t)
 (roletype object_r runtime_exec_t)
 (context runtime_exec (system_u object_r runtime_exec_t s0))
