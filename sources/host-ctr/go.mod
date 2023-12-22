@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/aws/aws-sdk-go v1.48.10
 	github.com/awslabs/amazon-ecr-containerd-resolver v0.0.0-20231201173530-9e48161da78d
-	github.com/containerd/containerd v1.6.25
+	github.com/containerd/containerd v1.6.26
 	github.com/opencontainers/runtime-spec v1.1.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pkg/errors v0.9.1
