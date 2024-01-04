@@ -93,7 +93,7 @@ impl FilesystemDataStore {
         // component, so we don't need the quotes in the filename.
         let raw_key_name = metadata_key
             .segments()
-            .get(0)
+            .first()
             .context(error::InternalSnafu {
                 msg: "metadata key with no segments",
             })?;
