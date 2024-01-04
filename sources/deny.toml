@@ -62,8 +62,6 @@ deny = [
 ]
 
 skip = [
-    # several dependencies use an older version of socket2
-    { name = "socket2", version = "=0.4" },
     # several dependencies use an older version of toml
     { name = "toml", version = "=0.5" },
     # tungstenite uses a newer version of base64, but many of the
