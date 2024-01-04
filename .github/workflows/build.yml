@@ -17,6 +17,8 @@ on:
       - '**.tpl'
       # Sample config files and OpenAPI docs
       - '**.yaml'
+      # Other files that don't affect the build
+      - 'packages/os/eni-max-pods'
 
 concurrency:
   group: ${{ github.ref }}
