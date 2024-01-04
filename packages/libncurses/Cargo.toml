@@ -9,11 +9,11 @@ build = "../build.rs"
 path = "../packages.rs"
 
 [package.metadata.build-package]
-releases-url = "https://invisible-mirror.net/ncurses/announce.html"
+releases-url = "https://invisible-mirror.net/archives/ncurses/current/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://invisible-mirror.net/archives/ncurses/ncurses-6.4.tar.gz"
-sha512 = "1c2efff87a82a57e57b0c60023c87bae93f6718114c8f9dc010d4c21119a2f7576d0225dab5f0a227c2cfc6fb6bdbd62728e407f35fce5bf351bb50cf9e0fd34"
+url = "https://invisible-mirror.net/archives/ncurses/current/ncurses-6.4-20231209.tgz"
+sha512 = "293b91b20f676230e28dadfc6ec811ac898e56d558d919566bf515d91ee9bd5df222f56da593d5ce249550a38ad4a9d206df2761f170c7738c9e8a3ea564e42a"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

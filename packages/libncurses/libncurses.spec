@@ -1,10 +1,13 @@
+%global ncurses_ver 6.4
+%global ncurses_rev 20231209
+
 Name: %{_cross_os}libncurses
-Version: 6.4
-Release: 1%{?dist}
+Version: %{ncurses_ver}
+Release: %{ncurses_rev}%{?dist}
 Summary: Ncurses libraries
 License: X11
 URL: https://invisible-island.net/ncurses/ncurses.html
-Source0: https://invisible-mirror.net/archives/ncurses/ncurses-%{version}.tar.gz
+Source0: https://invisible-mirror.net/archives/ncurses/current/ncurses-%{ncurses_ver}-%{ncurses_rev}.tgz
 Patch1: ncurses-config.patch
 Patch2: ncurses-libs.patch
 Patch3: ncurses-urxvt.patch
@@ -22,7 +25,7 @@ Requires: %{name}
 %{summary}.
 
 %prep
-%autosetup -n ncurses-%{version} -p1
+%autosetup -n ncurses-%{ncurses_ver}-%{ncurses_rev} -p1
 
 %build
 %cross_configure \
