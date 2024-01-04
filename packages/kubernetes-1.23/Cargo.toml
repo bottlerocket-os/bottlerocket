@@ -14,8 +14,8 @@ path = "../packages.rs"
 package-name = "kubernetes-1.23"
 
 [[package.metadata.build-package.external-files]]
-url = "https://distro.eks.amazonaws.com/kubernetes-1-23/releases/28/artifacts/kubernetes/v1.23.17/kubernetes-src.tar.gz"
-sha512 = "31fd414bebe6ec71682c65256373a99467f558340739739df3f332d6bf1cfef2a2c0b39b337f3f0ed56ae72a4ae083f4fdbe6ad8e964b86c2c9e144aa1f748ab"
+url = "https://distro.eks.amazonaws.com/kubernetes-1-23/releases/33/artifacts/kubernetes/v1.23.17/kubernetes-src.tar.gz"
+sha512 = "a11b1869c4f201e515b62fd83cf8a984ff83a5238f4447ef62426b933ade0132cdebeb9cd501ddae4b2b6dc6fad4fcea10a94673c36c0b77200602e2789640d5"
 
 [[package.metadata.build-package.external-files]]
 url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0026-EKS-PATCH-Cherry-pick-119832-Fix-the-problem-Pod-ter.patch"
