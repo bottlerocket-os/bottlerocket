@@ -3,9 +3,9 @@ schema-version = 1
 [sdk]
 registry = "public.ecr.aws/bottlerocket"
 name = "bottlerocket-sdk"
-version = "v0.36.1"
+version = "v0.37.0"
 
 [toolchain]
 registry = "public.ecr.aws/bottlerocket"
 name = "bottlerocket-toolchain"
-version = "v0.36.1"
+version = "v0.37.0"
