@@ -1044,8 +1044,8 @@ dependencies = [
 name = "bork"
 version = "0.1.0"
 dependencies = [
- "rand",
  "serde_json",
+ "settings-extension-updates",
 ]
 
 [[package]]
@@ -2617,6 +2617,7 @@ dependencies = [
  "settings-extension-container-registry",
  "settings-extension-motd",
  "settings-extension-ntp",
+ "settings-extension-updates",
  "toml 0.5.11",
 ]
 
@@ -3613,6 +3614,19 @@ dependencies = [
  "env_logger",
  "model-derive",
  "modeled-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "settings-extension-updates"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "rand",
  "serde",
  "serde_json",
 ]

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use crate::{
     BootSettings, BootstrapContainer, DnsSettings, HostContainer, KernelSettings, MetricsSettings,
-    NetworkSettings, OciHooks, PemCertificate, UpdatesSettings,
+    NetworkSettings, OciHooks, PemCertificate,
 };
 use modeled_types::Identifier;
 
@@ -12,7 +12,7 @@ use modeled_types::Identifier;
 #[model(rename = "settings", impl_default = true)]
 struct Settings {
     motd: settings_extension_motd::MotdV1,
-    updates: UpdatesSettings,
+    updates: settings_extension_updates::UpdatesSettingsV1,
     host_containers: HashMap<Identifier, HostContainer>,
     bootstrap_containers: HashMap<Identifier, BootstrapContainer>,
     ntp: settings_extension_ntp::NtpSettingsV1,

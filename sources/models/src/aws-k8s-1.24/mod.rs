@@ -1,7 +1,7 @@
 use crate::{
     AutoScalingSettings, AwsSettings, BootSettings, BootstrapContainer, CloudFormationSettings,
     ContainerRuntimeSettings, DnsSettings, HostContainer, KernelSettings, KubernetesSettings,
-    MetricsSettings, NetworkSettings, OciDefaults, OciHooks, PemCertificate, UpdatesSettings,
+    MetricsSettings, NetworkSettings, OciDefaults, OciHooks, PemCertificate,
 };
 use modeled_types::Identifier;
 
@@ -14,7 +14,7 @@ use std::collections::HashMap;
 struct Settings {
     motd: settings_extension_motd::MotdV1,
     kubernetes: KubernetesSettings,
-    updates: UpdatesSettings,
+    updates: settings_extension_updates::UpdatesSettingsV1,
     host_containers: HashMap<Identifier, HostContainer>,
     bootstrap_containers: HashMap<Identifier, BootstrapContainer>,
     ntp: settings_extension_ntp::NtpSettingsV1,
