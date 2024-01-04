@@ -68,7 +68,7 @@ Summary: Container cluster node agent
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
 Requires: %{_cross_os}findutils
-Requires: %{_cross_os}ecr-credential-provider-1.27
+Requires: %{_cross_os}ecr-credential-provider-1.29
 Requires: %{_cross_os}aws-signing-helper
 
 %description -n %{_cross_os}kubelet-1.29
