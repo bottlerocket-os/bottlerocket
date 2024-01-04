@@ -1,5 +1,5 @@
 Name: %{_cross_os}chrony
-Version: 4.4
+Version: 4.5
 Release: 1%{?dist}
 Summary: A versatile implementation of the Network Time Protocol
 License: GPL-2.0-only
