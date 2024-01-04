@@ -1006,7 +1006,7 @@ impl TryFrom<&str> for PemCertificateString {
         // Flag to check if the bundle doesn't contain any valid certificate
         let mut certs_found = false;
         // Validate each certificate in the bundle
-        for (_, pem) in x509_parser::pem::Pem::iter_from_buffer(&decoded_bytes).enumerate() {
+        for pem in x509_parser::pem::Pem::iter_from_buffer(&decoded_bytes) {
             // Parse buffer into a PEM object, then to a x509 certificate
             let pem = pem.context(error::InvalidPEMSnafu)?;
             pem.parse_x509()
