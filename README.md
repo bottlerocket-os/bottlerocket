@@ -589,6 +589,9 @@ Bottlerocket operates with two default storage volumes.
 * The root device, holds the active and passive [partition sets](#updates-1).
   It also contains the bootloader, the dm-verity hash tree for verifying the [immutable root filesystem](SECURITY_FEATURES.md#immutable-rootfs-backed-by-dm-verity), and the data store for the Bottlerocket API.
 * The data device is used as persistent storage for container images, container orchestration, [host-containers](#Custom-host-containers), and [bootstrap containers](#Bootstrap-containers-settings).
+  The operating system does not typically make changes to this volume during regular updates, though changes to upstream software such as containerd or kubelet could result in changes to their stored data.
+  This device (mounted to `/local` on the host) can be used for application storage for orchestrated workloads; however, we recommend using an additional volume if possible for such cases.
+  See [this section of the Security Guidance documentation](./SECURITY_GUIDANCE.md#limit-access-to-system-mounts) for more information.
 
 On boot Bottlerocket will increase the data partition size to use all of the data device.
 If you increase the size of the device, you can reboot Bottlerocket to extend the data partition.
