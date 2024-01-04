@@ -12,8 +12,8 @@ path = "../packages.rs"
 releases-url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/archive/v0.6.13/aws-iam-authenticator-0.6.13.tar.gz"
-sha512 = "deb7692c5e3d87fd9b6f3e44c916a08604fb6fbb23ba1cbd5611e87b0aca9f4380525641fb5ac7e4d7d9f82223bc73d7d5d6c1295e56de351a011c38a252e5f5"
+url = "https://github.com/kubernetes-sigs/aws-iam-authenticator/archive/v0.6.14/aws-iam-authenticator-0.6.14.tar.gz"
+sha512 = "26a6b394fbe767910f605a356032338a4ec254b81cd470796e3137e3595fef338bd213dee8d956c8d23e16f5508741e78664cd0f8b1acd97321d2fb5b7b723af"
 bundle-modules = [ "go" ]
 
 [build-dependencies]
