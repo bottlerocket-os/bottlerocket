@@ -260,6 +260,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-k8s-1_29"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-6_1",
+ "kubernetes-1_29",
+ "release",
+]
+
+[[package]]
+name = "aws-k8s-1_29-nvidia"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-6_1",
+ "kmod-6_1-nvidia",
+ "kubernetes-1_29",
+ "nvidia-container-toolkit",
+ "nvidia-k8s-device-plugin",
+ "release",
+]
+
+[[package]]
 name = "aws-signing-helper"
 version = "0.1.0"
 dependencies = [
@@ -403,6 +430,13 @@ dependencies = [
 
 [[package]]
 name = "ecr-credential-provider-1_27"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
+name = "ecr-credential-provider-1_29"
 version = "0.1.0"
 dependencies = [
  "glibc",
@@ -614,6 +648,15 @@ version = "0.1.0"
 dependencies = [
  "aws-signing-helper",
  "ecr-credential-provider-1_27",
+ "glibc",
+]
+
+[[package]]
+name = "kubernetes-1_29"
+version = "0.1.0"
+dependencies = [
+ "aws-signing-helper",
+ "ecr-credential-provider-1_29",
  "glibc",
 ]
 
@@ -988,6 +1031,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "metal-k8s-1_29"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-6_1",
+ "kubernetes-1_29",
+ "release",
+]
+
+[[package]]
 name = "microcode"
 version = "0.1.0"
 
@@ -1226,6 +1281,18 @@ dependencies = [
  "cni-plugins",
  "kernel-6_1",
  "kubernetes-1_28",
+ "open-vm-tools",
+ "release",
+]
+
+[[package]]
+name = "vmware-k8s-1_29"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-6_1",
+ "kubernetes-1_29",
  "open-vm-tools",
  "release",
 ]
