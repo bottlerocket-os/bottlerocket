@@ -306,10 +306,10 @@ impl ReadFromServer {
                                     );
                                     capacity
                                         .max_messages_outstanding
-                                        .store(new.max_messages_outstanding, Ordering::SeqCst);
+                                        .store(new.max_messages_outstanding, Ordering::Relaxed);
                                     capacity
                                         .messages_written
-                                        .store(new.messages_written, Ordering::SeqCst);
+                                        .store(new.messages_written, Ordering::Relaxed);
                                 }
                             }
                         }
@@ -473,8 +473,8 @@ impl ReadFromUser {
     fn wait_for_capacity(messages_read: u64, capacity: &Arc<AtomicCapacity>) -> Result<()> {
         let mut waited = 0u64;
         loop {
-            let max_outstanding = capacity.max_messages_outstanding.load(Ordering::SeqCst);
-            let messages_written = capacity.messages_written.load(Ordering::SeqCst);
+            let max_outstanding = capacity.max_messages_outstanding.load(Ordering::Relaxed);
+            let messages_written = capacity.messages_written.load(Ordering::Relaxed);
 
             // Check how many messages are currently waiting to be written; read - written.
             // If the server has written more than we've read, something is quite wrong!
