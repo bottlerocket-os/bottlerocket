@@ -1,5 +1,5 @@
 Name: %{_cross_os}procps
-Version: 3.3.17
+Version: 4.0.4
 Release: 1%{?dist}
 Summary: A set of process monitoring tools
 License: GPL-2.0-or-later AND LGPL-2.1-or-later
@@ -51,7 +51,7 @@ Requires: %{name}
 %{_cross_bindir}/pmap
 %{_cross_bindir}/ps
 %{_cross_bindir}/pwdx
-%{_cross_bindir}/pwait
+%{_cross_bindir}/pidwait
 %{_cross_bindir}/skill
 %{_cross_bindir}/snice
 %{_cross_bindir}/tload
@@ -62,15 +62,13 @@ Requires: %{name}
 %{_cross_libdir}/*.so.*
 
 %exclude %{_cross_docdir}/*
-%exclude %{_cross_localedir}/*
 %exclude %{_cross_mandir}/*
 
 %files devel
 %{_cross_libdir}/*.a
 %{_cross_libdir}/*.so
-%dir %{_cross_includedir}/proc
-%{_cross_includedir}/proc/*.h
+%dir %{_cross_includedir}/libproc2
+%{_cross_includedir}/libproc2/*.h
 %{_cross_pkgconfigdir}/*.pc
-%exclude %{_cross_libdir}/*.la
 
 %changelog

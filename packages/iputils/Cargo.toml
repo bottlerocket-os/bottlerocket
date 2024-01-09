@@ -12,9 +12,9 @@ path = "../packages.rs"
 releases-url = "https://github.com/iputils/iputils/releases"
 
 [[package.metadata.build-package.external-files]]
-path = "iputils-20221126.tar.gz"
-url = "https://github.com/iputils/iputils/archive/20221126.tar.gz"
-sha512 = "7fdfd76e6f2977039bc0930a1a5451f17319bf17beefc429751d99ffe143a83344d5b4cdbf008627bd70caafeadaf906a8b7c00393fa819e50d6c02b512c367f"
+path = "iputils-20231222.tar.gz"
+url = "https://github.com/iputils/iputils/archive/20231222.tar.gz"
+sha512 = "499cf870210d4aec28dc8c2305892d57d3c1aee0ddbdf0ecb5a4887cd41995bf9e07ca8eabb1e3a38f56d408ea6b54ea9c436e76098f58d530752b862b2598ff"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
