@@ -1,0 +1,11 @@
+[required-extensions]
+std = { version = "v1", helpers = ["default"]}
+pki = "v1"
++++
+{{#if settings.pki}}
+{{#each settings.pki}}
+[{{@key}}]
+trusted = {{this.trusted}}
+data = "{{this.data}}"
+{{/each}}
+{{/if}}

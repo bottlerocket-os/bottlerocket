@@ -55,6 +55,7 @@ Source121: disable-udp-offload.service
 Source122: has-boot-ever-succeeded.service
 Source123: run-netdog.mount
 Source124: write-network-status.service
+Source125: certdog-toml
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -472,7 +473,7 @@ install -d %{buildroot}%{_cross_datadir}/updog
 install -p -m 0644 %{_cross_repo_root_json} %{buildroot}%{_cross_datadir}/updog
 
 install -d %{buildroot}%{_cross_templatedir}
-install -p -m 0644 %{S:5} %{S:6} %{S:7} %{S:8} %{buildroot}%{_cross_templatedir}
+install -p -m 0644 %{S:5} %{S:6} %{S:7} %{S:8} %{S:125} %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
@@ -684,6 +685,7 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 
 %files -n %{_cross_os}certdog
 %{_cross_bindir}/certdog
+%{_cross_templatedir}/certdog-toml
 
 %files -n %{_cross_os}bootstrap-containers
 %{_cross_bindir}/bootstrap-containers

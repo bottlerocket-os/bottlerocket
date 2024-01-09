@@ -1227,6 +1227,7 @@ dependencies = [
  "snafu",
  "tempfile",
  "tokio",
+ "toml 0.8.8",
  "x509-parser",
 ]
 
