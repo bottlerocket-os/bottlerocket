@@ -154,6 +154,11 @@ CONFIG_EXT4_USE_FOR_EXT2=y
 
 # Disable obsolete NIC drivers
 # CONFIG_QLGE is not set
+# CONFIG_MLX4_CORE is not set
+# CONFIG_MLX4_EN is not set
+# CONFIG_MLX4_INFINIBAND is not set
+# CONFIG_MLXSW_CORE is not set
+# CONFIG_MLXFW is not set
 
 # Disable unused qdiscs
 #   - sch_cake targets home routers and residential links
@@ -171,3 +176,4 @@ CONFIG_SCSI_SMARTPQI=m
 
 # Disable AL port of BBR2 congestion algorithm
 # CONFIG_TCP_CONG_BBR2 is not set
+
