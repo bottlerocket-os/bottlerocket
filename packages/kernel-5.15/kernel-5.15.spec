@@ -22,6 +22,10 @@ Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 # Increase default of sysctl net.unix.max_dgram_qlen to 512.
 Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
 
+# Backport fix for #3691. Needs to be upstreamed to 5.15 stable series.
+Patch5001: 5001-kallsyms-Make-module_kallsyms_on_each_symbol-general.patch
+Patch5002: 5002-tracing-kprobes-Fix-symbol-counting-logic-by-looking.patch
+
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
