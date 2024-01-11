@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-5.15
-Version: 5.15.139
+Version: 5.15.145
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/blobstore/76d66a34d25e5ebc08dc424d9b03b0ecb44046eb05d95e47459447a5ab582cd2/kernel-5.15.139-93.147.amzn2.src.rpm
+Source0: https://cdn.amazonlinux.com/blobstore/ee035f7e9f6cfe0e00a4c32b3f7d9170e85ca9e9f5cc5026b601b532343b260d/kernel-5.15.145-95.156.amzn2.src.rpm
 Source100: config-bottlerocket
 Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
@@ -21,6 +21,10 @@ Patch1002: 1002-Revert-kbuild-hide-tools-build-targets-from-external.patch
 Patch1003: 1003-initramfs-unlink-INITRAMFS_FORCE-from-CMDLINE_-EXTEN.patch
 # Increase default of sysctl net.unix.max_dgram_qlen to 512.
 Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
+
+# Backport fix for #3691. Needs to be upstreamed to 5.15 stable series.
+Patch5001: 5001-kallsyms-Make-module_kallsyms_on_each_symbol-general.patch
+Patch5002: 5002-tracing-kprobes-Fix-symbol-counting-logic-by-looking.patch
 
 BuildRequires: bc
 BuildRequires: elfutils-devel
