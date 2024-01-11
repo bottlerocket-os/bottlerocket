@@ -1,3 +1,46 @@
+# v1.18.0 (2024-01-16)
+
+## OS Changes
+
+* Remove unused runc SELinux policy rule ([#3673])
+* Update third party packages ([#3692])
+* Fix creation of kprobes using unqualified names ([#3699], [#3708])
+* Update host containers ([#3704])
+* Update kernel to 5.10.205, 5.15.145, 6.1.66 ([#3686], [#3708])
+* Add container-registry settings extension ([#3674])
+* Add updates settings extension ([#3689])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Add Kubernetes 1.29 variants ([#3628])
+* Update Kubernetes 1.23 to release 33 ([#3692])
+* Add latest instance types to eni-max-pods mapping ([#3695])
+
+### ECS
+
+* Update ecs-agent to 1.79.2 ([#3692])
+
+## Build Changes
+
+* Export symbols for packages that include dynamically linked Go binaries ([#3680])
+* Update to Bottlerocket SDK v0.37.0 ([#3690])
+  + Upgrades to Go 1.21.5
+
+[#3628]: https://github.com/bottlerocket-os/bottlerocket/pull/3628
+[#3673]: https://github.com/bottlerocket-os/bottlerocket/pull/3673
+[#3674]: https://github.com/bottlerocket-os/bottlerocket/pull/3674
+[#3680]: https://github.com/bottlerocket-os/bottlerocket/pull/3680
+[#3686]: https://github.com/bottlerocket-os/bottlerocket/pull/3686
+[#3689]: https://github.com/bottlerocket-os/bottlerocket/pull/3689
+[#3690]: https://github.com/bottlerocket-os/bottlerocket/pull/3690
+[#3692]: https://github.com/bottlerocket-os/bottlerocket/pull/3692
+[#3695]: https://github.com/bottlerocket-os/bottlerocket/pull/3695
+[#3699]: https://github.com/bottlerocket-os/bottlerocket/pull/3699
+[#3704]: https://github.com/bottlerocket-os/bottlerocket/pull/3704
+[#3708]: https://github.com/bottlerocket-os/bottlerocket/pull/3708
+
 # v1.17.0 (2023-12-12)
 
 ## OS Changes
