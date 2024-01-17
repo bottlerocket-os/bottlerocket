@@ -70,6 +70,8 @@ members = [
     "api/migration/migrations/v1.19.3/thar-be-updates-affected-services-v0-1-0",
     "api/migration/migrations/v1.19.3/host-containers-config-file-v0-1-0",
     "api/migration/migrations/v1.19.3/host-containers-config-list-v0-1-0",
+    "api/migration/migrations/v1.19.3/corndog-config-file-v0-1-0",
+    "api/migration/migrations/v1.19.3/corndog-services-cfg-v0-1-0",
 
     "bloodhound",
 
@@ -113,7 +115,7 @@ members = [
 
     "shimpei",
 
-    "xfscli"
+    "xfscli",
 ]
 
 [profile.release]

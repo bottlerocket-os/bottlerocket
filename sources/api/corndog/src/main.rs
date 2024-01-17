@@ -6,6 +6,8 @@ It sets kernel-related settings, for example:
 */
 
 use log::{debug, error, info, trace, warn};
+use modeled_types::{Lockdown, SysctlKey};
+use serde::{Deserialize, Serialize};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::collections::HashMap;
@@ -17,41 +19,47 @@ use std::{env, process};
 
 const SYSCTL_PATH_PREFIX: &str = "/proc/sys";
 const LOCKDOWN_PATH: &str = "/sys/kernel/security/lockdown";
+const DEFAULT_CONFIG_PATH: &str = "/etc/corndog.toml";
 
 /// Store the args we receive on the command line.
 struct Args {
     subcommand: String,
     log_level: LevelFilter,
-    socket_path: String,
+    config_path: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct KernelSettings {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    lockdown: Option<Lockdown>,
+    // Values are almost always a single line and often just an integer... but not always.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sysctl: Option<HashMap<SysctlKey, String>>,
 }
 
 /// Main entry point.
-async fn run() -> Result<()> {
+fn run() -> Result<()> {
     let args = parse_args(env::args());
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
     SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     // If the user has kernel settings, apply them.
-    let model = get_model(args.socket_path).await?;
-    if let Some(settings) = model.settings {
-        if let Some(kernel) = settings.kernel {
-            match args.subcommand.as_ref() {
-                "sysctl" => {
-                    if let Some(sysctls) = kernel.sysctl {
-                        debug!("Applying sysctls: {:#?}", sysctls);
-                        set_sysctls(sysctls);
-                    }
-                }
-                "lockdown" => {
-                    if let Some(lockdown) = kernel.lockdown {
-                        debug!("Setting lockdown: {:#?}", lockdown);
-                        set_lockdown(&lockdown)?;
-                    }
-                }
-                _ => usage_msg(format!("Unknown subcommand '{}'", args.subcommand)), // should be unreachable
+    let kernel = get_kernel_settings(args.config_path)?;
+    match args.subcommand.as_ref() {
+        "sysctl" => {
+            if let Some(sysctls) = kernel.sysctl {
+                debug!("Applying sysctls: {:#?}", sysctls);
+                set_sysctls(sysctls);
             }
         }
+        "lockdown" => {
+            if let Some(lockdown) = kernel.lockdown {
+                debug!("Setting lockdown: {:#?}", lockdown);
+                set_lockdown(&lockdown)?;
+            }
+        }
+        _ => usage_msg(format!("Unknown subcommand '{}'", args.subcommand)), // should be unreachable
     }
 
     Ok(())
@@ -60,29 +68,13 @@ async fn run() -> Result<()> {
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 /// Retrieve the current model from the API.
-async fn get_model<P>(socket_path: P) -> Result<model::Model>
+fn get_kernel_settings<P>(config_path: P) -> Result<KernelSettings>
 where
     P: AsRef<Path>,
 {
-    let uri = "/";
-    let method = "GET";
-    trace!("{}ing from {}", method, uri);
-    let (code, response_body) = apiclient::raw_request(socket_path, &uri, method, None)
-        .await
-        .context(error::APIRequestSnafu { method, uri })?;
-
-    if !code.is_success() {
-        return error::APIResponseSnafu {
-            method,
-            uri,
-            code,
-            response_body,
-        }
-        .fail();
-    }
-    trace!("JSON response: {}", response_body);
-
-    serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { method, uri })
+    let config_str =
+        fs::read_to_string(config_path.as_ref()).context(error::ReadConfigFileSnafu)?;
+    toml::from_str(config_str.as_str()).context(error::DeserializationSnafu)
 }
 
 fn sysctl_path<S>(name: S) -> PathBuf
@@ -175,12 +167,11 @@ fn usage() -> ! {
         lockdown
 
     Global arguments:
-        --socket-path PATH
+        --config-path PATH
         --log-level trace|debug|info|warn|error
 
-    Socket path defaults to {}",
-        program_name,
-        constants::API_SOCKET,
+    Config path defaults to {}",
+        program_name, DEFAULT_CONFIG_PATH,
     );
     process::exit(2);
 }
@@ -194,7 +185,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parses the arguments to the program and return a representative `Args`.
 fn parse_args(args: env::Args) -> Args {
     let mut log_level = None;
-    let mut socket_path = None;
+    let mut config_path = None;
     let mut subcommand = None;
 
     let mut iter = args.skip(1);
@@ -209,10 +200,10 @@ fn parse_args(args: env::Args) -> Args {
                 }));
             }
 
-            "--socket-path" => {
-                socket_path = Some(
+            "--config-path" => {
+                config_path = Some(
                     iter.next()
-                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path")),
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --config-path")),
                 )
             }
 
@@ -225,16 +216,15 @@ fn parse_args(args: env::Args) -> Args {
     Args {
         subcommand: subcommand.unwrap_or_else(|| usage_msg("Must specify a subcommand.")),
         log_level: log_level.unwrap_or(LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
+        config_path: config_path.unwrap_or_else(|| DEFAULT_CONFIG_PATH.to_string()),
     }
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-#[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
+fn main() {
+    if let Err(e) = run() {
         eprintln!("{}", e);
         process::exit(1);
     }
@@ -243,27 +233,22 @@ async fn main() {
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 mod error {
-    use http::StatusCode;
     use snafu::Snafu;
     use std::io;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
-        #[snafu(display("Error {}ing to {}: {}", method, uri, source))]
-        APIRequest {
-            method: String,
-            uri: String,
-            #[snafu(source(from(apiclient::Error, Box::new)))]
-            source: Box<apiclient::Error>,
+        #[snafu(display("Error reading config file: {}", source))]
+        ReadConfigFile {
+            #[snafu(source(from(io::Error, Box::new)))]
+            source: Box<io::Error>,
         },
 
-        #[snafu(display("Error {} when {}ing to {}: {}", code, method, uri, response_body))]
-        APIResponse {
-            method: String,
-            uri: String,
-            code: StatusCode,
-            response_body: String,
+        #[snafu(display("Error deserializing config: {}", source))]
+        Deserialization {
+            #[snafu(source(from(toml::de::Error, Box::new)))]
+            source: Box<toml::de::Error>,
         },
 
         #[snafu(display(

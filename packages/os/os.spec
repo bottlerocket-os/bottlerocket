@@ -34,6 +34,7 @@ Source13: cis-checks-k8s-metadata-json
 Source14: certdog-toml
 Source15: prairiedog-toml
 Source16: thar-be-updates-toml
+Source17: corndog-toml
 Source19: host-containers-toml
 
 # 1xx sources: systemd units
@@ -476,7 +477,7 @@ install -d %{buildroot}%{_cross_datadir}/updog
 install -p -m 0644 %{_cross_repo_root_json} %{buildroot}%{_cross_datadir}/updog
 
 install -d %{buildroot}%{_cross_templatedir}
-install -p -m 0644 %{S:5} %{S:6} %{S:7} %{S:8} %{S:14} %{S:15} %{S:16} %{S:19} \
+install -p -m 0644 %{S:5} %{S:6} %{S:7} %{S:8} %{S:14} %{S:15} %{S:16} %{S:17} %{S:19} \
   %{buildroot}%{_cross_templatedir}
 
 install -d %{buildroot}%{_cross_unitdir}
@@ -569,6 +570,7 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 
 %files -n %{_cross_os}corndog
 %{_cross_bindir}/corndog
+%{_cross_templatedir}/corndog-toml
 
 %files -n %{_cross_os}sundog
 %{_cross_bindir}/sundog
