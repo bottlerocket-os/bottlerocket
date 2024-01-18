@@ -1,5 +1,4 @@
 use crate::status::{UpdateCommand, UpdateState};
-use http::StatusCode;
 use num_derive::{FromPrimitive, ToPrimitive};
 use snafu::Snafu;
 use std::path::PathBuf;
@@ -54,20 +53,16 @@ pub enum Error {
         source: std::io::Error,
     },
 
-    #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
-    APIRequest {
-        method: String,
-        uri: String,
-        #[snafu(source(from(apiclient::Error, Box::new)))]
-        source: Box<apiclient::Error>,
+    #[snafu(display("Error reading configuration file at {}: {}", path.display(), source))]
+    ReadConfig {
+        path: PathBuf,
+        source: std::io::Error,
     },
 
-    #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]
-    APIResponse {
-        method: String,
-        uri: String,
-        code: StatusCode,
-        response_body: String,
+    #[snafu(display("Error deserializing configuration at {}: {}", path.display(), source))]
+    Deserialization {
+        path: PathBuf,
+        source: toml::de::Error,
     },
 
     #[snafu(display("Error deserializing response as JSON from {}: {}", uri, source))]
@@ -120,6 +115,9 @@ pub enum Error {
         source: serde_json::Error,
     },
 
+    #[snafu(display("Failed to get required setting '{}'", setting))]
+    GetSettingOption { setting: String },
+
     #[snafu(display("Failed to parse version string '{}' into semver version", version))]
     SemVer {
         version: String,
@@ -149,9 +147,6 @@ pub enum Error {
 
     #[snafu(display("Logger setup error: {}", source))]
     Logger { source: log::SetLoggerError },
-
-    #[snafu(display("Unable to create a tokio runtime: {}", source))]
-    Runtime { source: std::io::Error },
 }
 
 /// Map errors to specific exit codes to return to caller

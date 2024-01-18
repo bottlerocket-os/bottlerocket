@@ -2,18 +2,27 @@ use crate::error;
 use crate::error::Result;
 use bottlerocket_release::BottlerocketRelease;
 use chrono::{DateTime, Utc};
-use model::modeled_types::FriendlyVersion;
+use modeled_types::FriendlyVersion;
 use serde::{Deserialize, Serialize};
 use signpost::State;
 use snafu::{OptionExt, ResultExt};
 use std::convert::TryInto;
+use std::fs;
 use std::fs::File;
 use std::os::unix::process::ExitStatusExt;
+use std::path::Path;
 use std::process::Output;
-use tokio::runtime::Runtime;
 
 pub const UPDATE_LOCKFILE: &str = "/run/lock/thar-be-updates.lock";
 pub const UPDATE_STATUS_FILE: &str = "/run/cache/thar-be-updates/status.json";
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+struct UpdatesSettings {
+    // Version to update to when updating via the API.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    version_lock: Option<FriendlyVersion>,
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum UpdateState {
@@ -105,23 +114,19 @@ pub fn get_update_status(_lockfile: &File) -> Result<UpdateStatus> {
     })
 }
 
-/// Retrieves settings from the API.
+/// Retrieves settings from the configuration file.
 ///
-/// NOTE: this function creates its own tokio runtime to make the async apiclient call.  It should
-/// not be called if you're running another tokio runtime.  The program structure requires forking
-/// to handle long-running update actions, and the tokio runtime uses threading, which generally
-/// isn't safe over forks; instead, we create and drop one here for the short period we need it.
-fn get_settings(socket_path: &str) -> Result<serde_json::Value> {
-    let uri = "/settings";
-    let method = "GET";
-
-    let rt = Runtime::new().context(error::RuntimeSnafu)?;
-    let try_response_body =
-        rt.block_on(async { apiclient::raw_request(&socket_path, uri, method, None).await });
-    let (_code, response_body) =
-        try_response_body.context(error::APIRequestSnafu { method, uri })?;
-
-    serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { uri })
+fn get_settings<P>(config_path: P) -> Result<UpdatesSettings>
+where
+    P: AsRef<Path>,
+{
+    let config_path = config_path.as_ref();
+    let config_str = fs::read_to_string(config_path).context(error::ReadConfigSnafu {
+        path: config_path.to_path_buf(),
+    })?;
+    toml::from_str(&config_str).context(error::DeserializationSnafu {
+        path: config_path.to_path_buf(),
+    })
 }
 
 // This is how the UpdateStatus is stored on disk
@@ -260,22 +265,25 @@ impl UpdateStatus {
 
     /// Checks the list of updates to for an available update.
     /// If the 'version-lock'ed version is available returns true. Otherwise returns false
-    pub fn update_available_updates(
+    pub fn update_available_updates<P>(
         &mut self,
-        socket_path: &str,
+        config_path: P,
         updates: Vec<update_metadata::Update>,
-    ) -> Result<bool> {
+    ) -> Result<bool>
+    where
+        P: AsRef<Path>,
+    {
         // Extract the version to store
         self.available_updates = updates.iter().map(|u| u.version.to_owned()).collect();
         // Check if the 'version-lock'ed update is available as the 'chosen' update
         // Retrieve the 'version-lock' setting
-        let settings = get_settings(socket_path)?;
-        let locked_version: FriendlyVersion = serde_json::from_value(
-            settings["updates"]["version-lock"].to_owned(),
-        )
-        .context(error::GetSettingSnafu {
-            setting: "/settings/updates/version-lock",
-        })?;
+        let settings = get_settings(config_path)?;
+        let locked_version: FriendlyVersion =
+            settings
+                .version_lock
+                .context(error::GetSettingOptionSnafu {
+                    setting: "version-lock",
+                })?;
 
         if locked_version == "latest" {
             // Set chosen_update to the latest version available

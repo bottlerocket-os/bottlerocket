@@ -278,4 +278,6 @@ version = "1.19.3"
 "(1.19.2, 1.19.3)" = [
     "migrate_v1.19.3_prairiedog-config-file-v0-1-0.lz4",
     "migrate_v1.19.3_prairiedog-services-cfg-v0-1-0.lz4",
+    "migrate_v1.19.3_thar-be-updates-config-file-v0-1-0.lz4",
+    "migrate_v1.19.3_thar-be-updates-affected-services-v0-1-0.lz4",
 ]
