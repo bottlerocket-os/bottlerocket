@@ -12,9 +12,9 @@ path = "../packages.rs"
 releases-url = "https://github.com/opencontainers/runc/releases/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/opencontainers/runc/releases/download/v1.1.10/runc.tar.xz"
-path = "runc-v1.1.10.tar.xz"
-sha512 = "bf25d5222b560428daab58d887fd867a7e4c5703004eae9dbc1a082d55ac5db961ed8e5a2ff5dafe6d6350e59afd1053b98a6fc0e8a281758b706cf9144860d3"
+url = "https://github.com/opencontainers/runc/releases/download/v1.1.11/runc.tar.xz"
+path = "runc-v1.1.11.tar.xz"
+sha512 = "f88a0076f34ffd8394e85196ba602e9def11638e46dce74b50325b0dbbad82cbfdadf32753234848b4d8958c80d71fcf43663401f8eaedc75519f8e3693a7c16"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
