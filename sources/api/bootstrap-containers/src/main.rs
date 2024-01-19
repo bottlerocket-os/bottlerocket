@@ -74,7 +74,7 @@ journalctl -u bootstrap-containers@bear.service
 extern crate log;
 
 use base64::Engine;
-use datastore::{serialize_scalar, Key, KeyType};
+use serde::{Deserialize, Serialize};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
@@ -83,29 +83,43 @@ use std::env;
 use std::ffi::OsStr;
 use std::fmt::Write;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
 
-use model::modeled_types::{BootstrapContainerMode, Identifier};
+use modeled_types::{BootstrapContainerMode, Identifier, Url, ValidBase64};
 
 const ENV_FILE_DIR: &str = "/etc/bootstrap-containers";
 const DROPIN_FILE_DIR: &str = "/etc/systemd/system";
 const PERSISTENT_STORAGE_DIR: &str = "/local/bootstrap-containers";
 const DROP_IN_FILENAME: &str = "overrides.conf";
+const DEFAULT_CONFIG_PATH: &str = "/etc/bootstrap-containers/bootstrap-containers.toml";
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+struct BootstrapContainer {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    source: Option<Url>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    mode: Option<BootstrapContainerMode>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    user_data: Option<ValidBase64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    essential: Option<bool>,
+}
 
 /// Stores user-supplied global arguments
 #[derive(Debug)]
 struct Args {
     log_level: LevelFilter,
-    socket_path: String,
+    config_path: PathBuf,
 }
 
 impl Default for Args {
     fn default() -> Self {
         Self {
             log_level: LevelFilter::Info,
-            socket_path: constants::API_SOCKET.to_string(),
+            config_path: PathBuf::from_str(DEFAULT_CONFIG_PATH).unwrap(),
         }
     }
 }
@@ -134,16 +148,15 @@ fn usage() {
         mark-bootstrap
 
     Global arguments:
-        [ --socket-path PATH ]
+        [ --config-path PATH ]
         [ --log-level trace|debug|info|warn|error ]
 
     Mark bootstrap arguments:
         --container-id CONTAINER-ID
         --mode MODE
 
-    Socket path defaults to {}",
-        program_name,
-        constants::API_SOCKET,
+    Config path defaults to {}",
+        program_name, DEFAULT_CONFIG_PATH,
     );
 }
 
@@ -165,10 +178,11 @@ fn parse_args(args: env::Args) -> Result<(Args, Subcommand)> {
                     .context(error::LogLevelSnafu { log_level })?;
             }
 
-            "-s" | "--socket-path" => {
-                global_args.socket_path = iter.next().context(error::UsageSnafu {
-                    message: "Did not give argument to --socket-path",
-                })?
+            "-c" | "--config-path" => {
+                let config_str = iter.next().context(error::UsageSnafu {
+                    message: "Did not give argument to --config-path",
+                })?;
+                global_args.config_path = PathBuf::from(config_str.as_str());
             }
 
             // Subcommands
@@ -242,10 +256,7 @@ fn parse_mark_bootstrap_args(args: Vec<String>) -> Result<Subcommand> {
 }
 
 /// Handles how the bootstrap containers' systemd units are created
-fn handle_bootstrap_container<S>(
-    name: S,
-    container_details: &model::BootstrapContainer,
-) -> Result<()>
+fn handle_bootstrap_container<S>(name: S, container_details: &BootstrapContainer) -> Result<()>
 where
     S: AsRef<str>,
 {
@@ -382,27 +393,17 @@ where
 }
 
 /// Query the API for the currently defined bootstrap containers
-async fn get_bootstrap_containers<P>(
-    socket_path: P,
-) -> Result<HashMap<Identifier, model::BootstrapContainer>>
+fn get_bootstrap_containers<P>(config_path: P) -> Result<HashMap<Identifier, BootstrapContainer>>
 where
     P: AsRef<Path>,
 {
-    debug!("Querying the API for settings");
+    let config_str = fs::read_to_string(config_path.as_ref()).context(error::ReadConfigSnafu {
+        config_path: config_path.as_ref(),
+    })?;
 
-    let method = "GET";
-    let uri = constants::API_SETTINGS_URI;
-    let (_code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
-        .await
-        .context(error::APIRequestSnafu { method, uri })?;
-
-    // Build a Settings struct from the response string
-    debug!("Deserializing response");
-    let settings: model::Settings =
-        serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { method, uri })?;
-
-    // If bootstrap containers aren't defined, return an empty map
-    Ok(settings.bootstrap_containers.unwrap_or_default())
+    toml::from_str(&config_str).context(error::DeserializationSnafu {
+        config_path: config_path.as_ref(),
+    })
 }
 
 /// SystemdUnit stores the systemd unit being manipulated
@@ -492,12 +493,12 @@ where
 }
 
 /// Handles the `create-containers` subcommand
-async fn create_containers<P>(socket_path: P) -> Result<()>
+fn create_containers<P>(config_path: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
     let mut failed = 0usize;
-    let bootstrap_containers = get_bootstrap_containers(socket_path).await?;
+    let bootstrap_containers = get_bootstrap_containers(config_path)?;
     for (name, container_details) in bootstrap_containers.iter() {
         // Continue to handle other bootstrap containers if we fail one
         if let Err(e) = handle_bootstrap_container(name, container_details) {
@@ -520,38 +521,24 @@ where
 /// Handles the `mark-bootstrap` subcommand, which is called by the bootstrap
 /// container's systemd unit, which could potentially cause a concurrent invocation
 /// in this binary after the API setting finalizes.
-async fn mark_bootstrap<P>(args: MarkBootstrapArgs, socket_path: P) -> Result<()>
-where
-    P: AsRef<Path>,
-{
+fn mark_bootstrap(args: MarkBootstrapArgs) -> Result<()> {
     let container_id: &str = args.container_id.as_ref();
     let mode = args.mode.as_ref();
     info!("Mode for '{}' is '{}'", container_id, mode);
 
     // When 'mode' is 'once', the container is marked as 'off' once it
-    // finishes. This guarantees that the the container is only started in
+    // finishes. This guarantees that the container is only started in
     // the boot where it was created.
     if mode != "always" {
-        let formatted = format!("settings.bootstrap-containers.{}.mode", container_id);
-        let key = Key::new(KeyType::Data, &formatted)
-            .context(error::KeyFormatSnafu { key: formatted })?;
-        let value = serialize_scalar(&"off".to_string()).context(error::SerializeSnafu)?;
-
-        let mut map = HashMap::new();
-        map.insert(key, value);
-        let settings: model::Settings = datastore::deserialization::from_map(&map)
-            .context(error::SettingsDeserializeSnafu { settings: map })?;
-
+        let formatted = format!("settings.bootstrap-containers.{}.mode=off", container_id);
         info!("Turning off container '{}'", container_id);
-        apiclient::set::set(socket_path, &settings)
-            .await
-            .context(error::SetSnafu)?;
+        command("apiclient", ["set", formatted.as_str()])?;
     }
 
     Ok(())
 }
 
-async fn run() -> Result<()> {
+fn run() -> Result<()> {
     let (args, subcommand) = parse_args(env::args())?;
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
@@ -560,19 +547,16 @@ async fn run() -> Result<()> {
     info!("bootstrap-containers started");
 
     match subcommand {
-        Subcommand::CreateContainers => create_containers(args.socket_path).await,
-        Subcommand::MarkBootstrap(mark_bootstrap_args) => {
-            mark_bootstrap(mark_bootstrap_args, args.socket_path).await
-        }
+        Subcommand::CreateContainers => create_containers(args.config_path),
+        Subcommand::MarkBootstrap(mark_bootstrap_args) => mark_bootstrap(mark_bootstrap_args),
     }
 }
 
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-#[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
+fn main() {
+    if let Err(e) = run() {
         match e {
             error::Error::Usage { .. } => {
                 eprintln!("{}", e);
@@ -590,9 +574,7 @@ async fn main() {
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
 mod error {
-    use datastore::Key;
     use snafu::Snafu;
-    use std::collections::HashMap;
     use std::fmt;
     use std::io;
     use std::path::PathBuf;
@@ -601,12 +583,16 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
-        #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
-        APIRequest {
-            method: String,
-            uri: String,
-            #[snafu(source(from(apiclient::Error, Box::new)))]
-            source: Box<apiclient::Error>,
+        #[snafu(display("Failed to read settings from config at {}: {}", config_path.display(), source))]
+        ReadConfig {
+            config_path: PathBuf,
+            source: std::io::Error,
+        },
+
+        #[snafu(display("Failed to deserialize settings from config at {}: {}", config_path.display(), source))]
+        Deserialization {
+            config_path: PathBuf,
+            source: toml::de::Error,
         },
 
         #[snafu(display(
@@ -621,9 +607,7 @@ mod error {
 
         // `try_from` in `BootstrapContainerMode` already returns a useful error message
         #[snafu(display("Failed to parse mode: {}", source))]
-        BootstrapContainerMode {
-            source: model::modeled_types::error::Error,
-        },
+        BootstrapContainerMode { source: modeled_types::error::Error },
 
         #[snafu(display("'{}' failed - stderr: {}",
                         bin_path, String::from_utf8_lossy(&output.stderr)))]
@@ -633,23 +617,6 @@ mod error {
         ExecutionFailure {
             command: Command,
             source: std::io::Error,
-        },
-
-        #[snafu(display("Failed to deserialize key '{}': '{}'", key, source))]
-        KeyDeserialize {
-            key: String,
-            source: datastore::deserialization::Error,
-        },
-
-        #[snafu(display(
-            "Adding container name to key '{}' resulted in invalid format: {}",
-            key,
-            source
-        ))]
-        KeyFormat {
-            key: String,
-            #[snafu(source(from(datastore::Error, Box::new)))]
-            source: Box<datastore::Error>,
         },
 
         #[snafu(display("Logger setup error: {}", source))]
@@ -688,14 +655,11 @@ mod error {
         #[snafu(display("Unable to serialize data: {}", source))]
         Serialize { source: serde_json::Error },
 
-        #[snafu(display("Failed to change settings: {}", source))]
-        Set { source: apiclient::set::Error },
+        #[snafu(display("Failed to change settings via apiclient: {}", source))]
+        Set { source: io::Error },
 
-        #[snafu(display("Failed to deserialize settings '{:#?}': '{}'", settings, source))]
-        SettingsDeserialize {
-            settings: HashMap<Key, String>,
-            source: datastore::deserialization::Error,
-        },
+        #[snafu(display("Failed to change settings, apiclient returned an error"))]
+        SetClient,
 
         #[snafu(display("{}", message))]
         Usage { message: String },
