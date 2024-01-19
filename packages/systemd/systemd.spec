@@ -13,6 +13,7 @@ Source2: systemd-modules-load.conf
 Source3: journald.conf
 Source4: issue
 Source5: systemd-journald.conf
+Source6: systemd-sysusers.conf
 
 # Backport of upstream patches that make the netlink default timeout
 # configurable.  Bottlerocket carries this patch and configures the timeout in
@@ -301,6 +302,9 @@ install -p -m 0644 %{S:3} %{buildroot}%{_cross_libdir}/systemd/journald.conf.d/j
 
 install -d %{buildroot}%{_cross_unitdir}/systemd-journald.service.d
 install -p -m 0644 %{S:5} %{buildroot}%{_cross_unitdir}/systemd-journald.service.d/systemd-journald.conf
+
+install -d %{buildroot}%{_cross_unitdir}/systemd-sysusers.service.d
+install -p -m 0644 %{S:6} %{buildroot}%{_cross_unitdir}/systemd-sysusers.service.d/systemd-sysusers.conf
 
 # Remove all stock network configurations, as they can interfere
 # with container networking by attempting to manage veth devices.
