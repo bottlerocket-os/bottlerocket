@@ -2629,6 +2629,7 @@ dependencies = [
  "serde",
  "serde_json",
  "settings-extension-container-registry",
+ "settings-extension-kernel",
  "settings-extension-motd",
  "settings-extension-ntp",
  "settings-extension-updates",
