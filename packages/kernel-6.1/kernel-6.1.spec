@@ -25,10 +25,6 @@ Patch1004: 1004-af_unix-increase-default-max_dgram_qlen-to-512.patch
 # options for nvidia are instead included through DRM_SIMPLE
 Patch1005: 1005-Revert-Revert-drm-fb_helper-improve-CONFIG_FB-depend.patch
 
-# Cherry-pick fix for #3691. Can be dropped after rebasing to 6.1.71 or later.
-Patch5001: 5001-kallsyms-Make-module_kallsyms_on_each_symbol-general.patch
-Patch5002: 5002-tracing-kprobes-Fix-symbol-counting-logic-by-looking.patch
-
 BuildRequires: bc
 BuildRequires: elfutils-devel
 BuildRequires: hostname
