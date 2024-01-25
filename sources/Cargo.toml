@@ -79,6 +79,7 @@ members = [
 
     "models",
 
+    "settings-extensions/kernel",
     "settings-extensions/motd",
     "settings-extensions/ntp",
     "settings-extensions/container-registry",
