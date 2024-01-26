@@ -2,9 +2,9 @@ use model_derive::model;
 use std::collections::HashMap;
 
 use crate::{
-    AutoScalingSettings, AwsSettings, BootSettings, BootstrapContainer, CloudFormationSettings,
-    DnsSettings, ECSSettings, HostContainer, MetricsSettings, NetworkSettings, OciDefaults,
-    OciHooks, PemCertificate,
+    AutoScalingSettings, BootSettings, BootstrapContainer, CloudFormationSettings, DnsSettings,
+    ECSSettings, HostContainer, MetricsSettings, NetworkSettings, OciDefaults, OciHooks,
+    PemCertificate,
 };
 use modeled_types::Identifier;
 
@@ -20,7 +20,7 @@ struct Settings {
     network: NetworkSettings,
     kernel: settings_extension_kernel::KernelSettingsV1,
     boot: BootSettings,
-    aws: AwsSettings,
+    aws: settings_extension_aws::AwsSettingsV1,
     ecs: ECSSettings,
     metrics: MetricsSettings,
     pki: HashMap<Identifier, PemCertificate>,

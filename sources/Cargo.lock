@@ -2649,6 +2649,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "settings-extension-aws",
  "settings-extension-container-registry",
  "settings-extension-kernel",
  "settings-extension-motd",
