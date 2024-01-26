@@ -1,5 +1,5 @@
 Name: %{_cross_os}libattr
-Version: 2.5.1
+Version: 2.5.2
 Release: 1%{?dist}
 Summary: Library for extended attribute support
 License: LGPL-2.1-or-later
