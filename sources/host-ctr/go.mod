@@ -3,7 +3,7 @@ module host-ctr
 go 1.21
 
 require (
-	github.com/aws/aws-sdk-go v1.49.13
+	github.com/aws/aws-sdk-go v1.50.4
 	github.com/awslabs/amazon-ecr-containerd-resolver v0.0.0-20231213164356-22a8023e9be3
 	github.com/containerd/containerd v1.6.26
 	github.com/opencontainers/runtime-spec v1.1.0
@@ -12,7 +12,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.27.1
-	k8s.io/cri-api v0.29.0
+	k8s.io/cri-api v0.29.1
 )
 
 replace (
