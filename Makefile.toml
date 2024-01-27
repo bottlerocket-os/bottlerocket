@@ -549,7 +549,24 @@ run_task = "run-twoliter"
 
 # This task is useful for using the current tree's testsys without symlinks
 [tasks.testsys]
-run_task = "run-twoliter"
+dependencies = ["install-twoliter"]
+script_runner = "bash"
+script = [
+'''
+# TODO - remove this workaround when https://github.com/bottlerocket-os/twoliter/issues/139
+# is fixed. Clap in Twoliter is greedily taking ownership of args intended for testsys
+# so we need to call testsys directly here.
+
+# Ensure tools are installed in the canonical location
+mkdir -p "./build/tools"
+"${TWOLITER}" debug check-tools --install-dir ./build/tools 2>&1 >/dev/null
+
+./build/tools/testsys \
+  --log-level "${TWOLITER_LOG_LEVEL}" \
+  ${CARGO_MAKE_TESTSYS_ARGS} \
+  ${@}
+'''
+]
 
 [tasks.default]
 alias = "build"
