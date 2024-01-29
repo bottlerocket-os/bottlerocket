@@ -2631,6 +2631,7 @@ dependencies = [
  "settings-extension-container-registry",
  "settings-extension-kernel",
  "settings-extension-motd",
+ "settings-extension-network",
  "settings-extension-ntp",
  "settings-extension-updates",
  "toml 0.5.11",
@@ -3646,6 +3647,19 @@ dependencies = [
  "serde",
  "serde_json",
  "string_impls_for",
+]
+
+[[package]]
+name = "settings-extension-network"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
+ "snafu",
 ]
 
 [[package]]
