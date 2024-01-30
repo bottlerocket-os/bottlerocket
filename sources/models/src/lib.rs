@@ -333,6 +333,8 @@ struct ECSSettings {
     image_cleanup_delete_per_cycle: i64,
     image_cleanup_enabled: bool,
     image_cleanup_age: ECSDurationValue,
+    backend_host: String,
+    awsvpc_block_imds: bool,
 }
 
 #[model]
