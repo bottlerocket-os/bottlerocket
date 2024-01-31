@@ -7,9 +7,9 @@ Wants=network-online.target configured.target
 
 [Service]
 Type=simple
-Restart=on-failure
+Restart=always
 RestartPreventExitStatus=5
-RestartSec=1s
+RestartSec=5
 EnvironmentFile=-/etc/ecs/ecs.config
 EnvironmentFile=/etc/network/proxy.env
 Environment=ECS_CHECKPOINT=true
