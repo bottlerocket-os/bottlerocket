@@ -1,3 +1,35 @@
+# v1.19.0 (2024-02-01)
+
+## OS Changes
+* Adjust unit dependencies for systemd-sysusers ([#3720])
+* Update third party packages ([#3722], [#3750])
+* Add kernel settings extension ([#3727])
+* Update kernel to 5.10.205, 5.15.145, 6.1.72 ([#3734])
+* Update runc to 1.1.12 and containerd to 1.6.28 ([#3751])
+
+## Orchestrator Changes
+
+### Kubernetes
+* Add latest instance types to eni-max-pods mapping ([#3741])
+* Drop Kubernetes 1.24 Metal and VMware variants ([#3742])
+
+### ECS
+* Add additional ECS settings for ECS_BACKEND_HOST and ECS_AWSVPC_BLOCK_IMDS ([#3749])
+
+## Build Changes
+* twoliter updated to v0.0.6 ([#3744])
+
+[#3720]: https://github.com/bottlerocket-os/bottlerocket/pull/3720
+[#3722]: https://github.com/bottlerocket-os/bottlerocket/pull/3722
+[#3727]: https://github.com/bottlerocket-os/bottlerocket/pull/3727
+[#3734]: https://github.com/bottlerocket-os/bottlerocket/pull/3734
+[#3741]: https://github.com/bottlerocket-os/bottlerocket/pull/3741
+[#3742]: https://github.com/bottlerocket-os/bottlerocket/pull/3742
+[#3744]: https://github.com/bottlerocket-os/bottlerocket/pull/3744
+[#3749]: https://github.com/bottlerocket-os/bottlerocket/pull/3749
+[#3750]: https://github.com/bottlerocket-os/bottlerocket/pull/3750
+[#3751]: https://github.com/bottlerocket-os/bottlerocket/pull/3751
+
 # v1.18.0 (2024-01-16)
 
 ## OS Changes
