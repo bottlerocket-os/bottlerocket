@@ -46,6 +46,23 @@ Patch0024: 0024-Fix-leak-in-getaddrinfo-introduced-by-the-fix-for-CV.patch
 Patch0025: 0025-Document-CVE-2023-4806-and-CVE-2023-5156-in-NEWS.patch
 Patch0026: 0026-Propagate-GLIBC_TUNABLES-in-setxid-binaries.patch
 Patch0027: 0027-tunables-Terminate-if-end-of-input-is-reached-CVE-20.patch
+Patch0028: 0028-Revert-elf-Remove-unused-l_text_end-field-from-struc.patch
+Patch0029: 0029-Revert-elf-Always-call-destructors-in-reverse-constr.patch
+Patch0030: 0030-Revert-elf-Move-l_init_called_next-to-old-place-of-l.patch
+Patch0031: 0031-sysdeps-sem_open-Clear-O_CREAT-when-semaphore-file-i.patch
+Patch0032: 0032-elf-Fix-wrong-break-removal-from-8ee878592c.patch
+Patch0033: 0033-LoongArch-Delete-excessively-allocated-memory.patch
+Patch0034: 0034-elf-Fix-TLS-modid-reuse-generation-assignment-BZ-290.patch
+Patch0035: 0035-elf-Add-TLS-modid-reuse-test-for-bug-29039.patch
+Patch0036: 0036-x86-64-Fix-the-dtv-field-load-for-x32-BZ-31184.patch
+Patch0037: 0037-x86-64-Fix-the-tcb-field-load-for-x32-BZ-31185.patch
+Patch0038: 0038-NEWS-Mention-bug-fixes-for-29039-30694-30709-30721.patch
+Patch0039: 0039-NEWS-Mention-bug-fixes-for-30745-30843.patch
+Patch0040: 0040-getaddrinfo-translate-ENOMEM-to-EAI_MEMORY-bug-31163.patch
+Patch0041: 0041-libio-Check-remaining-buffer-size-in-_IO_wdo_write-b.patch
+Patch0042: 0042-syslog-Fix-heap-buffer-overflow-in-__vsyslog_interna.patch
+Patch0043: 0043-syslog-Fix-heap-buffer-overflow-in-__vsyslog_interna.patch
+Patch0044: 0044-syslog-Fix-integer-overflow-in-__vsyslog_internal-CV.patch
 
 # Fedora patches
 Patch1001: glibc-cs-path.patch
