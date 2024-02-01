@@ -322,7 +322,7 @@ mod error {
 
 type Result<T> = std::result::Result<T, error::Error>;
 
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -3,7 +3,7 @@ use snafu::Snafu;
 use std::io;
 use std::path::PathBuf;
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 use crate::networkd;
 
 #[derive(Debug, Snafu)]
@@ -42,7 +42,7 @@ pub(crate) enum Error {
     #[snafu(display("Failed to parse network config: {}", source))]
     NetConfigParse { source: toml::de::Error },
 
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     #[snafu(display("Unable to create systemd-networkd config: {}", source))]
     NetworkDConfigCreate { source: networkd::Error },
 }

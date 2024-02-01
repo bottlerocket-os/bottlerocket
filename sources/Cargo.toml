@@ -8,7 +8,6 @@ members = [
     "api/certdog",
     "api/corndog",
     "api/datastore",
-    "api/netdog",
     "api/sundog",
     "api/schnauzer",
     "api/pluto",
@@ -114,6 +113,8 @@ members = [
     "ghostdog",
 
     "metricdog",
+
+    "netdog",
 
     "cfsignal",
 

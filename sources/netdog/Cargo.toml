@@ -8,11 +8,16 @@ publish = false
 # Don't rebuild crate just because of changes to README.
 exclude = ["README.md"]
 
+[features]
+default = []
+wicked = []
+
 [dependencies]
+anyhow = "1.0"
 argh = "0.1"
 dns-lookup = "2"
 ipnet = { version = "2", features = ["serde"] }
-imdsclient = { path = "../../imdsclient", version = "0.1" }
+imdsclient = { path = "../imdsclient", version = "0.1" }
 indexmap = { version = "1", features = ["serde"] }
 envy = "0.4"
 lazy_static = "1"
@@ -33,5 +38,5 @@ tempfile = "3"
 handlebars = "4"
 
 [build-dependencies]
-bottlerocket-variant = { version = "0.1", path = "../../bottlerocket-variant" }
-generate-readme = { version = "0.1", path = "../../generate-readme" }
+bottlerocket-variant = { version = "0.1", path = "../bottlerocket-variant" }
+generate-readme = { version = "0.1", path = "../generate-readme" }

@@ -7,7 +7,7 @@ use snafu::{OptionExt, ResultExt};
 use std::fs;
 use std::path::Path;
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 use crate::networkd::config::{NetworkDConfigFile, NETWORKD_CONFIG_DIR};
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -66,7 +66,7 @@ fn write_primary_interface(interface_id: &InterfaceId) -> Result<()> {
     })
 }
 
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bool) -> Result<()> {
     let mut wicked_interfaces = net_config.as_wicked_interfaces();
     for interface in &mut wicked_interfaces {
@@ -85,7 +85,7 @@ fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bo
     Ok(())
 }
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 fn write_network_config_files(net_config: Box<dyn Interfaces>, from_cmd_line: bool) -> Result<()> {
     fs::create_dir_all(NETWORKD_CONFIG_DIR).context(error::CreateDirSnafu {
         path: NETWORKD_CONFIG_DIR,

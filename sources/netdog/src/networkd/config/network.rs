@@ -208,7 +208,7 @@ impl Display for KeepConfiguration {
 }
 
 impl NetworkConfig {
-    const FILE_EXT: &str = "network";
+    const FILE_EXT: &'static str = "network";
 
     fn new_with_name(name: InterfaceName) -> Self {
         Self {

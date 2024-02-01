@@ -2804,6 +2804,7 @@ dependencies = [
 name = "netdog"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "argh",
  "bottlerocket-variant",
  "dns-lookup",

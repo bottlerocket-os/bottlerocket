@@ -3,22 +3,22 @@ use crate::dns::DnsSettings;
 use argh::FromArgs;
 use snafu::ResultExt;
 
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 use crate::lease::{dhcp_lease_path, LeaseInfo};
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 use crate::cli::Command;
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 use snafu::ensure;
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 static SYSTEMCTL: &str = "/usr/bin/systemctl";
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 use crate::cli::fetch_net_config;
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 use crate::networkd::config::NETWORKD_CONFIG_DIR;
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 use std::{fs, path::Path};
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 use systemd_derive::{SystemdUnit, SystemdUnitSection};
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -27,7 +27,7 @@ use systemd_derive::{SystemdUnit, SystemdUnitSection};
 pub(crate) struct WriteResolvConfArgs {}
 
 /// A struct representing an interface drop-in that overrides DNS-via-DHCP settings
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 #[derive(Debug, SystemdUnit)]
 struct InterfaceDNSDropIn {
     network: Option<NetworkSection>,
@@ -36,7 +36,7 @@ struct InterfaceDNSDropIn {
     ipv6_accept_ra: Option<IPv6AcceptRASection>,
 }
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 #[derive(Debug, SystemdUnitSection)]
 #[systemd(section = "Network")]
 struct NetworkSection {
@@ -44,7 +44,7 @@ struct NetworkSection {
     dns_default_route: Option<bool>,
 }
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 #[derive(Debug, SystemdUnitSection)]
 #[systemd(section = "DHCPv4")]
 struct Dhcp4Section {
@@ -54,7 +54,7 @@ struct Dhcp4Section {
     use_domains: Option<bool>,
 }
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 #[derive(Debug, SystemdUnitSection)]
 #[systemd(section = "DHCPv6")]
 struct Dhcp6Section {
@@ -64,7 +64,7 @@ struct Dhcp6Section {
     use_domains: Option<bool>,
 }
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 #[derive(Debug, SystemdUnitSection)]
 #[systemd(section = "IPv6AcceptRA")]
 struct IPv6AcceptRASection {
@@ -74,7 +74,7 @@ struct IPv6AcceptRASection {
     use_domains: Option<bool>,
 }
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 impl InterfaceDNSDropIn {
     /// Given API DNS settings create an appropriate drop-in for a network interface.
     fn new(settings: &DnsSettings, is_primary: bool) -> Self {
@@ -117,7 +117,7 @@ impl InterfaceDNSDropIn {
 // corresponding values in the DHCP lease.  If we don't, then we want to use the values from DHCP.
 // Toggle this functionality via a networkd interface drop-in.  Also write the global settings from
 // the API as a systemd-resolved drop-in.
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 fn handle_dns_settings(primary_interface: String) -> Result<()> {
     let dns_settings = DnsSettings::from_config().context(error::GetDnsSettingsSnafu)?;
 
@@ -180,7 +180,7 @@ fn handle_dns_settings(primary_interface: String) -> Result<()> {
 // Use DNS API settings if they exist, supplementing any missing settings with settings derived
 // from the primary interface's DHCP lease if it exists.  Static leases don't contain any DNS
 // data, so don't bother looking there.
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 fn handle_dns_settings(primary_interface: String) -> Result<()> {
     let primary_lease_path = dhcp_lease_path(primary_interface);
     let dns_settings = if let Some(primary_lease_path) = primary_lease_path {
