@@ -4,12 +4,12 @@ pub(crate) mod node_ip;
 pub(crate) mod set_hostname;
 pub(crate) mod write_resolv_conf;
 
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 pub(crate) mod install;
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 pub(crate) mod remove;
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 pub(crate) mod write_network_status;
 
 use crate::net_config::{self, Interfaces};
@@ -30,12 +30,12 @@ use std::process::Command;
 use std::{fs, io};
 pub(crate) use write_resolv_conf::WriteResolvConfArgs;
 
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 pub(crate) use install::InstallArgs;
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 pub(crate) use remove::RemoveArgs;
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 pub(crate) use write_network_status::WriteNetworkStatusArgs;
 
 #[derive(Debug, PartialEq, Deserialize)]
@@ -159,7 +159,7 @@ where
     let mut output = String::new();
     writeln!(output, "{}", ipv4_rp_filter).context(error::SysctlConfBuildSnafu)?;
 
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     // systemd-networkd implements its own RA client, and expects the kernel implementation to be
     // unused. However, various solutions that run in EC2 might "helpfully" turn it on since it's
     // required for most non-systemd-networkd systems. Guard against this by explicitly disabling
@@ -228,7 +228,9 @@ mod tests {
         let fake_file = tempfile::NamedTempFile::new().unwrap();
         let expected = "-net.ipv4.conf.eno1.rp_filter = 2\n";
         write_interface_sysctl(interface, &fake_file).unwrap();
-        assert_eq!(std::fs::read_to_string(&fake_file).unwrap(), expected);
+        assert!(std::fs::read_to_string(&fake_file)
+            .unwrap()
+            .starts_with(expected));
     }
 }
 
@@ -240,17 +242,17 @@ mod error {
     use std::io;
     use std::path::PathBuf;
 
-    #[cfg(net_backend = "wicked")]
+    #[cfg(feature = "wicked")]
     use crate::{lease, wicked};
 
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     use crate::{networkd, networkd_status};
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(crate)))]
     #[allow(clippy::enum_variant_names)]
     pub(crate) enum Error {
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("Unable to create directory '{}': {}", path.display(),source))]
         CreateDir { path: PathBuf, source: io::Error },
 
@@ -266,18 +268,18 @@ mod error {
         #[snafu(display("Failed to read/parse DNS settings from DHCP lease: {}", source))]
         DnsFromLease { source: dns::Error },
 
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("Unable to create interface drop-in directory '{}': {}", path.display(), source))]
         DropInDirCreate { path: PathBuf, source: io::Error },
 
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("Unable to write interface drop-in '{}': {}", path.display(), source))]
         DropInFileWrite { path: PathBuf, source: io::Error },
 
         #[snafu(display("'systemd-sysctl' failed: {}", stderr))]
         FailedSystemdSysctl { stderr: String },
 
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("'systemctl' failed: {}", stderr))]
         FailedSystemctl { stderr: String },
 
@@ -290,7 +292,7 @@ mod error {
         #[snafu(display("Failed to write hostname to '{}': {}", path.display(), source))]
         HostnameWriteFailed { path: PathBuf, source: io::Error },
 
-        #[cfg(net_backend = "wicked")]
+        #[cfg(feature = "wicked")]
         #[snafu(display("Failed to write network interface configuration: {}", source))]
         InterfaceConfigWrite { source: wicked::Error },
 
@@ -312,7 +314,7 @@ mod error {
             source: serde_json::error::Error,
         },
 
-        #[cfg(net_backend = "wicked")]
+        #[cfg(feature = "wicked")]
         #[snafu(display("Failed to read/parse lease data: {}", source))]
         LeaseParseFailed { source: lease::Error },
 
@@ -328,11 +330,11 @@ mod error {
         #[snafu(display("Unable to find an interface with MAC address '{}'", mac))]
         NonExistentMac { mac: String },
 
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("Unable to create systemd-networkd config: {}", source))]
         NetworkDConfigCreate { source: net_config::Error },
 
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("Failed to write network interface configuration: {}", source))]
         NetworkDConfigWrite { source: networkd::Error },
 
@@ -366,17 +368,17 @@ mod error {
         #[snafu(display("Failed to run 'systemd-sysctl': {}", source))]
         SystemdSysctlExecution { source: io::Error },
 
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("Failed to run 'systemctl': {}", source))]
         SystemctlExecution { source: io::Error },
 
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("Failed to retrieve networkctl status: {}", source))]
         NetworkDInterfaceStatus {
             source: networkd_status::NetworkDStatusError,
         },
 
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("Unable to determine primary interface IP Address: {}", source))]
         PrimaryInterfaceAddress {
             source: networkd_status::NetworkDStatusError,

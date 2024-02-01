@@ -10,7 +10,6 @@ members = [
     "api/datastore",
     "api/early-boot-config",
     "api/ecs-settings-applier",
-    "api/netdog",
     "api/sundog",
     "api/schnauzer",
     "api/pluto",
@@ -77,6 +76,8 @@ members = [
     "ghostdog",
 
     "metricdog",
+
+    "netdog",
 
     "cfsignal",
 
