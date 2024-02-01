@@ -33,6 +33,7 @@ included-packages = [
     "kubelet-1.25",
     "open-vm-tools",
     "release",
+    "wicked",
 ]
 
 [lib]

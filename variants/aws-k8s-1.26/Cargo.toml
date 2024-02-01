@@ -20,6 +20,7 @@ included-packages = [
     "cni-plugins",
     "kernel-5.15",
     "kubelet-1.26",
+    "wicked",
     "release",
 ]
 kernel-parameters = [
