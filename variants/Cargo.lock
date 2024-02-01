@@ -1052,6 +1052,13 @@ name = "microcode"
 version = "0.1.0"
 
 [[package]]
+name = "netdog"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "nvidia-container-toolkit"
 version = "0.1.0"
 dependencies = [
@@ -1153,6 +1160,7 @@ dependencies = [
  "libgcc",
  "libstd-rust",
  "makedumpfile",
+ "netdog",
  "oci-add-hooks",
  "os",
  "policycoreutils",

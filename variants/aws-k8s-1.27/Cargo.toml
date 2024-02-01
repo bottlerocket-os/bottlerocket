@@ -21,6 +21,7 @@ included-packages = [
     "kernel-5.15",
     "kubelet-1.27",
     "release",
+    "wicked",
 ]
 kernel-parameters = [
     "console=tty0",
