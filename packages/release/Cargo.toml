@@ -39,6 +39,7 @@ libaudit = { path = "../libaudit" }
 libgcc = { path = "../libgcc" }
 libstd-rust = { path = "../libstd-rust" }
 makedumpfile = { path = "../../packages/makedumpfile" }
+netdog = {path = "../netdog" }
 os = { path = "../os" }
 oci-add-hooks = { path = "../oci-add-hooks" }
 policycoreutils = { path = "../policycoreutils" }
