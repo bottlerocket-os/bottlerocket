@@ -162,7 +162,7 @@ affected-services = ["bootstrap-containers"]
 # Certdog
 
 [services.pki]
-configuration-files = []
+configuration-files = ["certdog-toml"]
 restart-commands = ["/usr/bin/certdog"]
 
 # DNS
@@ -176,3 +176,7 @@ restart-commands = ["netdog write-resolv-conf"]
 [configuration-files.netdog-toml]
 path = "/etc/netdog.toml"
 template-path = "/usr/share/templates/netdog-toml"
+
+[configuration-files.certdog-toml]
+path = "/etc/certdog.toml"
+template-path = "/usr/share/templates/certdog-toml"

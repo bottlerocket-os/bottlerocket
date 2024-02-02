@@ -1262,7 +1262,22 @@ dependencies = [
  "snafu",
  "tempfile",
  "tokio",
+ "toml 0.8.8",
  "x509-parser",
+]
+
+[[package]]
+name = "certdog-config-file-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "certdog-service-cfg-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
 ]
 
 [[package]]
