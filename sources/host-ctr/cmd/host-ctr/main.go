@@ -39,6 +39,11 @@ import (
 // Example 2: 777777777777.dkr.ecr.cn-north-1.amazonaws.com.cn/my_image:latest
 var ecrRegex = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?.*`)
 
+const (
+	// The maximum size of an	image label.
+	imageLabelMaxSize = 4096
+)
+
 func init() {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	// Dispatch logging output instead of writing all levels' messages to
@@ -161,9 +166,18 @@ func App() *cli.App {
 					Destination: &useCachedImage,
 					Value:       false,
 				},
+				&cli.StringSliceFlag{
+					Name:  "label",
+					Usage: "label to add to the pulled image in `key=value` format",
+				},
 			},
 			Action: func(c *cli.Context) error {
-				return pullImageOnly(containerdSocket, namespace, source, registryConfig, useCachedImage)
+				labels := c.StringSlice("label")
+				labelsMap, err := convertLabels(labels)
+				if err != nil {
+					return err
+				}
+				return pullImageOnly(containerdSocket, namespace, source, registryConfig, useCachedImage, labelsMap)
 			},
 		},
 		{
@@ -274,13 +288,15 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 	// Check if the image source is an ECR image. If it is, then we need to handle it with the ECR resolver.
 	isECRImage := ecrRegex.MatchString(source)
 	var img containerd.Image
+	emptyLabels := make(map[string]string)
+
 	if isECRImage {
-		img, err = fetchECRImage(ctx, source, client, registryConfigPath, useCachedImage)
+		img, err = fetchECRImage(ctx, source, client, registryConfigPath, useCachedImage, emptyLabels)
 		if err != nil {
 			return err
 		}
 	} else {
-		img, err = fetchImage(ctx, source, client, registryConfigPath, useCachedImage)
+		img, err = fetchImage(ctx, source, client, registryConfigPath, useCachedImage, emptyLabels)
 		if err != nil {
 			log.G(ctx).WithField("ref", source).Error(err)
 			return err
@@ -494,7 +510,7 @@ func runCtr(containerdSocket string, namespace string, containerID string, sourc
 }
 
 // pullImageOnly pulls the specified container image
-func pullImageOnly(containerdSocket string, namespace string, source string, registryConfigPath string, useCachedImage bool) error {
+func pullImageOnly(containerdSocket string, namespace string, source string, registryConfigPath string, useCachedImage bool, labels map[string]string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	ctx = namespaces.WithNamespace(ctx, namespace)
@@ -508,12 +524,12 @@ func pullImageOnly(containerdSocket string, namespace string, source string, reg
 	// Check if the image source is an ECR image. If it is, then we need to handle it with the ECR resolver.
 	isECRImage := ecrRegex.MatchString(source)
 	if isECRImage {
-		_, err = fetchECRImage(ctx, source, client, registryConfigPath, useCachedImage)
+		_, err = fetchECRImage(ctx, source, client, registryConfigPath, useCachedImage, labels)
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err = fetchImage(ctx, source, client, registryConfigPath, useCachedImage)
+		_, err = fetchImage(ctx, source, client, registryConfigPath, useCachedImage, labels)
 		if err != nil {
 			log.G(ctx).WithField("ref", source).Error(err)
 			return err
@@ -646,7 +662,7 @@ func fetchECRRef(ctx context.Context, input string) (ecr.ECRSpec, error) {
 }
 
 // fetchECRImage does some additional conversions before resolving the image reference and fetches the image.
-func fetchECRImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, fetchCachedImageIfExist bool) (containerd.Image, error) {
+func fetchECRImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, fetchCachedImageIfExist bool, labels map[string]string) (containerd.Image, error) {
 	ecrRef, err := fetchECRRef(ctx, source)
 	if err != nil {
 		return nil, err
@@ -658,7 +674,7 @@ func fetchECRImage(ctx context.Context, source string, client *containerd.Client
 		WithField("source", source).
 		Debug("parsed ECR reference from URI")
 
-	img, err := fetchImage(ctx, ref, client, registryConfigPath, fetchCachedImageIfExist)
+	img, err := fetchImage(ctx, ref, client, registryConfigPath, fetchCachedImageIfExist, labels)
 	if err != nil {
 		log.G(ctx).WithField("ref", ref).Error(err)
 		return nil, err
@@ -971,7 +987,7 @@ func withProxyEnv() oci.SpecOpts {
 }
 
 // fetchImage returns a `containerd.Image` given an image source.
-func fetchImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, useCachedImage bool) (containerd.Image, error) {
+func fetchImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, useCachedImage bool, labels map[string]string) (containerd.Image, error) {
 	// Check the containerd image store to see if image exists
 	img, err := client.GetImage(ctx, source)
 	if err != nil {
@@ -986,11 +1002,11 @@ func fetchImage(ctx context.Context, source string, client *containerd.Client, r
 		log.G(ctx).WithField("ref", source).Info("Image exists, fetching cached image from image store")
 		return img, err
 	}
-	return pullImage(ctx, source, client, registryConfigPath)
+	return pullImage(ctx, source, client, registryConfigPath, labels)
 }
 
 // pullImage pulls an image from the specified source.
-func pullImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string) (containerd.Image, error) {
+func pullImage(ctx context.Context, source string, client *containerd.Client, registryConfigPath string, labels map[string]string) (containerd.Image, error) {
 	// Handle registry config
 	var registryConfig *RegistryConfig
 	if registryConfigPath != "" {
@@ -1017,9 +1033,18 @@ func pullImage(ctx context.Context, source string, client *containerd.Client, re
 	var img containerd.Image
 	for {
 		var err error
-		img, err = client.Pull(ctx, source,
+
+		pullOpts := []containerd.RemoteOpt{
 			withDynamicResolver(ctx, source, registryConfig),
-			containerd.WithSchema1Conversion)
+			containerd.WithSchema1Conversion,
+		}
+
+		if len(labels) != 0 {
+			pullOpts = append(pullOpts, containerd.WithPullLabels(labels))
+		}
+
+		img, err = client.Pull(ctx, source, pullOpts...)
+
 		if err == nil {
 			log.G(ctx).WithField("img", img.Name()).Info("pulled image successfully")
 			break
@@ -1183,4 +1208,29 @@ func withUnmaskedPaths(unmaskPaths []string) oci.SpecOpts {
 		}
 		return nil
 	}
+}
+
+// Convert label to map[string]string for containerd.WithPullLabels.
+// Label are in the format of "key=value".
+func convertLabels(labels []string) (map[string]string, error) {
+	labelsMap := make(map[string]string)
+	// a slice of labels is empty if no labels are provided. Then we should return an empty map.
+	if len(labels) == 0 {
+		return labelsMap, nil
+	}
+
+	for _, label := range labels {
+		labelLen := len(label)
+		if labelLen > imageLabelMaxSize {
+			return labelsMap, fmt.Errorf("label key and value length (%d bytes) greater than maximum size (%d bytes)", labelLen, imageLabelMaxSize)
+		}
+
+		if strings.Contains(label, "=") {
+			labelKeyValue := strings.Split(label, "=")
+			labelsMap[labelKeyValue[0]] = labelKeyValue[1]
+		} else {
+			labelsMap[label] = ""
+		}
+	}
+	return labelsMap, nil
 }
