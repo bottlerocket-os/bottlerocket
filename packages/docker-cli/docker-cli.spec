@@ -2,9 +2,9 @@
 %global gorepo cli
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 20.10.21
+%global gover 25.0.2
 %global rpmver %{gover}
-%global gitrev baeda1f82a10204ec5708d5fbba130ad76cfee49
+%global gitrev 29cf62922279a56e122dc132eb84fe98f61d5950
 
 %global source_date_epoch 1492525740
 
@@ -18,9 +18,6 @@ License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/cli-%{gover}.tar.gz
 Source1000: clarify.toml
-
-# Backport to fix host header issue when compiling with Go 1.20.6 or later
-Patch0001: 0001-non-tcp-host-header.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
