@@ -37,7 +37,6 @@ included-packages = [
     "docker-cli",
     "docker-engine",
     "docker-init",
-    "docker-proxy",
 # tools
     "login",
     "iputils",
@@ -57,7 +56,6 @@ open-vm-tools = { path = "../../packages/open-vm-tools" }
 docker-cli = { path = "../../packages/docker-cli" }
 docker-engine = { path = "../../packages/docker-engine" }
 docker-init = { path = "../../packages/docker-init" }
-docker-proxy = { path = "../../packages/docker-proxy" }
 # tools
 login = { path = "../../packages/login" }
 iputils = { path = "../../packages/iputils" }

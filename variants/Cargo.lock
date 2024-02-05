@@ -24,7 +24,6 @@ dependencies = [
  "docker-cli",
  "docker-engine",
  "docker-init",
- "docker-proxy",
  "iputils",
  "kernel-6_1",
  "login",
@@ -39,7 +38,6 @@ dependencies = [
  "docker-cli",
  "docker-engine",
  "docker-init",
- "docker-proxy",
  "ecs-agent",
  "kernel-5_10",
  "release",
@@ -52,7 +50,6 @@ dependencies = [
  "docker-cli",
  "docker-engine",
  "docker-init",
- "docker-proxy",
  "ecs-agent",
  "ecs-gpu-init",
  "kernel-5_10",
@@ -68,7 +65,6 @@ dependencies = [
  "docker-cli",
  "docker-engine",
  "docker-init",
- "docker-proxy",
  "ecs-agent",
  "kernel-6_1",
  "release",
@@ -81,7 +77,6 @@ dependencies = [
  "docker-cli",
  "docker-engine",
  "docker-init",
- "docker-proxy",
  "ecs-agent",
  "ecs-gpu-init",
  "kernel-6_1",
@@ -401,13 +396,6 @@ dependencies = [
 
 [[package]]
 name = "docker-init"
-version = "0.1.0"
-dependencies = [
- "glibc",
-]
-
-[[package]]
-name = "docker-proxy"
 version = "0.1.0"
 dependencies = [
  "glibc",
@@ -957,7 +945,6 @@ dependencies = [
  "docker-cli",
  "docker-engine",
  "docker-init",
- "docker-proxy",
  "iputils",
  "kernel-6_1",
  "linux-firmware",
@@ -1203,7 +1190,6 @@ dependencies = [
  "docker-cli",
  "docker-engine",
  "docker-init",
- "docker-proxy",
  "iputils",
  "kernel-6_1",
  "login",
