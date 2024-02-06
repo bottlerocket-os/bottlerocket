@@ -59,6 +59,8 @@ members = [
     "api/migration/migrations/v1.19.0/add-additional-ecs-settings",
     "api/migration/migrations/v1.19.1/aws-admin-container-v0-11-4",
     "api/migration/migrations/v1.19.1/public-admin-container-v0-11-4",
+    "api/migration/migrations/v1.19.1/aws-control-container-v0-7-8",
+    "api/migration/migrations/v1.19.1/public-control-container-v0-7-8",
 
     "bloodhound",
 
