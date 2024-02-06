@@ -3,9 +3,9 @@
 %global goorg github.com/docker
 %global goimport %{goorg}/docker
 
-%global gover 20.10.21
+%global gover 25.0.2
 %global rpmver %{gover}
-%global gitrev 3056208812eb5e792fa99736c9167d1e10f4ab49
+%global gitrev fce6e0ca9bc000888de3daa157af14fa41fcd0ff
 
 %global source_date_epoch 1363394400
 
@@ -29,9 +29,7 @@ Source100: prepare-var-lib-docker.service
 
 Source1000: clarify.toml
 
-# Backport to fix host header issue when compiling with Go 1.20.6 or later
-Patch0001: 0001-non-tcp-host-header.patch
-Patch0002: 0002-Change-default-capabilities-using-daemon-config.patch
+Patch0001: 0001-Change-default-capabilities-using-daemon-config.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
@@ -64,10 +62,12 @@ export BUILDTIME=$(date -u -d "@%{source_date_epoch}" --rfc-3339 ns 2> /dev/null
 export PLATFORM="Docker Engine - Community"
 source ./hack/make/.go-autogen
 go build -buildmode=pie -ldflags="${GOLDFLAGS} ${LDFLAGS}" -tags="${BUILDTAGS}" -o dockerd %{goimport}/cmd/dockerd
+go build -buildmode=pie -ldflags="${GOLDFLAGS} ${LDFLAGS}" -tags="${BUILDTAGS}" -o docker-proxy %{goimport}/cmd/docker-proxy
 
 %install
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 dockerd %{buildroot}%{_cross_bindir}
+install -p -m 0755 docker-proxy %{buildroot}%{_cross_bindir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{S:100} %{buildroot}%{_cross_unitdir}
@@ -86,6 +86,7 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/docker-daemon-nvidia
 %{_cross_attribution_file}
 %{_cross_attribution_vendor_dir}
 %{_cross_bindir}/dockerd
+%{_cross_bindir}/docker-proxy
 %{_cross_unitdir}/docker.service
 %{_cross_unitdir}/docker.socket
 %{_cross_unitdir}/prepare-var-lib-docker.service

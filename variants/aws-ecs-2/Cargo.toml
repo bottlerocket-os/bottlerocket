@@ -23,7 +23,6 @@ included-packages = [
     "docker-cli",
     "docker-engine",
     "docker-init",
-    "docker-proxy",
 # ecs
     "ecs-agent",
 ]
@@ -46,6 +45,5 @@ kernel-6_1 = { path = "../../packages/kernel-6.1" }
 docker-cli = { path = "../../packages/docker-cli" }
 docker-engine = { path = "../../packages/docker-engine" }
 docker-init = { path = "../../packages/docker-init" }
-docker-proxy = { path = "../../packages/docker-proxy" }
 # ecs
 ecs-agent = { path = "../../packages/ecs-agent" }
