@@ -1,3 +1,25 @@
+# v1.19.1 (2024-02-06)
+
+## OS Changes
+* Update kernel to 5.10.209, 5.15.148 ([#3765])
+* Update host containers ([#3763])
+
+## Orchestrator Changes
+
+### Kubernetes
+* Mark pause container image as "pinned" to prevent garbage collection ([#3757]) 
+
+### ECS
+* Update Docker engine and Docker CLI to v25.0.2 ([#3759])
+* Update ECS agent to 1.81.0 ([#3759])
+* Update AWS SSM agent to 3.2.2222.0 ([#3762])
+
+[#3765]: https://github.com/bottlerocket-os/bottlerocket/pull/3765
+[#3763]: https://github.com/bottlerocket-os/bottlerocket/pull/3763
+[#3757]: https://github.com/bottlerocket-os/bottlerocket/pull/3757
+[#3759]: https://github.com/bottlerocket-os/bottlerocket/pull/3759
+[#3762]: https://github.com/bottlerocket-os/bottlerocket/pull/3762
+
 # v1.19.0 (2024-02-01)
 
 ## OS Changes
