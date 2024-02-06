@@ -40,7 +40,7 @@ import (
 var ecrRegex = regexp.MustCompile(`(^[a-zA-Z0-9][a-zA-Z0-9-_]*)\.dkr\.ecr\.([a-zA-Z0-9][a-zA-Z0-9-_]*)\.amazonaws\.com(\.cn)?.*`)
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	// Dispatch logging output instead of writing all levels' messages to
 	// stderr.
 	log.L.Logger.SetOutput(io.Discard)
