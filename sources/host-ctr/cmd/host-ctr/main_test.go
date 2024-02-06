@@ -222,3 +222,77 @@ func TestFetchECRRef(t *testing.T) {
 		})
 	}
 }
+
+func TestConvertLabel(t *testing.T) {
+	tests := []struct {
+		name             string
+		labels           []string
+		expectedErr      bool
+		expectedLabelMap map[string]string
+	}{
+		{
+			"Valid single label",
+			[]string{"io.cri-containerd.pinned=pinned"},
+			false,
+			map[string]string{
+				"io.cri-containerd.pinned": "pinned",
+			},
+		},
+		{
+			"Valid single label without equals sign",
+			[]string{"io.cri-containerd.pinned,pinned"},
+			false,
+			map[string]string{
+				"io.cri-containerd.pinned,pinned": "",
+			},
+		},
+		{
+			"Empty labels",
+			[]string{""},
+			false,
+			map[string]string{"": ""},
+		},
+		{
+			"Valid multiple labels",
+			[]string{"io.cri-containerd.pinned=pinned", "io.cri-containerd.test=test"},
+			false,
+			map[string]string{
+				"io.cri-containerd.pinned": "pinned",
+				"io.cri-containerd.test":   "test",
+			},
+		},
+		{
+			"valid multiple labels without equals sign",
+			[]string{"io.cri-containerd.pinned=pinned", "io.cri-containerd.test,test"},
+			false,
+			map[string]string{
+				"io.cri-containerd.pinned":    "pinned",
+				"io.cri-containerd.test,test": "",
+			},
+		},
+		{
+			"Value is empty",
+			[]string{"io.cri-containerd.pinned=pinned", "io.cri-containerd.test="},
+			false,
+			map[string]string{
+				"io.cri-containerd.pinned": "pinned",
+				"io.cri-containerd.test":   "",
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := convertLabels(tc.labels)
+			if tc.expectedErr {
+				// handle error cases
+				if err == nil {
+					t.Fail()
+				}
+			} else {
+				// handle happy paths
+				assert.Equal(t, tc.expectedLabelMap, result)
+			}
+		})
+	}
+}
