@@ -14,13 +14,14 @@ bytes = "1"
 constants = { path = "../../constants", version = "0.1" }
 log = "0.4"
 nix = "0.26"
-models =  { path = "../../models", version = "0.1" }
+modeled-types = { path = "../../models/modeled-types", version = "0.1"}
 schnauzer = { path = "../schnauzer", version = "0.1" }
 signpost = { path = "../../updater/signpost", version = "0.1" }
 simplelog = "0.12"
 snafu = "0.7"
-serde_json = "1"
-tokio = { version = "~1.32", default-features = false, features = ["macros", "rt-multi-thread"] } # LTS
+serde = { version = "1.0", features = ["derive"]}
+serde_json = "1.0"
+toml = "0.8"
 
 [dev-dependencies]
 maplit = "1"

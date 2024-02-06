@@ -56,9 +56,6 @@ pub(super) enum Error {
         path: PathBuf,
     },
 
-    #[snafu(display("Failed to retrieve settings: {}", source))]
-    RetrieveSettings { source: schnauzer::v1::Error },
-
     #[snafu(display("Failed to convert usize to u32: {}", source))]
     UsizeToU32 { source: std::num::TryFromIntError },
 
@@ -68,11 +65,11 @@ pub(super) enum Error {
     #[snafu(display("Failed to write initrd image file: {}", source))]
     WriteInitrd { source: std::io::Error },
 
+    #[snafu(display("Error deserializing `BootSettings` from TOML: {}", source))]
+    InputToml { source: toml::de::Error },
+
     #[snafu(display("Error serializing `BootSettings` to JSON: {}", source))]
     OutputJson { source: serde_json::error::Error },
-
-    #[snafu(display("Failed to deserialize `BootSettings` from JSON value: {}", source))]
-    BootSettingsFromJsonValue { source: serde_json::error::Error },
 
     #[snafu(display(
         "Invalid boot config file, expected key-value, or key entries for each line"
@@ -80,17 +77,13 @@ pub(super) enum Error {
     InvalidBootConfig,
 
     #[snafu(display("Failed to parse boot config key: {}", source))]
-    ParseBootConfigKey {
-        source: model::modeled_types::error::Error,
-    },
+    ParseBootConfigKey { source: modeled_types::error::Error },
 
     #[snafu(display("Invalid boot config value '{}'. Boot config values may only contain ASCII printable characters except for delimiters such as ';', '\n', ',', '#', and '}}'", input))]
     InvalidBootConfigValue { input: String },
 
     #[snafu(display("Failed to parse boot config value: {}", source))]
-    ParseBootConfigValue {
-        source: model::modeled_types::error::Error,
-    },
+    ParseBootConfigValue { source: modeled_types::error::Error },
 
     #[snafu(display("Unsupported boot config key '{}'. `BootSettings` currently only supports boot configuration for 'kernel' and 'init'", key))]
     UnsupportedBootConfigKey { key: String },

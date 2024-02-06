@@ -5,5 +5,9 @@ affected-services = ["bootconfig"]
 setting-generator = "/usr/bin/prairiedog generate-boot-settings"
 
 [services.bootconfig]
-configuration-files = []
+configuration-files = ["prairiedog-toml"]
 restart-commands = ["/usr/bin/prairiedog generate-boot-config"]
+
+[configuration-files.prairiedog-toml]
+path = "/etc/prairiedog.toml"
+template-path = "/usr/share/templates/prairiedog-toml"

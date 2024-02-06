@@ -20,7 +20,7 @@ use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger, WriteLogger};
 use snafu::{ensure, ResultExt};
 use std::ffi::OsStr;
 use std::fs::{self, File};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::thread;
 use std::time::Duration;
@@ -29,6 +29,8 @@ mod bootconfig;
 mod error;
 mod initrd;
 
+// Prairie dog config path
+const DEFAULT_CONFIG_FILE: &str = "/etc/prairiedog.toml";
 // Kdump related binary paths
 const MAKEDUMPFILE_PATH: &str = "/sbin/makedumpfile";
 const KEXEC_PATH: &str = "/sbin/kexec";
@@ -60,9 +62,9 @@ struct Args {
     #[argh(option, default = "LevelFilter::Info", short = 'l')]
     /// log-level trace|debug|info|warn|error
     log_level: LevelFilter,
-    #[argh(option, default = "constants::API_SOCKET.to_string()", short = 's')]
-    /// socket-path path to apiserver socket
-    socket_path: String,
+    #[argh(option, default = "PathBuf::from(DEFAULT_CONFIG_FILE)", short = 'c')]
+    /// config-path to provide alternate config file path
+    config_path: PathBuf,
     #[argh(subcommand)]
     subcommand: Subcommand,
 }
@@ -283,11 +285,11 @@ fn load_crash_kernel() -> Result<()> {
     Ok(())
 }
 
-async fn reboot_if_required<P>(socket_path: P) -> Result<()>
+fn reboot_if_required<P>(config_path: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    if is_reboot_required(socket_path).await? {
+    if is_reboot_required(config_path)? {
         info!("Boot settings changed and require a reboot to take effect. Initiating reboot...");
         command("/usr/bin/systemctl", ["reboot"])?;
         // The "systemctl reboot" process will not block until the host does
@@ -333,7 +335,7 @@ fn setup_logger(args: &Args) -> Result<()> {
     Ok(())
 }
 
-async fn run() -> Result<()> {
+fn run() -> Result<()> {
     let args: Args = argh::from_env();
     setup_logger(&args)?;
 
@@ -341,15 +343,14 @@ async fn run() -> Result<()> {
         Subcommand::CaptureDump(_) => capture_dump(),
         Subcommand::PrepareBoot(_) => prepare_boot(),
         Subcommand::LoadCrashKernel(_) => load_crash_kernel(),
-        Subcommand::GenerateBootConfig(_) => generate_boot_config(args.socket_path).await,
-        Subcommand::GenerateBootSettings(_) => generate_boot_settings().await,
-        Subcommand::RebootIfRequired(_) => reboot_if_required(args.socket_path).await,
+        Subcommand::GenerateBootConfig(_) => generate_boot_config(args.config_path),
+        Subcommand::GenerateBootSettings(_) => generate_boot_settings(),
+        Subcommand::RebootIfRequired(_) => reboot_if_required(args.config_path),
     }
 }
 
-#[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
+fn main() {
+    if let Err(e) = run() {
         error!("{}", e);
         process::exit(1);
     }

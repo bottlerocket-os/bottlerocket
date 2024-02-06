@@ -3108,14 +3108,29 @@ dependencies = [
  "generate-readme",
  "log",
  "maplit",
- "models",
+ "modeled-types",
  "nix",
  "schnauzer",
+ "serde",
  "serde_json",
  "signpost",
  "simplelog",
  "snafu",
- "tokio",
+ "toml 0.8.8",
+]
+
+[[package]]
+name = "prairiedog-config-file-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "prairiedog-services-cfg-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
 ]
 
 [[package]]
