@@ -1,0 +1,6 @@
+[clarify."github.com/cloudflare/circl"]
+expression = "BSD-3-Clause"
+license-files = [
+    { path = "LICENSE", hash = 0xc5e27124 },
+]
+

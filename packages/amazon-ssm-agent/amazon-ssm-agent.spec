@@ -8,12 +8,14 @@
 %global goimport %{goproject}/%{gorepo}
 
 Name: %{_cross_os}amazon-ssm-agent
-Version: 3.2.2143.0
+Version: 3.2.2222.0
 Release: 1%{?dist}
 Summary: An agent to enable remote management of EC2 instances
 License: Apache-2.0
 URL: https://github.com/aws/amazon-ssm-agent
 Source0: %{gorepo}-%{version}.tar.gz
+Source1000: clarify.toml
+
 BuildRequires: %{_cross_os}glibc-devel
 
 %description
@@ -40,7 +42,8 @@ for b in amazon-ssm-agent ssm-agent-worker ssm-session-worker; do
   install -D -p -m 0755 ${b} %{buildroot}%{_cross_libexecdir}/amazon-ssm-agent/bin/%{version}
 done
 
-%cross_scan_attribution go-vendor vendor
+
+%cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
 %files
 %license LICENSE
