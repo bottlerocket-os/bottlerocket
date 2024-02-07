@@ -1,5 +1,5 @@
 [Unit]
-Description=CNI Plugin Directory (/opt/cni/bin)
+Description=CNI Plugin Directory (/opt/cni)
 DefaultDependencies=no
 Conflicts=umount.target
 Before=local-fs.target umount.target
@@ -9,10 +9,10 @@ RequiresMountsFor=/opt /var
 
 [Mount]
 What=overlay
-Where=/opt/cni/bin
+Where=/opt/cni
 Type=overlay
 # "noexec" omitted because containerd needs to execute CNI plugins
-Options=nosuid,nodev,noatime,lowerdir=/usr/libexec/cni/bin,upperdir=/var/lib/cni-plugins/.overlay/upper,workdir=/var/lib/cni-plugins/.overlay/work,context=system_u:object_r:cni_exec_t:s0
+Options=nosuid,nodev,noatime,lowerdir=/usr/libexec/cni,upperdir=/var/lib/cni-plugins/.overlay/upper,workdir=/var/lib/cni-plugins/.overlay/work,context=system_u:object_r:cni_exec_t:s0
 
 [Install]
 WantedBy=preconfigured.target

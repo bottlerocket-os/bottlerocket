@@ -44,7 +44,7 @@ Source1024: mnt.mount
 Source1025: local.mount
 Source1026: media-cdrom.mount
 Source1027: root-.aws.mount
-Source1028: opt-cni-bin.mount
+Source1028: opt-cni.mount
 
 # Mounts that require helper programs.
 Source1040: prepare-boot.service
@@ -240,7 +240,7 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_unitdir}/opt.mount
 %{_cross_unitdir}/mnt.mount
 %{_cross_unitdir}/etc-cni.mount
-%{_cross_unitdir}/opt-cni-bin.mount
+%{_cross_unitdir}/opt-cni.mount
 %{_cross_unitdir}/media-cdrom.mount
 %{_cross_unitdir}/local.mount
 %{_cross_unitdir}/*-lower.mount
