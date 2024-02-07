@@ -12,6 +12,10 @@ Type=oneshot
 ExecStart=/usr/bin/rm -rf /opt/cni
 ExecStart=/usr/bin/mkdir -p /opt/cni
 
+# Create the directories for a read-write overlayfs for CSI helpers.
+ExecStart=/usr/bin/rm -rf /opt/csi
+ExecStart=/usr/bin/mkdir -p /opt/csi
+
 RemainAfterExit=true
 StandardError=journal+console
 
