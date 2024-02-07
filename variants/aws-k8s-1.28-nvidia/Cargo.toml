@@ -30,7 +30,7 @@ included-packages = [
     "kubelet-1.28",
     "aws-iam-authenticator",
     # nvidia
-    "nvidia-container-toolkit",
+    "nvidia-container-toolkit-k8s",
     "nvidia-k8s-device-plugin",
     "kmod-6.1-nvidia-tesla-535",
 ]

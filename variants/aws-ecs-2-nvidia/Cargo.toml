@@ -28,7 +28,7 @@ included-packages = [
     "ecs-agent",
 # NVIDIA support
     "ecs-gpu-init",
-    "nvidia-container-toolkit",
+    "nvidia-container-toolkit-ecs",
     "kmod-6.1-nvidia-tesla-535",
 ]
 

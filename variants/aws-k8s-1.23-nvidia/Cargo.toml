@@ -23,7 +23,7 @@ included-packages = [
     "kernel-5.10",
     "kubelet-1.23",
     "release",
-    "nvidia-container-toolkit",
+    "nvidia-container-toolkit-k8s",
     "nvidia-k8s-device-plugin",
     "kmod-5.10-nvidia-tesla-470",
 ]

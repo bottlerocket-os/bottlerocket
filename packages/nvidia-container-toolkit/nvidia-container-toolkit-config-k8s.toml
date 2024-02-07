@@ -1,0 +1,8 @@
+accept-nvidia-visible-devices-as-volume-mounts = true
+accept-nvidia-visible-devices-envvar-when-unprivileged = false
+
+[nvidia-container-cli]
+root = "/"
+path = "/usr/bin/nvidia-container-cli"
+environment = []
+ldconfig = "@/sbin/ldconfig"
