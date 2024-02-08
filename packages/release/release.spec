@@ -24,35 +24,29 @@ Source205: netdog.template
 Source206: aws-config
 Source207: aws-credentials
 Source208: modules-load.template
+Source209: log4j-hotpatch-enabled
 
+# Core targets, services, and slices.
 Source1001: multi-user.target
 Source1002: configured.target
 Source1003: preconfigured.target
 Source1004: activate-configured.service
 Source1005: activate-multi-user.service
-Source1011: set-hostname.service
+Source1006: set-hostname.service
+Source1007: runtime.slice
 
-# Mounts for writable local storage.
-Source1006: var.mount
-Source1007: opt.mount
-Source1008: var-lib-bottlerocket.mount
-Source1009: etc-cni.mount
-Source1010: mnt.mount
-Source1012: opt-cni-bin.mount
-Source1013: local.mount
-Source1014: root-.aws.mount
+# Mount units.
+Source1020: var.mount
+Source1021: opt.mount
+Source1022: var-lib-bottlerocket.mount
+Source1023: etc-cni.mount
+Source1024: mnt.mount
+Source1025: local.mount
+Source1026: media-cdrom.mount
+Source1027: root-.aws.mount
+Source1028: opt-cni-bin.mount
 
-# CD-ROM mount & associated udev rules
-Source1015: media-cdrom.mount
-Source1016: mount-cdrom.rules
-
-# Mounts that require build-time edits.
-Source1020: var-lib-kernel-devel-lower.mount.in
-Source1021: usr-src-kernels.mount.in
-Source1022: usr-share-licenses.mount.in
-Source1023: lib-modules.mount.in
-
-# Mounts that require helper programs
+# Mounts that require helper programs.
 Source1040: prepare-boot.service
 Source1041: prepare-opt.service
 Source1042: prepare-var.service
@@ -64,26 +58,29 @@ Source1047: repart-data-preferred.service
 Source1048: repart-data-fallback.service
 Source1049: prepare-local-fs.service
 
-# Services for kdump support
+# Feature-specific units.
 Source1060: capture-kernel-dump.service
 Source1061: disable-kexec-load.service
 Source1062: load-crash-kernel.service
+Source1063: deprecation-warning@.service
+Source1064: deprecation-warning@.timer
 
-# systemd cgroups/slices
-Source1080: runtime.slice
+# Mounts that require build-time edits.
+Source1080: var-lib-kernel-devel-lower.mount.in
+Source1081: usr-src-kernels.mount.in
+Source1082: usr-share-licenses.mount.in
+Source1083: lib-modules.mount.in
 
 # Drop-in units to override defaults
 Source1100: systemd-tmpfiles-setup-service-debug.conf
 Source1101: systemd-resolved-service-env.conf
 Source1102: systemd-networkd-service-env.conf
 
-# systemd-udevd default link
+# network link rules
 Source1200: 80-release.link
 
-# Systemd units and configurations for deprecation warnings
-Source1300: deprecation-warning@.service
-Source1301: deprecation-warning@.timer
-Source1302: log4j-hotpatch-enabled
+# udev rules
+Source1300: mount-cdrom.rules
 
 # Common logdog configuration
 Source1400: logdog.common.conf
@@ -156,11 +153,13 @@ EOF
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
-  %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} %{S:1006} %{S:1007} \
-  %{S:1008} %{S:1009} %{S:1010} %{S:1011} %{S:1012} %{S:1013} %{S:1015} \
-  %{S:1040} %{S:1041} %{S:1042} %{S:1043} %{S:1044} %{S:1045} %{S:1046} \
-  %{S:1047} %{S:1048} %{S:1049} %{S:1060} %{S:1061} %{S:1062} %{S:1080} \
-  %{S:1014} %{S:1300} %{S:1301} \
+  %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} \
+  %{S:1006} %{S:1007} \
+  %{S:1020} %{S:1021} %{S:1022} %{S:1023} %{S:1024} \
+  %{S:1025} %{S:1026} %{S:1027} %{S:1028} \
+  %{S:1040} %{S:1041} %{S:1042} %{S:1043} %{S:1044} \
+  %{S:1045} %{S:1046} %{S:1047} %{S:1048} %{S:1049} \
+  %{S:1060} %{S:1061} %{S:1062} %{S:1063} %{S:1064} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
@@ -176,22 +175,22 @@ install -p -m 0644 %{S:1102} \
   %{buildroot}%{_cross_unitdir}/systemd-networkd.service.d/00-env.conf
 
 LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/.overlay/lower)
-sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1020} > ${LOWERPATH}.mount
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1080} > ${LOWERPATH}.mount
 install -p -m 0644 ${LOWERPATH}.mount %{buildroot}%{_cross_unitdir}
 
 # Mounting on usr/src/kernels requires using the real path: %{_cross_usrsrc}/kernels
 KERNELPATH=$(systemd-escape --path %{_cross_usrsrc}/kernels)
-sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1021} > ${KERNELPATH}.mount
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1081} > ${KERNELPATH}.mount
 install -p -m 0644 ${KERNELPATH}.mount %{buildroot}%{_cross_unitdir}
 
 # Mounting on usr/share/licenses requires using the real path: %{_cross_datadir}/licenses
 LICENSEPATH=$(systemd-escape --path %{_cross_licensedir})
-sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1022} > ${LICENSEPATH}.mount
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1082} > ${LICENSEPATH}.mount
 install -p -m 0644 ${LICENSEPATH}.mount %{buildroot}%{_cross_unitdir}
 
 # Mounting on lib/modules requires using the real path: %{_cross_libdir}/modules
 LIBDIRPATH=$(systemd-escape --path %{_cross_libdir})
-sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1023} > ${LIBDIRPATH}-modules.mount
+sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1083} > ${LIBDIRPATH}-modules.mount
 install -p -m 0644 ${LIBDIRPATH}-modules.mount %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_templatedir}
@@ -204,15 +203,15 @@ install -p -m 0644 %{S:205} %{buildroot}%{_cross_templatedir}/netdog-toml
 install -p -m 0644 %{S:206} %{buildroot}%{_cross_templatedir}/aws-config
 install -p -m 0644 %{S:207} %{buildroot}%{_cross_templatedir}/aws-credentials
 install -p -m 0644 %{S:208} %{buildroot}%{_cross_templatedir}/modules-load
-install -p -m 0644 %{S:1302} %{buildroot}%{_cross_templatedir}/log4j-hotpatch-enabled
+install -p -m 0644 %{S:209} %{buildroot}%{_cross_templatedir}/log4j-hotpatch-enabled
 
 install -d %{buildroot}%{_cross_udevrulesdir}
-install -p -m 0644 %{S:1016} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
-
-ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
+install -p -m 0644 %{S:1300} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.rules
 
 install -d %{buildroot}%{_cross_datadir}/logdog.d
 install -p -m 0644 %{S:1400} %{buildroot}%{_cross_datadir}/logdog.d
+
+ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 
 %files
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
