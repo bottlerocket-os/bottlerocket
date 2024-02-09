@@ -172,6 +172,19 @@
 (typeattribute ephemeral_o)
 (typeattributeset ephemeral_o (any_t proc_t))
 
+; Executable objects that are entry points into containers.
+(typeattribute container_exec_o)
+(typeattributeset container_exec_o (data_t cache_t secret_t cni_exec_t))
+
+; Executable objects that transition into unprivileged containers by default.
+(typeattribute unprivileged_container_exec_o)
+(typeattributeset unprivileged_container_exec_o (cni_exec_t))
+
+; Executable objects that transition into privileged containers by default.
+(typeattribute privileged_container_exec_o)
+(typeattributeset privileged_container_exec_o (
+  xor (container_exec_o) (unprivileged_container_exec_o)))
+
 ; The set of all objects.
 (typeattribute all_o)
 (typeattributeset all_o (

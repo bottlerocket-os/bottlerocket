@@ -66,6 +66,11 @@
 (allow init_t runtime_t (processes (transform)))
 (allow runtime_t runtime_exec_t (file (entrypoint)))
 
+; `runc` can transition to any of the container subject labels, for
+; a process started from any of the container object labels.
+(allow runtime_t container_s (processes (transform)))
+(allow container_s container_exec_o (file (entrypoint)))
+
 ; `runc` starts container processes as "control_t" by default, but it
 ; can use other "container" subject labels like "container_t". This
 ; depends on correct labeling for objects on local storage.
@@ -73,24 +78,15 @@
 ; Runtimes that use the Go SELinux library will override this label
 ; with the "process" label from the `lxc_contexts` when launching
 ; unprivileged containers, unless automatic labeling is disabled.
-(typetransition runtime_t data_t process control_t)
-(typetransition runtime_t cache_t process control_t)
-(typetransition runtime_t secret_t process control_t)
-(allow runtime_t container_s (processes (transform)))
-(allow container_s data_t (file (entrypoint)))
-(allow container_s cache_t (file (entrypoint)))
-(allow container_s secret_t (file (entrypoint)))
-
-; Adjust the level range to span all categories, since privileged
+;
+; The level range is adjusted to span all categories, since privileged
 ; containers won't get an MCS pair assigned.
-(rangetransition runtime_t data_t process s0-s0)
-(rangetransition runtime_t cache_t process s0-s0)
-(rangetransition runtime_t secret_t process s0-s0)
+(typetransition runtime_t privileged_container_exec_o process control_t)
+(rangetransition runtime_t privileged_container_exec_o process s0-s0)
 
-; Run CNI plugins as unprivileged containers.
-(typetransition runtime_t cni_exec_t process container_t)
-(rangetransition runtime_t cni_exec_t process s0)
-(allow container_t cni_exec_t (file (entrypoint)))
+; Some processes should transition to unprivileged containers by default.
+(typetransition runtime_t unprivileged_container_exec_o process container_t)
+(rangetransition runtime_t unprivileged_container_exec_o process s0)
 
 ; Allow transitions to container labels for programs invoked by OCI
 ; hooks. There's no matching type or range transition since `runc`
