@@ -88,6 +88,12 @@
 (typetransition runtime_t unprivileged_container_exec_o process container_t)
 (rangetransition runtime_t unprivileged_container_exec_o process s0)
 
+; If PID 1 is used to invoke a CSI helper directly, it should also
+; run as a privileged container.
+(typetransition init_t csi_exec_t process control_t)
+(rangetransition init_t csi_exec_t process s0-s0)
+(allow init_t control_t (processes (transform)))
+
 ; Allow transitions to container labels for programs invoked by OCI
 ; hooks. There's no matching type or range transition since `runc`
 ; also needs to run other OS programs.
@@ -151,6 +157,11 @@
 ; also run other system binaries.
 (allow api_t any_t (files (execute)))
 (allow api_t immutable_o (files (execute)))
+
+; `systemd` can only run immutable files, with the exception of CSI helpers
+; that may be required for FUSE mounts.
+(allow init_t immutable_o (files (execute)))
+(allow init_t csi_exec_t (files (execute)))
 
 ; Subjects that must run verified code can execute immutable objects, since
 ; those are all protected by dm-verity.

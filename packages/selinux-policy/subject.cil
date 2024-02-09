@@ -121,7 +121,7 @@
 
 ; Subjects shipped with the OS that should only execute verified code.
 (typeattribute verified_s)
-(typeattributeset verified_s (xor (host_s) (runtime_t mount_t api_t)))
+(typeattributeset verified_s (xor (host_s) (runtime_t mount_t api_t init_t)))
 
 ; Subjects that are allowed to manage the system clock.
 (typeattribute clock_s)
