@@ -3668,7 +3668,6 @@ dependencies = [
  "env_logger",
  "model-derive",
  "modeled-types",
- "rand",
  "serde",
  "serde_json",
 ]
