@@ -2649,6 +2649,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "settings-extension-aws",
  "settings-extension-container-registry",
  "settings-extension-kernel",
  "settings-extension-motd",
@@ -3646,6 +3647,18 @@ dependencies = [
  "simplelog",
  "snafu",
  "tokio",
+]
+
+[[package]]
+name = "settings-extension-aws"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

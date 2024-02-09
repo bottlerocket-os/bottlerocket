@@ -84,6 +84,7 @@ members = [
 
     "models",
 
+    "settings-extensions/aws",
     "settings-extensions/container-registry",
     "settings-extensions/kernel",
     "settings-extensions/motd",
