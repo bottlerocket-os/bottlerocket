@@ -8,7 +8,7 @@
 
 ; Define a subset of these types which are considered public.
 (typeattribute public)
-(typeattributeset public (xor (global) (restricted_o)))
+(typeattributeset public (xor (global) (read_restricted_o)))
 
 ; All subjects are allowed to describe all processes.
 (allow all_s all_s (processes (describe)))
@@ -129,7 +129,7 @@
 (allow privileged_s global (files (load)))
 
 ; Unprivileged subjects cannot read or execute restricted objects.
-(neverallow unprivileged_s restricted_o (files (load execute)))
+(neverallow unprivileged_s read_restricted_o (files (load execute)))
 
 ; Container subjects can execute anything that's public.
 (allow container_s public (files (execute)))
@@ -181,30 +181,27 @@
 ; most of the files and directories on /local.
 (allow unconfined_s shared_o (files (mutate mount)))
 
-; Subjects that control the OS, including helpers spawned by apiserver, can
-; write to and manage mounts for "secret" files and directories on /local.
-; Our runtimes also need to be able to perform these operations so that
-; they can launch host containers.
+; Helpers spawned by apiserver can write to and manage mounts for
+; "secret" files and directories on /local. Our runtimes also need to
+; be able to perform these operations so that they can launch host
+; containers.
 (allow api_s secret_t (files (mutate mount)))
-(allow control_s secret_t (files (mutate mount)))
 (allow runtime_s secret_t (files (mutate mount)))
 
-; Subjects that control the OS can write to and manage mounts for "state"
-; files and directories on /local.
-(allow control_s state_t (files (mutate mount)))
+; Subjects that control the OS can write to and manage mounts for
+; "sensitive" files and directories on /local.
+(allow control_s sensitive_o (files (mutate mount)))
 
-; `mount` can also write to these directories, to set up overlayfs mounts
-; that use them for work directories.
-(allow mount_t state_t (files (mutate)))
+; `mount` can also write to sensitive directories, which is required
+; to set up overlayfs mounts that can subsequently be written to.
+(allow mount_t sensitive_o (files (mutate)))
 
-; Unprivileged subjects cannot modify "state" or "secret" files.
-(neverallow unprivileged_s state_t (files (mutate mount)))
-(neverallow unprivileged_s secret_t (files (mutate mount)))
+; Unprivileged subjects cannot modify "sensitive" files.
+(neverallow unprivileged_s sensitive_o (files (mutate mount)))
 
-; Confined subjects cannot modify "state", "secret", or "shared" files.
+; Confined subjects are a subset of unprivileged subjects that cannot
+; modify "shared" files either.
 (neverallow confined_s shared_o (files (mutate mount)))
-(neverallow confined_s state_t (files (mutate mount)))
-(neverallow confined_s secret_t (files (mutate mount)))
 
 ; Trusted components are allowed to manage mounts everywhere.
 (allow trusted_s global (files (mount)))
@@ -219,7 +216,7 @@
 
 ; Other components should not be permitted to modify these files,
 ; or to manage mounts for these directories.
-(neverallow other_s protected_o (files (mutate mount)))
+(neverallow other_s write_restricted_o (files (mutate mount)))
 
 ; Only the API server and specific components can use the API
 ; socket, as this provides a means to escalate privileges and
@@ -272,8 +269,8 @@
 (allow all_o self (filesystem (associate)))
 (allow all_o ephemeral_o (filesystem (associate)))
 
-; Protected object labels can be used on local storage.
-(allow protected_o local_t (filesystem (associate)))
+; Write-restricted object labels can be used on local storage.
+(allow write_restricted_o local_t (filesystem (associate)))
 
 ; Shared object labels can also be used, so that volume types like
 ; emptyDir can be relabeled on behalf of containers.

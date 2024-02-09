@@ -148,14 +148,22 @@
 (typeattribute unconstrained_o)
 (typeattributeset unconstrained_o (xor (all_o) (constrained_o)))
 
-; Protected objects are files on local storage with special rules.
-(typeattribute protected_o)
-(typeattributeset protected_o (
-  cache_t private_t lease_t measure_t secret_t state_t))
+; Write-restricted objects are files on local storage that can only be
+; modified by system-level processes.
+(typeattribute write_restricted_o)
+(typeattributeset write_restricted_o (
+  cache_t lease_t measure_t secret_t state_t private_t))
 
-; Restricted objects are files that cannot be read by all processes.
-(typeattribute restricted_o)
-(typeattributeset restricted_o (private_t secret_t))
+; Read-restricted objects are files on local storage that can only be
+; opened by system-level processes.
+(typeattribute read_restricted_o)
+(typeattributeset read_restricted_o (
+  xor (write_restricted_o) (cache_t lease_t measure_t state_t)))
+
+; Sensitive objects are files on local storage that can only be modified
+; by unconfined system-level processes.
+(typeattribute sensitive_o)
+(typeattributeset sensitive_o (secret_t state_t))
 
 ; Immutable objects reside on read-only storage.
 (typeattribute immutable_o)
