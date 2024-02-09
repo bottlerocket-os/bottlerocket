@@ -88,6 +88,8 @@
 ; Label local directories for overlayfs mounts.
 (filecon "/var/lib/cni-plugins" any state)
 (filecon "/var/lib/cni-plugins/.*" any state)
+(filecon "/var/lib/csi-helpers" any state)
+(filecon "/var/lib/csi-helpers/.*" any state)
 (filecon "/var/lib/kernel-devel" any state)
 (filecon "/var/lib/kernel-devel/.*" any state)
 (filecon "/var/lib/kernel-modules" any state)
