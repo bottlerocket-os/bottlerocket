@@ -135,7 +135,9 @@ mod error {
 type Result<T> = std::result::Result<T, error::Error>;
 
 /// Query the API for the currently defined host containers
-async fn get_host_containers<P>(socket_path: P) -> Result<HashMap<Identifier, model::HostContainer>>
+async fn get_host_containers<P>(
+    socket_path: P,
+) -> Result<HashMap<Identifier, settings_extension_host_containers::HostContainer>>
 where
     P: AsRef<Path>,
 {
@@ -161,7 +163,7 @@ where
         serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { method, uri })?;
 
     // If host containers aren't defined, return an empty map
-    Ok(settings.host_containers.unwrap_or_default())
+    Ok(settings.host_containers.unwrap_or_default().host_containers)
 }
 
 /// SystemdUnit stores the systemd unit being manipulated
@@ -347,7 +349,10 @@ fn parse_args(args: env::Args) -> Args {
     }
 }
 
-fn handle_host_container<S>(name: S, image_details: &model::HostContainer) -> Result<()>
+fn handle_host_container<S>(
+    name: S,
+    image_details: &settings_extension_host_containers::HostContainer,
+) -> Result<()>
 where
     S: AsRef<str>,
 {

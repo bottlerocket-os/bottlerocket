@@ -2094,6 +2094,7 @@ dependencies = [
  "log",
  "models",
  "serde_json",
+ "settings-extension-host-containers",
  "simplelog",
  "snafu",
  "tokio",
