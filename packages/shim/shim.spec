@@ -35,7 +35,7 @@ mv gnu-efi-shim-%{gnuefiver} gnu-efi
 truncate -s 4080 empty.cer
 
 %global shim_make \
-%make_build\\\
+make\\\
   ARCH="%{_cross_arch}"\\\
   CROSS_COMPILE="%{_cross_target}-"\\\
   COMMIT_ID="%{commit}"\\\
