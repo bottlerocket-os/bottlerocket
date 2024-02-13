@@ -15,11 +15,14 @@ use std::fmt::Write;
 use std::fs;
 use std::io::BufReader;
 use std::io::{BufRead, Seek};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process;
 
 use model::modeled_types::Identifier;
+use model::PemCertificate;
 
+// Default location of the config file
+const DEFAULT_CONFIG_FILE: &str = "/etc/certdog.toml";
 // Read from the source in `/usr/share/factory` not the copy in `/etc`
 const DEFAULT_SOURCE_BUNDLE: &str = "/usr/share/factory/etc/pki/tls/certs/ca-bundle.crt";
 // This file is first created with tmpfilesd configurations
@@ -36,9 +39,9 @@ struct Args {
     #[argh(option, default = "LevelFilter::Info", short = 'l')]
     /// log-level trace|debug|info|warn|error
     log_level: LevelFilter,
-    #[argh(option, default = "constants::API_SOCKET.to_string()", short = 's')]
-    /// socket-path path to apiserver socket
-    socket_path: String,
+    #[argh(option, default = "PathBuf::from(DEFAULT_CONFIG_FILE)", short = 'c')]
+    /// config-path path to certdog toml
+    config_path: PathBuf,
     #[argh(option, default = "DEFAULT_TRUSTED_STORE.to_string()", short = 't')]
     /// trusted-store path to the trusted store
     trusted_store: String,
@@ -47,6 +50,7 @@ struct Args {
     source_bundle: String,
 }
 
+#[derive(Default)]
 struct CertBundle {
     trusted_certs: Vec<x509_parser::pem::Pem>,
     distrusted_certs: Vec<x509_parser::pem::Pem>,
@@ -54,30 +58,29 @@ struct CertBundle {
 
 /// Query the API for the certificate bundles, returns a tuple with trusted
 /// and distrusted PEM certificates
-async fn get_certificate_bundles<P>(socket_path: P) -> Result<CertBundle>
+async fn get_certificate_bundles<P>(config_path: P) -> Result<CertBundle>
 where
     P: AsRef<Path>,
 {
-    debug!("Querying the API for settings");
+    debug!("Loading certdog configuration");
+    let config_path = config_path.as_ref();
+    if !config_path.exists() {
+        return Ok(CertBundle::default());
+    }
 
-    let method = "GET";
-    let uri = constants::API_SETTINGS_URI;
-    let (_code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
-        .await
-        .context(error::APIRequestSnafu { method, uri })?;
+    let config_str = fs::read_to_string(config_path).context(error::ConfigReadSnafu {
+        config: format!("{:?}", config_path),
+    })?;
+    let pki: HashMap<Identifier, PemCertificate> =
+        toml::from_str(config_str.as_str()).context(error::ConfigDeserializationSnafu {
+            config: format!("{:?}", config_path),
+        })?;
 
-    // Build a Settings struct from the response string
-    debug!("Deserializing response");
-    let settings: model::Settings =
-        serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { uri })?;
-
-    split_bundles(settings.pki.unwrap_or_default())
+    split_bundles(pki)
 }
 
 /// Returns a tuple with two lists, for trusted and distrusted certificates
-fn split_bundles(
-    certificates_bundle: HashMap<Identifier, model::PemCertificate>,
-) -> Result<CertBundle> {
+fn split_bundles(certificates_bundle: HashMap<Identifier, PemCertificate>) -> Result<CertBundle> {
     let mut trusted_certs: Vec<x509_parser::pem::Pem> = Vec::new();
     let mut distrusted_certs: Vec<x509_parser::pem::Pem> = Vec::new();
 
@@ -210,8 +213,8 @@ async fn run() -> Result<()> {
     SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("certdog started");
-    let certificate_bundles = get_certificate_bundles(&args.socket_path).await?;
-    info!("Got certificate bundles from API");
+    let certificate_bundles = get_certificate_bundles(&args.config_path).await?;
+    info!("Got certificate bundles from configuration file");
     update_trusted_store(certificate_bundles, args.trusted_store, args.source_bundle)?;
     info!("Updated trusted store");
 
@@ -238,12 +241,18 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
-        #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
-        APIRequest {
-            method: String,
-            uri: String,
-            #[snafu(source(from(apiclient::Error, Box::new)))]
-            source: Box<apiclient::Error>,
+        #[snafu(display("Error reading data from configuration at {}: {}", config, source))]
+        ConfigRead {
+            config: String,
+            #[snafu(source(from(std::io::Error, Box::new)))]
+            source: Box<std::io::Error>,
+        },
+
+        #[snafu(display("Error deserializing pki from configuration at {}: {}", config, source))]
+        ConfigDeserialization {
+            config: String,
+            #[snafu(source(from(toml::de::Error, Box::new)))]
+            source: Box<toml::de::Error>,
         },
 
         #[snafu(display("Unable to decode base64 from certificate '{}': {}", name, source))]
@@ -273,12 +282,6 @@ mod error {
 
         #[snafu(display("Error while reading bundle from file '{}': {}", path.display(), source))]
         ReadSourceBundle { path: PathBuf, source: io::Error },
-
-        #[snafu(display("Error deserializing response from '{}': {}", uri, source))]
-        ResponseJson {
-            uri: String,
-            source: serde_json::Error,
-        },
 
         #[snafu(display("Failed to update trust store: {}", source))]
         UpdateTrustedStore { source: io::Error },

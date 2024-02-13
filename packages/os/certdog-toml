@@ -1,0 +1,10 @@
+[required-extensions]
+pki = "v1"
++++
+{{#if settings.pki}}
+{{#each settings.pki}}
+["{{@key}}"]
+trusted = {{this.trusted}}
+data = "{{this.data}}"
+{{/each}}
+{{/if}}
