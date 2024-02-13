@@ -3,7 +3,7 @@
 
 host-containers ensures that host containers are running as defined in system settings.
 
-It queries the API for their settings, then configures the system by:
+It reads the currently configured containers from its config file, then configures the system by:
 * creating a user-data file in the host container's persistent storage area, if a base64-encoded
   user-data setting is set for the host container.  (The decoded contents are available to the
   container at /.bottlerocket/host-containers/NAME/user-data)
@@ -26,13 +26,15 @@ use std::path::{Path, PathBuf};
 use std::process::{self, Command};
 use std::str::FromStr;
 
-use model::modeled_types::Identifier;
+use modeled_types::Identifier;
 
 const ENV_FILE_DIR: &str = "/etc/host-containers";
+const CONFIG_FILE: &str = "/etc/host-containers/host-containers.toml";
 const PERSISTENT_STORAGE_BASE_DIR: &str = "/local/host-containers";
 
+mod config;
+
 mod error {
-    use http::StatusCode;
     use snafu::Snafu;
     use std::fmt;
     use std::io;
@@ -42,32 +44,16 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
-        #[snafu(display("Error sending {} to {}: {}", method, uri, source))]
-        APIRequest {
-            method: String,
-            uri: String,
-            #[snafu(source(from(apiclient::Error, Box::new)))]
-            source: Box<apiclient::Error>,
+        #[snafu(display("Error reading config from {}: {}", config_file, source))]
+        ReadConfig {
+            config_file: String,
+            source: io::Error,
         },
 
-        #[snafu(display("Error {} when sending {} to {}: {}", code, method, uri, response_body))]
-        APIResponse {
-            method: String,
-            uri: String,
-            code: StatusCode,
-            response_body: String,
-        },
-
-        #[snafu(display(
-            "Error deserializing response as JSON from {} to {}: {}",
-            method,
-            uri,
-            source
-        ))]
-        ResponseJson {
-            method: &'static str,
-            uri: String,
-            source: serde_json::Error,
+        #[snafu(display("Error parsing config toml from {}: {}", config_file, source))]
+        ConfigToml {
+            config_file: String,
+            source: toml::de::Error,
         },
 
         #[snafu(display("Host containers '{}' missing field '{}'", name, field))]
@@ -134,34 +120,26 @@ mod error {
 
 type Result<T> = std::result::Result<T, error::Error>;
 
-/// Query the API for the currently defined host containers
-async fn get_host_containers<P>(socket_path: P) -> Result<HashMap<Identifier, model::HostContainer>>
+/// Read the currently defined host containers from the config file
+fn get_host_containers<P>(config_path: P) -> Result<HashMap<Identifier, config::HostContainer>>
 where
     P: AsRef<Path>,
 {
-    debug!("Querying the API for settings");
-
-    let method = "GET";
-    let uri = constants::API_SETTINGS_URI;
-    let (code, response_body) = apiclient::raw_request(&socket_path, uri, method, None)
-        .await
-        .context(error::APIRequestSnafu { method, uri })?;
-    ensure!(
-        code.is_success(),
-        error::APIResponseSnafu {
-            method,
-            uri,
-            code,
-            response_body,
-        }
+    let config_path = config_path.as_ref();
+    debug!(
+        "Reading containers from the config file: {}",
+        config_path.display()
     );
-
-    // Build a Settings struct from the response string
-    let settings: model::Settings =
-        serde_json::from_str(&response_body).context(error::ResponseJsonSnafu { method, uri })?;
+    let config = std::fs::read_to_string(config_path).context(error::ReadConfigSnafu {
+        config_file: format!("{:?}", config_path),
+    })?;
+    let config: config::HostContainersConfig =
+        toml::from_str(&config).context(error::ConfigTomlSnafu {
+            config_file: format!("{:?}", config_path),
+        })?;
 
     // If host containers aren't defined, return an empty map
-    Ok(settings.host_containers.unwrap_or_default())
+    Ok(config.host_containers.unwrap_or_default())
 }
 
 /// SystemdUnit stores the systemd unit being manipulated
@@ -288,7 +266,7 @@ where
 /// Store the args we receive on the command line
 struct Args {
     log_level: LevelFilter,
-    socket_path: PathBuf,
+    config_path: PathBuf,
 }
 
 /// Print a usage message in the event a bad arg is passed
@@ -296,12 +274,11 @@ fn usage() -> ! {
     let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
     eprintln!(
         r"Usage: {}
-            [ --socket-path PATH ]
+            [ --config-path PATH ]
             [ --log-level trace|debug|info|warn|error ]
 
-    Socket path defaults to {}",
-        program_name,
-        constants::API_SOCKET,
+    Config path defaults to {}",
+        program_name, CONFIG_FILE,
     );
     process::exit(2);
 }
@@ -315,7 +292,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 /// Parse the args to the program and return an Args struct
 fn parse_args(args: env::Args) -> Args {
     let mut log_level = None;
-    let mut socket_path = None;
+    let mut config_path = None;
 
     let mut iter = args.skip(1);
     while let Some(arg) = iter.next() {
@@ -329,10 +306,10 @@ fn parse_args(args: env::Args) -> Args {
                 }));
             }
 
-            "--socket-path" => {
-                socket_path = Some(
+            "--config-path" => {
+                config_path = Some(
                     iter.next()
-                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path"))
+                        .unwrap_or_else(|| usage_msg("Did not give argument to --config-path"))
                         .into(),
                 )
             }
@@ -343,15 +320,15 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         log_level: log_level.unwrap_or(LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.into()),
+        config_path: config_path.unwrap_or_else(|| CONFIG_FILE.into()),
     }
 }
 
-fn handle_host_container<S>(name: S, image_details: &model::HostContainer) -> Result<()>
+fn handle_host_container<S>(name: S, image_details: &config::HostContainer) -> Result<()>
 where
     S: AsRef<str>,
 {
-    // Get basic settings, as retrieved from API.
+    // Get basic settings, as retrieved from the config file.
     let name = name.as_ref();
     let source = image_details
         .source
@@ -469,7 +446,7 @@ fn is_container_affected(settings: &[&str], container_name: &str) -> bool {
     false
 }
 
-async fn run() -> Result<()> {
+fn run() -> Result<()> {
     let args = parse_args(env::args());
     // this env var is passed by thar-be-settings
     let changed_settings_env = env::var("CHANGED_SETTINGS").unwrap_or_else(|_| "".to_string());
@@ -481,7 +458,7 @@ async fn run() -> Result<()> {
     info!("host-containers started");
 
     let mut failed = 0usize;
-    let host_containers = get_host_containers(args.socket_path).await?;
+    let host_containers = get_host_containers(args.config_path)?;
     for (name, image_details) in host_containers.iter() {
         // handle all host containers during startup
         // handle the host container that has settings changed during restart
@@ -507,10 +484,44 @@ async fn run() -> Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-#[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
+fn main() {
+    if let Err(e) = run() {
         eprintln!("{}", e);
         process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use modeled_types::{Identifier, Url, ValidBase64};
+
+    #[test]
+    fn test_get_host_containers() {
+        let config_toml = r#"[host-containers."foo"]
+        source = "https://example.com"
+        enabled = true
+        superpowered = true
+        user-data = "Zm9vCg=="
+        "#;
+
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let temp_config = Path::join(temp_dir.path(), "host-containers.toml");
+        let _ = std::fs::write(&temp_config, config_toml).unwrap();
+
+        let host_containers = get_host_containers(&temp_config).unwrap();
+
+        let mut expected_host_containers = HashMap::new();
+        expected_host_containers.insert(
+            Identifier::try_from("foo").unwrap(),
+            config::HostContainer {
+                source: Some(Url::try_from("https://example.com").unwrap()),
+                enabled: Some(true),
+                superpowered: Some(true),
+                user_data: Some(ValidBase64::try_from("Zm9vCg==").unwrap()),
+            },
+        );
+
+        assert_eq!(host_containers, expected_host_containers)
     }
 }

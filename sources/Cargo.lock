@@ -2106,17 +2106,16 @@ dependencies = [
 name = "host-containers"
 version = "0.1.0"
 dependencies = [
- "apiclient",
  "base64 0.13.1",
  "constants",
  "generate-readme",
- "http",
  "log",
- "models",
- "serde_json",
+ "modeled-types",
+ "serde",
  "simplelog",
  "snafu",
- "tokio",
+ "tempfile",
+ "toml 0.8.8",
 ]
 
 [[package]]
