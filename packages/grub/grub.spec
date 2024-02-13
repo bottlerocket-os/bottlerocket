@@ -15,7 +15,7 @@ Release: 1%{?dist}
 Summary: Bootloader with support for Linux and more
 License: GPL-3.0-or-later AND Unicode-DFS-2015
 URL: https://www.gnu.org/software/grub/
-Source0: https://cdn.amazonlinux.com/al2023/blobstore/74f9ee6e75b8f89fe91ccda86896243179968a8664ba045bece11dc5aff61f4e/grub2-2.06-61.amzn2023.0.6.src.rpm
+Source0: https://cdn.amazonlinux.com/al2023/blobstore/f4fa28cb4e1586d622925449b1e24748c6ab09ccebe0fd8ddfa20cf5e7ce182a/grub2-2.06-61.amzn2023.0.9.src.rpm
 Source1: bios.cfg
 Source2: efi.cfg
 Source3: sbat.csv.in
@@ -64,6 +64,8 @@ Patch0042: 0042-util-mkimage-Bump-EFI-PE-header-size-to-accommodate-.patch
 Patch0043: 0043-util-mkimage-avoid-adding-section-table-entry-outsid.patch
 Patch0044: 0044-efi-return-virtual-size-of-section-found-by-grub_efi.patch
 Patch0045: 0045-mkimage-pgp-move-single-public-key-into-its-own-sect.patch
+Patch0046: 0046-Revert-sb-Add-fallback-to-EFI-LoadImage-if-shim_lock.patch
+Patch0047: 0047-Revert-UBUNTU-Move-verifiers-after-decompressors.patch
 
 BuildRequires: automake
 BuildRequires: bison
