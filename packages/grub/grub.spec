@@ -66,6 +66,7 @@ Patch0044: 0044-efi-return-virtual-size-of-section-found-by-grub_efi.patch
 Patch0045: 0045-mkimage-pgp-move-single-public-key-into-its-own-sect.patch
 Patch0046: 0046-Revert-sb-Add-fallback-to-EFI-LoadImage-if-shim_lock.patch
 Patch0047: 0047-Revert-UBUNTU-Move-verifiers-after-decompressors.patch
+Patch0048: 0048-add-flag-to-only-search-root-dev.patch
 
 BuildRequires: automake
 BuildRequires: bison
