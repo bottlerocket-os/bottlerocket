@@ -2119,6 +2119,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "host-containers-config-file-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "host-containers-config-list-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "http"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"

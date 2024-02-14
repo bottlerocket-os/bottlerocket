@@ -280,4 +280,6 @@ version = "1.19.3"
     "migrate_v1.19.3_prairiedog-services-cfg-v0-1-0.lz4",
     "migrate_v1.19.3_thar-be-updates-config-file-v0-1-0.lz4",
     "migrate_v1.19.3_thar-be-updates-affected-services-v0-1-0.lz4",
+    "migrate_v1.19.3_host-containers-config-file-v0-1-0.lz4",
+    "migrate_v1.19.3_host-containers-config-list-v0-1-0.lz4",
 ]
