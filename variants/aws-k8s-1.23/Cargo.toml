@@ -19,6 +19,7 @@ included-packages = [
     "cni-plugins",
     "kernel-5.10",
     "kubelet-1.23",
+    "pluto",
     "release",
 ]
 kernel-parameters = [
@@ -38,4 +39,5 @@ cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
 kernel-5_10 = { path = "../../packages/kernel-5.10" }
 kubernetes-1_23= { path = "../../packages/kubernetes-1.23" }
+pluto = { path = "../../packages/pluto" }
 release = { path = "../../packages/release" }

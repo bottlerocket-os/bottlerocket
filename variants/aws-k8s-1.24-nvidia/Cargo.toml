@@ -26,6 +26,7 @@ included-packages = [
     "nvidia-container-toolkit-k8s",
     "nvidia-k8s-device-plugin",
     "kmod-5.15-nvidia-tesla-535",
+    "pluto",
 ]
 kernel-parameters = [
     "console=tty0",
@@ -48,3 +49,4 @@ release = { path = "../../packages/release" }
 nvidia-container-toolkit = { path = "../../packages/nvidia-container-toolkit" }
 nvidia-k8s-device-plugin = { path = "../../packages/nvidia-k8s-device-plugin" }
 kmod-5_15-nvidia = { path = "../../packages/kmod-5.15-nvidia" }
+pluto = { path = "../../packages/pluto" }

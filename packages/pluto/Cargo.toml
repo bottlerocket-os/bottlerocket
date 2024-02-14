@@ -1,0 +1,17 @@
+[package]
+name = "pluto"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "build.rs"
+
+[package.metadata.build-package]
+source-groups = [
+    "api"
+]
+
+[lib]
+path = "../packages.rs"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
