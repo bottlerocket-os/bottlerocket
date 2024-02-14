@@ -5,6 +5,6 @@ pki = "v1"
 {{#each settings.pki}}
 ["{{@key}}"]
 trusted = {{this.trusted}}
-data = "{{this.data}}"
+data = "{{{this.data}}}"
 {{/each}}
 {{/if}}
