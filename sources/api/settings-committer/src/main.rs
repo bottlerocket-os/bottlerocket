@@ -191,7 +191,7 @@ fn parse_args(args: env::Args) -> Args {
 
     Args {
         transaction: transaction.unwrap_or_else(|| constants::LAUNCH_TRANSACTION.to_string()),
-        log_level: log_level.unwrap_or(LevelFilter::Info),
+        log_level: log_level.unwrap_or(LevelFilter::Trace),
         socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
     }
 }

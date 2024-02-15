@@ -1,76 +1,60 @@
-pub(super) use inner::{get_aws_k8s_info, Error};
+use std::path::Path;
+
+use modeled_types;
+use serde::{Deserialize, Serialize};
+use snafu::{ResultExt, Snafu};
 
 /// The result type for the [`api`] module.
 pub(super) type Result<T> = std::result::Result<T, Error>;
 
+/// Default Configuration Path
+const DEFAULT_CONFIG_PATH: &str = "/etc/pluto.toml";
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 pub(crate) struct AwsK8sInfo {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) region: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub(crate) cluster_name: Option<String>,
-    pub(crate) cluster_dns_ip: Option<model::modeled_types::KubernetesClusterDnsIp>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) cluster_dns_ip: Option<modeled_types::KubernetesClusterDnsIp>,
 }
 
-/// This code is the 'actual' implementation compiled when the `sources` workspace is being compiled
-/// for `aws-k8s-*` variants.
-#[cfg(variant_family = "aws-k8s")]
-mod inner {
-    use super::*;
-    use snafu::{ResultExt, Snafu};
+#[derive(Debug, Snafu)]
+pub(crate) enum Error {
+    #[snafu(display("Failed to read configuration file: {}", source))]
+    Read {
+        #[snafu(source(from(std::io::Error, Box::new)))]
+        source: Box<std::io::Error>,
+    },
+    #[snafu(display("Deserialization of configuration file failed: {}", source))]
+    DeserializeToml {
+        #[snafu(source(from(toml::de::Error, Box::new)))]
+        source: Box<toml::de::Error>,
+    },
+}
 
-    #[derive(Debug, Snafu)]
-    pub(crate) enum Error {
-        #[snafu(display("Error calling Bottlerocket API: {}", source))]
-        ApiClient {
-            #[snafu(source(from(apiclient::Error, Box::new)))]
-            source: Box<apiclient::Error>,
-            uri: String,
-        },
-
-        #[snafu(display("Unable to deserialize Bottlerocket settings: {}", source))]
-        SettingsJson { source: serde_json::Error },
-    }
-
-    /// Gets the Bottlerocket settings from the API and deserializes them into a struct.
-    async fn get_settings() -> Result<model::Settings> {
-        let uri = constants::API_SETTINGS_URI;
-        let (_status, response_body) =
-            apiclient::raw_request(constants::API_SOCKET, uri, "GET", None)
-                .await
-                .context(ApiClientSnafu { uri })?;
-
-        serde_json::from_str(&response_body).context(SettingsJsonSnafu)
-    }
-
-    /// Gets the info that we need to know about the EKS cluster from the Bottlerocket API.
-    pub(crate) async fn get_aws_k8s_info() -> Result<AwsK8sInfo> {
-        let settings = get_settings().await?;
+/// Gets the info that we need to know about the EKS cluster from the configuration file.
+/// Note that we cannot rely on the configuration file being generated as pluto gets called
+/// before template files are fully rendered. (i.e. Pluto self resolves some of the values that
+/// are used in the configuration file). To keep this behavior sane if the configuration file
+/// does not exist, return None and auto populate the region off IMDS
+pub(crate) async fn get_aws_k8s_info() -> Result<AwsK8sInfo> {
+    let path = Path::new(DEFAULT_CONFIG_PATH);
+    if path.exists() {
+        let config = tokio::fs::read_to_string(DEFAULT_CONFIG_PATH)
+            .await
+            .context(ReadSnafu)?;
+        toml::from_str(config.as_str()).context(DeserializeTomlSnafu)
+    } else {
+        // Attempt to fetch the region from imds since AWS_REGION is not set
+        let mut imds = imdsclient::ImdsClient::new();
+        let region = imds.fetch_region().await.unwrap();
         Ok(AwsK8sInfo {
-            region: settings.aws.and_then(|a| a.region).map(|s| s.into()),
-            cluster_name: settings
-                .kubernetes
-                .as_ref()
-                .and_then(|k| k.cluster_name.clone())
-                .map(|s| s.into()),
-            cluster_dns_ip: settings.kubernetes.and_then(|k| k.cluster_dns_ip),
+            cluster_dns_ip: None,
+            cluster_name: None,
+            region,
         })
-    }
-}
-
-/// This dummy code is compiled when the `sources` workspace is being compiled for non `aws-k8s-*`
-/// variants.
-#[cfg(not(variant_family = "aws-k8s"))]
-mod inner {
-    use super::*;
-    use snafu::Snafu;
-
-    #[derive(Debug, Snafu)]
-    pub(crate) enum Error {
-        #[snafu(display(
-            "The get_aws_k8s_info function is only compatible with aws-k8s variants"
-        ))]
-        WrongVariant,
-    }
-
-    pub(crate) async fn get_aws_k8s_info() -> Result<AwsK8sInfo> {
-        WrongVariantSnafu.fail()
     }
 }

@@ -10,7 +10,7 @@ max-pods.setting-generator = "pluto max-pods"
 cluster-dns-ip.setting-generator = "pluto cluster-dns-ip"
 node-ip.setting-generator = "pluto node-ip"
 provider-id.setting-generator = "pluto provider-id"
-affected-services = ["kubernetes"]
+affected-services = ["kubernetes", "pluto"]
 
 [metadata.settings.kubernetes.pod-infra-container-image]
 setting-generator = "schnauzer-v2 render --requires 'aws@v1' --requires 'kubernetes@v1(helpers=[pause-prefix])' --template '{{ pause-prefix settings.aws.region }}/eks/pause:3.1-eksbuild.1'"
@@ -26,9 +26,20 @@ affected-services = ["containerd", "kubernetes", "host-containerd", "host-contai
 configuration-files = ["warm-pool-wait-toml"]
 restart-commands = []
 
+[services.pluto]
+configuration-files = ["pluto-toml"]
+restart-commands = []
+
+[configuration-files.pluto-toml]
+path = "/etc/pluto.toml"
+template-path = "/usr/share/templates/pluto-toml"
+
 [configuration-files.warm-pool-wait-toml]
 path = "/etc/warm-pool-wait.toml"
 template-path = "/usr/share/templates/warm-pool-wait-toml"
 
 [metadata.settings.autoscaling]
 affected-services = ["autoscaling-warm-pool"]
+
+[metadata.settings.aws.region]
+affected-services = ["pluto"]
