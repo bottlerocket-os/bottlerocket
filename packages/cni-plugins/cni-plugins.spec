@@ -14,6 +14,7 @@ Summary: Plugins for container networking
 License: Apache-2.0
 URL: https://%{goimport}
 Source0: https://%{goimport}/archive/v%{gover}/%{gorepo}-%{gover}.tar.gz
+Source1: cni-plugins-tmpfiles.conf
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}iptables
@@ -34,6 +35,9 @@ done
 %install
 install -d %{buildroot}%{_cross_libexecdir}/cni/bin
 install -p -m 0755 bin/* %{buildroot}%{_cross_libexecdir}/cni/bin
+
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:1} %{buildroot}%{_cross_tmpfilesdir}/cni-plugins.conf
 
 %cross_scan_attribution go-vendor vendor
 
@@ -59,5 +63,6 @@ install -p -m 0755 bin/* %{buildroot}%{_cross_libexecdir}/cni/bin
 %{_cross_libexecdir}/cni/bin/tuning
 %{_cross_libexecdir}/cni/bin/vlan
 %{_cross_libexecdir}/cni/bin/vrf
+%{_cross_tmpfilesdir}/cni-plugins.conf
 
 %changelog
