@@ -7,6 +7,7 @@
 ## Orchestrator Changes
 
 ### Kubernetes
+* Add Kubernetes 1.29 vmware variant ([#3628])
 * Mark pause container image as "pinned" to prevent garbage collection ([#3757]) 
 
 ### ECS
@@ -14,6 +15,7 @@
 * Update ECS agent to 1.81.0 ([#3759])
 * Update AWS SSM agent to 3.2.2222.0 ([#3762])
 
+[#3628]: https://github.com/bottlerocket-os/bottlerocket/pull/3628
 [#3765]: https://github.com/bottlerocket-os/bottlerocket/pull/3765
 [#3763]: https://github.com/bottlerocket-os/bottlerocket/pull/3763
 [#3757]: https://github.com/bottlerocket-os/bottlerocket/pull/3757
