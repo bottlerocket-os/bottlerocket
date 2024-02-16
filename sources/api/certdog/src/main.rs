@@ -8,6 +8,7 @@
 extern crate log;
 
 use argh::FromArgs;
+use serde::Deserialize;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
 use std::collections::HashMap;
@@ -18,8 +19,7 @@ use std::io::{BufRead, Seek};
 use std::path::{Path, PathBuf};
 use std::process;
 
-use model::modeled_types::Identifier;
-use model::PemCertificate;
+use modeled_types::{Identifier, PemCertificateString};
 
 // Default location of the config file
 const DEFAULT_CONFIG_FILE: &str = "/etc/certdog.toml";
@@ -32,6 +32,12 @@ const DEFAULT_TRUSTED_STORE: &str = "/etc/pki/tls/certs/ca-bundle.crt";
 const PEM_HEADER: &str = "-----BEGIN";
 const PEM_FOOTER: &str = "-----END";
 const PEM_SUFFIX: &str = "-----";
+
+#[derive(Deserialize)]
+struct PemCertificate {
+    data: Option<PemCertificateString>,
+    trusted: Option<bool>,
+}
 
 /// Stores user-supplied global arguments
 #[derive(FromArgs, Debug)]
@@ -58,7 +64,7 @@ struct CertBundle {
 
 /// Query the API for the certificate bundles, returns a tuple with trusted
 /// and distrusted PEM certificates
-async fn get_certificate_bundles<P>(config_path: P) -> Result<CertBundle>
+fn get_certificate_bundles<P>(config_path: P) -> Result<CertBundle>
 where
     P: AsRef<Path>,
 {
@@ -206,14 +212,14 @@ fn comment_for_pem(pem: &x509_parser::pem::Pem) -> Result<Option<String>> {
     Ok(comment.and_then(|c| c.as_str().ok()).map(|c| c.to_string()))
 }
 
-async fn run() -> Result<()> {
+fn run() -> Result<()> {
     let args: Args = argh::from_env();
 
     // SimpleLogger will send errors to stderr and anything less to stdout.
     SimpleLogger::init(args.log_level, LogConfig::default()).context(error::LoggerSnafu)?;
 
     info!("certdog started");
-    let certificate_bundles = get_certificate_bundles(&args.config_path).await?;
+    let certificate_bundles = get_certificate_bundles(&args.config_path)?;
     info!("Got certificate bundles from configuration file");
     update_trusted_store(certificate_bundles, args.trusted_store, args.source_bundle)?;
     info!("Updated trusted store");
@@ -224,9 +230,8 @@ async fn run() -> Result<()> {
 // Returning a Result from main makes it print a Debug representation of the error, but with Snafu
 // we have nice Display representations of the error, so we wrap "main" (run) and print any error.
 // https://github.com/shepmaster/snafu/issues/110
-#[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
+fn main() {
+    if let Err(e) = run() {
         error!("{}", e);
         process::exit(1);
     }
@@ -296,7 +301,7 @@ type Result<T> = std::result::Result<T, error::Error>;
 #[cfg(test)]
 mod test_certdog {
     use super::*;
-    use model::modeled_types::{Identifier, PemCertificateString};
+    use modeled_types::{Identifier, PemCertificateString};
     use std::collections::HashMap;
     use std::convert::TryFrom;
     use std::fs::File;
@@ -308,21 +313,21 @@ mod test_certdog {
         let mut bundle = HashMap::new();
         bundle.insert(
             Identifier::try_from("trusted").unwrap(),
-            model::PemCertificate {
+            super::PemCertificate {
                 data: Some(PemCertificateString::try_from(TEST_PEM).unwrap()),
                 trusted: Some(true),
             },
         );
         bundle.insert(
             Identifier::try_from("distrusted").unwrap(),
-            model::PemCertificate {
+            super::PemCertificate {
                 data: Some(PemCertificateString::try_from(TEST_PEM).unwrap()),
                 trusted: Some(false),
             },
         );
         bundle.insert(
             Identifier::try_from("distrusted-without-flag").unwrap(),
-            model::PemCertificate {
+            super::PemCertificate {
                 data: Some(PemCertificateString::try_from(TEST_PEM).unwrap()),
                 trusted: None,
             },
