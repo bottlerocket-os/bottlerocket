@@ -71,6 +71,9 @@ Patch0004: 0004-bottlerocket-fix-procfs-path-on-host.patch
 # Bottlerocket-specific - fix ECS exec directories
 Patch0005: 0005-bottlerocket-change-execcmd-directories-for-Bottlero.patch
 
+# Bottlerocket-specific - fix container metadata path
+Patch0006: 0006-containermetadata-don-t-use-dataDirOnHost-for-metada.patch
+
 # Bottlerocket-specific - filesystem location for ECS CNI plugins
 Patch1001: 1001-bottlerocket-default-filesystem-locations.patch
 
