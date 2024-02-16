@@ -273,4 +273,5 @@ version = "1.19.2"
 "(1.19.1, 1.19.2)" = [
     "migrate_v1.19.2_certdog-config-file-v0-1-0.lz4",
     "migrate_v1.19.2_certdog-service-cfg-v0-1-0.lz4",
+    "migrate_v1.19.2_add-ecs-enable-container-metadata.lz4",
 ]

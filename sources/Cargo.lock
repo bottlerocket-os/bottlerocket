@@ -225,6 +225,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-ecs-enable-container-metadata"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
