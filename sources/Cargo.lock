@@ -1250,18 +1250,16 @@ dependencies = [
 name = "certdog"
 version = "0.1.0"
 dependencies = [
- "apiclient",
  "argh",
  "base64 0.13.1",
  "constants",
  "generate-readme",
  "log",
- "models",
- "serde_json",
+ "modeled-types",
+ "serde",
  "simplelog",
  "snafu",
  "tempfile",
- "tokio",
  "toml 0.8.8",
  "x509-parser",
 ]
