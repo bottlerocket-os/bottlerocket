@@ -12,9 +12,9 @@ path = "../packages.rs"
 releases-url = "https://github.com/benhoyt/inih/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/benhoyt/inih/archive/refs/tags/r57.tar.gz"
-path = "inih-r57.tar.gz"
-sha512 = "9f758df876df54ed7e228fd82044f184eefbe47e806cd1e6d62e1b0ea28e2c08e67fa743042d73b4baef0b882480e6afe2e72878b175822eb2bdbb6d89c0e411"
+url = "https://github.com/benhoyt/inih/archive/refs/tags/r58.tar.gz"
+path = "inih-r58.tar.gz"
+sha512 = "d69f488299c1896e87ddd3dd20cd9db5848da7afa4c6159b8a99ba9a5d33f35cadfdb9f65d6f2fe31decdbadb8b43bf610ff2699df475e1f9ff045e343ac26ae"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

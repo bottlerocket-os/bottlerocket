@@ -1,5 +1,5 @@
 Name: %{_cross_os}libinih
-Version: 57
+Version: 58
 Release: 1%{?dist}
 Summary: Simple INI file parser library
 License: BSD-3-Clause
