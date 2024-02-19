@@ -1,5 +1,5 @@
 Name: %{_cross_os}libz
-Version: 1.3
+Version: 1.3.1
 Release: 1%{?dist}
 Summary: Library for zlib compression
 URL: https://www.zlib.net/
