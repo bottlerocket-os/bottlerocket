@@ -1,5 +1,5 @@
 Name: %{_cross_os}ethtool
-Version: 6.6
+Version: 6.7
 Release: 1%{?dist}
 Summary: Settings tool for Ethernet NICs
 License: GPL-2.0-only AND GPL-2.0-or-later
