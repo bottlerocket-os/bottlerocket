@@ -203,7 +203,7 @@ Requires: %{name}
 
 Macros start with `%`.
 If the macro is specific to Bottlerocket, it will include the `cross` token.
-The definitions for most of these can be found in [macros](../macros).
+The definitions for most of these can be found in [macros](https://github.com/bottlerocket-os/bottlerocket-sdk/tree/develop/macros).
 The definition for `%{_cross_variant}` is the Bottlerocket variant being built.
 
 When developing a package on an RPM-based system, you can expand the macros with a command like this.
