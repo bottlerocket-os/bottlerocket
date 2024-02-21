@@ -19,7 +19,7 @@ use snafu::{ensure, ResultExt};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::{self, FromStr};
-use std::{env, process};
+use std::{env, io, process};
 use tokio::process::Command as AsyncCommand;
 use walkdir::WalkDir;
 
@@ -109,38 +109,42 @@ fn gather_providers() -> Result<Vec<PathBuf>> {
         .collect())
 }
 
-/// Run a user data provider binary, forwarding its logs
-async fn run_provider<P>(log_level: &LevelFilter, provider: P) -> Result<process::Output>
+/// Run a user data provider binary
+async fn run_provider<P>(log_level: &LevelFilter, provider: P) -> io::Result<process::Output>
 where
     P: AsRef<Path>,
 {
     let provider = provider.as_ref();
-    let result = AsyncCommand::new(provider)
+    AsyncCommand::new(provider)
         .env(LOG_LEVEL_ENV_VAR, log_level.as_str())
         .output()
         .await
-        .context(error::CommandFailureSnafu {
-            provider: &provider,
-        })?;
+}
 
+/// Check that a user data provider succeeded and forward its logs
+fn check_provider_status<P>(provider: P, output: &process::Output) -> Result<()>
+where
+    P: AsRef<Path>,
+{
+    let provider = provider.as_ref();
     // Regardless of provider status, log its output
     let provider_name = provider
         .file_name()
         .unwrap_or(provider.as_os_str())
         .to_string_lossy();
-    let provider_logs = String::from_utf8_lossy(&result.stderr);
+    let provider_logs = String::from_utf8_lossy(&output.stderr);
     for line in provider_logs.lines() {
         info!("Provider '{}': {}", provider_name, line);
     }
 
     ensure!(
-        result.status.success(),
+        output.status.success(),
         error::ProviderFailureSnafu {
             provider: &provider,
         }
     );
 
-    Ok(result)
+    Ok(())
 }
 
 /// Submit user data to the API
@@ -188,10 +192,24 @@ async fn run() -> Result<()> {
     info!("early-boot-config started");
 
     info!("Gathering user data providers");
+    let mut threads = Vec::new();
     let providers = gather_providers()?;
     for provider in providers {
-        debug!("Found '{}', running it...", provider.display());
-        let result = run_provider(&args.log_level, &provider).await?;
+        threads.push((
+            provider.clone(),
+            tokio::spawn(async move { run_provider(&args.log_level, &provider).await }),
+        ));
+    }
+
+    for (provider, handle) in threads {
+        let result =
+            handle
+                .await
+                .context(error::ThreadSnafu)?
+                .context(error::CommandFailureSnafu {
+                    provider: provider.clone(),
+                })?;
+        check_provider_status(&provider, &result)?;
 
         // User data providers output a serialized `SettingsJson` if they are successful in finding
         // user data at their respective source.  Output will be empty otherwise.
@@ -290,6 +308,9 @@ mod error {
             code: StatusCode,
             response_body: String,
         },
+
+        #[snafu(display("Thread execution error: {}", source))]
+        Thread { source: tokio::task::JoinError },
 
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
