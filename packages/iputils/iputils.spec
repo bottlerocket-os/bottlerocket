@@ -1,5 +1,5 @@
 Name: %{_cross_os}iputils
-Version: 20231222
+Version: 20240117
 Release: 1%{?dist}
 Summary: A set of network monitoring tools
 License: GPL-2.0-or-later AND BSD-3-Clause
