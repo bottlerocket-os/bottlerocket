@@ -8,7 +8,7 @@
 
 ; Define a subset of these types which are considered public.
 (typeattribute public)
-(typeattributeset public (xor (global) (restricted_o)))
+(typeattributeset public (xor (global) (read_restricted_o)))
 
 ; All subjects are allowed to describe all processes.
 (allow all_s all_s (processes (describe)))
@@ -66,6 +66,11 @@
 (allow init_t runtime_t (processes (transform)))
 (allow runtime_t runtime_exec_t (file (entrypoint)))
 
+; `runc` can transition to any of the container subject labels, for
+; a process started from any of the container object labels.
+(allow runtime_t container_s (processes (transform)))
+(allow container_s container_exec_o (file (entrypoint)))
+
 ; `runc` starts container processes as "control_t" by default, but it
 ; can use other "container" subject labels like "container_t". This
 ; depends on correct labeling for objects on local storage.
@@ -73,24 +78,21 @@
 ; Runtimes that use the Go SELinux library will override this label
 ; with the "process" label from the `lxc_contexts` when launching
 ; unprivileged containers, unless automatic labeling is disabled.
-(typetransition runtime_t data_t process control_t)
-(typetransition runtime_t cache_t process control_t)
-(typetransition runtime_t secret_t process control_t)
-(allow runtime_t container_s (processes (transform)))
-(allow container_s data_t (file (entrypoint)))
-(allow container_s cache_t (file (entrypoint)))
-(allow container_s secret_t (file (entrypoint)))
-
-; Adjust the level range to span all categories, since privileged
+;
+; The level range is adjusted to span all categories, since privileged
 ; containers won't get an MCS pair assigned.
-(rangetransition runtime_t data_t process s0-s0)
-(rangetransition runtime_t cache_t process s0-s0)
-(rangetransition runtime_t secret_t process s0-s0)
+(typetransition runtime_t privileged_container_exec_o process control_t)
+(rangetransition runtime_t privileged_container_exec_o process s0-s0)
 
-; Run CNI plugins as unprivileged containers.
-(typetransition runtime_t cni_exec_t process container_t)
-(rangetransition runtime_t cni_exec_t process s0)
-(allow container_t cni_exec_t (file (entrypoint)))
+; Some processes should transition to unprivileged containers by default.
+(typetransition runtime_t unprivileged_container_exec_o process container_t)
+(rangetransition runtime_t unprivileged_container_exec_o process s0)
+
+; If PID 1 is used to invoke a CSI helper directly, it should also
+; run as a privileged container.
+(typetransition init_t csi_exec_t process control_t)
+(rangetransition init_t csi_exec_t process s0-s0)
+(allow init_t control_t (processes (transform)))
 
 ; Allow transitions to container labels for programs invoked by OCI
 ; hooks. There's no matching type or range transition since `runc`
@@ -133,7 +135,7 @@
 (allow privileged_s global (files (load)))
 
 ; Unprivileged subjects cannot read or execute restricted objects.
-(neverallow unprivileged_s restricted_o (files (load execute)))
+(neverallow unprivileged_s read_restricted_o (files (load execute)))
 
 ; Container subjects can execute anything that's public.
 (allow container_s public (files (execute)))
@@ -155,6 +157,11 @@
 ; also run other system binaries.
 (allow api_t any_t (files (execute)))
 (allow api_t immutable_o (files (execute)))
+
+; `systemd` can only run immutable files, with the exception of CSI helpers
+; that may be required for FUSE mounts.
+(allow init_t immutable_o (files (execute)))
+(allow init_t csi_exec_t (files (execute)))
 
 ; Subjects that must run verified code can execute immutable objects, since
 ; those are all protected by dm-verity.
@@ -185,30 +192,27 @@
 ; most of the files and directories on /local.
 (allow unconfined_s shared_o (files (mutate mount)))
 
-; Subjects that control the OS, including helpers spawned by apiserver, can
-; write to and manage mounts for "secret" files and directories on /local.
-; Our runtimes also need to be able to perform these operations so that
-; they can launch host containers.
+; Helpers spawned by apiserver can write to and manage mounts for
+; "secret" files and directories on /local. Our runtimes also need to
+; be able to perform these operations so that they can launch host
+; containers.
 (allow api_s secret_t (files (mutate mount)))
-(allow control_s secret_t (files (mutate mount)))
 (allow runtime_s secret_t (files (mutate mount)))
 
-; Subjects that control the OS can write to and manage mounts for "state"
-; files and directories on /local.
-(allow control_s state_t (files (mutate mount)))
+; Subjects that control the OS can write to and manage mounts for
+; "sensitive" files and directories on /local.
+(allow control_s sensitive_o (files (mutate mount)))
 
-; `mount` can also write to these directories, to set up overlayfs mounts
-; that use them for work directories.
-(allow mount_t state_t (files (mutate)))
+; `mount` can also write to sensitive directories, which is required
+; to set up overlayfs mounts that can subsequently be written to.
+(allow mount_t sensitive_o (files (mutate)))
 
-; Unprivileged subjects cannot modify "state" or "secret" files.
-(neverallow unprivileged_s state_t (files (mutate mount)))
-(neverallow unprivileged_s secret_t (files (mutate mount)))
+; Unprivileged subjects cannot modify "sensitive" files.
+(neverallow unprivileged_s sensitive_o (files (mutate mount)))
 
-; Confined subjects cannot modify "state", "secret", or "shared" files.
+; Confined subjects are a subset of unprivileged subjects that cannot
+; modify "shared" files either.
 (neverallow confined_s shared_o (files (mutate mount)))
-(neverallow confined_s state_t (files (mutate mount)))
-(neverallow confined_s secret_t (files (mutate mount)))
 
 ; Trusted components are allowed to manage mounts everywhere.
 (allow trusted_s global (files (mount)))
@@ -223,7 +227,7 @@
 
 ; Other components should not be permitted to modify these files,
 ; or to manage mounts for these directories.
-(neverallow other_s protected_o (files (mutate mount)))
+(neverallow other_s write_restricted_o (files (mutate mount)))
 
 ; Only the API server and specific components can use the API
 ; socket, as this provides a means to escalate privileges and
@@ -276,8 +280,8 @@
 (allow all_o self (filesystem (associate)))
 (allow all_o ephemeral_o (filesystem (associate)))
 
-; Protected object labels can be used on local storage.
-(allow protected_o local_t (filesystem (associate)))
+; Write-restricted object labels can be used on local storage.
+(allow write_restricted_o local_t (filesystem (associate)))
 
 ; Shared object labels can also be used, so that volume types like
 ; emptyDir can be relabeled on behalf of containers.

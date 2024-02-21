@@ -55,6 +55,7 @@
 (filecon "/.*/usr/bin/containerd.*" file runtime_exec)
 (filecon "/.*/usr/bin/docker.*" file runtime_exec)
 (filecon "/.*/usr/bin/host-ctr" file runtime_exec)
+(filecon "/.*/usr/bin/runc.*" file runtime_exec)
 (filecon "/.*/usr/bin/shibaken" file api_exec)
 
 ; Label local storage mounts.
@@ -87,6 +88,8 @@
 ; Label local directories for overlayfs mounts.
 (filecon "/var/lib/cni-plugins" any state)
 (filecon "/var/lib/cni-plugins/.*" any state)
+(filecon "/var/lib/csi-helpers" any state)
+(filecon "/var/lib/csi-helpers/.*" any state)
 (filecon "/var/lib/kernel-devel" any state)
 (filecon "/var/lib/kernel-devel/.*" any state)
 (filecon "/var/lib/kernel-modules" any state)

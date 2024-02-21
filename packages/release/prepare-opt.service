@@ -10,7 +10,11 @@ Type=oneshot
 
 # Create the directories for a read-write overlayfs for CNI plugins.
 ExecStart=/usr/bin/rm -rf /opt/cni
-ExecStart=/usr/bin/mkdir -p /opt/cni/bin
+ExecStart=/usr/bin/mkdir -p /opt/cni
+
+# Create the directories for a read-write overlayfs for CSI helpers.
+ExecStart=/usr/bin/rm -rf /opt/csi
+ExecStart=/usr/bin/mkdir -p /opt/csi
 
 RemainAfterExit=true
 StandardError=journal+console
