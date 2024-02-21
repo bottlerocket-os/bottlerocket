@@ -335,6 +335,7 @@ struct ECSSettings {
     image_cleanup_age: ECSDurationValue,
     backend_host: String,
     awsvpc_block_imds: bool,
+    enable_container_metadata: bool,
 }
 
 #[model]

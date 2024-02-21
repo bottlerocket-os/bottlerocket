@@ -1,0 +1,50 @@
+From b1c29a82de3d567ab84cea71a7142dffd34d7c03 Mon Sep 17 00:00:00 2001
+From: Arnaldo Garcia Rincon <agarrcia@amazon.com>
+Date: Tue, 13 Feb 2024 17:38:29 +0000
+Subject: [PATCH] containermetadata: don't use dataDirOnHost for metadata path
+
+The ECS agent stores the metadata file for a container task under
+ECS_DATADIR. Under normal circumstances, the ECS agent runs as a
+container and the ECS_DATADIR configuration points to a bind-mounted
+directory in the host under the path at ECS_HOST_DATA_DIR. The setup for
+these two configurations is as follows:
+
+- ECS_HOST_DATA_DIR: /var/lib/ecs/, in the host
+- ECS_DATADIR: /data, in the container, that points to /var/lib/ecs/data
+  in the host
+
+When the ECS agent writes the metadata file, it uses the path at
+ECS_DATADIR, e.g. /data/metadata/<task.id>/*.json. However, when it sets
+up the mounts for the container task it uses the composite path
+ECS_HOST_DATA_DIR/ECS_DATADIR. This works for the ECS agent, since the
+final source path will be the correct path: /var/lib/ecs/data.
+
+In Bottlerocket, the ECS agent doesn't run as a container. Thus, the
+ECS_DATADIR configuration points to /var/lib/ecs/data in the host. The
+problem with this configuration is that the source of the bind-mount
+path will be wrong when ECS_HOST_DATA_DIR and ECS_DATADIR are
+concatenated, the resulting path will include /var/lib/ecs twice.
+
+With this commit, only the ECS_HOST_DATA_DIR configuration is ignored
+when the bind-mount configuration is generated, and the correct metadata
+file is bind-mounted onto the container.
+---
+ agent/containermetadata/write_metadata_unix.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/agent/containermetadata/write_metadata_unix.go b/agent/containermetadata/write_metadata_unix.go
+index 1c9e799..0181c95 100644
+--- a/agent/containermetadata/write_metadata_unix.go
++++ b/agent/containermetadata/write_metadata_unix.go
+@@ -47,7 +47,7 @@ func createBindsEnv(binds []string, env []string, dataDirOnHost string, metadata
+ 	}
+ 
+ 	randID := uuid.New()
+-	instanceBind := fmt.Sprintf(`%s/%s:%s/%s`, dataDirOnHost, metadataDirectoryPath, mountPoint, randID)
++	instanceBind := fmt.Sprintf(`%s:%s/%s`, metadataDirectoryPath, mountPoint, randID)
+ 	if selinuxEnabled {
+ 		seelog.Info("Selinux is enabled on docker, mounting data directory in Z mode")
+ 		instanceBind = fmt.Sprintf(`%s:%s`, instanceBind, bindMode)
+-- 
+2.41.0
+
