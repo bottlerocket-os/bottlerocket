@@ -1,6 +1,6 @@
 %global tesla_major 535
-%global tesla_minor 129
-%global tesla_patch 03
+%global tesla_minor 161
+%global tesla_patch 07
 %global tesla_ver %{tesla_major}.%{tesla_minor}.%{tesla_patch}
 %global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
 %global license_file %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml path nvidia -p ./licenses)
