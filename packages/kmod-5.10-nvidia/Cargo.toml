@@ -13,13 +13,13 @@ package-name = "kmod-5.10-nvidia"
 releases-url = "https://docs.nvidia.com/datacenter/tesla/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://us.download.nvidia.com/tesla/470.223.02/NVIDIA-Linux-x86_64-470.223.02.run"
-sha512 = "66e470343b6f0c04703c81169cd03674be06b5315db738cab64308ec073b5bf5b87508b58ac8b6288d10e95307072d99e874e7884207a323a3dd08887bbc8750"
+url = "https://us.download.nvidia.com/tesla/470.239.06/NVIDIA-Linux-x86_64-470.239.06.run"
+sha512 = "92bdfb11db405071cd58deed2a0853448932657e256258e0a0bda5069f00485e2b6e49b4a0eeff499a4991be4f884273f3564c164110b1ed1f5d924506f13e2d"
 force-upstream = true
 
 [[package.metadata.build-package.external-files]]
-url = "https://us.download.nvidia.com/tesla/470.223.02/NVIDIA-Linux-aarch64-470.223.02.run"
-sha512 = "c22eab4ec6aa1868bbe55200ba74187939571ae78645c333fe05d544869c54b84d63e26f5c4f922bbe4e768da1f394d15d0b85cacbd4bbbc2b1dfd5074734a02"
+url = "https://us.download.nvidia.com/tesla/470.239.06/NVIDIA-Linux-aarch64-470.239.06.run"
+sha512 = "e448c18cf243233387d3bde4fff4d6fa1eaccc743706f18fd3c6431ce73c8f4ac49009a18ff6bd7796456ce719905bb7611548bf68d61259285f5d5f1d061c0f"
 force-upstream = true
 
 [build-dependencies]
