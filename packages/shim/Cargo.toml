@@ -9,10 +9,5 @@ build = "../build.rs"
 path = "../packages.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/rhboot/shim/archive/15.7/shim-15.7.tar.gz"
-sha512 = "95ef9c0125269cfa0263a32e4f343d8ccc8813d71fa918a2f54850781e3a2d6a06a719249be355fdb24c935899e0e11370815501ecde1800bdd974a9a79c5612"
-
-[[package.metadata.build-package.external-files]]
-url = "https://github.com/rhboot/gnu-efi/archive/refs/heads/shim-15.6.tar.gz"
-path = "gnu-efi-shim-15.6.tar.gz"
-sha512 = "d09dbb9e461d60e23294326ed4178301a6ab5959ade912bf559dbeb050362d994c8e63c8e062c19569055a269e5dbb65f0572317da4725177e19aae82e3c6978"
+url = "https://github.com/rhboot/shim/releases/download/15.8/shim-15.8.tar.bz2"
+sha512 = "30b3390ae935121ea6fe728d8f59d37ded7b918ad81bea06e213464298b4bdabbca881b30817965bd397facc596db1ad0b8462a84c87896ce6c1204b19371cd1"
