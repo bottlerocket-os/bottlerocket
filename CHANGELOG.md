@@ -1,3 +1,44 @@
+# v1.19.2 (2024-02-26)
+
+## OS Changes
+* Update third party packages ([#3789])
+* Update kernel to 5.10.209, 5.15.148, 6.1.77 ([#3797])
+* Add AWS settings extension ([#3738], [#3770])
+* Allow CSI helpers in the SELinux policy ([#3779])
+* Update to latest NVIDIA drivers ([#3798])
+
+## Orchestrator Changes
+
+### Kubernetes
+* Enable NVIDIA GPU isolation using volume mounts ([#3718] thanks @chiragjn , [#3790])
+* Clean up CNI results cache on boot ([#3792])
+
+### ECS
+* Add `settings.ecs.enable-container-metadata` ([#3782])
+
+## Build Changes
+* Adjust certdog to utilize a configuration file instead of the API server ([#3706], [#3778], [#3787])
+* Don't use parallel make for shim package ([#3771])
+* Renumber unit files in release package ([#3769])
+* Ignore EKS patches for k8s-1.23 in Git ([#3774])
+
+[#3706]: https://github.com/bottlerocket-os/bottlerocket/pull/3706
+[#3718]: https://github.com/bottlerocket-os/bottlerocket/pull/3718
+[#3738]: https://github.com/bottlerocket-os/bottlerocket/pull/3738
+[#3769]: https://github.com/bottlerocket-os/bottlerocket/pull/3769
+[#3770]: https://github.com/bottlerocket-os/bottlerocket/pull/3770
+[#3771]: https://github.com/bottlerocket-os/bottlerocket/pull/3771
+[#3774]: https://github.com/bottlerocket-os/bottlerocket/pull/3774
+[#3778]: https://github.com/bottlerocket-os/bottlerocket/pull/3778
+[#3779]: https://github.com/bottlerocket-os/bottlerocket/pull/3779
+[#3782]: https://github.com/bottlerocket-os/bottlerocket/pull/3782
+[#3787]: https://github.com/bottlerocket-os/bottlerocket/pull/3787
+[#3789]: https://github.com/bottlerocket-os/bottlerocket/pull/3789
+[#3790]: https://github.com/bottlerocket-os/bottlerocket/pull/3790
+[#3792]: https://github.com/bottlerocket-os/bottlerocket/pull/3792
+[#3797]: https://github.com/bottlerocket-os/bottlerocket/pull/3797
+[#3798]: https://github.com/bottlerocket-os/bottlerocket/pull/3798
+
 # v1.19.1 (2024-02-06)
 
 ## OS Changes
