@@ -17,11 +17,10 @@ grub-set-private-var = true
 
 [package.metadata.build-variant]
 included-packages = [
-    "aws-data-providers",
     "aws-iam-authenticator",
     "cni",
     "cni-plugins",
-    "early-boot-config",
+    "early-boot-config-aws",
     "kernel-5.15",
     "kubelet-1.25",
     "release",
@@ -44,16 +43,10 @@ path = "../variants.rs"
 aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
-early-boot-config = { path = "../../packages/early-boot-config" }
-early-boot-config-ec2-identity-doc = { path = "../../packages/early-boot-config-ec2-identity-doc" }
-early-boot-config-ec2-imds = { path = "../../packages/early-boot-config-ec2-imds" }
-early-boot-config-local-defaults = { path = "../../packages/early-boot-config-local-defaults" }
-early-boot-config-local-overrides = { path = "../../packages/early-boot-config-local-overrides" }
-early-boot-config-local = { path = "../../packages/early-boot-config-local" }
-early-boot-config-providers = { path = "../../packages/early-boot-config-providers" }
 kernel-5_15 = { path = "../../packages/kernel-5.15" }
 kubernetes-1_25 = { path = "../../packages/kubernetes-1.25" }
 release = { path = "../../packages/release" }
+early-boot-config = { path = "../../packages/early-boot-config" }
 nvidia-container-toolkit = { path = "../../packages/nvidia-container-toolkit" }
 nvidia-k8s-device-plugin = { path = "../../packages/nvidia-k8s-device-plugin" }
 kmod-5_15-nvidia = { path = "../../packages/kmod-5.15-nvidia" }
