@@ -29,12 +29,11 @@ kernel-parameters = [
 included-packages = [
     "cni",
     "cni-plugins",
-    "early-boot-config",
+    "early-boot-config-vmware",
     "kernel-5.15",
     "kubelet-1.25",
     "open-vm-tools",
     "release",
-    "vmware-data-providers",
 ]
 
 [lib]
@@ -43,14 +42,8 @@ path = "../variants.rs"
 [build-dependencies]
 cni = { path = "../../packages/cni" }
 cni-plugins = { path = "../../packages/cni-plugins" }
-early-boot-config = { path = "../../packages/early-boot-config" }
-early-boot-config-local-defaults = { path = "../../packages/early-boot-config-local-defaults" }
-early-boot-config-local-overrides = { path = "../../packages/early-boot-config-local-overrides" }
-early-boot-config-local = { path = "../../packages/early-boot-config-local" }
-early-boot-config-vmware-cd-rom = { path = "../../packages/early-boot-config-vmware-cd-rom" }
-early-boot-config-vmware-guestinfo = { path = "../../packages/early-boot-config-vmware-guestinfo" }
-early-boot-config-providers = { path = "../../packages/early-boot-config-providers" }
 kernel-5_15 = { path = "../../packages/kernel-5.15" }
 kubernetes-1_25 = { path = "../../packages/kubernetes-1.25" }
 open-vm-tools = { path = "../../packages/open-vm-tools" }
 release = { path = "../../packages/release" }
+early-boot-config = { path = "../../packages/early-boot-config" }

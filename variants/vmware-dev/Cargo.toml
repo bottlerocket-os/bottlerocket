@@ -30,11 +30,10 @@ kernel-parameters = [
 ]
 included-packages = [
 # core
-    "early-boot-config",
+    "early-boot-config-vmware",
     "release",
     "kernel-6.1",
     "open-vm-tools",
-    "vmware-data-providers",
 # docker
     "docker-cli",
     "docker-engine",
@@ -51,14 +50,8 @@ path = "../variants.rs"
 
 [build-dependencies]
 # core
-early-boot-config = { path = "../../packages/early-boot-config" }
-early-boot-config-local-defaults = { path = "../../packages/early-boot-config-local-defaults" }
-early-boot-config-local-overrides = { path = "../../packages/early-boot-config-local-overrides" }
-early-boot-config-local = { path = "../../packages/early-boot-config-local" }
-early-boot-config-vmware-cd-rom = { path = "../../packages/early-boot-config-vmware-cd-rom" }
-early-boot-config-vmware-guestinfo = { path = "../../packages/early-boot-config-vmware-guestinfo" }
-early-boot-config-providers = { path = "../../packages/early-boot-config-providers" }
 release = { path = "../../packages/release" }
+early-boot-config = { path = "../../packages/early-boot-config" }
 kernel-6_1 = { path = "../../packages/kernel-6.1" }
 open-vm-tools = { path = "../../packages/open-vm-tools" }
 # docker
