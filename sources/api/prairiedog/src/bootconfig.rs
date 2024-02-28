@@ -1,13 +1,13 @@
 use crate::error;
 use crate::error::Result;
 use crate::initrd::generate_initrd;
-use model::modeled_types::{BootConfigKey, BootConfigValue};
-use model::BootSettings;
+use modeled_types::{BootConfigKey, BootConfigValue};
+use serde::{Deserialize, Serialize};
 use snafu::{ensure, ResultExt};
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::path::Path;
-use tokio::io;
+use std::{fs, io};
 
 // Boot config related consts
 const BOOTCONFIG_INITRD_PATH: &str = "/var/lib/bottlerocket/bootconfig.data";
@@ -21,6 +21,27 @@ const DEFAULT_BOOT_SETTINGS: BootSettings = BootSettings {
     kernel_parameters: None,
     init_parameters: None,
 };
+
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "kebab-case")]
+struct BootSettings {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    reboot_to_reconcile: Option<bool>,
+    #[serde(
+        alias = "kernel",
+        rename(serialize = "kernel"),
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    kernel_parameters: Option<HashMap<BootConfigKey, Vec<BootConfigValue>>>,
+    #[serde(
+        alias = "init",
+        rename(serialize = "init"),
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    init_parameters: Option<HashMap<BootConfigKey, Vec<BootConfigValue>>>,
+}
 
 fn append_boot_config_value_list(values: &[BootConfigValue], output: &mut String) {
     for (i, v) in values.iter().enumerate() {
@@ -66,11 +87,11 @@ fn serialize_boot_settings_to_boot_config(boot_settings: &BootSettings) -> Resul
 }
 
 /// Queries Bottlerocket boot settings and generates initrd image file with boot config as the only data
-pub(crate) async fn generate_boot_config<P>(socket_path: P) -> Result<()>
+pub(crate) fn generate_boot_config<P>(config_path: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    let bootconfig_bytes = match get_boot_config_settings(socket_path).await? {
+    let bootconfig_bytes = match get_boot_config_settings(config_path)? {
         Some(boot_settings) => {
             info!("Generating initrd boot config from boot settings");
             trace!("Boot settings: {:?}", boot_settings);
@@ -86,36 +107,25 @@ where
     };
     let initrd = generate_initrd(&bootconfig_bytes)?;
     trace!("Writing initrd image file: {:?}", initrd);
-    tokio::fs::write(BOOTCONFIG_INITRD_PATH, &initrd)
-        .await
-        .context(error::WriteInitrdSnafu)?;
+    fs::write(BOOTCONFIG_INITRD_PATH, &initrd).context(error::WriteInitrdSnafu)?;
     Ok(())
 }
 
 /// Retrieves boot config related Bottlerocket settings. If they don't exist in the settings model,
 /// we return `None` instead.
-async fn get_boot_config_settings<P>(socket_path: P) -> Result<Option<BootSettings>>
+fn get_boot_config_settings<P>(config_path: P) -> Result<Option<BootSettings>>
 where
     P: AsRef<Path>,
 {
-    let uri = "/settings";
-    let settings: serde_json::Value =
-        schnauzer::v1::get_json(socket_path, uri, Some(("prefix", "boot")))
-            .await
-            .context(error::RetrieveSettingsSnafu)?;
-
-    match settings.get("boot") {
-        None => Ok(None),
-        Some(boot_settings_val) => Ok(Some(
-            serde_json::from_value(boot_settings_val.to_owned())
-                .context(error::BootSettingsFromJsonValueSnafu)?,
-        )),
-    }
+    let config_str = fs::read_to_string(config_path.as_ref()).context(error::ReadFileSnafu {
+        path: config_path.as_ref().to_path_buf(),
+    })?;
+    toml::from_str(config_str.as_str()).context(error::InputTomlSnafu)
 }
 
 /// Reads `/proc/bootconfig`. Not having any boot config is ignored.
-async fn read_proc_bootconfig() -> Result<Option<String>> {
-    match tokio::fs::read_to_string(PROC_BOOTCONFIG).await {
+fn read_proc_bootconfig() -> Result<Option<String>> {
+    match fs::read_to_string(PROC_BOOTCONFIG) {
         Ok(s) => Ok(Some(s)),
         Err(e) => {
             // If there's no `/proc/bootconfig`, then the user hasn't provisioned any kernel boot configuration.
@@ -131,8 +141,8 @@ async fn read_proc_bootconfig() -> Result<Option<String>> {
 }
 
 /// Reads `/proc/bootconfig` and populates the Bottlerocket boot settings based on the existing boot config data
-pub(crate) async fn generate_boot_settings() -> Result<()> {
-    if let Some(proc_bootconfig) = read_proc_bootconfig().await? {
+pub(crate) fn generate_boot_settings() -> Result<()> {
+    if let Some(proc_bootconfig) = read_proc_bootconfig()? {
         debug!(
             "Generating kernel boot config settings from `{}`",
             PROC_BOOTCONFIG
@@ -265,7 +275,7 @@ fn parse_boot_config_to_boot_settings(bootconfig: &str) -> Result<BootSettings> 
     })
 }
 
-/// Given a boot config string, deserialize it to `model::BootSettings` and then serialize it back
+/// Given a boot config string, deserialize it to `BootSettings` and then serialize it back
 /// out as a JSON string for sundog consumption
 fn boot_config_to_boot_settings_json(bootconfig_str: &str) -> Result<String> {
     // We'll only send the setting if the existing boot config file fits our settings model
@@ -275,18 +285,16 @@ fn boot_config_to_boot_settings_json(bootconfig_str: &str) -> Result<String> {
 }
 
 /// Decides whether the host should be rebooted to have its boot settings take effect
-pub(crate) async fn is_reboot_required<P>(socket_path: P) -> Result<bool>
+pub(crate) fn is_reboot_required<P>(config_path: P) -> Result<bool>
 where
     P: AsRef<Path>,
 {
-    let old_boot_settings = match read_proc_bootconfig().await? {
+    let old_boot_settings = match read_proc_bootconfig()? {
         Some(proc_bootconfig) => parse_boot_config_to_boot_settings(&proc_bootconfig)?,
         None => DEFAULT_BOOT_SETTINGS,
     };
 
-    let new_boot_settings = get_boot_config_settings(socket_path)
-        .await?
-        .unwrap_or(DEFAULT_BOOT_SETTINGS);
+    let new_boot_settings = get_boot_config_settings(config_path)?.unwrap_or(DEFAULT_BOOT_SETTINGS);
 
     let reboot_required = if new_boot_settings.reboot_to_reconcile.unwrap_or(false) {
         boot_settings_change_requires_reboot(&old_boot_settings, &new_boot_settings)
@@ -297,7 +305,7 @@ where
     Ok(reboot_required)
 }
 
-/// Check whether `model::BootSettings` changed in a way to warrant a reboot
+/// Check whether `BootSettings` changed in a way to warrant a reboot
 fn boot_settings_change_requires_reboot(
     old_boot_settings: &BootSettings,
     new_boot_settings: &BootSettings,
@@ -328,13 +336,13 @@ fn boot_settings_change_requires_reboot(
 
 #[cfg(test)]
 mod boot_settings_tests {
+    use super::BootSettings;
     use crate::bootconfig::{
         boot_config_to_boot_settings_json, boot_settings_change_requires_reboot,
         serialize_boot_settings_to_boot_config, DEFAULT_BOOTCONFIG_STR,
     };
     use maplit::hashmap;
-    use model::modeled_types::{BootConfigKey, BootConfigValue};
-    use model::BootSettings;
+    use modeled_types::{BootConfigKey, BootConfigValue};
     use serde_json::json;
     use serde_json::value::Value;
     use std::collections::HashMap;

@@ -1,0 +1,20 @@
+[required-extensions]
+boot = "v1"
++++
+{{#if settings.boot}}
+{{#if settings.boot.reboot-to-reconcile}}
+reboot-to-reconcile = {{settings.boot.reboot-to-reconcile}}
+{{/if}}
+{{#if settings.boot.kernel}}
+[kernel]
+{{#each settings.boot.kernel}}
+"{{@key}}" = [ {{#each this}}"{{{this}}}",{{/each}} ]
+{{/each}}
+{{/if}}
+{{#if settings.boot.init}}
+[init]
+{{#each settings.boot.init}}
+"{{@key}}" = [ {{#each this}}"{{{this}}}",{{/each}} ]
+{{/each}}
+{{/if}}
+{{/if}}
