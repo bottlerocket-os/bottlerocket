@@ -11,8 +11,6 @@ User data provider binaries each implement the ability to obtain user data from 
 #[macro_use]
 extern crate log;
 
-use user_data_provider::settings::SettingsJson;
-use user_data_provider::LOG_LEVEL_ENV_VAR;
 use env_logger::{Target, WriteStyle};
 use log::LevelFilter;
 use snafu::{ensure, ResultExt};
@@ -21,6 +19,8 @@ use std::path::{Path, PathBuf};
 use std::str::{self, FromStr};
 use std::{env, io, process};
 use tokio::process::Command as AsyncCommand;
+use user_data_provider::settings::SettingsJson;
+use user_data_provider::LOG_LEVEL_ENV_VAR;
 use walkdir::WalkDir;
 
 // TODO

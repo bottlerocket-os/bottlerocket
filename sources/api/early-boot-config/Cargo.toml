@@ -9,63 +9,23 @@ build = "build.rs"
 # Don't rebuild crate just because of changes to README.
 exclude = ["README.md"]
 
-[[bin]]
-name = "local-defaults-provider"
-path = "src/bin/user-data-providers/local_defaults.rs"
-
-[[bin]]
-name = "local-overrides-provider"
-path = "src/bin/user-data-providers/local_overrides.rs"
-
-[[bin]]
-name = "local-user-data-provider"
-path = "src/bin/user-data-providers/local_user_data.rs"
-
-[[bin]]
-name = "ec2-imds-provider"
-path = "src/bin/user-data-providers/ec2_imds.rs"
-
-[[bin]]
-name = "ec2-identity-doc-provider"
-path = "src/bin/user-data-providers/ec2_identity_doc.rs"
-
-[[bin]]
-name = "vmware-cd-rom-provider"
-path = "src/bin/user-data-providers/vmware_cd_rom.rs"
-
-[[bin]]
-name = "vmware-guestinfo-provider"
-path = "src/bin/user-data-providers/vmware_guestinfo.rs"
-
 [dependencies]
 apiclient = { path = "../apiclient", version = "0.1" }
 async-trait = "0.1"
 base64 = "0.21"
 constants = { path = "../../constants", version = "0.1" }
 env_logger = "0.10"
-flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 http = "0.2"
-imdsclient = { path = "../../imdsclient", version = "0.1" }
 log = "0.4"
-retry-read = { path = "../../retry-read", version = "0.1" }
-serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_plain = "1"
 serde-xml-rs = "0.6"
 simplelog = "0.12"
 snafu = "0.8"
-tokio = { version = "~1.32", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
+tokio = { version = "~1.32", default-features = false, features = ["process", "macros", "rt-multi-thread"] }  # LTS
 toml = "0.8"
 user-data-provider = { path = "../user-data-provider", version = "0.1" }
 walkdir = "2.4"
 
-[target.'cfg(target_arch = "x86_64")'.dependencies]
-# vmw_backdoor includes x86_64 assembly, prevent it from building for ARM
-vmw_backdoor = "0.2"
-
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../../generate-readme" }
-
-[dev-dependencies]
-hex-literal = "0.3"
-lazy_static = "1"
