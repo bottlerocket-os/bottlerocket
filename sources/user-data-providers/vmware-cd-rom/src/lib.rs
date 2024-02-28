@@ -1,4 +1,7 @@
 /// VMWare CD-ROM
+#[macro_use]
+extern crate log;
+
 use async_trait::async_trait;
 use base64::Engine;
 use serde::Deserialize;

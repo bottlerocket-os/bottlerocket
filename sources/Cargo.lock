@@ -4767,6 +4767,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "vmware-cd-rom-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64 0.13.1",
+ "log",
+ "serde",
+ "serde-xml-rs",
+ "snafu",
+ "tokio",
+ "user-data-provider",
+]
+
+[[package]]
+name = "vmware-guestinfo-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64 0.13.1",
+ "log",
+ "serde",
+ "serde_plain",
+ "snafu",
+ "tokio",
+ "user-data-provider",
+ "vmw_backdoor",
+]
+
+[[package]]
 name = "vsimd"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

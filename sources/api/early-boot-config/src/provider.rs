@@ -4,9 +4,6 @@ mod ec2_imds;
 mod local_defaults;
 mod local_overrides;
 mod local_user_data;
-mod vmware_cd_rom;
-#[cfg(target_arch = "x86_64")]
-mod vmware_guestinfo;
 
 use user_data_provider::compression::expand_file_maybe;
 use user_data_provider::settings::SettingsJson;
@@ -21,9 +18,6 @@ pub use local_user_data::LocalUserData;
 use snafu::ResultExt;
 use std::path::Path;
 use std::process::ExitCode;
-pub use vmware_cd_rom::VmwareCdRom;
-#[cfg(target_arch = "x86_64")]
-pub use vmware_guestinfo::VmwareGuestinfo;
 
 /// Support for user data providers can be added by implementing this trait, and adding an
 /// additional binary using the implementor and common functions below.
