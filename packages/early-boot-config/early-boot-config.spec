@@ -40,6 +40,7 @@ Requires: %{_cross_os}early-boot-config-local
 %description -n %{_cross_os}early-boot-config-aws
 %{summary}.
 
+%ifarch x86_64
 %package -n %{_cross_os}early-boot-config-vmware
 Summary: early-boot-config package for vmware
 Provides: %{_cross_os}early-boot-config
@@ -48,6 +49,7 @@ Requires: %{_cross_os}early-boot-config-data-providers
 Requires: %{_cross_os}early-boot-config-local
 %description -n %{_cross_os}early-boot-config-vmware
 %{summary}.
+%endif
 
 %package -n %{_cross_os}early-boot-config-metal
 Summary: early-boot-config package for metal
@@ -71,8 +73,12 @@ Requires: %{_cross_os}early-boot-config-local
     --bin local-user-data-provider \
     --bin local-defaults-provider \
     --bin local-overrides-provider \
-    --bin vmware-cd-rom-provider \
-    --bin vmware-guestinfo-provider
+
+%ifarch x86_64
+%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
+    -p vmware-cd-rom-user-data-provider \
+    -p vmware-guestinfo-user-data-provider
+%endif
 
 %install
 install -d %{buildroot}%{_cross_bindir}
@@ -88,9 +94,14 @@ install -p -m 0755 \
     ${HOME}/.cache/%{__cargo_target}/release/local-user-data-provider \
     ${HOME}/.cache/%{__cargo_target}/release/local-defaults-provider \
     ${HOME}/.cache/%{__cargo_target}/release/local-overrides-provider \
-    ${HOME}/.cache/%{__cargo_target}/release/vmware-cd-rom-provider \
-    ${HOME}/.cache/%{__cargo_target}/release/vmware-guestinfo-provider \
     %{buildroot}%{_cross_libexecdir}/early-boot-config/bin
+
+%ifarch x86_64
+install -p -m 0755 \
+    ${HOME}/.cache/%{__cargo_target}/release/vmware-cd-rom-provider \
+    ${HOME}/.cache/%{__cargo_target}/release/vmware-guestinfo-user-data-provider \
+    %{buildroot}%{_cross_libexecdir}/early-boot-config/bin
+%endif
 
 install -d %{buildroot}%{_cross_datadir}/early-boot-config/data-providers.d
 
@@ -103,9 +114,11 @@ posix.symlink("../../../libexec/early-boot-config/bin/local-user-data-provider",
 posix.symlink("../../../libexec/early-boot-config/bin/local-defaults-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/10-local-defaults")
 posix.symlink("../../../libexec/early-boot-config/bin/local-overrides-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/50-local-overrides")
 
+%ifarch x86_64
 %post -n %{_cross_os}early-boot-config-vmware -p <lua>
 posix.symlink("../../../libexec/early-boot-config/bin/vmware-cd-rom-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/30-vmware-cd-rom")
-posix.symlink("../../../libexec/early-boot-config/bin/vmware-guestinfo-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/40-vmware-guestinfo")
+posix.symlink("../../../libexec/early-boot-config/bin/vmware-guestinfo-user-data-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/40-vmware-guestinfo")
+%endif
 
 %files -n %{_cross_os}early-boot-config-common
 %{_cross_bindir}/early-boot-config
@@ -123,8 +136,10 @@ posix.symlink("../../../libexec/early-boot-config/bin/vmware-guestinfo-provider"
 %{_cross_libexecdir}/early-boot-config/bin/ec2-identity-doc-provider
 %{_cross_libexecdir}/early-boot-config/bin/ec2-imds-provider
 
+%ifarch x86_64
 %files -n %{_cross_os}early-boot-config-vmware
 %{_cross_libexecdir}/early-boot-config/bin/vmware-cd-rom-provider
-%{_cross_libexecdir}/early-boot-config/bin/vmware-guestinfo-provider
+%{_cross_libexecdir}/early-boot-config/bin/vmware-guestinfo-user-data-provider
+%endif
 
 %files -n %{_cross_os}early-boot-config-metal

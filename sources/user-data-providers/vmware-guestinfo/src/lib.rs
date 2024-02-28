@@ -1,10 +1,13 @@
 /// VMWare guestinfo
-use user_data_provider::provider::UserDataProvider;
-use user_data_provider::{compression::OptionalCompressionReader, settings::SettingsJson};
+#[macro_use]
+extern crate log;
+
 use async_trait::async_trait;
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
 use std::io::{Cursor, Read};
+use user_data_provider::provider::UserDataProvider;
+use user_data_provider::{compression::OptionalCompressionReader, settings::SettingsJson};
 
 // The fields in which user data and its encoding are stored in guestinfo
 const GUESTINFO_USERDATA: &str = "guestinfo.userdata";

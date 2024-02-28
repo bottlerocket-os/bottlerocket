@@ -11,6 +11,9 @@ path = "../packages.rs"
 [package.metadata.build-package]
 source-groups = [
     "api/early-boot-config",
+
+    "user-data-providers/vmware-cd-rom",
+    "user-data-providers/vmware-guestinfo",
 ]
 
 # RPM BuildRequires
