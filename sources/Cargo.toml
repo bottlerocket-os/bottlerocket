@@ -23,6 +23,7 @@ members = [
     "api/migration/migration-helpers",
     "api/shibaken",
     "api/prairiedog",
+    "api/user-data-provider",
 
     # "api/migration/migrations/vX.Y.Z/..."
     # (all previous migrations archived; add new ones after this line)
