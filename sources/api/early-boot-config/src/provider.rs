@@ -8,9 +8,9 @@ mod vmware_cd_rom;
 #[cfg(target_arch = "x86_64")]
 mod vmware_guestinfo;
 
-use crate::compression::expand_file_maybe;
-use crate::settings::SettingsJson;
-use crate::LOG_LEVEL_ENV_VAR;
+use user_data_provider::compression::expand_file_maybe;
+use user_data_provider::settings::SettingsJson;
+use user_data_provider::LOG_LEVEL_ENV_VAR;
 use async_trait::async_trait;
 pub use ec2_identity_doc::Ec2IdentityDoc;
 pub use ec2_imds::Ec2Imds;
@@ -112,7 +112,7 @@ mod error {
         #[snafu(display("Unable to serialize settings from {}: {}", from.display(), source))]
         SettingsToJSON {
             from: PathBuf,
-            source: crate::settings::Error,
+            source: user_data_provider::settings::Error,
         },
     }
 }

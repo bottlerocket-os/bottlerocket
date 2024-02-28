@@ -56,6 +56,7 @@ simplelog = "0.12"
 snafu = "0.8"
 tokio = { version = "~1.32", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
 toml = "0.8"
+user-data-provider = { path = "../user-data-provider", version = "0.1" }
 walkdir = "2.4"
 
 [target.'cfg(target_arch = "x86_64")'.dependencies]

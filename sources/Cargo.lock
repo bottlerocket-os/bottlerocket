@@ -1710,6 +1710,7 @@ dependencies = [
  "snafu 0.8.2",
  "tokio",
  "toml",
+ "user-data-provider",
  "vmw_backdoor",
  "walkdir",
 ]

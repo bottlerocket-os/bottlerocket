@@ -11,8 +11,8 @@ User data provider binaries each implement the ability to obtain user data from 
 #[macro_use]
 extern crate log;
 
-use early_boot_config::settings::SettingsJson;
-use early_boot_config::LOG_LEVEL_ENV_VAR;
+use user_data_provider::settings::SettingsJson;
+use user_data_provider::LOG_LEVEL_ENV_VAR;
 use env_logger::{Target, WriteStyle};
 use log::LevelFilter;
 use snafu::{ensure, ResultExt};

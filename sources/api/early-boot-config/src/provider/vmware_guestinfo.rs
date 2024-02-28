@@ -1,6 +1,6 @@
 /// VMWare guestinfo
-use super::UserDataProvider;
-use crate::{compression::OptionalCompressionReader, settings::SettingsJson};
+use user_data_provider::provider::UserDataProvider;
+use user_data_provider::{compression::OptionalCompressionReader, settings::SettingsJson};
 use async_trait::async_trait;
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
@@ -182,7 +182,7 @@ mod error {
         #[snafu(display("Unable to serialize settings from {}: {}", from, source))]
         SettingsToJson {
             from: String,
-            source: crate::settings::Error,
+            source: user_data_provider::settings::Error,
         },
 
         #[snafu(display("Unknown user data encoding: '{}': {}", encoding, source))]

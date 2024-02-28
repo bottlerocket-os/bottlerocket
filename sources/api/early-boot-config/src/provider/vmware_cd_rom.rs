@@ -1,7 +1,4 @@
 /// VMWare CD-ROM
-use super::UserDataProvider;
-use crate::compression::{expand_file_maybe, expand_slice_maybe, OptionalCompressionReader};
-use crate::settings::SettingsJson;
 use async_trait::async_trait;
 use base64::Engine;
 use serde::Deserialize;
@@ -10,6 +7,11 @@ use std::ffi::OsStr;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
+use user_data_provider::compression::{
+    expand_file_maybe, expand_slice_maybe, OptionalCompressionReader,
+};
+use user_data_provider::provider::UserDataProvider;
+use user_data_provider::settings::SettingsJson;
 
 // This program expects that the CD-ROM is already mounted.  Mounting happens elsewhere in a
 // systemd unit file
@@ -201,7 +203,7 @@ mod error {
         #[snafu(display("Unable to serialize settings from {}: {}", from, source))]
         SettingsToJson {
             from: String,
-            source: crate::settings::Error,
+            source: user_data_provider::settings::Error,
         },
 
         #[snafu(display("Found multiple user data files in '{}', expected 1", place))]

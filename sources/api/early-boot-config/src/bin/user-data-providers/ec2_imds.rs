@@ -1,5 +1,6 @@
-use early_boot_config::provider::{run_userdata_provider, setup_provider_logging, Ec2Imds};
+use early_boot_config::provider::Ec2Imds;
 use std::process::ExitCode;
+use user_data_provider::provider::{run_userdata_provider, setup_provider_logging};
 
 #[tokio::main]
 async fn main() -> ExitCode {
