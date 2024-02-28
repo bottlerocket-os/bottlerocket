@@ -120,6 +120,9 @@ members = [
     "updater/update_metadata",
     "updater/updog",
 
+    "user-data-providers/local-defaults",
+    "user-data-providers/local-file",
+    "user-data-providers/local-overrides",
     "user-data-providers/vmware-cd-rom",
     "user-data-providers/vmware-guestinfo",
 

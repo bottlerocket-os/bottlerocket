@@ -1,9 +1,6 @@
 //! The provider module owns the `UserDataProvider` trait
 mod ec2_identity_doc;
 mod ec2_imds;
-mod local_defaults;
-mod local_overrides;
-mod local_user_data;
 
 use user_data_provider::compression::expand_file_maybe;
 use user_data_provider::settings::SettingsJson;
@@ -12,9 +9,6 @@ use async_trait::async_trait;
 pub use ec2_identity_doc::Ec2IdentityDoc;
 pub use ec2_imds::Ec2Imds;
 use env_logger::{Env, Target, WriteStyle};
-pub use local_defaults::LocalDefaults;
-pub use local_overrides::LocalOverrides;
-pub use local_user_data::LocalUserData;
 use snafu::ResultExt;
 use std::path::Path;
 use std::process::ExitCode;

@@ -2454,6 +2454,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "local-defaults-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "tokio",
+ "user-data-provider",
+]
+
+[[package]]
+name = "local-file-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "tokio",
+ "user-data-provider",
+]
+
+[[package]]
+name = "local-overrides-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "tokio",
+ "user-data-provider",
+]
+
+[[package]]
 name = "local-waker"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
