@@ -1,11 +1,11 @@
 /// EC2 Identity Document
-use super::UserDataProvider;
-use crate::settings::SettingsJson;
 use async_trait::async_trait;
 use imdsclient::ImdsClient;
 use serde_json::json;
 use snafu::{OptionExt, ResultExt};
 use std::{fs, path::Path};
+use user_data_provider::provider::UserDataProvider;
+use user_data_provider::settings::SettingsJson;
 
 const IDENTITY_DOCUMENT_FILE: &str = "/etc/early-boot-config/identity-document";
 const FALLBACK_REGION: &str = "us-east-1";
@@ -91,7 +91,7 @@ mod error {
         #[snafu(display("Unable to serialize settings from {}: {}", from, source))]
         SettingsToJSON {
             from: String,
-            source: crate::settings::Error,
+            source: user_data_provider::settings::Error,
         },
 
         #[snafu(display(

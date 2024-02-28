@@ -1,10 +1,10 @@
 /// EC2 Instance Metadata Service
-use super::UserDataProvider;
-use crate::compression::expand_slice_maybe;
-use crate::settings::SettingsJson;
 use async_trait::async_trait;
 use imdsclient::ImdsClient;
 use snafu::ResultExt;
+use user_data_provider::compression::expand_slice_maybe;
+use user_data_provider::provider::UserDataProvider;
+use user_data_provider::settings::SettingsJson;
 
 pub struct Ec2Imds;
 
@@ -59,7 +59,7 @@ mod error {
         #[snafu(display("Unable to serialize settings from {}: {}", from, source))]
         SettingsToJSON {
             from: String,
-            source: crate::settings::Error,
+            source: user_data_provider::settings::Error,
         },
     }
 }
