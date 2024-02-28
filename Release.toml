@@ -1,4 +1,4 @@
-version = "1.19.2"
+version = "1.19.3"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -274,4 +274,6 @@ version = "1.19.2"
     "migrate_v1.19.2_certdog-config-file-v0-1-0.lz4",
     "migrate_v1.19.2_certdog-service-cfg-v0-1-0.lz4",
     "migrate_v1.19.2_add-ecs-enable-container-metadata.lz4",
+]
+"(1.19.2, 1.19.3)" = [
 ]
