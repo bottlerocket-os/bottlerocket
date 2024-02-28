@@ -67,9 +67,12 @@ Requires: %{_cross_os}early-boot-config-local
 %build
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
     -p early-boot-config \
-    --bin early-boot-config \
-    --bin ec2-identity-doc-provider \
-    --bin ec2-imds-provider
+    --bin early-boot-config
+
+# build aws user data providers
+%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
+    -p ec2-identity-doc-user-data-provider \
+    -p ec2-imds-user-data-provider
 
 # build local file user data providers
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
@@ -93,8 +96,8 @@ install -p -m 0644 %{S:100} %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_libexecdir}/early-boot-config/bin
 install -p -m 0755 \
-    ${HOME}/.cache/%{__cargo_target}/release/ec2-identity-doc-provider \
-    ${HOME}/.cache/%{__cargo_target}/release/ec2-imds-provider \
+    ${HOME}/.cache/%{__cargo_target}/release/ec2-identity-doc-user-data-provider \
+    ${HOME}/.cache/%{__cargo_target}/release/ec2-imds-user-data-provider \
     ${HOME}/.cache/%{__cargo_target}/release/local-defaults-user-data-provider \
     ${HOME}/.cache/%{__cargo_target}/release/local-file-user-data-provider \
     ${HOME}/.cache/%{__cargo_target}/release/local-overrides-user-data-provider \
@@ -110,8 +113,8 @@ install -p -m 0755 \
 install -d %{buildroot}%{_cross_datadir}/early-boot-config/data-providers.d
 
 %post -n %{_cross_os}early-boot-config-aws -p <lua>
-posix.symlink("../../../libexec/early-boot-config/bin/ec2-identity-doc-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/30-ec2-identity-doc")
-posix.symlink("../../../libexec/early-boot-config/bin/ec2-imds-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/40-ec2-imds")
+posix.symlink("../../../libexec/early-boot-config/bin/ec2-identity-doc-user-data-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/30-ec2-identity-doc")
+posix.symlink("../../../libexec/early-boot-config/bin/ec2-imds-user-data-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/40-ec2-imds")
 
 %post -n %{_cross_os}early-boot-config-local -p <lua>
 posix.symlink("../../../libexec/early-boot-config/bin/local-defaults-user-data-provider", "%{_cross_datadir}/early-boot-config/data-providers.d/10-local-defaults")
@@ -137,8 +140,8 @@ posix.symlink("../../../libexec/early-boot-config/bin/vmware-guestinfo-user-data
 %{_cross_libexecdir}/early-boot-config/bin/local-overrides-user-data-provider
 
 %files -n %{_cross_os}early-boot-config-aws
-%{_cross_libexecdir}/early-boot-config/bin/ec2-identity-doc-provider
-%{_cross_libexecdir}/early-boot-config/bin/ec2-imds-provider
+%{_cross_libexecdir}/early-boot-config/bin/ec2-identity-doc-user-data-provider
+%{_cross_libexecdir}/early-boot-config/bin/ec2-imds-user-data-provider
 
 %ifarch x86_64
 %files -n %{_cross_os}early-boot-config-vmware

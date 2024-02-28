@@ -1,4 +1,7 @@
 /// EC2 Identity Document
+#[macro_use]
+extern crate log;
+
 use async_trait::async_trait;
 use imdsclient::ImdsClient;
 use serde_json::json;

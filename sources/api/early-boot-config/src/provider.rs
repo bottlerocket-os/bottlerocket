@@ -1,13 +1,9 @@
 //! The provider module owns the `UserDataProvider` trait
-mod ec2_identity_doc;
-mod ec2_imds;
 
 use user_data_provider::compression::expand_file_maybe;
 use user_data_provider::settings::SettingsJson;
 use user_data_provider::LOG_LEVEL_ENV_VAR;
 use async_trait::async_trait;
-pub use ec2_identity_doc::Ec2IdentityDoc;
-pub use ec2_imds::Ec2Imds;
 use env_logger::{Env, Target, WriteStyle};
 use snafu::ResultExt;
 use std::path::Path;

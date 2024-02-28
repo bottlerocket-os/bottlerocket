@@ -1716,6 +1716,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "ec2-identity-doc-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "imdsclient",
+ "log",
+ "serde_json",
+ "snafu",
+ "tokio",
+ "user-data-provider",
+]
+
+[[package]]
+name = "ec2-imds-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "imdsclient",
+ "log",
+ "snafu",
+ "tokio",
+ "user-data-provider",
+]
+
+[[package]]
 name = "either"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

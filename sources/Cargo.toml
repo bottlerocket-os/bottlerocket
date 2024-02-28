@@ -120,6 +120,8 @@ members = [
     "updater/update_metadata",
     "updater/updog",
 
+    "user-data-providers/ec2-identity-doc",
+    "user-data-providers/ec2-imds",
     "user-data-providers/local-defaults",
     "user-data-providers/local-file",
     "user-data-providers/local-overrides",
