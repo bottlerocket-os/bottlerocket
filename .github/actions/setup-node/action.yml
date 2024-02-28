@@ -13,13 +13,13 @@ runs:
         echo "OS_ARCH=`uname -m`" >> $GITHUB_ENV
         sudo apt -y install build-essential openssl libssl-dev pkg-config liblz4-tool
       shell: bash
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       # Cache `cargo-make`, `cargo-cache`
       with:
         path: |
           ~/.cargo
         key: ${{ hashFiles('.github/workflows/cache.yml') }}-${{ runner.os }}-${{ env.OS_ARCH }}
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       # Cache first-party code dependencies
       with:
         path: |
