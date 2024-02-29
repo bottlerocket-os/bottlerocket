@@ -141,6 +141,7 @@ where
         output.status.success(),
         error::ProviderFailureSnafu {
             provider: &provider,
+            message: String::from_utf8_lossy(&output.stdout),
         }
     );
 
@@ -282,8 +283,11 @@ mod error {
         #[snafu(display("Provider error: {}", source))]
         Provider { source: Box<dyn std::error::Error> },
 
-        #[snafu(display("Provider '{}' failed", provider.display()))]
-        ProviderFailure { provider: PathBuf },
+        #[snafu(display("Provider '{}' failed: {}", provider.display(), message))]
+        ProviderFailure {
+            provider: PathBuf,
+            message: String,
+        },
 
         #[snafu(display(
             "Error deserializing provider output as JSON from {}: '{}'",
