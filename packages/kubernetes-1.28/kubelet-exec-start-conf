@@ -34,4 +34,5 @@ ExecStart=/usr/bin/kubelet \
 {{#if settings.kubernetes.log-level includeZero=true}}
     -v {{settings.kubernetes.log-level}} \
 {{/if}}
-    --pod-infra-container-image ${POD_INFRA_CONTAINER_IMAGE}
+    --pod-infra-container-image ${POD_INFRA_CONTAINER_IMAGE} \
+    --runtime-cgroups=/runtime.slice/containerd.service
