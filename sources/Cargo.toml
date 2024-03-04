@@ -93,6 +93,7 @@ members = [
 
     "settings-extensions/aws",
     "settings-extensions/container-registry",
+    "settings-extensions/host-containers",
     "settings-extensions/kernel",
     "settings-extensions/motd",
     "settings-extensions/ntp",

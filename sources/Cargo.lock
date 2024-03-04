@@ -2114,6 +2114,7 @@ dependencies = [
  "log",
  "models",
  "serde_json",
+ "settings-extension-host-containers",
  "simplelog",
  "snafu",
  "tokio",
@@ -2671,6 +2672,7 @@ dependencies = [
  "serde_json",
  "settings-extension-aws",
  "settings-extension-container-registry",
+ "settings-extension-host-containers",
  "settings-extension-kernel",
  "settings-extension-motd",
  "settings-extension-ntp",
@@ -3698,6 +3700,18 @@ dependencies = [
 
 [[package]]
 name = "settings-extension-container-registry"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "settings-extension-host-containers"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-settings-sdk",
