@@ -46,16 +46,24 @@ restart-commands = ["/bin/systemctl try-restart host-containerd.service"]
 version-lock = "latest"
 ignore-waves = false
 
+[services.thar-be-updates]
+configuration-files = ["thar-be-updates-toml"]
+restart-commands = []
+
 [services.updog]
 configuration-files = ["updog-toml"]
 restart-commands = []
+
+[configuration-files.thar-be-updates-toml]
+path = "/etc/thar-be-updates.toml"
+template-path = "/usr/share/templates/thar-be-updates-toml"
 
 [configuration-files.updog-toml]
 path = "/etc/updog.toml"
 template-path = "/usr/share/templates/updog-toml"
 
 [metadata.settings.updates]
-affected-services = ["updog"]
+affected-services = ["updog", "thar-be-updates"]
 seed.setting-generator = "bork seed"
 
 # HostContainers

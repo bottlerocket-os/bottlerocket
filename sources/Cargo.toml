@@ -66,6 +66,8 @@ members = [
     "api/migration/migrations/v1.19.2/add-ecs-enable-container-metadata",
     "api/migration/migrations/v1.19.3/prairiedog-config-file-v0-1-0",
     "api/migration/migrations/v1.19.3/prairiedog-services-cfg-v0-1-0",
+    "api/migration/migrations/v1.19.3/thar-be-updates-config-file-v0-1-0",
+    "api/migration/migrations/v1.19.3/thar-be-updates-affected-services-v0-1-0",
 
     "bloodhound",
 

@@ -24,7 +24,7 @@ use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ensure;
 use snafu::{OptionExt, ResultExt};
 use std::fs::File;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{exit, Command};
 use std::str::FromStr;
 use std::{env, process};
@@ -37,12 +37,13 @@ use thar_be_updates::status::{
 };
 
 const UPDATE_STATUS_DIR: &str = "/run/cache/thar-be-updates";
+const DEFAULT_CONFIG_FILE: &str = "/etc/thar-be-updates.toml";
 
 /// Stores the command line arguments
 struct Args {
     subcommand: UpdateCommand,
     log_level: LevelFilter,
-    socket_path: String,
+    config_path: PathBuf,
 }
 
 /// Prints an usage message
@@ -59,10 +60,9 @@ fn usage() -> ! {
                 deactivate  Reverts update activation by marking current active partition for boot
 
             Global options:
-                    [ --socket-path PATH ]    Bottlerocket API socket path (default {})
+                    [ --config-path PATH ]    configuration file (default {})
                     [ --log-level trace|debug|info|warn|error ]  (default info)",
-        program_name,
-        constants::API_SOCKET,
+        program_name, DEFAULT_CONFIG_FILE,
     );
     process::exit(2);
 }
@@ -77,7 +77,7 @@ fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
 fn parse_args(args: std::env::Args) -> Args {
     let mut subcommand = None;
     let mut log_level = None;
-    let mut socket_path = None;
+    let mut config_path = None;
 
     let mut iter = args.skip(1).peekable();
     while let Some(arg) = iter.next() {
@@ -91,11 +91,11 @@ fn parse_args(args: std::env::Args) -> Args {
                 }));
             }
 
-            "--socket-path" => {
-                socket_path = Some(
-                    iter.next()
-                        .unwrap_or_else(|| usage_msg("Did not give argument to --socket-path")),
-                )
+            "--config-path" => {
+                config_path =
+                    Some(PathBuf::from(iter.next().unwrap_or_else(|| {
+                        usage_msg("Did not give argument to --config-path")
+                    })))
             }
             // Assume any arguments not prefixed with '-' is a subcommand
             s if !s.starts_with('-') => {
@@ -112,7 +112,7 @@ fn parse_args(args: std::env::Args) -> Args {
     Args {
         subcommand: subcommand.unwrap_or_else(|| usage()),
         log_level: log_level.unwrap_or(LevelFilter::Info),
-        socket_path: socket_path.unwrap_or_else(|| constants::API_SOCKET.to_string()),
+        config_path: config_path.unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIG_FILE)),
     }
 }
 
@@ -180,7 +180,10 @@ macro_rules! fork_and_return {
 
 /// Spawns updog process to get list of updates and check if any of them can be updated to.
 /// Returns true if there is an available update, returns false otherwise.
-fn refresh(status: &mut UpdateStatus, socket_path: &str) -> Result<bool> {
+fn refresh<P>(status: &mut UpdateStatus, config_path: P) -> Result<bool>
+where
+    P: AsRef<Path>,
+{
     fork_and_return!({
         debug!("Spawning 'updog whats'");
         let output = Command::new("updog")
@@ -194,7 +197,7 @@ fn refresh(status: &mut UpdateStatus, socket_path: &str) -> Result<bool> {
         }
         let update_info: Vec<update_metadata::Update> =
             serde_json::from_slice(&output.stdout).context(error::UpdateInfoSnafu)?;
-        status.update_available_updates(socket_path, update_info)
+        status.update_available_updates(config_path, update_info)
     })
 }
 
@@ -255,15 +258,18 @@ fn deactivate(status: &mut UpdateStatus) -> Result<()> {
 }
 
 /// Given the update command, this drives the update state machine.
-fn drive_state_machine(
+fn drive_state_machine<P>(
     update_status: &mut UpdateStatus,
     operation: &UpdateCommand,
-    socket_path: &str,
-) -> Result<()> {
+    config_path: P,
+) -> Result<()>
+where
+    P: AsRef<Path>,
+{
     let new_state = match (operation, update_status.update_state()) {
         (UpdateCommand::Refresh, UpdateState::Idle)
         | (UpdateCommand::Refresh, UpdateState::Available) => {
-            if refresh(update_status, socket_path)? {
+            if refresh(update_status, config_path)? {
                 // Transitions state to `Available` if there is an available update
                 UpdateState::Available
             } else {
@@ -273,7 +279,7 @@ fn drive_state_machine(
         }
         // Refreshing the list of updates is allowed under every update state
         (UpdateCommand::Refresh, _) => {
-            refresh(update_status, socket_path)?;
+            refresh(update_status, config_path)?;
             // No need to transition state here as we're already beyond `Available`
             update_status.update_state().to_owned()
         }
@@ -348,7 +354,7 @@ fn run() -> Result<()> {
     // The commands inside drive_state_machine update the update_status object (hence &mut) to
     // reflect success or failure, and we want to reflect that in our status file regardless of
     // success, so we store the result rather than returning early here.
-    let result = drive_state_machine(&mut update_status, &args.subcommand, &args.socket_path);
+    let result = drive_state_machine(&mut update_status, &args.subcommand, &args.config_path);
     write_update_status(&update_status)?;
     result
 }

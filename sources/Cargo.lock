@@ -4094,15 +4094,12 @@ dependencies = [
 name = "thar-be-updates"
 version = "0.1.0"
 dependencies = [
- "apiclient",
  "bottlerocket-release",
  "chrono",
- "constants",
  "fs2",
  "generate-readme",
- "http",
  "log",
- "models",
+ "modeled-types",
  "nix",
  "num-derive",
  "num-traits",
@@ -4114,8 +4111,22 @@ dependencies = [
  "simplelog",
  "snafu",
  "tempfile",
- "tokio",
+ "toml 0.8.8",
  "update_metadata",
+]
+
+[[package]]
+name = "thar-be-updates-affected-services-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "thar-be-updates-config-file-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
 ]
 
 [[package]]

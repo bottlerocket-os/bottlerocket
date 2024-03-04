@@ -10,14 +10,11 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-apiclient = { path = "../apiclient", version = "0.1" }
-constants = { path = "../../constants", version = "0.1" }
 bottlerocket-release = { path = "../../bottlerocket-release", version = "0.1" }
 chrono = { version = "0.4", default-features = false, features = ["std", "serde", "clock"] }
 fs2 = "0.4"
-http = "0.2"
 log = "0.4"
-models = { path = "../../models", version = "0.1" }
+modeled-types = { path = "../../models/modeled-types", version = "0.1" }
 nix = "0.26"
 num-derive = "0.3"
 num-traits = "0.2"
@@ -29,7 +26,7 @@ signpost = { path = "../../updater/signpost", version = "0.1" }
 simplelog = "0.12"
 snafu = "0.7"
 tempfile = "3"
-tokio = { version = "~1.32", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
+toml = "0.8"
 update_metadata = { path = "../../updater/update_metadata", version = "0.1" }
 
 [build-dependencies]
