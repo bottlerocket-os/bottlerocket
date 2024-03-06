@@ -3,7 +3,7 @@
 
 early-boot-config sends user data to the Bottlerocket API.
 
-Variants include their required user data provider binaries via packages.  early-boot-config discovers these binaries at runtime in /usr/share/early-boot-config/data-providers.d and runs them in order, sending any user data found to the API.
+Variants include their required user data provider binaries via packages.  early-boot-config discovers these binaries at runtime in /usr/libexec/early-boot-config/data-providers.d and runs them in order, sending any user data found to the API.
 
 User data provider binaries each implement the ability to obtain user data from a single source.  Sources include local files, AWS Instance Metadata Service (IMDS), among others.
 */
@@ -31,7 +31,7 @@ use walkdir::WalkDir;
 // We create it after running successfully.
 const MARKER_FILE: &str = "/var/lib/bottlerocket/early-boot-config.ran";
 /// The directory containing user data provider binaries
-const PROVIDERS_DIR: &str = "/usr/share/early-boot-config/data-providers.d";
+const PROVIDERS_DIR: &str = "/usr/libexec/early-boot-config/data-providers.d";
 
 /// Store the args we receive on the command line
 #[derive(Debug)]
