@@ -10,15 +10,16 @@ path = "../packages.rs"
 
 [package.metadata.build-package]
 source-groups = [
-    "api/early-boot-config",
+    "early-boot-config/early-boot-config",
+    "early-boot-config/early-boot-config-provider",
 
-    "user-data-providers/ec2-identity-doc",
-    "user-data-providers/ec2-imds",
-    "user-data-providers/local-defaults",
-    "user-data-providers/local-file",
-    "user-data-providers/local-overrides",
-    "user-data-providers/vmware-cd-rom",
-    "user-data-providers/vmware-guestinfo",
+    "early-boot-config/user-data-providers/ec2-identity-doc",
+    "early-boot-config/user-data-providers/ec2-imds",
+    "early-boot-config/user-data-providers/local-defaults",
+    "early-boot-config/user-data-providers/local-file",
+    "early-boot-config/user-data-providers/local-overrides",
+    "early-boot-config/user-data-providers/vmware-cd-rom",
+    "early-boot-config/user-data-providers/vmware-guestinfo",
 ]
 
 # RPM BuildRequires

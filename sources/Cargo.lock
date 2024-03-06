@@ -1674,6 +1674,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "constants",
+ "early-boot-config-provider",
  "env_logger",
  "generate-readme",
  "http",
@@ -1681,8 +1682,25 @@ dependencies = [
  "serde_json",
  "snafu",
  "tokio",
- "user-data-provider",
  "walkdir",
+]
+
+[[package]]
+name = "early-boot-config-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "env_logger",
+ "flate2",
+ "generate-readme",
+ "hex-literal",
+ "lazy_static",
+ "log",
+ "retry-read",
+ "serde",
+ "serde_json",
+ "snafu",
+ "toml 0.5.11",
 ]
 
 [[package]]
@@ -1690,12 +1708,12 @@ name = "ec2-identity-doc-user-data-provider"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "early-boot-config-provider",
  "imdsclient",
  "log",
  "serde_json",
  "snafu",
  "tokio",
- "user-data-provider",
 ]
 
 [[package]]
@@ -1703,11 +1721,11 @@ name = "ec2-imds-user-data-provider"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "early-boot-config-provider",
  "imdsclient",
  "log",
  "snafu",
  "tokio",
- "user-data-provider",
 ]
 
 [[package]]
@@ -2447,8 +2465,8 @@ name = "local-defaults-user-data-provider"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "early-boot-config-provider",
  "tokio",
- "user-data-provider",
 ]
 
 [[package]]
@@ -2456,8 +2474,8 @@ name = "local-file-user-data-provider"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "early-boot-config-provider",
  "tokio",
- "user-data-provider",
 ]
 
 [[package]]
@@ -2465,8 +2483,8 @@ name = "local-overrides-user-data-provider"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "early-boot-config-provider",
  "tokio",
- "user-data-provider",
 ]
 
 [[package]]
@@ -4625,34 +4643,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da"
 
 [[package]]
-name = "user-data-provider"
-version = "0.1.0"
-dependencies = [
- "apiclient",
- "async-trait",
- "base64 0.13.1",
- "constants",
- "env_logger",
- "flate2",
- "generate-readme",
- "hex-literal",
- "http",
- "imdsclient",
- "lazy_static",
- "log",
- "retry-read",
- "serde",
- "serde-xml-rs",
- "serde_json",
- "serde_plain",
- "snafu",
- "tokio",
- "toml 0.5.11",
- "vmw_backdoor",
- "walkdir",
-]
-
-[[package]]
 name = "utf-8"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4690,12 +4680,12 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "base64 0.13.1",
+ "early-boot-config-provider",
  "log",
  "serde",
  "serde-xml-rs",
  "snafu",
  "tokio",
- "user-data-provider",
 ]
 
 [[package]]
@@ -4704,12 +4694,12 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "base64 0.13.1",
+ "early-boot-config-provider",
  "log",
  "serde",
  "serde_plain",
  "snafu",
  "tokio",
- "user-data-provider",
  "vmw_backdoor",
 ]
 
