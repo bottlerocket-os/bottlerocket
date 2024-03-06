@@ -1,0 +1,18 @@
+[package]
+name = "vmware-guestinfo-user-data-provider"
+version = "0.1.0"
+authors = ["Zac Mrowicki <mrowicki@amazon.com>", "Sam Berning <bernings@amazon.com>"]
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+async-trait = "0.1"
+base64 = "0.13"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_plain = "1"
+snafu = "0.7"
+tokio = { version = "~1.32", default-features = false, features = ["process", "macros", "rt-multi-thread"] }  # LTS
+early-boot-config-provider = { path = "../../early-boot-config-provider", version = "0.1" }
+vmw_backdoor = "0.2"

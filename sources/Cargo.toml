@@ -8,7 +8,6 @@ members = [
     "api/certdog",
     "api/corndog",
     "api/datastore",
-    "api/early-boot-config",
     "api/netdog",
     "api/sundog",
     "api/schnauzer",
@@ -23,7 +22,6 @@ members = [
     "api/migration/migration-helpers",
     "api/shibaken",
     "api/prairiedog",
-    "api/user-data-provider",
 
     # "api/migration/migrations/vX.Y.Z/..."
     # (all previous migrations archived; add new ones after this line)
@@ -92,6 +90,17 @@ members = [
 
     "driverdog",
 
+    "early-boot-config/early-boot-config",
+    "early-boot-config/early-boot-config-provider",
+
+    "early-boot-config/user-data-providers/ec2-identity-doc",
+    "early-boot-config/user-data-providers/ec2-imds",
+    "early-boot-config/user-data-providers/local-defaults",
+    "early-boot-config/user-data-providers/local-file",
+    "early-boot-config/user-data-providers/local-overrides",
+    "early-boot-config/user-data-providers/vmware-cd-rom",
+    "early-boot-config/user-data-providers/vmware-guestinfo",
+
     "generate-readme",
 
     "ghostdog",
@@ -119,14 +128,6 @@ members = [
     "updater/signpost",
     "updater/update_metadata",
     "updater/updog",
-
-    "user-data-providers/ec2-identity-doc",
-    "user-data-providers/ec2-imds",
-    "user-data-providers/local-defaults",
-    "user-data-providers/local-file",
-    "user-data-providers/local-overrides",
-    "user-data-providers/vmware-cd-rom",
-    "user-data-providers/vmware-guestinfo",
 
     "constants",
 
