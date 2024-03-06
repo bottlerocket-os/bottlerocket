@@ -4,7 +4,7 @@ extern crate log;
 
 use async_trait::async_trait;
 use early_boot_config_provider::compression::expand_slice_maybe;
-use early_boot_config_provider::provider::UserDataProvider;
+use early_boot_config_provider::provider::AsyncUserDataProvider;
 use early_boot_config_provider::settings::SettingsJson;
 use imdsclient::ImdsClient;
 use snafu::ResultExt;
@@ -12,7 +12,7 @@ use snafu::ResultExt;
 pub struct Ec2Imds;
 
 #[async_trait]
-impl UserDataProvider for Ec2Imds {
+impl AsyncUserDataProvider for Ec2Imds {
     async fn user_data(
         &self,
     ) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {

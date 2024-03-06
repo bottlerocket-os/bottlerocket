@@ -2466,30 +2466,24 @@ dependencies = [
 name = "local-defaults-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "early-boot-config-provider",
  "generate-readme",
- "tokio",
 ]
 
 [[package]]
 name = "local-file-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "early-boot-config-provider",
  "generate-readme",
- "tokio",
 ]
 
 [[package]]
 name = "local-overrides-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "early-boot-config-provider",
  "generate-readme",
- "tokio",
 ]
 
 [[package]]
@@ -4683,7 +4677,6 @@ dependencies = [
 name = "vmware-cd-rom-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "base64 0.13.1",
  "early-boot-config-provider",
  "generate-readme",
@@ -4691,14 +4684,12 @@ dependencies = [
  "serde",
  "serde-xml-rs",
  "snafu",
- "tokio",
 ]
 
 [[package]]
 name = "vmware-guestinfo-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "base64 0.13.1",
  "early-boot-config-provider",
  "generate-readme",
@@ -4706,7 +4697,6 @@ dependencies = [
  "serde",
  "serde_plain",
  "snafu",
- "tokio",
  "vmw_backdoor",
 ]
 

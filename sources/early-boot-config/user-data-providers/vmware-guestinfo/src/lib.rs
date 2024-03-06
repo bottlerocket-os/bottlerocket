@@ -2,7 +2,6 @@
 #[macro_use]
 extern crate log;
 
-use async_trait::async_trait;
 use early_boot_config_provider::provider::UserDataProvider;
 use early_boot_config_provider::{compression::OptionalCompressionReader, settings::SettingsJson};
 use serde::Deserialize;
@@ -78,9 +77,8 @@ impl VmwareGuestinfo {
     }
 }
 
-#[async_trait]
 impl UserDataProvider for VmwareGuestinfo {
-    async fn user_data(
+    fn user_data(
         &self,
     ) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
         info!("Attempting to retrieve user data via guestinfo interface");
