@@ -1709,6 +1709,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "early-boot-config-provider",
+ "generate-readme",
  "imdsclient",
  "log",
  "serde_json",
@@ -1722,6 +1723,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "early-boot-config-provider",
+ "generate-readme",
  "imdsclient",
  "log",
  "snafu",
@@ -2466,6 +2468,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "early-boot-config-provider",
+ "generate-readme",
  "tokio",
 ]
 
@@ -2475,6 +2478,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "early-boot-config-provider",
+ "generate-readme",
  "tokio",
 ]
 
@@ -2484,6 +2488,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "early-boot-config-provider",
+ "generate-readme",
  "tokio",
 ]
 
@@ -4681,6 +4686,7 @@ dependencies = [
  "async-trait",
  "base64 0.13.1",
  "early-boot-config-provider",
+ "generate-readme",
  "log",
  "serde",
  "serde-xml-rs",
@@ -4695,6 +4701,7 @@ dependencies = [
  "async-trait",
  "base64 0.13.1",
  "early-boot-config-provider",
+ "generate-readme",
  "log",
  "serde",
  "serde_plain",

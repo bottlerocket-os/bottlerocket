@@ -5,6 +5,9 @@ authors = ["Zac Mrowicki <mrowicki@amazon.com>", "Sam Berning <bernings@amazon.c
 edition = "2021"
 license = "Apache-2.0 OR MIT"
 publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
 
 [dependencies]
 async-trait = "0.1"
@@ -15,3 +18,6 @@ serde-xml-rs = "0.6"
 snafu = "0.7"
 tokio = { version = "~1.32", default-features = false, features = ["process", "macros", "rt-multi-thread"] }  # LTS
 early-boot-config-provider = { path = "../../early-boot-config-provider", version = "0.1" }
+
+[build-dependencies]
+generate-readme = { version = "0.1", path = "../../../generate-readme" }

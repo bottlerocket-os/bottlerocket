@@ -1,7 +1,7 @@
 /*!
 # Introduction
 
-user-data-provider defines the interface of the user data provider binaries used by early-boot-config.
+early-boot-config-provider defines the interface of the user data provider binaries used by early-boot-config.
 
 User data provider binaries can also be easily created using the UserDataProvider trait and logging functions defined by this crate.
 */
