@@ -34,8 +34,27 @@ BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}runc
 Requires: %{_cross_os}pigz
+Requires: %{name}(binaries)
 
 %description
+%{summary}.
+
+%package bin
+Summary: An industry-standard container runtime's binaries
+Provides: %{name}(binaries)
+Requires: (%{_cross_os}image-feature(no-fips) and %{name})
+Conflicts: (%{_cross_os}image-feature(fips) or %{name}-fips-bin)
+
+%description bin
+%{summary}.
+
+%package fips-bin
+Summary: An industry-standard container runtime's binaries, FIPS edition
+Provides: %{name}(binaries)
+Requires: (%{_cross_os}image-feature(fips) and %{name})
+Conflicts: (%{_cross_os}image-feature(no-fips) or %{name}-bin)
+
+%description fips-bin
 %{summary}.
 
 %prep
@@ -47,6 +66,13 @@ Requires: %{_cross_os}pigz
 export BUILDTAGS="no_btrfs selinux"
 export LD_VERSION="-X github.com/containerd/containerd/version.Version=%{gover}+bottlerocket"
 export LD_REVISION="-X github.com/containerd/containerd/version.Revision=%{gitrev}"
+
+declare -a BUILD_ARGS
+BUILD_ARGS=(
+  -tags="${BUILDTAGS}"
+  -ldflags="${GOLDFLAGS} ${LD_VERSION} ${LD_REVISION}"
+)
+
 for bin in \
   containerd \
   containerd-shim \
@@ -54,16 +80,12 @@ for bin in \
   containerd-shim-runc-v2 \
   ctr ;
 do
-  go build \
-     -buildmode=pie \
-     -ldflags="${GOLDFLAGS} ${LD_VERSION} ${LD_REVISION}" \
-     -tags="${BUILDTAGS}" \
-     -o ${bin} \
-     %{goimport}/cmd/${bin}
+  go build "${BUILD_ARGS[@]}" -o ${bin} %{goimport}/cmd/${bin}
+  gofips build "${BUILD_ARGS[@]}" -o fips/${bin} %{goimport}/cmd/${bin}
 done
 
 %install
-install -d %{buildroot}%{_cross_bindir}
+install -d %{buildroot}{%{_cross_bindir},%{_cross_fips_bindir}}
 for bin in \
   containerd \
   containerd-shim \
@@ -72,6 +94,7 @@ for bin in \
   ctr ;
 do
   install -p -m 0755 ${bin} %{buildroot}%{_cross_bindir}
+  install -p -m 0755 fips/${bin} %{buildroot}%{_cross_fips_bindir}
 done
 
 install -d %{buildroot}%{_cross_unitdir}
@@ -90,11 +113,6 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 %license LICENSE NOTICE
 %{_cross_attribution_file}
 %{_cross_attribution_vendor_dir}
-%{_cross_bindir}/containerd
-%{_cross_bindir}/containerd-shim
-%{_cross_bindir}/containerd-shim-runc-v1
-%{_cross_bindir}/containerd-shim-runc-v2
-%{_cross_bindir}/ctr
 %{_cross_unitdir}/containerd.service
 %{_cross_unitdir}/etc-containerd.mount
 %{_cross_unitdir}/prepare-var-lib-containerd.service
@@ -102,5 +120,19 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 %{_cross_templatedir}/containerd-config-toml*
 %{_cross_templatedir}/containerd-cri-base-json
 %{_cross_tmpfilesdir}/containerd.conf
+
+%files bin
+%{_cross_bindir}/containerd
+%{_cross_bindir}/containerd-shim
+%{_cross_bindir}/containerd-shim-runc-v1
+%{_cross_bindir}/containerd-shim-runc-v2
+%{_cross_bindir}/ctr
+
+%files fips-bin
+%{_cross_fips_bindir}/containerd
+%{_cross_fips_bindir}/containerd-shim
+%{_cross_fips_bindir}/containerd-shim-runc-v1
+%{_cross_fips_bindir}/containerd-shim-runc-v2
+%{_cross_fips_bindir}/ctr
 
 %changelog
