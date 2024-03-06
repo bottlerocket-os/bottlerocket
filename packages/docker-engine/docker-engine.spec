@@ -40,8 +40,27 @@ Requires: %{_cross_os}libseccomp
 Requires: %{_cross_os}iptables
 Requires: %{_cross_os}systemd
 Requires: %{_cross_os}procps
+Requires: %{name}(binaries)
 
 %description
+%{summary}.
+
+%package bin
+Summary: Docker engine binaries
+Provides: %{name}(binaries)
+Requires: (%{_cross_os}image-feature(no-fips) and %{name})
+Conflicts: (%{_cross_os}image-feature(fips) or %{name}-fips-bin)
+
+%description bin
+%{summary}.
+
+%package fips-bin
+Summary: Docker engine binaries, FIPS edition
+Provides: %{name}(binaries)
+Requires: (%{_cross_os}image-feature(fips) and %{name})
+Conflicts: (%{_cross_os}image-feature(no-fips) or %{name}-bin)
+
+%description fips-bin
 %{summary}.
 
 %prep
@@ -61,13 +80,27 @@ export GITCOMMIT=%{gitrev}
 export BUILDTIME=$(date -u -d "@%{source_date_epoch}" --rfc-3339 ns 2> /dev/null | sed -e 's/ /T/')
 export PLATFORM="Docker Engine - Community"
 source ./hack/make/.go-autogen
-go build -buildmode=pie -ldflags="${GOLDFLAGS} ${LDFLAGS}" -tags="${BUILDTAGS}" -o dockerd %{goimport}/cmd/dockerd
-go build -buildmode=pie -ldflags="${GOLDFLAGS} ${LDFLAGS}" -tags="${BUILDTAGS}" -o docker-proxy %{goimport}/cmd/docker-proxy
+
+declare -a BUILD_ARGS
+BUILD_ARGS=(
+  -ldflags="${GOLDFLAGS} ${LDFLAGS}"
+  -tags="${BUILDTAGS}"
+)
+
+go build "${BUILD_ARGS[@]}" -o dockerd %{goimport}/cmd/dockerd
+go build "${BUILD_ARGS[@]}" -o docker-proxy %{goimport}/cmd/docker-proxy
+
+gofips build "${BUILD_ARGS[@]}" -o fips/dockerd %{goimport}/cmd/dockerd
+gofips build "${BUILD_ARGS[@]}" -o fips/docker-proxy %{goimport}/cmd/docker-proxy
 
 %install
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 dockerd %{buildroot}%{_cross_bindir}
 install -p -m 0755 docker-proxy %{buildroot}%{_cross_bindir}
+
+install -d %{buildroot}%{_cross_fips_bindir}
+install -p -m 0755 fips/dockerd %{buildroot}%{_cross_fips_bindir}
+install -p -m 0755 fips/docker-proxy %{buildroot}%{_cross_fips_bindir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{S:100} %{buildroot}%{_cross_unitdir}
@@ -85,13 +118,19 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_templatedir}/docker-daemon-nvidia
 %files
 %{_cross_attribution_file}
 %{_cross_attribution_vendor_dir}
-%{_cross_bindir}/dockerd
-%{_cross_bindir}/docker-proxy
 %{_cross_unitdir}/docker.service
 %{_cross_unitdir}/docker.socket
 %{_cross_unitdir}/prepare-var-lib-docker.service
 %{_cross_sysusersdir}/docker.conf
 %{_cross_templatedir}/docker-daemon-json
 %{_cross_templatedir}/docker-daemon-nvidia-json
+
+%files bin
+%{_cross_bindir}/dockerd
+%{_cross_bindir}/docker-proxy
+
+%files fips-bin
+%{_cross_fips_bindir}/dockerd
+%{_cross_fips_bindir}/docker-proxy
 
 %changelog
