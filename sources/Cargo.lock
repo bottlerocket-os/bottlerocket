@@ -55,7 +55,7 @@ dependencies = [
  "actix-service",
  "actix-utils",
  "ahash",
- "base64 0.21.7",
+ "base64",
  "bitflags 2.4.2",
  "bytes",
  "bytestring",
@@ -347,7 +347,7 @@ checksum = "0952808a6c2afd1aa8947271f3a60f1a6763c7b912d210184c5149b5cf147247"
 name = "apiclient"
 version = "0.1.0"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "constants",
  "datastore",
  "futures",
@@ -371,7 +371,7 @@ dependencies = [
  "snafu 0.8.2",
  "tokio",
  "tokio-tungstenite",
- "toml 0.8.12",
+ "toml",
  "unindent",
  "url",
 ]
@@ -403,7 +403,7 @@ dependencies = [
  "snafu 0.8.2",
  "thar-be-updates",
  "tokio",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -992,12 +992,6 @@ dependencies = [
 
 [[package]]
 name = "base64"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
-
-[[package]]
-name = "base64"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
@@ -1259,7 +1253,7 @@ dependencies = [
  "percent-encoding",
  "regex",
  "serde",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -1273,7 +1267,7 @@ name = "certdog"
 version = "0.1.0"
 dependencies = [
  "argh",
- "base64 0.21.7",
+ "base64",
  "constants",
  "generate-readme",
  "log",
@@ -1282,7 +1276,7 @@ dependencies = [
  "simplelog",
  "snafu 0.8.2",
  "tempfile",
- "toml 0.8.12",
+ "toml",
  "x509-parser",
 ]
 
@@ -1320,7 +1314,7 @@ dependencies = [
  "simplelog",
  "snafu 0.8.2",
  "tokio",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -1422,7 +1416,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "snafu 0.8.2",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -1584,7 +1578,7 @@ dependencies = [
  "serde",
  "serde_json",
  "snafu 0.8.2",
- "toml 0.8.12",
+ "toml",
  "walkdir",
 ]
 
@@ -1682,7 +1676,7 @@ dependencies = [
  "simplelog",
  "snafu 0.8.2",
  "tempfile",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -1697,7 +1691,7 @@ version = "0.1.0"
 dependencies = [
  "apiclient",
  "async-trait",
- "base64 0.21.7",
+ "base64",
  "constants",
  "early-boot-config-provider",
  "env_logger",
@@ -1710,7 +1704,7 @@ dependencies = [
  "simplelog",
  "snafu 0.8.2",
  "tokio",
- "toml 0.8.12",
+ "toml",
  "walkdir",
 ]
 
@@ -1728,8 +1722,8 @@ dependencies = [
  "retry-read",
  "serde",
  "serde_json",
- "snafu 0.7.5",
- "toml 0.5.11",
+ "snafu 0.8.2",
+ "toml",
 ]
 
 [[package]]
@@ -1742,7 +1736,7 @@ dependencies = [
  "imdsclient",
  "log",
  "serde_json",
- "snafu 0.7.5",
+ "snafu 0.8.2",
  "tokio",
 ]
 
@@ -1755,7 +1749,7 @@ dependencies = [
  "generate-readme",
  "imdsclient",
  "log",
- "snafu 0.7.5",
+ "snafu 0.8.2",
  "tokio",
 ]
 
@@ -2088,7 +2082,7 @@ version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06683b93020a07e3dbcf5f8c0f6d40080d725bea7936fc01ad345c01b97dc270"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "bytes",
  "headers-core",
  "http 0.2.12",
@@ -2149,7 +2143,7 @@ dependencies = [
 name = "host-containers"
 version = "0.1.0"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "constants",
  "generate-readme",
  "log",
@@ -2158,7 +2152,7 @@ dependencies = [
  "simplelog",
  "snafu 0.8.2",
  "tempfile",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -2501,30 +2495,24 @@ dependencies = [
 name = "local-defaults-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "early-boot-config-provider",
  "generate-readme",
- "tokio",
 ]
 
 [[package]]
 name = "local-file-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "early-boot-config-provider",
  "generate-readme",
- "tokio",
 ]
 
 [[package]]
 name = "local-overrides-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "early-boot-config-provider",
  "generate-readme",
- "tokio",
 ]
 
 [[package]]
@@ -2625,7 +2613,7 @@ name = "merge-toml"
 version = "0.1.0"
 dependencies = [
  "snafu 0.8.2",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -2643,7 +2631,7 @@ dependencies = [
  "simplelog",
  "snafu 0.8.2",
  "tempfile",
- "toml 0.8.12",
+ "toml",
  "url",
 ]
 
@@ -2737,7 +2725,7 @@ dependencies = [
 name = "modeled-types"
 version = "0.1.0"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "generate-readme",
  "indexmap 2.2.5",
  "lazy_static",
@@ -2774,7 +2762,7 @@ dependencies = [
  "settings-extension-motd",
  "settings-extension-ntp",
  "settings-extension-updates",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -2802,7 +2790,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-retry",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -3063,7 +3051,7 @@ version = "3.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b8fcc794035347fb64beda2d3b462595dd2753e3f268d89c5aae77e8cf2c310"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "serde",
 ]
 
@@ -3220,7 +3208,7 @@ dependencies = [
  "signpost",
  "simplelog",
  "snafu 0.8.2",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -3442,7 +3430,7 @@ version = "0.11.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78bf93c4af7a8bb7d879d51cebe797356ff10ae8516ace542b5182d9dcac10b2"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -3568,7 +3556,7 @@ version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c74cae0a4cf6ccbbf5f359f08efdf8ee7e1dc532573bf0db71968cb56b1448c"
 dependencies = [
- "base64 0.21.7",
+ "base64",
 ]
 
 [[package]]
@@ -3635,7 +3623,7 @@ dependencies = [
  "apiclient",
  "argh",
  "async-trait",
- "base64 0.21.7",
+ "base64",
  "bottlerocket-release",
  "cached",
  "constants",
@@ -3659,7 +3647,7 @@ dependencies = [
  "simplelog",
  "snafu 0.8.2",
  "tokio",
- "toml 0.8.12",
+ "toml",
  "url",
 ]
 
@@ -3931,7 +3919,7 @@ name = "shibaken"
 version = "0.1.0"
 dependencies = [
  "argh",
- "base64 0.21.7",
+ "base64",
  "generate-readme",
  "imdsclient",
  "log",
@@ -3941,7 +3929,7 @@ dependencies = [
  "snafu 0.8.2",
  "tempfile",
  "tokio",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -4085,7 +4073,7 @@ checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
 name = "static-pods"
 version = "0.1.0"
 dependencies = [
- "base64 0.21.7",
+ "base64",
  "bottlerocket-variant",
  "constants",
  "generate-readme",
@@ -4114,7 +4102,7 @@ dependencies = [
  "semver",
  "simplelog",
  "snafu 0.8.2",
- "toml 0.8.12",
+ "toml",
  "walkdir",
 ]
 
@@ -4307,7 +4295,7 @@ dependencies = [
  "simplelog",
  "snafu 0.8.2",
  "tempfile",
- "toml 0.8.12",
+ "toml",
  "update_metadata",
 ]
 
@@ -4493,15 +4481,6 @@ dependencies = [
  "pin-project-lite",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "toml"
-version = "0.5.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4f7f0dd8d50a853a531c426359045b1998f04219d88799810762cd4ad314234"
-dependencies = [
- "serde",
 ]
 
 [[package]]
@@ -4725,7 +4704,7 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "snafu 0.8.2",
- "toml 0.8.12",
+ "toml",
 ]
 
 [[package]]
@@ -4753,7 +4732,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tokio-util",
- "toml 0.8.12",
+ "toml",
  "tough",
  "update_metadata",
  "url",
@@ -4825,30 +4804,26 @@ dependencies = [
 name = "vmware-cd-rom-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
- "base64 0.13.1",
+ "base64",
  "early-boot-config-provider",
  "generate-readme",
  "log",
  "serde",
  "serde-xml-rs",
- "snafu 0.7.5",
- "tokio",
+ "snafu 0.8.2",
 ]
 
 [[package]]
 name = "vmware-guestinfo-user-data-provider"
 version = "0.1.0"
 dependencies = [
- "async-trait",
- "base64 0.13.1",
+ "base64",
  "early-boot-config-provider",
  "generate-readme",
  "log",
  "serde",
  "serde_plain",
- "snafu 0.7.5",
- "tokio",
+ "snafu 0.8.2",
  "vmw_backdoor",
 ]
 

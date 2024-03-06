@@ -13,7 +13,7 @@ exclude = ["README.md"]
 async-trait = "0.1"
 imdsclient = { path = "../../../imdsclient", version = "0.1" }
 log = "0.4"
-snafu = "0.7"
+snafu = "0.8"
 tokio = { version = "~1.32", default-features = false, features = ["process", "macros", "rt-multi-thread"] }  # LTS
 early-boot-config-provider = { path = "../../early-boot-config-provider", version = "0.1" }
 

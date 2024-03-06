@@ -10,8 +10,6 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-async-trait = "0.1"
-tokio = { version = "~1.32", default-features = false, features = ["process", "macros", "rt-multi-thread"] }  # LTS
 early-boot-config-provider = { path = "../../early-boot-config-provider", version = "0.1" }
 
 [build-dependencies]

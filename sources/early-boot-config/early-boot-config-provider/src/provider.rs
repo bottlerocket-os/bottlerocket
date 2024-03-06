@@ -11,19 +11,27 @@ use std::process::ExitCode;
 
 /// Support for user data providers can be added by implementing this trait, and adding an
 /// additional binary using the implementor and common functions below.
-#[async_trait]
 pub trait UserDataProvider {
     /// Optionally return a SettingsJson object if user data is found, representing the settings to
     /// send to the API.
+    fn user_data(&self) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>>;
+}
+
+/// This trait is the same as UserDataProvider, but it allows for async data sources, such as IMDS.
+#[async_trait]
+pub trait AsyncUserDataProvider {
     async fn user_data(
         &self,
     ) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>>;
 }
 
-/// Run a user data provider, returning the proper exit code and errors, and if successful,
-/// printing its JSON to stdout.
-pub async fn run_userdata_provider(provider: &impl UserDataProvider) -> ExitCode {
-    let (exit_code, output) = match provider.user_data().await {
+/// Provides the standard output format of a user data provider. Takes a result returned by a user
+/// data provider, checks for errors, and returns the proper exit code. If the user data was
+/// returned successfully, this will print its JSON to stdout.
+pub fn print_userdata_output(
+    user_data: std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>>,
+) -> ExitCode {
+    let (exit_code, output) = match user_data {
         Ok(Some(user_data)) => match serde_json::to_string(&user_data) {
             Ok(json) => (ExitCode::SUCCESS, json),
             Err(e) => (
@@ -34,7 +42,6 @@ pub async fn run_userdata_provider(provider: &impl UserDataProvider) -> ExitCode
         Ok(None) => (ExitCode::SUCCESS, String::new()),
         Err(e) => (ExitCode::FAILURE, format!("{}", e)),
     };
-
     println!("{}", output);
     exit_code
 }

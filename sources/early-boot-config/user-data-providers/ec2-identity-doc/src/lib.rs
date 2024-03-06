@@ -3,7 +3,7 @@
 extern crate log;
 
 use async_trait::async_trait;
-use early_boot_config_provider::provider::UserDataProvider;
+use early_boot_config_provider::provider::AsyncUserDataProvider;
 use early_boot_config_provider::settings::SettingsJson;
 use imdsclient::ImdsClient;
 use serde_json::json;
@@ -50,7 +50,7 @@ impl Ec2IdentityDoc {
 }
 
 #[async_trait]
-impl UserDataProvider for Ec2IdentityDoc {
+impl AsyncUserDataProvider for Ec2IdentityDoc {
     async fn user_data(
         &self,
     ) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {

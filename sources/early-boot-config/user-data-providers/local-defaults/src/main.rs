@@ -1,9 +1,10 @@
-use early_boot_config_provider::provider::{run_userdata_provider, setup_provider_logging};
+use early_boot_config_provider::provider::{
+    print_userdata_output, setup_provider_logging, UserDataProvider,
+};
 use local_defaults_user_data_provider::LocalDefaults;
 use std::process::ExitCode;
 
-#[tokio::main]
-async fn main() -> ExitCode {
+fn main() -> ExitCode {
     setup_provider_logging();
-    run_userdata_provider(&LocalDefaults).await
+    print_userdata_output(LocalDefaults.user_data())
 }

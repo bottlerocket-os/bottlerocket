@@ -10,13 +10,11 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-async-trait = "0.1"
-base64 = "0.13"
+base64 = "0.21"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde-xml-rs = "0.6"
-snafu = "0.7"
-tokio = { version = "~1.32", default-features = false, features = ["process", "macros", "rt-multi-thread"] }  # LTS
+snafu = "0.8"
 early-boot-config-provider = { path = "../../early-boot-config-provider", version = "0.1" }
 
 [build-dependencies]

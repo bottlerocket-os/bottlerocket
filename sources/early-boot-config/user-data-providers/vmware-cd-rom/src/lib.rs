@@ -2,7 +2,6 @@
 #[macro_use]
 extern crate log;
 
-use async_trait::async_trait;
 use base64::Engine;
 use early_boot_config_provider::compression::{
     expand_file_maybe, expand_slice_maybe, OptionalCompressionReader,
@@ -98,11 +97,8 @@ impl VmwareCdRom {
     }
 }
 
-#[async_trait]
 impl UserDataProvider for VmwareCdRom {
-    async fn user_data(
-        &self,
-    ) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
+    fn user_data(&self) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
         // Given the list of acceptable filenames, ensure only 1 exists and parse
         // it for user data
         info!("Attempting to retrieve user data from mounted CD-ROM");
