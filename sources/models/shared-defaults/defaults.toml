@@ -69,12 +69,16 @@ seed.setting-generator = "bork seed"
 # HostContainers
 
 [services.host-containers]
-configuration-files = ["host-ctr-toml"]
+configuration-files = ["host-ctr-toml", "host-containers-toml"]
 restart-commands = ["/usr/bin/host-containers"]
 
 [configuration-files.host-ctr-toml]
 path = "/etc/host-containers/host-ctr.toml"
 template-path = "/usr/share/templates/host-ctr-toml"
+
+[configuration-files.host-containers-toml]
+path = "/etc/host-containers/host-containers.toml"
+template-path = "/usr/share/templates/host-containers-toml"
 
 [metadata.settings.host-containers]
 affected-services = ["host-containers"]

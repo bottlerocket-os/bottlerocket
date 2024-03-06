@@ -6,7 +6,7 @@ Current version: 0.1.0
 
 host-containers ensures that host containers are running as defined in system settings.
 
-It queries the API for their settings, then configures the system by:
+It reads the currently configured containers from its config file, then configures the system by:
 * creating a user-data file in the host container's persistent storage area, if a base64-encoded
   user-data setting is set for the host container.  (The decoded contents are available to the
   container at /.bottlerocket/host-containers/NAME/user-data)

@@ -1,0 +1,20 @@
+[required-extensions]
+host-containers = "v1"
++++
+{{#if settings.host-containers}}
+{{#each settings.host-containers}}
+[host-containers."{{{@key}}}"]
+{{#if this.source}}
+source = "{{{this.source}}}"
+{{/if}}
+{{#if this.enabled}}
+enabled = {{{this.enabled}}}
+{{/if}}
+{{#if this.superpowered}}
+superpowered = {{{this.superpowered}}}
+{{/if}}
+{{#if this.user-data}}
+user-data = "{{{this.user-data}}}"
+{{/if}}
+{{/each}}
+{{/if}}
