@@ -1400,16 +1400,28 @@ checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 name = "corndog"
 version = "0.1.0"
 dependencies = [
- "apiclient",
- "constants",
  "generate-readme",
- "http",
  "log",
- "models",
+ "modeled-types",
+ "serde",
  "serde_json",
  "simplelog",
  "snafu",
- "tokio",
+ "toml 0.8.8",
+]
+
+[[package]]
+name = "corndog-config-file-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "corndog-services-cfg-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
 ]
 
 [[package]]

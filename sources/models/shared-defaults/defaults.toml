@@ -134,7 +134,7 @@ affected-services = ["ntp"]
 # Kernel
 
 [services.sysctl]
-configuration-files = []
+configuration-files = ["corndog-toml"]
 restart-commands = ["/usr/bin/corndog sysctl"]
 
 [metadata.settings.kernel.sysctl]
@@ -156,11 +156,15 @@ template-path = "/usr/share/templates/modules-load"
 affected-services = ["kernel-modules"]
 
 [services.lockdown]
-configuration-files = []
+configuration-files = ["corndog-toml"]
 restart-commands = ["/usr/bin/corndog lockdown"]
 
 [metadata.settings.kernel.lockdown]
 affected-services = ["lockdown"]
+
+[configuration-files.corndog-toml]
+path = "/etc/corndog.toml"
+template-path = "/usr/share/templates/corndog-toml"
 
 # Bootstrap Containers
 
