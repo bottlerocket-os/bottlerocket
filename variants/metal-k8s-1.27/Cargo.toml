@@ -29,6 +29,7 @@ included-packages = [
     "cni",
     "cni-plugins",
     "kernel-5.15",
+    "wicked",
     "linux-firmware",
     "kubelet-1.27",
     "release",

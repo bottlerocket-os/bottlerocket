@@ -23,6 +23,7 @@ included-packages = [
     "cni-plugins",
     "kernel-5.15",
     "kubelet-1.26",
+    "wicked",
     "release",
     "nvidia-container-toolkit-k8s",
     "nvidia-k8s-device-plugin",

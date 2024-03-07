@@ -17,7 +17,6 @@ grub-set-private-var = true
 unified-cgroup-hierarchy = true
 uefi-secure-boot = true
 xfs-data-partition = true
-systemd-networkd = true
 
 [package.metadata.build-variant]
 included-packages = [
