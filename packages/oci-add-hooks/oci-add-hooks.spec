@@ -25,7 +25,7 @@ BuildRequires: %{_cross_os}glibc-devel
 %build
 %set_cross_go_flags
 export LD_VERSION="-X main.commit=oci-add-hooks-%{gitrev}"
-go build ${GOFLAGS} -v -x -buildmode=pie -ldflags="${GOLDFLAGS} ${LD_VERSION}" -o oci-add-hooks
+go build -ldflags="${GOLDFLAGS} ${LD_VERSION}" -o oci-add-hooks
 
 %install
 install -d %{buildroot}%{_cross_bindir}
