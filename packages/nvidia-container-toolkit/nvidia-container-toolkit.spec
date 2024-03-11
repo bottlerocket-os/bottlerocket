@@ -49,8 +49,8 @@ Conflicts: %{name}-ecs
 
 %build
 %cross_go_configure %{goimport}
-go build -buildmode=pie -ldflags="${GOLDFLAGS}" -o nvidia-container-runtime-hook ./cmd/nvidia-container-runtime-hook
-go build -buildmode=pie -ldflags="${GOLDFLAGS}" -o nvidia-ctk ./cmd/nvidia-ctk
+go build -ldflags="${GOLDFLAGS}" -o nvidia-container-runtime-hook ./cmd/nvidia-container-runtime-hook
+go build -ldflags="${GOLDFLAGS}" -o nvidia-ctk ./cmd/nvidia-ctk
 
 %install
 install -d %{buildroot}%{_cross_bindir}
