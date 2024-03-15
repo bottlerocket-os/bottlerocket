@@ -96,6 +96,7 @@ cp include/nv_fm_types.h %{buildroot}%{_includedir}/
 %files
 %{_bindir}/*
 %license LICENSE
+%license third-party-notices.txt
 %{_cross_attribution_file}
 /usr/lib/systemd/system/*
 /usr/share/nvidia/nvswitch/*
