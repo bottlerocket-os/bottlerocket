@@ -10,7 +10,6 @@ path = "../packages.rs"
 
 [package.metadata.build-package]
 releases-url = "https://github.com/systemd/systemd-stable/releases"
-package-features = ["unified-cgroup-hierarchy"]
 
 [[package.metadata.build-package.external-files]]
 url = "https://github.com/systemd/systemd-stable/archive/v252.22/systemd-stable-252.22.tar.gz"
