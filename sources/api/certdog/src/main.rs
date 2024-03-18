@@ -8,6 +8,7 @@
 extern crate log;
 
 use argh::FromArgs;
+use base64::Engine;
 use serde::Deserialize;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::ResultExt;
@@ -100,7 +101,9 @@ fn split_bundles(certificates_bundle: HashMap<Identifier, PemCertificate>) -> Re
         }
 
         let name = name.as_ref();
-        let decoded = base64::decode(data.as_bytes()).context(error::Base64DecodeSnafu { name })?;
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(data.as_bytes())
+            .context(error::Base64DecodeSnafu { name })?;
         // Each record in the API could include one or more certificates
         let mut pems = pems_from_iter(x509_parser::pem::Pem::iter_from_buffer(&decoded))?;
 
@@ -186,7 +189,7 @@ fn pem_to_string(pem: &x509_parser::pem::Pem) -> Result<String> {
 
     writeln!(out, "{} {}{}", PEM_HEADER, pem.label, PEM_SUFFIX)
         .context(error::WritePemStringSnafu)?;
-    let encoded = base64::encode(&pem.contents);
+    let encoded = base64::engine::general_purpose::STANDARD.encode(&pem.contents);
     let bytes = encoded.as_bytes();
     for chunk in bytes.chunks(64) {
         let chunk = String::from_utf8_lossy(chunk);
@@ -343,9 +346,12 @@ mod test_certdog {
     fn trusted_store_updated() {
         let trusted_store = tempfile::NamedTempFile::new().unwrap();
         let source_bundle = tempfile::NamedTempFile::new().unwrap();
-        let (_, pem) =
-            x509_parser::pem::parse_x509_pem(&base64::decode(TEST_PEM.as_bytes()).unwrap())
-                .unwrap();
+        let (_, pem) = x509_parser::pem::parse_x509_pem(
+            &base64::engine::general_purpose::STANDARD
+                .decode(TEST_PEM.as_bytes())
+                .unwrap(),
+        )
+        .unwrap();
         let trusted_certs: Vec<x509_parser::pem::Pem> = vec![pem];
         let certs_bundle = CertBundle {
             trusted_certs,

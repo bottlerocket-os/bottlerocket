@@ -11,6 +11,7 @@ It queries for all existing static pod settings, then configures the system as f
 * If the pod is disabled, it ensures the manifest file is removed from the pod manifest path.
 */
 
+use base64::Engine;
 use model::modeled_types::Identifier;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
@@ -117,8 +118,9 @@ where
                 field: "manifest",
             })?;
 
-        let manifest =
-            base64::decode(manifest.as_bytes()).context(error::Base64DecodeSnafu { name })?;
+        let manifest = base64::engine::general_purpose::STANDARD
+            .decode(manifest.as_bytes())
+            .context(error::Base64DecodeSnafu { name })?;
 
         info!("Writing static pod '{}' to '{}'", name, STATIC_POD_DIR);
 
