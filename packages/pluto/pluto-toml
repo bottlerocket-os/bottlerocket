@@ -1,0 +1,13 @@
+[required-extensions]
+aws = "v1"
+kubernetes = "v1"
++++
+{{#if settings.aws.region}}
+region = "{{{settings.aws.region}}}"
+{{/if}}
+{{#if settings.kubernetes.cluster-name}}
+cluster-name = "{{{settings.kubernetes.cluster-name}}}"
+{{/if}}
+{{#if settings.kubernetes.cluster-dns-ip}}
+cluster-dns-ip = "{{{settings.kubernetes.cluster-dns-ip}}}"
+{{/if}}

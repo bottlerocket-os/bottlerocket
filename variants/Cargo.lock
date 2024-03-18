@@ -101,6 +101,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_10",
  "kubernetes-1_23",
+ "pluto",
  "release",
 ]
 
@@ -116,6 +117,7 @@ dependencies = [
  "kubernetes-1_23",
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
+ "pluto",
  "release",
 ]
 
@@ -128,6 +130,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_15",
  "kubernetes-1_24",
+ "pluto",
  "release",
 ]
 
@@ -143,6 +146,7 @@ dependencies = [
  "kubernetes-1_24",
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
+ "pluto",
  "release",
 ]
 
@@ -155,6 +159,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_15",
  "kubernetes-1_25",
+ "pluto",
  "release",
 ]
 
@@ -170,6 +175,7 @@ dependencies = [
  "kubernetes-1_25",
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
+ "pluto",
  "release",
 ]
 
@@ -182,6 +188,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_15",
  "kubernetes-1_26",
+ "pluto",
  "release",
 ]
 
@@ -197,6 +204,7 @@ dependencies = [
  "kubernetes-1_26",
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
+ "pluto",
  "release",
 ]
 
@@ -209,6 +217,7 @@ dependencies = [
  "cni-plugins",
  "kernel-5_15",
  "kubernetes-1_27",
+ "pluto",
  "release",
 ]
 
@@ -224,6 +233,7 @@ dependencies = [
  "kubernetes-1_27",
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
+ "pluto",
  "release",
 ]
 
@@ -236,6 +246,7 @@ dependencies = [
  "cni-plugins",
  "kernel-6_1",
  "kubernetes-1_28",
+ "pluto",
  "release",
 ]
 
@@ -251,6 +262,7 @@ dependencies = [
  "kubernetes-1_28",
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
+ "pluto",
  "release",
 ]
 
@@ -263,6 +275,7 @@ dependencies = [
  "cni-plugins",
  "kernel-6_1",
  "kubernetes-1_29",
+ "pluto",
  "release",
 ]
 
@@ -278,6 +291,7 @@ dependencies = [
  "kubernetes-1_29",
  "nvidia-container-toolkit",
  "nvidia-k8s-device-plugin",
+ "pluto",
  "release",
 ]
 
@@ -1065,6 +1079,13 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "libz",
+]
+
+[[package]]
+name = "pluto"
+version = "0.1.0"
+dependencies = [
+ "glibc",
 ]
 
 [[package]]
