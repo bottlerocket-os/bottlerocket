@@ -1,6 +1,6 @@
 # ECS
 [services.ecs]
-restart-commands = ["/usr/bin/ecs-settings-applier", "/bin/systemctl try-reload-or-restart ecs.service"]
+restart-commands = ["/bin/systemctl try-reload-or-restart ecs.service"]
 configuration-files = ["ecs-config"]
 
 [configuration-files.ecs-config]

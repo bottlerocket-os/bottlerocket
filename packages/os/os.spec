@@ -119,10 +119,6 @@ Requires: %{_cross_os}shibaken
 Requires: %{_cross_os}cfsignal
 %endif
 
-%if %{with ecs_runtime}
-Requires: %{_cross_os}ecs-settings-applier
-%endif
-
 %if %{with nvidia_flavor}
 Requires: %{_cross_os}driverdog
 %endif
@@ -248,13 +244,6 @@ Summary: Bottlerocket certificates handler
 %description -n %{_cross_os}certdog
 %{summary}.
 
-%if %{with ecs_runtime}
-%package -n %{_cross_os}ecs-settings-applier
-Summary: Settings generator for ECS
-%description -n %{_cross_os}ecs-settings-applier
-%{summary}.
-%endif
-
 %if %{with aws_k8s_family}
 %package -n %{_cross_os}pluto
 Summary: Dynamic setting generator for kubernetes
@@ -370,7 +359,6 @@ echo "** Output from non-static builds:"
     -p shimpei \
     -p bloodhound \
     -p xfscli \
-    %{?with_ecs_runtime: -p ecs-settings-applier} \
     %{?with_aws_platform: -p shibaken -p cfsignal} \
     %{?with_aws_k8s_family: -p pluto} \
     %{?with_k8s_runtime: -p static-pods} \
@@ -396,7 +384,6 @@ for p in \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
   shimpei bloodhound bottlerocket-checks \
-  %{?with_ecs_runtime: ecs-settings-applier} \
   %{?with_aws_platform: shibaken cfsignal} \
   %{?with_aws_k8s_family: pluto} \
   %{?with_k8s_runtime: static-pods} \
@@ -643,11 +630,6 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 
 %files -n %{_cross_os}logdog
 %{_cross_bindir}/logdog
-
-%if %{with ecs_runtime}
-%files -n %{_cross_os}ecs-settings-applier
-%{_cross_bindir}/ecs-settings-applier
-%endif
 
 %if %{with aws_platform}
 %files -n %{_cross_os}shibaken

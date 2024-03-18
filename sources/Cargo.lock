@@ -1714,23 +1714,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ecs-settings-applier"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "constants",
- "generate-readme",
- "log",
- "models",
- "schnauzer",
- "serde",
- "serde_json",
- "simplelog",
- "snafu 0.8.2",
- "tokio",
-]
-
-[[package]]
 name = "either"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
