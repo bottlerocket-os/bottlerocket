@@ -183,6 +183,7 @@ done
 %{_cross_bindir}/lslocks
 %{_cross_bindir}/lsmem
 %{_cross_bindir}/lsns
+%{_cross_sbindir}/mkswap
 %{_cross_bindir}/more
 %{_cross_bindir}/mount
 %{_cross_bindir}/newgrp
@@ -190,6 +191,9 @@ done
 %{_cross_bindir}/prlimit
 %{_cross_bindir}/renice
 %{_cross_bindir}/setsid
+%{_cross_sbindir}/swaplabel
+%{_cross_sbindir}/swapoff
+%{_cross_sbindir}/swapon
 %{_cross_bindir}/taskset
 %{_cross_bindir}/uclampset
 %{_cross_bindir}/umount
@@ -270,16 +274,12 @@ done
 %exclude %{_cross_sbindir}/ldattach
 %exclude %{_cross_sbindir}/mkfs.bfs
 %exclude %{_cross_sbindir}/mkfs.minix
-%exclude %{_cross_sbindir}/mkswap
 %exclude %{_cross_sbindir}/raw
 %exclude %{_cross_sbindir}/readprofile
 %exclude %{_cross_sbindir}/rfkill
 %exclude %{_cross_sbindir}/rtcwake
 %exclude %{_cross_sbindir}/sfdisk
 %exclude %{_cross_sbindir}/sulogin
-%exclude %{_cross_sbindir}/swaplabel
-%exclude %{_cross_sbindir}/swapoff
-%exclude %{_cross_sbindir}/swapon
 %exclude %{_cross_sbindir}/tunelp
 %exclude %{_cross_sbindir}/uuidd
 %exclude %{_cross_sbindir}/vigr
