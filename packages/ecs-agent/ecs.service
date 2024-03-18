@@ -10,7 +10,6 @@ Type=simple
 Restart=always
 RestartPreventExitStatus=5
 RestartSec=5
-EnvironmentFile=-/etc/ecs/ecs.config
 EnvironmentFile=/etc/network/proxy.env
 Environment=ECS_CHECKPOINT=true
 # Grant ECS tasks access to the ECS task metadata endpoint

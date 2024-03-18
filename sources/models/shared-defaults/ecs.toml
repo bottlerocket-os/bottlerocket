@@ -4,8 +4,8 @@ restart-commands = ["/usr/bin/ecs-settings-applier", "/bin/systemctl try-reload-
 configuration-files = ["ecs-config"]
 
 [configuration-files.ecs-config]
-path = "/etc/ecs/ecs.config"
-template-path = "/usr/share/templates/ecs.config"
+path = "/etc/systemd/system/ecs.service.d/10-base.conf"
+template-path = "/usr/share/templates/ecs-base-conf"
 
 [metadata.settings.ecs]
 affected-services = ["ecs"]
