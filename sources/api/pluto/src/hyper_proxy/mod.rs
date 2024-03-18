@@ -23,7 +23,7 @@ use hyper_rustls::ConfigBuilderExt;
 use tokio_rustls::rustls::{ClientConfig, ServerName};
 use tokio_rustls::TlsConnector;
 
-type BoxError = Box<dyn std::error::Error + Send + Sync>;
+pub(crate) type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
 /// The Intercept enum to filter connections
 #[derive(Debug, Clone)]
