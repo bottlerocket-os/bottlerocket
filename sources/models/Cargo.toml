@@ -15,7 +15,7 @@ libc = "0.2"
 model-derive = { path = "model-derive", version = "0.1" }
 modeled-types = { path = "modeled-types", version = "0.1" }
 serde = { version = "1", features = ["derive"] }
-toml = "0.5"
+toml = "0.8"
 
 # settings extensions
 settings-extension-aws = { path = "../settings-extensions/aws", version = "0.1" }

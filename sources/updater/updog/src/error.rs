@@ -28,7 +28,8 @@ pub(crate) enum Error {
     #[snafu(display("Failed to parse config file {}: {}", path.display(), source))]
     ConfigParse {
         path: PathBuf,
-        source: toml::de::Error,
+        #[snafu(source(from(toml::de::Error, Box::new)))]
+        source: Box<toml::de::Error>,
         backtrace: Backtrace,
     },
 
@@ -85,7 +86,8 @@ pub(crate) enum Error {
 
     #[snafu(display("Error parsing manifest: {}", source))]
     ManifestParse {
-        source: update_metadata::error::Error,
+        #[snafu(source(from(update_metadata::error::Error, Box::new)))]
+        source: Box<update_metadata::error::Error>,
         backtrace: Backtrace,
     },
 
@@ -149,7 +151,8 @@ pub(crate) enum Error {
     #[snafu(display("Failed to parse release metadata file '{}': {}", path.display(), source))]
     ReleaseParse {
         path: PathBuf,
-        source: toml::de::Error,
+        #[snafu(source(from(toml::de::Error, Box::new)))]
+        source: Box<toml::de::Error>,
         backtrace: Backtrace,
     },
 
