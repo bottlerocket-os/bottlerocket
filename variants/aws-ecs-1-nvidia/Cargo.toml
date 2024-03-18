@@ -25,7 +25,7 @@ included-packages = [
     "docker-engine",
     "docker-init",
 # ecs
-    "ecs-agent",
+    "ecs-agent-nvidia-config",
 # NVIDIA support
     "ecs-gpu-init",
     "nvidia-container-toolkit-ecs",
