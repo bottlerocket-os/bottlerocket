@@ -1,3 +1,9 @@
+/*!
+# Introduction
+
+User data provider binary used to fetch user data provided via VMWare guestinfo.
+*/
+
 use early_boot_config_provider::provider::{
     print_userdata_output, setup_provider_logging, UserDataProvider,
 };

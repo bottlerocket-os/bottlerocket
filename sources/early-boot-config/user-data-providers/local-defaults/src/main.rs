@@ -1,3 +1,9 @@
+/*!
+# Introduction
+
+User data provider binary used to fetch the default user data provided in the file tree under `/local/user-data-defaults.toml`.
+*/
+
 use early_boot_config_provider::provider::{
     print_userdata_output, setup_provider_logging, UserDataProvider,
 };

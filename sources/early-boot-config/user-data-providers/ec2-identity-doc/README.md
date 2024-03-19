@@ -2,7 +2,11 @@
 
 Current version: 0.1.0
 
+## Introduction
 
+User data provider binary used to generate user data from data in the EC2 instance identity document.
+
+Currently used only to fetch the AWS region. Falls back to IMDS if the region is not found in the instance identity document.
 
 ## Colophon
 

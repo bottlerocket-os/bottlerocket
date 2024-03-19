@@ -2,7 +2,9 @@
 
 Current version: 0.1.0
 
+## Introduction
 
+User data provider binary used to fetch the user data overrides provided in the file tree under `/local/user-data-overrides.toml`.
 
 ## Colophon
 
