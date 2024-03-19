@@ -12,8 +12,8 @@ path = "../packages.rs"
 releases-url = "https://github.com/SELinuxProject/selinux/releases/"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/SELinuxProject/selinux/releases/download/3.5/libselinux-3.5.tar.gz"
-sha512 = "4e13261a5821018a5f3cdce676f180bb62e5bc225981ca8a498ece0d1c88d9ba8eaa0ce4099dd0849309a8a7c5a9a0953df841a9922f2c284e5a109e5d937ba7"
+url = "https://github.com/SELinuxProject/selinux/releases/download/3.6/libselinux-3.6.tar.gz"
+sha512 = "182dcdf3510083ff4b9376a4a6d6a7b33905ac3c5e974c188bf3965686c54b663162c543ecf15eab75102f3c91a2502d33d0f1104dec01dd9b14737ef3f2b544"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
