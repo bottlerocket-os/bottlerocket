@@ -5,7 +5,6 @@ authors = ["Zac Mrowicki <mrowicki@amazon.com>", "Sam Berning <bernings@amazon.c
 edition = "2021"
 license = "Apache-2.0 OR MIT"
 publish = false
-build = "build.rs"
 # Don't rebuild crate just because of changes to README.
 exclude = ["README.md"]
 

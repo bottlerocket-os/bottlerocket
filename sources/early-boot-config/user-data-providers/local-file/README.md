@@ -2,7 +2,9 @@
 
 Current version: 0.1.0
 
+## Introduction
 
+User data provider binary used to fetch the user data provided in the file tree under `/var/lib/bottlerocket/user-data.toml`.
 
 ## Colophon
 

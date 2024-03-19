@@ -1,3 +1,9 @@
+/*!
+# Introduction
+
+User data provider binary that fetches user data provided via CD-ROM to a VMWare VM.
+*/
+
 use early_boot_config_provider::provider::{
     print_userdata_output, setup_provider_logging, UserDataProvider,
 };

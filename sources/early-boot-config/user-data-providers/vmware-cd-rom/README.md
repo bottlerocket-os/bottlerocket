@@ -2,7 +2,9 @@
 
 Current version: 0.1.0
 
+## Introduction
 
+User data provider binary that fetches user data provided via CD-ROM to a VMWare VM.
 
 ## Colophon
 

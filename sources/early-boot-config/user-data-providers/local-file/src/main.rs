@@ -1,3 +1,9 @@
+/*!
+# Introduction
+
+User data provider binary used to fetch the user data provided in the file tree under `/var/lib/bottlerocket/user-data.toml`.
+*/
+
 use early_boot_config_provider::provider::{
     print_userdata_output, setup_provider_logging, UserDataProvider,
 };
