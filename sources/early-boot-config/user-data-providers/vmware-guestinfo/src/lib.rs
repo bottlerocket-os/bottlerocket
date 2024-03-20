@@ -14,6 +14,7 @@ const GUESTINFO_USERDATA_ENCODING: &str = "guestinfo.userdata.encoding";
 
 pub struct VmwareGuestinfo;
 
+#[cfg(target_arch = "x86_64")]
 impl VmwareGuestinfo {
     /// Fetch the user data's encoding from guestinfo.
     // `guestinfo.userdata.encoding` informs us how to handle the data in the
@@ -78,9 +79,8 @@ impl VmwareGuestinfo {
 }
 
 impl UserDataProvider for VmwareGuestinfo {
-    fn user_data(
-        &self,
-    ) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
+    #[cfg(target_arch = "x86_64")]
+    fn user_data(&self) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
         info!("Attempting to retrieve user data via guestinfo interface");
 
         // It would be extremely odd to get here and not be on VMware, but check anyway
@@ -121,6 +121,11 @@ impl UserDataProvider for VmwareGuestinfo {
             .context(error::SettingsToJsonSnafu { from: "guestinfo" })?;
         Ok(Some(json))
     }
+
+    #[cfg(not(target_arch = "x86_64"))]
+    fn user_data(&self) -> std::result::Result<Option<SettingsJson>, Box<dyn std::error::Error>> {
+        unimplemented!("VMWare can only be used on x86_64");
+    }
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=
@@ -151,6 +156,7 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(crate) enum Error {
+        #[cfg(target_arch = "x86_64")]
         #[snafu(display("VMware backdoor: failed to '{}': '{}'", op, source))]
         Backdoor {
             op: String,
@@ -160,6 +166,7 @@ mod error {
         #[snafu(display("Failed to decompress {}: {}", what, source))]
         Decompression { what: String, source: io::Error },
 
+        #[cfg(target_arch = "x86_64")]
         #[snafu(display("Failed to fetch key '{}' from guestinfo: {}", what, source))]
         GuestInfo {
             what: String,
