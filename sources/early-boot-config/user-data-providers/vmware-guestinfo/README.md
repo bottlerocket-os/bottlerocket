@@ -4,7 +4,7 @@ Current version: 0.1.0
 
 ## Introduction
 
-User data provider binary used to fetch user data provided via VMWare guestinfo.
+User data provider binary used to fetch user data provided via VMware guestinfo.
 
 ## Colophon
 

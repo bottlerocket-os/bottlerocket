@@ -1,4 +1,4 @@
-/// VMWare CD-ROM
+/// VMware CD-ROM
 #[macro_use]
 extern crate log;
 

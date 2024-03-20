@@ -1,7 +1,7 @@
 /*!
 # Introduction
 
-User data provider binary used to fetch user data provided via VMWare guestinfo.
+User data provider binary used to fetch user data provided via VMware guestinfo.
 */
 
 use early_boot_config_provider::provider::{
