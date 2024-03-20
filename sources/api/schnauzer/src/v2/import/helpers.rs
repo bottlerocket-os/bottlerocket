@@ -60,12 +60,14 @@ fn all_helpers() -> HashMap<ExtensionName, HashMap<HelperName, Box<dyn HelperDef
         },
 
         // globally helpful helpers will be included in a null extension called "std"
+        // Prefer snake case for helper names (we accidentally created a few with kabob case)
         "std" => hashmap! {
             "any_enabled" => helper!(handlebars_helpers::any_enabled),
             "base64_decode" => helper!(handlebars_helpers::base64_decode),
             "default" => helper!(handlebars_helpers::default),
             "join_array" => helper!(handlebars_helpers::join_array),
             "join_map" => helper!(handlebars_helpers::join_map),
+            "if_not_null" => Box::new(handlebars_helpers::IfNotNullHelper),
             "goarch" => helper!(handlebars_helpers::goarch),
         },
     }
