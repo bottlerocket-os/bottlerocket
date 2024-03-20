@@ -1,6 +1,6 @@
-From d45fa29ef802bf5787393e88dd61dabc2999d5ae Mon Sep 17 00:00:00 2001
+From 5a76b5fa1b631191adbec7919f58e067dd6c2896 Mon Sep 17 00:00:00 2001
 From: Ben Cressey <bcressey@amazon.com>
-Date: Mon, 17 Jun 2019 22:40:54 +0000
+Date: Tue, 19 Mar 2024 14:17:52 +0000
 Subject: [PATCH] disable RPC helper
 
 We do not intend to run the daemon to synchronize firewall rules or
@@ -16,10 +16,10 @@ Signed-off-by: Ben Cressey <bcressey@amazon.com>
  2 files changed, 7 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index d0565be..a417691 100644
+index da852b1..973a9d5 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -50,8 +50,6 @@ AC_ARG_ENABLE([systemd],
+@@ -49,8 +49,6 @@ AC_ARG_ENABLE([systemd],
          AS_HELP_STRING([--enable-systemd], [Build systemd support]),
          [enable_systemd="$enableval"], [enable_systemd="no"])
 
@@ -27,9 +27,9 @@ index d0565be..a417691 100644
 -
  PKG_CHECK_MODULES([LIBNFNETLINK], [libnfnetlink >= 1.0.1])
  PKG_CHECK_MODULES([LIBMNL], [libmnl >= 1.0.3])
- PKG_CHECK_MODULES([LIBNETFILTER_CONNTRACK], [libnetfilter_conntrack >= 1.0.8])
+ PKG_CHECK_MODULES([LIBNETFILTER_CONNTRACK], [libnetfilter_conntrack >= 1.0.9])
 diff --git a/src/helpers/Makefile.am b/src/helpers/Makefile.am
-index e4f10c9..159362f 100644
+index e458ab4..47f1d46 100644
 --- a/src/helpers/Makefile.am
 +++ b/src/helpers/Makefile.am
 @@ -4,7 +4,6 @@ pkglib_LTLIBRARIES = ct_helper_amanda.la \
@@ -52,5 +52,5 @@ index e4f10c9..159362f 100644
  ct_helper_tftp_la_LDFLAGS = $(HELPER_LDFLAGS)
  ct_helper_tftp_la_CFLAGS = $(HELPER_CFLAGS)
 -- 
-2.21.0
+2.40.1
 
