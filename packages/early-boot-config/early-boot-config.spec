@@ -53,25 +53,17 @@ Requires: %{_cross_os}early-boot-config-local
 
 %build
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
-    -p early-boot-config
-
-# build aws user data providers
-%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
+    -p early-boot-config \
     -p ec2-identity-doc-user-data-provider \
-    -p ec2-imds-user-data-provider
-
-# build local file user data providers
-%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
+    -p ec2-imds-user-data-provider \
     -p local-defaults-user-data-provider \
     -p local-file-user-data-provider \
-    -p local-overrides-user-data-provider
-
+    -p local-overrides-user-data-provider \
 %ifarch x86_64
-# build vmware user data providers
-%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
     -p vmware-cd-rom-user-data-provider \
-    -p vmware-guestinfo-user-data-provider
+    -p vmware-guestinfo-user-data-provider \
 %endif
+    %{nil}
 
 %global cargo_outdir %{getenv:HOME}/.cache/%{__cargo_target}/release
 %global early_boot_config_bindir %{_cross_libexecdir}/early-boot-config/bin
