@@ -3,7 +3,7 @@
 
 early-boot-config sends user data to the Bottlerocket API.
 
-Variants include their required user data provider binaries via packages.  early-boot-config discovers these binaries at runtime in /usr/libexec/early-boot-config/data-providers.d and runs them in order, sending any user data found to the API.
+Variants include their required user data provider binaries via packages.  early-boot-config discovers these binaries at runtime in `/usr/libexec/early-boot-config/data-providers.d` and runs them in order, sending any user data found to the API.
 
 User data provider binaries each implement the ability to obtain user data from a single source.  Sources include local files, AWS Instance Metadata Service (IMDS), among others.
 */
@@ -22,9 +22,6 @@ use std::str::{self, FromStr};
 use std::{env, io, process};
 use tokio::process::Command as AsyncCommand;
 use walkdir::WalkDir;
-
-// TODO
-// Tests!
 
 // We only want to run early-boot-config once, at first boot.  Our systemd unit file has a
 // ConditionPathExists that will prevent it from running again if this file exists.
@@ -284,10 +281,7 @@ mod error {
         Provider { source: Box<dyn std::error::Error> },
 
         #[snafu(display("Provider '{}' failed: {}", provider.display(), message))]
-        ProviderFailure {
-            provider: PathBuf,
-            message: String,
-        },
+        ProviderFailure { provider: PathBuf, message: String },
 
         #[snafu(display(
             "Error deserializing provider output as JSON from {}: '{}'",
