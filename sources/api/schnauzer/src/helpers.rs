@@ -4,7 +4,8 @@
 
 use dns_lookup::lookup_host;
 use handlebars::{
-    handlebars_helper, Context, Handlebars, Helper, Output, RenderContext, RenderError,
+    handlebars_helper, Context, Handlebars, Helper, HelperDef, Output, RenderContext, RenderError,
+    Renderable,
 };
 use lazy_static::lazy_static;
 use model::modeled_types::{OciDefaultsCapability, OciDefaultsResourceLimitType};
@@ -675,6 +676,42 @@ pub fn default(
         template: template_name.to_owned(),
     })?;
     Ok(())
+}
+
+/// The `if_not_null` helper is used to check when a value is not null. This is
+/// useful especially for falsy values such as `false`, `0`, or `""` to
+/// distinguish between "not set" and "false".
+#[derive(Clone, Copy)]
+pub struct IfNotNullHelper;
+
+impl HelperDef for IfNotNullHelper {
+    fn call<'reg: 'rc, 'rc>(
+        &self,
+        helper: &Helper<'reg, 'rc>,
+        registry: &'reg Handlebars<'reg>,
+        ctx: &'rc Context,
+        renderctx: &mut RenderContext<'reg, 'rc>,
+        out: &mut dyn Output,
+    ) -> Result<(), RenderError> {
+        trace!("Starting if_not_null helper");
+        let template_name = template_name(renderctx);
+        trace!("Template name: {}", &template_name);
+
+        trace!("Number of params: {}", helper.params().len());
+        check_param_count(helper, template_name, 1)?;
+
+        let param = get_param(helper, 0)?;
+
+        let tmpl = if !param.is_null() {
+            helper.template()
+        } else {
+            helper.inverse()
+        };
+        match tmpl {
+            Some(t) => t.render(registry, ctx, renderctx, out),
+            None => Ok(()),
+        }
+    }
 }
 
 /// The `ecr-prefix` helper is used to map an AWS region to the correct ECR
@@ -2077,6 +2114,94 @@ mod test_default {
         )
         .unwrap();
         assert_eq!(result, "true")
+    }
+}
+
+#[cfg(test)]
+mod test_if_not_null {
+    use super::*;
+    use handlebars::RenderError;
+    use serde::Serialize;
+    use serde_json::json;
+
+    // A thin wrapper around the handlebars render_template method that includes
+    // setup and registration of helpers
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("if_not_null", Box::new(IfNotNullHelper));
+
+        registry.render_template(tmpl, data)
+    }
+
+    #[test]
+    fn null_value() {
+        let result =
+            setup_and_render_template("{{#if_not_null setting}}foo{{/if_not_null}}", &json!({}))
+                .unwrap();
+        assert_eq!(result, "")
+    }
+
+    #[test]
+    fn render_else() {
+        let result = setup_and_render_template(
+            "{{#if_not_null setting}}foo{{else}}bar{{/if_not_null}}",
+            &json!({}),
+        )
+        .unwrap();
+        assert_eq!(result, "bar")
+    }
+
+    #[test]
+    fn explicit_null_value() {
+        let result = setup_and_render_template(
+            "{{#if_not_null setting}}foo{{/if_not_null}}",
+            &json!({"setting": None::<()>}),
+        )
+        .unwrap();
+        assert_eq!(result, "")
+    }
+
+    #[test]
+    fn falsy_number_value() {
+        let result = setup_and_render_template(
+            "{{#if_not_null setting}}foo{{/if_not_null}}",
+            &json!({"setting": 0}),
+        )
+        .unwrap();
+        assert_eq!(result, "foo")
+    }
+
+    #[test]
+    fn falsy_string_value() {
+        let result = setup_and_render_template(
+            "{{#if_not_null setting}}foo{{/if_not_null}}",
+            &json!({"setting": ""}),
+        )
+        .unwrap();
+        assert_eq!(result, "foo")
+    }
+
+    #[test]
+    fn falsy_bool_value() {
+        let result = setup_and_render_template(
+            "{{#if_not_null setting}}foo{{/if_not_null}}",
+            &json!({"setting": false}),
+        )
+        .unwrap();
+        assert_eq!(result, "foo")
+    }
+
+    #[test]
+    fn falsy_array_value() {
+        let result = setup_and_render_template(
+            "{{#if_not_null setting}}foo{{/if_not_null}}",
+            &json!({"setting": Vec::<()>::new()}),
+        )
+        .unwrap();
+        assert_eq!(result, "foo")
     }
 }
 
