@@ -452,7 +452,7 @@ mod tests {
 
     fn test_time() -> DateTime<Utc> {
         // DateTime for 1/1/2000 00:00:00
-        DateTime::<Utc>::from_utc(
+        DateTime::<Utc>::from_naive_utc_and_offset(
             NaiveDate::from_ymd_opt(2000, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(0, 0, 0, 0)
@@ -496,13 +496,14 @@ mod tests {
         // e.g. seed 1 -> update is ready 1 millisecond past start of wave
         // seed 500 -> update is ready 500 millisecond past start of wave, etc
         update.waves.insert(0, time);
-        update
-            .waves
-            .insert(MAX_SEED, time + Duration::milliseconds(i64::from(MAX_SEED)));
+        update.waves.insert(
+            MAX_SEED,
+            time + Duration::try_milliseconds(i64::from(MAX_SEED)).unwrap(),
+        );
 
         for seed in (100..500).step_by(100) {
             assert!(
-                !update.update_ready(seed, time + Duration::milliseconds(i64::from(seed) - 1)),
+                !update.update_ready(seed, time + Duration::try_milliseconds(i64::from(seed) - 1).unwrap()),
                 "seed: {}, time: {}, wave start time: {}, wave start seed: {}, {} milliseconds hasn't passed yet",
                 seed,
                 time,
@@ -511,10 +512,10 @@ mod tests {
                 seed
             );
             assert!(
-                update.update_ready(seed, time + Duration::milliseconds(i64::from(seed))),
+                update.update_ready(seed, time + Duration::try_milliseconds(i64::from(seed)).unwrap()),
                 "seed: {}, time: {}, wave start time: {}, wave start seed: {}, update should be ready",
                 seed,
-                time + Duration::milliseconds(100),
+                time + Duration::try_milliseconds(100).unwrap(),
                 time,
                 0,
             );
@@ -525,15 +526,17 @@ mod tests {
         let time = test_time();
         update.waves.insert(0, time);
         // First wave ends 200 milliseconds into the update and has seeds 0 - 50
-        update.waves.insert(50, time + Duration::milliseconds(200));
+        update
+            .waves
+            .insert(50, time + Duration::try_milliseconds(200).unwrap());
         // Second wave ends 1024 milliseconds into the update and has seeds 50 - 100
         update
             .waves
-            .insert(100, time + Duration::milliseconds(1024));
+            .insert(100, time + Duration::try_milliseconds(1024).unwrap());
         // Third wave ends 4096 milliseconds into the update and has seeds 100 - 1024
         update
             .waves
-            .insert(1024, time + Duration::milliseconds(4096));
+            .insert(1024, time + Duration::try_milliseconds(4096).unwrap());
     }
 
     #[test]
@@ -546,7 +549,7 @@ mod tests {
 
         for duration in (0..200).step_by(10) {
             assert!(
-                !update.update_ready(seed, time + Duration::milliseconds(duration)),
+                !update.update_ready(seed, time + Duration::try_milliseconds(duration).unwrap()),
                 "seed should not part of first wave",
             );
         }
@@ -555,7 +558,7 @@ mod tests {
         for duration in (200..seed_time_position).step_by(2) {
             assert!(
                 !update.update_ready(
-                    seed, time + Duration::milliseconds(i64::from(duration))
+                    seed, time + Duration::try_milliseconds(i64::from(duration)).unwrap()
                 ),
                 "update should not be ready, it's the second wave but not at position within wave yet: {}", duration,
             );
@@ -565,8 +568,8 @@ mod tests {
             assert!(
                 update.update_ready(
                     seed,
-                    time + Duration::milliseconds(200)
-                        + Duration::milliseconds(i64::from(duration))
+                    time + Duration::try_milliseconds(200).unwrap()
+                        + Duration::try_milliseconds(i64::from(duration)).unwrap()
                 ),
                 "update should be ready now that we're passed the allocated time position within the second wave: {}", duration,
             );
@@ -574,7 +577,10 @@ mod tests {
 
         for duration in (1024..4096).step_by(8) {
             assert!(
-                update.update_ready(seed, time + Duration::milliseconds(i64::from(duration))),
+                update.update_ready(
+                    seed,
+                    time + Duration::try_milliseconds(i64::from(duration)).unwrap()
+                ),
                 "update should be ready after the third wave starts and onwards",
             );
         }
@@ -589,14 +595,14 @@ mod tests {
 
         for duration in (0..200).step_by(10) {
             assert!(
-                !update.update_ready(seed, time + Duration::milliseconds(duration)),
+                !update.update_ready(seed, time + Duration::try_milliseconds(duration).unwrap()),
                 "seed should not part of first wave",
             );
         }
 
         for duration in (200..1024).step_by(4) {
             assert!(
-                !update.update_ready(seed, time + Duration::milliseconds(duration)),
+                !update.update_ready(seed, time + Duration::try_milliseconds(duration).unwrap()),
                 "seed should not part of second wave",
             );
         }
@@ -606,8 +612,8 @@ mod tests {
             assert!(
                 !update.update_ready(
                     seed,
-                    time + Duration::milliseconds(200)
-                        + Duration::milliseconds(i64::from(duration))
+                    time + Duration::try_milliseconds(200).unwrap()
+                        + Duration::try_milliseconds(i64::from(duration)).unwrap()
                 ),
                 "update should not be ready, it's the third wave but not at position within wave yet: {}", duration,
             );
@@ -617,8 +623,8 @@ mod tests {
             assert!(
                 update.update_ready(
                     seed,
-                    time + Duration::milliseconds(1024 + 200)
-                        + Duration::milliseconds(i64::from(duration))
+                    time + Duration::try_milliseconds(1024 + 200).unwrap()
+                        + Duration::try_milliseconds(i64::from(duration)).unwrap()
                 ),
                 "update should be ready now that we're passed the allocated time position within the third wave: {}", duration,
             );
@@ -641,7 +647,7 @@ mod tests {
         };
         let seed = 1024;
         // Construct a DateTime object for 1/1/2000 00:00:00
-        let time = DateTime::<Utc>::from_utc(
+        let time = DateTime::<Utc>::from_naive_utc_and_offset(
             NaiveDate::from_ymd_opt(2000, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(0, 0, 0, 0)
@@ -649,9 +655,15 @@ mod tests {
             Utc,
         );
 
-        update.waves.insert(0, time - Duration::hours(3));
-        update.waves.insert(256, time - Duration::hours(2));
-        update.waves.insert(512, time - Duration::hours(1));
+        update
+            .waves
+            .insert(0, time - Duration::try_hours(3).unwrap());
+        update
+            .waves
+            .insert(256, time - Duration::try_hours(2).unwrap());
+        update
+            .waves
+            .insert(512, time - Duration::try_hours(1).unwrap());
 
         assert!(
             // Last wave should have already passed
@@ -670,11 +682,11 @@ mod tests {
         let to = Version::parse("1.5.0").unwrap();
         let targets = find_migrations(&from, &to, &manifest).unwrap();
 
-        assert!(targets.len() == 3);
+        assert_eq!(targets.len(), 3);
         let mut i = targets.iter();
-        assert!(i.next().unwrap() == "migration_1.1.0_a");
-        assert!(i.next().unwrap() == "migration_1.1.0_b");
-        assert!(i.next().unwrap() == "migration_1.5.0_shortcut");
+        assert_eq!(i.next().unwrap(), "migration_1.1.0_a");
+        assert_eq!(i.next().unwrap(), "migration_1.1.0_b");
+        assert_eq!(i.next().unwrap(), "migration_1.5.0_shortcut");
     }
 
     #[test]
@@ -686,10 +698,10 @@ mod tests {
         let to = Version::parse("1.0.0").unwrap();
         let targets = find_migrations(&from, &to, &manifest).unwrap();
 
-        assert!(targets.len() == 3);
+        assert_eq!(targets.len(), 3);
         let mut i = targets.iter();
-        assert!(i.next().unwrap() == "migration_1.5.0_shortcut");
-        assert!(i.next().unwrap() == "migration_1.1.0_b");
-        assert!(i.next().unwrap() == "migration_1.1.0_a");
+        assert_eq!(i.next().unwrap(), "migration_1.5.0_shortcut");
+        assert_eq!(i.next().unwrap(), "migration_1.1.0_b");
+        assert_eq!(i.next().unwrap(), "migration_1.1.0_a");
     }
 }

@@ -10,13 +10,13 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-base64 = "0.13"
+base64 = "0.21"
 constants = { path = "../../constants", version = "0.1" }
 log = "0.4"
 modeled-types = { path = "../../models/modeled-types", version = "0.1" }
 serde = { version = "1", features = ["derive"] }
 simplelog = "0.12"
-snafu = "0.7"
+snafu = "0.8"
 toml = "0.8"
 
 [dev-dependencies]

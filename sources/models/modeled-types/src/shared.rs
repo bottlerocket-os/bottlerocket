@@ -1,4 +1,5 @@
 use super::error;
+use base64::Engine;
 use lazy_static::lazy_static;
 use regex::Regex;
 use scalar::traits::{Scalar, Validate};
@@ -28,7 +29,9 @@ impl TryFrom<&str> for ValidBase64 {
     type Error = error::Error;
 
     fn try_from(input: &str) -> Result<Self, Self::Error> {
-        base64::decode(input).context(error::InvalidBase64Snafu)?;
+        base64::engine::general_purpose::STANDARD
+            .decode(input)
+            .context(error::InvalidBase64Snafu)?;
         Ok(ValidBase64 {
             inner: input.to_string(),
         })
@@ -40,12 +43,15 @@ string_impls_for!(ValidBase64, "ValidBase64");
 #[cfg(test)]
 mod test_valid_base64 {
     use super::ValidBase64;
+    use base64::Engine;
     use std::convert::TryFrom;
 
     #[test]
     fn valid_base64() {
         let v = ValidBase64::try_from("aGk=").unwrap();
-        let decoded_bytes = base64::decode(v.as_ref()).unwrap();
+        let decoded_bytes = base64::engine::general_purpose::STANDARD
+            .decode(v.as_ref())
+            .unwrap();
         let decoded = std::str::from_utf8(&decoded_bytes).unwrap();
         assert_eq!(decoded, "hi");
     }
@@ -1002,7 +1008,9 @@ impl TryFrom<&str> for PemCertificateString {
                 inner: input.to_string(),
             });
         }
-        let decoded_bytes = base64::decode(input).context(error::InvalidBase64Snafu)?;
+        let decoded_bytes = base64::engine::general_purpose::STANDARD
+            .decode(input)
+            .context(error::InvalidBase64Snafu)?;
         // Flag to check if the bundle doesn't contain any valid certificate
         let mut certs_found = false;
         // Validate each certificate in the bundle

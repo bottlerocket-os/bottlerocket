@@ -19,4 +19,4 @@ path = "src/bin/fsck_xfs/main.rs"
 [dependencies]
 argh = "0.1"
 tempfile = "3"
-snafu = "0.7"
+snafu = "0.8"
