@@ -75,6 +75,9 @@ members = [
     "api/migration/migrations/v1.20.0/host-containers-config-list-v0-1-0",
     "api/migration/migrations/v1.20.0/corndog-config-file-v0-1-0",
     "api/migration/migrations/v1.20.0/corndog-services-cfg-v0-1-0",
+    "api/migration/migrations/v1.20.0/remove-ecs-settings-applier",
+    "api/migration/migrations/v1.20.0/update-ecs-config-path",
+    "api/migration/migrations/v1.20.0/update-ecs-config-template-path",
 
     "bloodhound",
 
