@@ -1,20 +1,21 @@
 [required-extensions]
 host-containers = "v1"
+std = { version = "v1", helpers = ["if_not_null"]}
 +++
-{{#if settings.host-containers}}
+{{#if_not_null settings.host-containers}}
 {{#each settings.host-containers}}
 [host-containers."{{{@key}}}"]
-{{#if this.source}}
+{{#if_not_null this.source}}
 source = "{{{this.source}}}"
-{{/if}}
-{{#if this.enabled}}
-enabled = {{{this.enabled}}}
-{{/if}}
-{{#if this.superpowered}}
-superpowered = {{{this.superpowered}}}
-{{/if}}
-{{#if this.user-data}}
+{{/if_not_null}}
+{{#if_not_null this.enabled}}
+enabled = {{this.enabled}}
+{{/if_not_null}}
+{{#if_not_null this.superpowered}}
+superpowered = {{this.superpowered}}
+{{/if_not_null}}
+{{#if_not_null this.user-data}}
 user-data = "{{{this.user-data}}}"
-{{/if}}
+{{/if_not_null}}
 {{/each}}
-{{/if}}
+{{/if_not_null}}
