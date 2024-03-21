@@ -22,6 +22,7 @@ systemd-networkd = true
 [package.metadata.build-variant]
 included-packages = [
     # core
+    "early-boot-config-aws",
     "release",
     "kernel-6.1",
     # k8s
@@ -48,6 +49,7 @@ path = "../variants.rs"
 [build-dependencies]
 # core
 release = { path = "../../packages/release" }
+early-boot-config = { path = "../../packages/early-boot-config" }
 kernel-6_1 = { path = "../../packages/kernel-6.1" }
 # k8s
 cni = { path = "../../packages/cni" }
