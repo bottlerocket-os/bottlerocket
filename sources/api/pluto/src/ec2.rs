@@ -1,5 +1,6 @@
 use crate::aws::sdk_config;
 use crate::{aws, proxy};
+use aws_smithy_runtime::client::http::hyper_014::HyperClientBuilder;
 use aws_smithy_types::error::display::DisplayErrorContext;
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::time::Duration;
@@ -49,9 +50,10 @@ pub(super) async fn get_private_dns_name(region: &str, instance_id: &str) -> Res
     let config = sdk_config(region).await?;
 
     let client = if let Some(https_proxy) = https_proxy {
-        let http_client = proxy::setup_http_client(https_proxy, no_proxy)?;
+        let http_connector = proxy::setup_http_client(https_proxy, no_proxy)?;
+        let http_client = HyperClientBuilder::new().build(http_connector);
         let ec2_config = aws_sdk_ec2::config::Builder::from(&config)
-            .http_connector(http_client)
+            .http_client(http_client)
             .build();
         aws_sdk_ec2::Client::from_conf(ec2_config)
     } else {

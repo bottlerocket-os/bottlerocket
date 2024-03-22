@@ -1,11 +1,10 @@
 Name: %{_cross_os}xfsprogs
-Version: 6.4.0
+Version: 6.6.0
 Release: 1%{?dist}
 Summary: Utilities for managing the XFS filesystem
 License: GPL-2.0-only AND LGPL-2.1-only
 URL: https://xfs.wiki.kernel.org
 Source0: http://kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-%{version}.tar.xz
-Patch1: 0001-libxfs-do-not-try-to-run-the-crc32selftest.patch
 
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libuuid-devel
@@ -27,7 +26,7 @@ Requires: %{name}
 %{summary}.
 
 %prep
-%autosetup -n xfsprogs-%{version} -p1
+%autosetup -n xfsprogs-%{version}
 
 %build
 %cross_configure \

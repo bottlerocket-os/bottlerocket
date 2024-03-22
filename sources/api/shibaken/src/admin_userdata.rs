@@ -1,5 +1,6 @@
 /// This module contains utilities for populating userdata for the admin-container with user SSH keys from IMDS.
 use argh::FromArgs;
+use base64::Engine;
 use imdsclient::ImdsClient;
 use serde::Serialize;
 use snafu::ResultExt;
@@ -27,7 +28,7 @@ impl GenerateAdminUserdata {
         // admin container user-data must be base64-encoded to be passed through to the admin container
         // using a setting, rather than another arbitrary storage mechanism. This approach allows the
         // user to bypass shibaken and use their own user-data if desired.
-        let user_data_base64 = base64::encode(&user_data_json);
+        let user_data_base64 = base64::engine::general_purpose::STANDARD.encode(&user_data_json);
 
         log::info!("Outputting base64-encoded user-data");
         // sundog expects JSON-serialized output so that many types can be represented, allowing the

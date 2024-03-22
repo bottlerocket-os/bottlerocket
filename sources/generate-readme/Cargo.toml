@@ -8,4 +8,4 @@ publish = false
 
 [dependencies]
 cargo-readme = "3"
-snafu = "0.7"
+snafu = "0.8"
