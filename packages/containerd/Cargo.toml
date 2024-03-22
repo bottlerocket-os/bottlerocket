@@ -12,8 +12,8 @@ path = "../packages.rs"
 releases-url = "https://github.com/containerd/containerd/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/containerd/containerd/archive/v1.6.30/containerd-1.6.30.tar.gz"
-sha512 = "0c92412601805757c13f9007cb8a2828da557bcc0e9e4627d1d1c50e5a2f8281c9155d5976d57b51cace497f68bd014c2688b077cf4bfc77d458bdc91dae164c"
+url = "https://github.com/containerd/containerd/archive/v1.6.28/containerd-1.6.28.tar.gz"
+sha512 = "8d7f289aa1dd55868612654e60ddb95573149b2b40ba925910a0ad75ec5de1acd916ecaaf7571f4f24ec0fb6db3ec23ef1efbe6bf4960c410f46f7b15531a301"
 
 # RPM BuildRequires
 [build-dependencies]

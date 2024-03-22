@@ -1,7 +1,6 @@
 use crate::aws::sdk_config;
 use crate::{aws, proxy};
 use aws_sdk_eks::types::KubernetesNetworkConfigResponse;
-use aws_smithy_runtime::client::http::hyper_014::HyperClientBuilder;
 use snafu::{OptionExt, ResultExt, Snafu};
 use std::time::Duration;
 
@@ -46,10 +45,9 @@ pub(super) async fn get_cluster_network_config(
     let config = sdk_config(region).await?;
 
     let client = if let Some(https_proxy) = https_proxy {
-        let http_connector = proxy::setup_http_client(https_proxy, no_proxy)?;
-        let http_client = HyperClientBuilder::new().build(http_connector);
+        let http_client = proxy::setup_http_client(https_proxy, no_proxy)?;
         let eks_config = aws_sdk_eks::config::Builder::from(&config)
-            .http_client(http_client)
+            .http_connector(http_client)
             .build();
         aws_sdk_eks::Client::from_conf(eks_config)
     } else {

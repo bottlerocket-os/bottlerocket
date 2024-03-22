@@ -73,7 +73,6 @@ journalctl -u bootstrap-containers@bear.service
 #[macro_use]
 extern crate log;
 
-use base64::Engine;
 use datastore::{serialize_scalar, Key, KeyType};
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
@@ -273,9 +272,8 @@ where
     // If user data was specified, decode it and write it out
     if let Some(user_data) = &container_details.user_data {
         debug!("Decoding user data for container '{}'", name);
-        let decoded_bytes = base64::engine::general_purpose::STANDARD
-            .decode(user_data.as_bytes())
-            .context(error::Base64DecodeSnafu { name })?;
+        let decoded_bytes =
+            base64::decode(user_data.as_bytes()).context(error::Base64DecodeSnafu { name })?;
 
         let path = dir.join("user-data");
         debug!("Storing user data in {}", path.display());

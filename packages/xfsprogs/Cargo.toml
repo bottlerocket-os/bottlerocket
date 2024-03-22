@@ -12,8 +12,8 @@ path = "../packages.rs"
 releases-url = "https://mirrors.edge.kernel.org/pub/linux/utils/fs/xfs/xfsprogs/"
 
 [[package.metadata.build-package.external-files]]
-url = "http://kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-6.6.0.tar.xz"
-sha512 = "89b4436a958075ac77cc2b5b5f0618164d47f7d6fbc2271a7927c886fba7bf67284e1825c1ecc259969235222b4d084a40c354edb6d83c21029d737108aa38da"
+url = "http://kernel.org/pub/linux/utils/fs/xfs/xfsprogs/xfsprogs-6.4.0.tar.xz"
+sha512 = "831e7747640bc2964b182226d8bb6f637610b123aeec9b3cb97a5de5d5b65bde30c6b40ad2e78de6a5214e823dd75de3a2bdfddd8ab1638f5c7340a760c91b3f"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

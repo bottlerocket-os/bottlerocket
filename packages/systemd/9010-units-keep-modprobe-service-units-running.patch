@@ -17,7 +17,7 @@ index 85a2c08..2994082 100644
 @@ -18,3 +18,4 @@ StartLimitIntervalSec=0
  [Service]
  Type=oneshot
- ExecStart=-/sbin/modprobe -abq %i
+ ExecStart=-/sbin/modprobe -abq %I
 +RemainAfterExit=true
 -- 
 2.40.1

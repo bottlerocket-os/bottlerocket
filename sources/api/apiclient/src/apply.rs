@@ -177,9 +177,8 @@ mod error {
         ))]
         InputType {
             input_source: String,
-            toml_err: Box<toml::de::Error>,
-            #[snafu(source(from(serde_json::Error, Box::new)))]
-            source: Box<serde_json::Error>,
+            toml_err: toml::de::Error,
+            source: serde_json::Error,
         },
 
         #[snafu(display(

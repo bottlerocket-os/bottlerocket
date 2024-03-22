@@ -13,20 +13,20 @@ argh = "0.1"
 dns-lookup = "2"
 ipnet = { version = "2", features = ["serde"] }
 imdsclient = { path = "../../imdsclient", version = "0.1" }
-indexmap = { version = "1", features = ["serde"] }
+indexmap = { version = "1", features = ["serde"]}
 envy = "0.4"
 lazy_static = "1"
 systemd-derive = { path = "systemd-derive", version = "0.1" }
-quick-xml = { version = "0.26", features = ["serialize"] }
+quick-xml = {version = "0.26", features = ["serialize"]}
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 regex = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_plain = "1"
-snafu = "0.8"
+snafu = "0.7"
 tokio = { version = "~1.32", default-features = false, features = ["macros", "rt-multi-thread", "time"] }  # LTS
 tokio-retry = "0.3"
-toml = { version = "0.8", features = ["preserve_order"] }
+toml = { version = "0.5", features = ["preserve_order"] }
 
 [dev-dependencies]
 tempfile = "3"

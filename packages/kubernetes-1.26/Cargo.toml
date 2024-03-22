@@ -14,8 +14,8 @@ path = "../packages.rs"
 package-name = "kubernetes-1.26"
 
 [[package.metadata.build-package.external-files]]
-url = "https://distro.eks.amazonaws.com/kubernetes-1-26/releases/31/artifacts/kubernetes/v1.26.14/kubernetes-src.tar.gz"
-sha512 = "6e4df683493b055e0445be2389f7c31b48da5a26f82f833df9ab9d0ae17e769cda65d58e0af2bbd4472a30b6f8ec4bd144af00b35a8ecd2b7afd9c62c2fcc7dc"
+url = "https://distro.eks.amazonaws.com/kubernetes-1-26/releases/23/artifacts/kubernetes/v1.26.11/kubernetes-src.tar.gz"
+sha512 = "7790ef617fbd30a1f264a4af19d6ccd0a81a6b3abfafe75aa9584948211c1e16a0d4f8910cb9b3edfc77407932bd879215fc0084fbfc5e65b090369e05378790"
 # RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }

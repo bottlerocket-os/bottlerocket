@@ -1,5 +1,5 @@
 Name: %{_cross_os}libselinux
-Version: 3.6
+Version: 3.5
 Release: 1%{?dist}
 Summary: Library for SELinux
 License: LicenseRef-SELinux-PD
@@ -70,7 +70,6 @@ export USE_PCRE2='y' \\\
 %exclude %{_cross_sbindir}/getenforce
 %exclude %{_cross_sbindir}/getfilecon
 %exclude %{_cross_sbindir}/getpidcon
-%exclude %{_cross_sbindir}/getpolicyload
 %exclude %{_cross_sbindir}/getsebool
 %exclude %{_cross_sbindir}/getseuser
 %exclude %{_cross_sbindir}/matchpathcon

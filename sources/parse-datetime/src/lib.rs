@@ -21,7 +21,7 @@ Examples:
 */
 
 use chrono::{DateTime, Duration, FixedOffset, Utc};
-use snafu::{ensure, OptionExt, ResultExt};
+use snafu::{ensure, ResultExt};
 
 mod error {
     use snafu::Snafu;
@@ -94,30 +94,17 @@ pub fn parse_offset(input: &str) -> Result<Duration> {
         .context(error::DateArgCountSnafu { input })?;
 
     let duration = match unit_str {
-        "hour" | "hours" => {
-            Duration::try_hours(i64::from(count)).context(error::DateArgInvalidSnafu {
+        "hour" | "hours" => Duration::hours(i64::from(count)),
+        "day" | "days" => Duration::days(i64::from(count)),
+        "week" | "weeks" => Duration::weeks(i64::from(count)),
+        _ => {
+            return error::DateArgInvalidSnafu {
                 input,
-                msg: "date argument's hours unit must be a numerical value",
-            })
+                msg: "date argument's unit must be hours/days/weeks",
+            }
+            .fail();
         }
-        "day" | "days" => {
-            Duration::try_days(i64::from(count)).context(error::DateArgInvalidSnafu {
-                input,
-                msg: "date argument's days unit must be a numerical value",
-            })
-        }
-        "week" | "weeks" => {
-            Duration::try_weeks(i64::from(count)).context(error::DateArgInvalidSnafu {
-                input,
-                msg: "date argument's weeks unit must be a numerical value",
-            })
-        }
-        _ => error::DateArgInvalidSnafu {
-            input,
-            msg: "date argument's unit must be hours/days/weeks",
-        }
-        .fail(),
-    }?;
+    };
 
     Ok(duration)
 }

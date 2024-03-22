@@ -1,0 +1,44 @@
+From 3a77dfc54271059dcac305384bf6ace34fe1f3d3 Mon Sep 17 00:00:00 2001
+From: "Yann E. MORIN" <yann.morin.1998@free.fr>
+Date: Sun, 18 Dec 2016 15:37:27 +0100
+Subject: [PATCH] libxfs: do not try to run the crc32selftest
+
+Even though the crc32selftest is natively compiled (because it is to be
+executed), it fails in cross-compilation as the host may lack the
+required headers, like uuid/uuid.h (e.g. in a minimal environment).
+
+Moreover, running the crc32selftest natively is completely wrong,
+because it passing on the host does not mean it would still pass n the
+target (because endianness or bitness or alignment differences).
+
+So, just disable running the crc32selftest altogether.
+
+Note that there's a remaining bug-in-hiding, because the crc32 table
+generator is natively built, but with the target CFLAGS.
+
+Signed-off-by: "Yann E. MORIN" <yann.morin.1998@free.fr>
+Signed-off-by: "Fabrice Fontaine" <fontaine.fabrice@gmail.com>
+[Update for 4.18.0: crc32 has been moved from libxfs to libfrog]
+---
+ libfrog/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libfrog/Makefile b/libfrog/Makefile
+index 0110708..675c1cb 100644
+--- a/libfrog/Makefile
++++ b/libfrog/Makefile
+@@ -54,9 +54,9 @@ ifeq ($(HAVE_GETMNTENT),yes)
+ LCFLAGS += -DHAVE_GETMNTENT
+ endif
+ 
+-LDIRT = gen_crc32table crc32table.h crc32selftest
++LDIRT = gen_crc32table crc32table.h
+ 
+-default: crc32selftest ltdepend $(LTLIBRARY)
++default: ltdepend $(LTLIBRARY)
+ 
+ crc32table.h: gen_crc32table.c crc32defs.h
+ 	@echo "    [CC]     gen_crc32table"
+-- 
+2.40.1
+

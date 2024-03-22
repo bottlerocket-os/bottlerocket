@@ -4,7 +4,6 @@
 use super::{PlatformDataProvider, SettingsJson};
 use crate::compression::{expand_file_maybe, expand_slice_maybe, OptionalCompressionReader};
 use async_trait::async_trait;
-use base64::Engine;
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
 use std::ffi::OsStr;
@@ -131,11 +130,9 @@ impl VmwareDataProvider {
         }
 
         // Base64 decode the &str
-        let decoded_bytes = base64::engine::general_purpose::STANDARD
-            .decode(base64_str)
-            .context(error::Base64DecodeSnafu {
-                what: "OVF user data",
-            })?;
+        let decoded_bytes = base64::decode(base64_str).context(error::Base64DecodeSnafu {
+            what: "OVF user data",
+        })?;
 
         // Decompress the data if it's compressed
         let decoded = expand_slice_maybe(&decoded_bytes).context(error::DecompressionSnafu {
@@ -188,10 +185,7 @@ impl VmwareDataProvider {
             UserDataEncoding::Base64 | UserDataEncoding::GzipBase64 => {
                 info!("Decoding user data");
                 let mut reader = Cursor::new(user_data_bytes);
-                let decoder = base64::read::DecoderReader::new(
-                    &mut reader,
-                    &base64::engine::general_purpose::STANDARD,
-                );
+                let decoder = base64::read::DecoderReader::new(&mut reader, base64::STANDARD);
 
                 // Decompresses the data if it is gzip'ed
                 let mut output = String::new();

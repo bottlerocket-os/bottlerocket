@@ -914,12 +914,8 @@ mod tests {
         // Two waves; the 1st wave that starts immediately, and the final wave which starts in one hour
         let time = Utc::now();
         update.waves.insert(0, time);
-        update
-            .waves
-            .insert(1024, time + TestDuration::try_hours(1).unwrap());
-        update
-            .waves
-            .insert(2048, time + TestDuration::try_hours(1).unwrap());
+        update.waves.insert(1024, time + TestDuration::hours(1));
+        update.waves.insert(2048, time + TestDuration::hours(1));
         manifest.updates.push(update);
 
         assert!(

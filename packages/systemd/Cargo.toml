@@ -13,8 +13,8 @@ releases-url = "https://github.com/systemd/systemd-stable/releases"
 package-features = ["unified-cgroup-hierarchy"]
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/systemd/systemd-stable/archive/v252.22/systemd-stable-252.22.tar.gz"
-sha512 = "cc394b7c5f9149bc68b59ff23c4db9384deac073c0b96d5047c4d4ea36e82b930eabc03d5978155e7ab5e8617ccfebd67804cb7b19c3a43fdaf96abc48a3e3e2"
+url = "https://github.com/systemd/systemd-stable/archive/v252.18/systemd-stable-252.18.tar.gz"
+sha512 = "0c8ec1aceb43a74693876e27b84df0973e879fca96960c32d28f365703ad6b2c193fce2038c169f0ad6f31e75bca19d880c6106d7737ce26e165f427957ba339"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

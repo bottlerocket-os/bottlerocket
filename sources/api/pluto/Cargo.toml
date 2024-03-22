@@ -17,20 +17,20 @@ futures-util = { version = "0.3", default-features = false }
 headers = "0.3"
 http = "0.2"
 hyper = "0.14"
-hyper-rustls = { version = "0.24", default-features = false, features = ["http2", "native-tokio", "tls12", "logging"] }
+hyper-rustls = { version = "0.23", default-features = false, features = ["http2", "native-tokio", "tls12", "logging"] }
 imdsclient = { path = "../../imdsclient", version = "0.1" }
 models = { path = "../../models", version = "0.1" }
-aws-config = "1"
-aws-sdk-eks = "1"
-aws-sdk-ec2 = "1"
-aws-types = "1"
-aws-smithy-types = "1"
-aws-smithy-runtime = "1"
+aws-config = "0.55"
+aws-sdk-eks = "0.28"
+aws-sdk-ec2 = "0.28"
+aws-types = "0.55"
+aws-smithy-client = { version = "0.55", default-features = false, features = ["rustls"] }
+aws-smithy-types = "0.55"
 serde_json = "1"
-snafu = "0.8"
+snafu = "0.7"
 tokio = { version = "~1.32", default-features = false, features = ["macros", "rt-multi-thread"] }  # LTS
 tokio-retry = "0.3"
-tokio-rustls = "0.24"
+tokio-rustls = "0.23"
 url = "2"
 
 [build-dependencies]
