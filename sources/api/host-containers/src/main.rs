@@ -14,6 +14,7 @@ It queries the API for their settings, then configures the system by:
 #[macro_use]
 extern crate log;
 
+use base64::Engine;
 use simplelog::{Config as LogConfig, LevelFilter, SimpleLogger};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashMap;
@@ -376,8 +377,9 @@ where
 
     // If user data was specified, unencode it and write it out before we start the container.
     if let Some(user_data) = &image_details.user_data {
-        let decoded_bytes =
-            base64::decode(user_data.as_bytes()).context(error::Base64DecodeSnafu { name })?;
+        let decoded_bytes = base64::engine::general_purpose::STANDARD
+            .decode(user_data.as_bytes())
+            .context(error::Base64DecodeSnafu { name })?;
 
         let path = dir.join("user-data");
         fs::write(path, decoded_bytes).context(error::UserDataWriteSnafu { name })?;
