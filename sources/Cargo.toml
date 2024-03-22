@@ -64,10 +64,6 @@ members = [
     "api/migration/migrations/v1.19.2/certdog-config-file-v0-1-0",
     "api/migration/migrations/v1.19.2/certdog-service-cfg-v0-1-0",
     "api/migration/migrations/v1.19.2/add-ecs-enable-container-metadata",
-    "api/migration/migrations/v1.19.3/aws-admin-container-v0-11-6",
-    "api/migration/migrations/v1.19.3/public-admin-container-v0-11-6",
-    "api/migration/migrations/v1.19.3/aws-control-container-v0-7-10",
-    "api/migration/migrations/v1.19.3/public-control-container-v0-7-10",
 
     "bloodhound",
 

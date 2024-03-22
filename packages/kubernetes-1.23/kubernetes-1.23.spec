@@ -84,7 +84,6 @@ cp third_party/forked/golang/LICENSE LICENSE.golang
 cp third_party/forked/golang/PATENTS PATENTS.golang
 
 %build
-export FORCE_HOST_GO=1
 # Build codegen programs with the host toolchain.
 make generated_files
 

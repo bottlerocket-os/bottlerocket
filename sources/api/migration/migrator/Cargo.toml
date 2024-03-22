@@ -21,10 +21,10 @@ pentacle = "1"
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 semver = "1"
 simplelog = "0.12"
-snafu = "0.8"
+snafu = "0.7"
 tokio = { version = "~1.32", default-features = false, features = ["fs", "macros", "rt-multi-thread"] }  # LTS
 tokio-util = { version = "0.7", features = ["compat", "io-util"] }
-tough = { version = "0.17", features = ["http"] }
+tough = { version = "0.15", features = ["http"] }
 update_metadata = { path = "../../../updater/update_metadata", version = "0.1" }
 url = "2"
 

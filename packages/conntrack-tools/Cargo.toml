@@ -12,8 +12,8 @@ path = "../packages.rs"
 releases-url = "https://www.netfilter.org/projects/conntrack-tools/files"
 
 [[package.metadata.build-package.external-files]]
-url = "https://www.netfilter.org/projects/conntrack-tools/files/conntrack-tools-1.4.8.tar.xz"
-sha512 = "95d8f6f068c1342ad7e767537e722272a4f5bd8b46b952713ade053a1043aa9ababbe5ce658ede9c77b6de5221b97ad8833777caffd69b67dd70a99f2b45afdf"
+url = "https://www.netfilter.org/projects/conntrack-tools/files/conntrack-tools-1.4.7.tar.bz2"
+sha512 = "3d37a6b8cd13fd3c149ab80009d686d2184920ba2d0d5c1b57abed6e92e0dd92cba868bfe22f1a155479fe5ab2e291b8bb8a7e72123a73788032202ac142653b"
 
 [build-dependencies]
 glibc = { path = "../glibc" }

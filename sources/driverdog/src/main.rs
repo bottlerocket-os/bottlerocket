@@ -365,10 +365,9 @@ fn run() -> Result<()> {
     .flatten()
     {
         let path = entry.path();
-        let modules_sets: HashMap<String, DriverConfig> = toml::from_str(
-            &fs::read_to_string(&path).context(error::ReadPathSnafu { path: &path })?,
-        )
-        .context(error::DeserializeSnafu { path: &path })?;
+        let modules_sets: HashMap<String, DriverConfig> =
+            toml::from_slice(&fs::read(&path).context(error::ReadPathSnafu { path: &path })?)
+                .context(error::DeserializeSnafu { path: &path })?;
 
         all_modules_sets.extend(modules_sets);
     }

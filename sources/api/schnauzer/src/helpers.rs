@@ -2,7 +2,6 @@
 // be registered with the Handlebars library to assist in manipulating
 // text at render time.
 
-use base64::Engine;
 use dns_lookup::lookup_host;
 use handlebars::{
     handlebars_helper, Context, Handlebars, Helper, Output, RenderContext, RenderError,
@@ -366,11 +365,9 @@ pub fn base64_decode(
     trace!("Base64 string from template: {}", base64_str);
 
     // Base64 decode the &str
-    let decoded_bytes = base64::engine::general_purpose::STANDARD
-        .decode(base64_str)
-        .context(error::Base64DecodeSnafu {
-            template: template_name.to_owned(),
-        })?;
+    let decoded_bytes = base64::decode(base64_str).context(error::Base64DecodeSnafu {
+        template: template_name.to_owned(),
+    })?;
 
     // Create a valid utf8 str
     let decoded = std::str::from_utf8(&decoded_bytes).context(error::InvalidUTF8Snafu {

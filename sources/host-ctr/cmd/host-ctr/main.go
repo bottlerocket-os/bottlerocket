@@ -742,22 +742,14 @@ func withBootstrap() oci.SpecOpts {
 		withPrivilegedMounts(),
 		withStorageMounts(),
 		withRootFsShared(),
-		// host PID namespace is required to configure audit rules
-		oci.WithHostNamespace(runtimespec.PIDNamespace),
 		oci.WithSelinuxLabel("system_u:system_r:control_t:s0-s0:c0.c1023"),
-		// Bootstrap containers don't require all capabilities. We only add:
+		// Bootstrap containers don't require all capabilities. We only add
 		// - CAP_SYS_ADMIN: for mounting filesystems
 		// - CAP_NET_ADMIN: for managing iptables rules
 		// - CAP_SYS_CHROOT: to execute binaries from the root filesystem
 		// - CAP_SYS_MODULE: to load kernel modules from the root filesystem
-		// - CAP_AUDIT_CONTROL: to retrieve and configure audit rules
-		oci.WithAddedCapabilities([]string{
-			"CAP_SYS_ADMIN",
-			"CAP_NET_ADMIN",
-			"CAP_SYS_CHROOT",
-			"CAP_SYS_MODULE",
-			"CAP_AUDIT_CONTROL",
-		}),
+		// managing iptables rules, `CAP_SYS_CH`
+		oci.WithAddedCapabilities([]string{"CAP_SYS_ADMIN", "CAP_NET_ADMIN", "CAP_SYS_CHROOT", "CAP_SYS_MODULE"}),
 		// `WithDefaultProfile` creates the proper seccomp profile based on the
 		// container's capabilities.
 		seccomp.WithDefaultProfile(),

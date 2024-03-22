@@ -13,7 +13,7 @@ envy = "0.4"
 log = "0.4"
 semver = { version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
-snafu = "0.8"
+snafu = "0.7"
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../generate-readme" }

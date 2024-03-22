@@ -1,8 +1,7 @@
 use crate::hyper_proxy::{Proxy, ProxyConnector};
 use headers::Authorization;
-use hyper::client::HttpConnector;
 use hyper::Uri;
-use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
+use hyper_rustls::HttpsConnectorBuilder;
 use snafu::{ResultExt, Snafu};
 use std::env;
 use url::Url;
@@ -46,7 +45,7 @@ pub(crate) fn fetch_proxy_env() -> (Option<String>, Option<String>) {
 pub(crate) fn setup_http_client(
     https_proxy: String,
     no_proxy: Option<String>,
-) -> Result<ProxyConnector<HttpsConnector<HttpConnector>>> {
+) -> Result<impl Into<aws_smithy_client::http_connector::HttpConnector>> {
     // Determines whether a request of a given scheme, host and port should be proxied
     // according to `https_proxy` and `no_proxy`.
     let intercept = move |scheme: Option<&str>, host: Option<&str>, _port| {
@@ -104,5 +103,5 @@ pub(crate) fn setup_http_client(
         .build();
     let proxy_connector =
         ProxyConnector::from_proxy(https_connector, proxy).context(ProxyConnectorSnafu)?;
-    Ok(proxy_connector)
+    Ok(aws_smithy_client::hyper_ext::Adapter::builder().build(proxy_connector))
 }

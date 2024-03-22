@@ -12,10 +12,10 @@ exclude = ["README.md"]
 argh = "0.1"
 log = "0.4"
 simplelog = "0.12"
-snafu = "0.8"
+snafu = "0.7"
 serde = { version = "1", features = ["derive"] }
 tempfile = "3"
-toml = "0.8"
+toml = "0.5"
 
 [build-dependencies]
 generate-readme = { version = "0.1", path = "../generate-readme" }

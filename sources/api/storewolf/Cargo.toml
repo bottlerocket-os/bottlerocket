@@ -18,8 +18,8 @@ models = { path = "../../models", version = "0.1" }
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
 semver = "1"
 simplelog = "0.12"
-snafu = "0.8"
-toml = "0.8"
+snafu = "0.7"
+toml = "0.5"
 
 [build-dependencies]
 bottlerocket-variant = { version = "0.1", path = "../../bottlerocket-variant" }
@@ -31,8 +31,8 @@ merge-toml = { path = "merge-toml", version = "0.1" }
 # runs twice, once for the above dependency and once for this build-dependency,
 # so it's important that it remains reentrant.
 models = { path = "../../models", version = "0.1" }
-snafu = "0.8"
-toml = "0.8"
+snafu = "0.7"
+toml = "0.5"
 walkdir = "2"
 
 [[bin]]

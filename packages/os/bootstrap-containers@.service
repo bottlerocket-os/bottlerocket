@@ -27,4 +27,3 @@ ExecStartPost=/usr/bin/bootstrap-containers mark-bootstrap \
     --mode '${CTR_MODE}'
 RemainAfterExit=true
 StandardError=journal+console
-SyslogIdentifier=bootstrap-containers@%i
