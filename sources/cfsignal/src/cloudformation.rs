@@ -1,3 +1,4 @@
+use aws_config::BehaviorVersion;
 use std::str::FromStr;
 
 use crate::error::{self, Result};
@@ -21,7 +22,7 @@ pub async fn signal_resource(
         "Region: {:?} - InstanceID: {:?} - Signal: {:?}",
         region, instance_id, status
     );
-    let config = aws_config::from_env()
+    let config = aws_config::defaults(BehaviorVersion::v2023_11_09())
         .region(Region::new(region.to_owned()))
         .load()
         .await;

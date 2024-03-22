@@ -15,4 +15,4 @@ gptman = { version = "1", default-features = false }
 hex-literal = "0.3"
 serde = { version = "1", features = ["derive"] }
 serde_plain = "1"
-snafu = { version = "0.7", default-features = false, features = ["std"] }
+snafu = { version = "0.8", default-features = false, features = ["std"] }
