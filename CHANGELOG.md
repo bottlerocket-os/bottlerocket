@@ -10,6 +10,7 @@
 
 ### Kubernetes
 * Add latest instance types to eni-max-pods mapping ([#3824])
+* Provide runtime cgroup to kubelet cAdvisor ([#3804])
 
 ### ECS
 
@@ -19,6 +20,7 @@
 * twoliter updated to v0.0.7 ([#3839])
 
 [#3793]: https://github.com/bottlerocket-os/bottlerocket/pull/3793
+[#3804]: https://github.com/bottlerocket-os/bottlerocket/pull/3804
 [#3815]: https://github.com/bottlerocket-os/bottlerocket/pull/3815
 [#3816]: https://github.com/bottlerocket-os/bottlerocket/pull/3816
 [#3824]: https://github.com/bottlerocket-os/bottlerocket/pull/3824
