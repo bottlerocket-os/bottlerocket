@@ -17,6 +17,7 @@ Restart=always
 RestartSec=45
 TimeoutStopSec=60
 StandardError=journal+console
+SyslogIdentifier=host-containers@%i
 
 [Install]
 WantedBy=multi-user.target

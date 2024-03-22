@@ -17,7 +17,7 @@ futures = { version = "0.3", default-features = false }
 futures-channel = { version = "0.3", default-features = false }
 http = "0.2"
 httparse = "1"
-hyper = { version = "0.14", default-features = false, features = [ "client", "http1", "http2" ] }
+hyper = { version = "0.14", default-features = false, features = ["client", "http1", "http2"] }
 hyper-unix-connector = "0.2"
 libc = "0.2"
 log = "0.4"
@@ -30,10 +30,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 signal-hook = "0.3"
 simplelog = "0.12"
-snafu = { version = "0.7", features = ["futures"] }
+snafu = { version = "0.8", features = ["futures"] }
 tokio = { version = "~1.32", default-features = false, features = ["fs", "io-std", "io-util", "macros", "rt-multi-thread", "time"] }  # LTS
 tokio-tungstenite = { version = "0.20", default-features = false, features = ["connect"] }
-toml = "0.5"
+toml = "0.8"
 unindent = "0.1"
 url = "2"
 

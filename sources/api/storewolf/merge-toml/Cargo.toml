@@ -7,5 +7,5 @@ edition = "2021"
 publish = false
 
 [dependencies]
-snafu = "0.7"
-toml = "0.5"
+snafu = "0.8"
+toml = "0.8"
