@@ -79,6 +79,7 @@ members = [
     "api/migration/migrations/v1.20.0/remove-ecs-settings-applier",
     "api/migration/migrations/v1.20.0/update-ecs-config-path",
     "api/migration/migrations/v1.20.0/update-ecs-config-template-path",
+    "api/migration/migrations/v1.20.0/add-ntp-default-options-v0-1-0",
 
     "bloodhound",
 
