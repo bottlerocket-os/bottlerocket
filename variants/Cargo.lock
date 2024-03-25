@@ -282,6 +282,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-k8s-1_30"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-6_1",
+ "kubernetes-1_30",
+ "release",
+]
+
+[[package]]
+name = "aws-k8s-1_30-nvidia"
+version = "0.1.0"
+dependencies = [
+ "aws-iam-authenticator",
+ "cni",
+ "cni-plugins",
+ "kernel-6_1",
+ "kmod-6_1-nvidia",
+ "kubernetes-1_30",
+ "nvidia-container-toolkit",
+ "nvidia-k8s-device-plugin",
+ "release",
+]
+
+[[package]]
 name = "aws-signing-helper"
 version = "0.1.0"
 dependencies = [
@@ -641,6 +668,15 @@ dependencies = [
 
 [[package]]
 name = "kubernetes-1_29"
+version = "0.1.0"
+dependencies = [
+ "aws-signing-helper",
+ "ecr-credential-provider-1_29",
+ "glibc",
+]
+
+[[package]]
+name = "kubernetes-1_30"
 version = "0.1.0"
 dependencies = [
  "aws-signing-helper",
@@ -1254,6 +1290,18 @@ dependencies = [
  "cni-plugins",
  "kernel-6_1",
  "kubernetes-1_29",
+ "open-vm-tools",
+ "release",
+]
+
+[[package]]
+name = "vmware-k8s-1_30"
+version = "0.1.0"
+dependencies = [
+ "cni",
+ "cni-plugins",
+ "kernel-6_1",
+ "kubernetes-1_30",
  "open-vm-tools",
  "release",
 ]
