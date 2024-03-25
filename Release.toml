@@ -1,4 +1,4 @@
-version = "1.19.3"
+version = "1.20.0"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -276,16 +276,18 @@ version = "1.19.3"
     "migrate_v1.19.2_add-ecs-enable-container-metadata.lz4",
 ]
 "(1.19.2, 1.19.3)" = [
-    "migrate_v1.19.3_prairiedog-config-file-v0-1-0.lz4",
-    "migrate_v1.19.3_prairiedog-services-cfg-v0-1-0.lz4",
-    "migrate_v1.19.3_thar-be-updates-config-file-v0-1-0.lz4",
-    "migrate_v1.19.3_thar-be-updates-affected-services-v0-1-0.lz4",
-    "migrate_v1.19.3_host-containers-config-file-v0-1-0.lz4",
-    "migrate_v1.19.3_host-containers-config-list-v0-1-0.lz4",
-    "migrate_v1.19.3_corndog-config-file-v0-1-0.lz4",
-    "migrate_v1.19.3_corndog-services-cfg-v0-1-0.lz4",
     "migrate_v1.19.3_aws-admin-container-v0-11-6.lz4",
     "migrate_v1.19.3_public-admin-container-v0-11-6.lz4",
     "migrate_v1.19.3_aws-control-container-v0-7-10.lz4",
     "migrate_v1.19.3_public-control-container-v0-7-10.lz4",
+]
+"(1.19.3, 1.20.0)" = [
+    "migrate_v1.20.0_prairiedog-config-file-v0-1-0.lz4",
+    "migrate_v1.20.0_prairiedog-services-cfg-v0-1-0.lz4",
+    "migrate_v1.20.0_thar-be-updates-config-file-v0-1-0.lz4",
+    "migrate_v1.20.0_thar-be-updates-affected-services-v0-1-0.lz4",
+    "migrate_v1.20.0_host-containers-config-file-v0-1-0.lz4",
+    "migrate_v1.20.0_host-containers-config-list-v0-1-0.lz4",
+    "migrate_v1.20.0_corndog-config-file-v0-1-0.lz4",
+    "migrate_v1.20.0_corndog-services-cfg-v0-1-0.lz4",
 ]
