@@ -8,6 +8,7 @@ use std::convert::Infallible;
 #[model(impl_default = true)]
 pub struct NtpSettingsV1 {
     time_servers: Vec<Url>,
+    options: Vec<str>,
 }
 
 type Result<T> = std::result::Result<T, Infallible>;
@@ -65,6 +66,7 @@ mod test {
             NtpSettingsV1::generate(None, None),
             Ok(GenerateResult::Complete(NtpSettingsV1 {
                 time_servers: None
+                options: None
             }))
         )
     }
@@ -79,6 +81,24 @@ mod test {
             vec!(
                 Url::try_from("https://example.net").unwrap(),
                 Url::try_from("http://www.example.com").unwrap(),
+            )
+        );
+
+        let results = serde_json::to_string(&ntp).unwrap();
+        assert_eq!(results, test_json);
+    }
+
+    fn test_options_ntp() {
+        let test_json = r#"{"time-servers":["https://example.net","http://www.example.com"],"options": ["minpoll", "1", "maxpoll", "2"]}"#;
+
+        let ntp: NtpSettingsV1 = serde_json::from_str(test_json).unwrap();
+        assert_eq!(
+            ntp.options.clone().unwrap(),
+            vec!(
+                Url::try_from("minpool").unwrap(),
+                Url::try_from("1").unwrap(),
+                Url::try_from("maxpool").unwrap(),
+                Url::try_from("2").unwrap(),
             )
         );
 

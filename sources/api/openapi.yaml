@@ -120,6 +120,10 @@ components:
               type: array
               items:
                 type: string
+            options:
+              type: array
+              items:
+                type: string
         network:
           type: object
           properties:
