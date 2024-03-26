@@ -1,8 +1,8 @@
 # v1.19.3 (2024-03-26)
 
 ## OS Changes
-* Update kernel to 5.10.210, 5.15.149, 6.1.78 ([#3816])
-* Update third party packages ([#3793], [#3815], [#3832])
+* Update kernel to 5.10.210, 5.15.149, 6.1.79 ([#3853])
+* Update third party packages ([#3793], [#3832])
 * Update host containers ([#3837])
 * Support auditctl in bootstrap containers ([#3831])
 
@@ -19,14 +19,13 @@
 * twoliter updated to v0.0.7 ([#3839])
 
 [#3793]: https://github.com/bottlerocket-os/bottlerocket/pull/3793
-[#3815]: https://github.com/bottlerocket-os/bottlerocket/pull/3815
-[#3816]: https://github.com/bottlerocket-os/bottlerocket/pull/3816
 [#3824]: https://github.com/bottlerocket-os/bottlerocket/pull/3824
 [#3832]: https://github.com/bottlerocket-os/bottlerocket/pull/3832
 [#3830]: https://github.com/bottlerocket-os/bottlerocket/pull/3830
 [#3831]: https://github.com/bottlerocket-os/bottlerocket/pull/3831
 [#3837]: https://github.com/bottlerocket-os/bottlerocket/pull/3837
 [#3839]: https://github.com/bottlerocket-os/bottlerocket/pull/3839
+[#3853]: https://github.com/bottlerocket-os/bottlerocket/pull/3853
 
 # v1.19.2 (2024-02-26)
 
