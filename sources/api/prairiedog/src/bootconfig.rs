@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use snafu::{ensure, ResultExt};
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::io::ErrorKind;
 use std::path::Path;
 use std::{fs, io};
 
@@ -117,10 +118,20 @@ fn get_boot_config_settings<P>(config_path: P) -> Result<Option<BootSettings>>
 where
     P: AsRef<Path>,
 {
-    let config_str = fs::read_to_string(config_path.as_ref()).context(error::ReadFileSnafu {
-        path: config_path.as_ref().to_path_buf(),
-    })?;
-    toml::from_str(config_str.as_str()).context(error::InputTomlSnafu)
+    let config_path = config_path.as_ref();
+    match fs::read_to_string(config_path) {
+        Ok(config_str) => toml::from_str(config_str.as_str()).context(error::InputTomlSnafu),
+        Err(e) => {
+            if e.kind() == ErrorKind::NotFound {
+                Ok(None)
+            } else {
+                Err(error::Error::ReadFile {
+                    source: e,
+                    path: config_path.to_path_buf(),
+                })
+            }
+        }
+    }
 }
 
 /// Reads `/proc/bootconfig`. Not having any boot config is ignored.
