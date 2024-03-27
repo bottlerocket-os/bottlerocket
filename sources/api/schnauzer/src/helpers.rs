@@ -1368,6 +1368,67 @@ pub fn etc_hosts_entries(
     Ok(())
 }
 
+/// This helper negates a boolean value, or returns a default value when the provided key wasn't
+/// set.
+///
+/// The first argument for the helper is the default value; the second argument is the key to
+/// negate. Both values must be booleans, otherwise the helper will return an error. The default
+/// value will be returned as it is if the provided key is missing.
+
+pub fn negate_or_else(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    // To give context to our errors, get the template name, if available.
+    trace!("Starting negate_or_else helper");
+    let template_name = template_name(renderctx);
+    trace!("Template name: {}", &template_name);
+
+    // Check number of parameters, must be exactly two (the value to negate and the default value)
+    trace!("Number of params: {}", helper.params().len());
+    check_param_count(helper, template_name, 2)?;
+
+    let fallback_value = get_param(helper, 0)?;
+    let value_to_negate = get_param(helper, 1)?;
+
+    let fallback = match fallback_value {
+        Value::Bool(b) => b,
+        _ => {
+            return Err(RenderError::from(
+                error::TemplateHelperError::InvalidTemplateValue {
+                    expected: "boolean",
+                    value: fallback_value.to_owned(),
+                    template: template_name.to_owned(),
+                },
+            ))
+        }
+    };
+
+    let output = match value_to_negate {
+        Value::Bool(b) => !b,
+        Value::Null => *fallback,
+        _ => {
+            return Err(RenderError::from(
+                error::TemplateHelperError::InvalidTemplateValue {
+                    expected: "boolean",
+                    value: value_to_negate.to_owned(),
+                    template: template_name.to_owned(),
+                },
+            ))
+        }
+    };
+
+    out.write(&(output).to_string())
+        .context(error::TemplateWriteSnafu {
+            template: template_name.to_owned(),
+        })?;
+
+    Ok(())
+}
+
 // This helper checks if any objects have '"enabled": true' in their properties.
 //
 // any_enabled takes one argument that is expected to be an array of objects,
@@ -3074,3 +3135,55 @@ mod test_oci_spec {
         );
     }
 }
+
+#[cfg(test)]
+mod test_negate_or_else {
+    use crate::helpers::negate_or_else;
+    use handlebars::{Handlebars, RenderError};
+    use serde::Serialize;
+    use serde_json::json;
+
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper("negate_or_else", Box::new(negate_or_else));
+
+        registry.render_template(tmpl, data)
+    }
+
+    #[test]
+    fn test_negated_values() {
+        let template: &str = r#"{{negate_or_else false settings.value}}"#;
+
+        let test_cases = vec![
+            (json!({"settings": {"value": true}}), "false"),
+            (json!({"settings": {"value": false}}), "true"),
+            (json!({"settings": {"value": None::<bool>}}), "false"),
+        ];
+
+        test_cases.iter().for_each(|test_case| {
+            let (config, expected) = test_case;
+            let rendered = setup_and_render_template(template, config).unwrap();
+            assert!(expected == &rendered);
+        });
+    }
+
+    #[test]
+    fn test_fails_when_not_booleans() {
+        let test_cases = vec![
+            json!({"settings": {"value": []}}),
+            json!({"settings": {"value": {}}}),
+            json!({"settings": {"value": ""}}),
+        ];
+
+        let template: &str = r#"{{negate_or_else false settings.value}}"#;
+
+        test_cases.iter().for_each(|test_case| {
+            let rendered = setup_and_render_template(template, test_case);
+            assert!(rendered.is_err());
+        });
+    }
+}
+

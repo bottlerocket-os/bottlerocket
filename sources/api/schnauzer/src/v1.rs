@@ -135,6 +135,7 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     template_registry.register_helper("etc_hosts_entries", Box::new(helpers::etc_hosts_entries));
     template_registry.register_helper("any_enabled", Box::new(helpers::any_enabled));
     template_registry.register_helper("oci_defaults", Box::new(helpers::oci_defaults));
+    template_registry.register_helper("negate_or_else", Box::new(helpers::negate_or_else));
 
     Ok(template_registry)
 }

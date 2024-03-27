@@ -69,6 +69,7 @@ fn all_helpers() -> HashMap<ExtensionName, HashMap<HelperName, Box<dyn HelperDef
             "join_map" => helper!(handlebars_helpers::join_map),
             "if_not_null" => Box::new(handlebars_helpers::IfNotNullHelper),
             "goarch" => helper!(handlebars_helpers::goarch),
+            "negate_or_else" => helper!(handlebars_helpers::negate_or_else),
         },
     }
 }
