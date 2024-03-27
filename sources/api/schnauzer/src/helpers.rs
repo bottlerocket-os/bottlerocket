@@ -158,6 +158,9 @@ const KUBE_RESERVE_ADDITIONAL: f32 = 2.5;
 const IPV4_LOCALHOST: IpAddr = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
 const IPV6_LOCALHOST: IpAddr = IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1));
 
+const DEFAULT_ECS_METADATA_SERVICE_RPS: i32 = 40;
+const DEFAULT_ECS_METADATA_SERVICE_BURST: i32 = 60;
+
 /// Potential errors during helper execution
 mod error {
     use handlebars::RenderError;
@@ -316,6 +319,12 @@ mod error {
         InvalidOutputType {
             source: serde_plain::Error,
             runtime: String,
+        },
+
+        #[snafu(display("Invalid metadata service limits '{},{}'", rps, burst))]
+        InvalidMetadataServiceLimits {
+            rps: handlebars::JsonValue,
+            burst: handlebars::JsonValue,
         },
     }
 
@@ -1425,6 +1434,68 @@ pub fn negate_or_else(
         .context(error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
+
+    Ok(())
+}
+
+/// This helper returns the valid values for the ECS metadata service limits
+///
+/// This helper returns the properly formatted ECS metadata service limits. When either RPS, burst
+/// or both are missing, the default values in the ECS agent are used instead.
+pub fn ecs_metadata_service_limits(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    // To give context to our errors, get the template name, if available.
+    trace!("Starting ecs_metadata_service_limits helper");
+    let template_name = template_name(renderctx);
+    trace!("Template name: {}", &template_name);
+
+    // Check number of parameters, must be exactly two (metadata_service_rps and
+    // metadata_service_burst)
+    trace!("Number of params: {}", helper.params().len());
+    check_param_count(helper, template_name, 2)?;
+
+    let metadata_service_rps = helper
+        .param(0)
+        .map(|v| v.value())
+        .context(error::ParamUnwrapSnafu {})?;
+
+    let metadata_service_burst = helper
+        .param(1)
+        .map(|v| v.value())
+        .context(error::ParamUnwrapSnafu {})?;
+
+    let output = match (metadata_service_rps, metadata_service_burst) {
+        (Value::Number(rps), Value::Number(burst)) => {
+            format!("{},{}", rps, burst)
+        }
+        (Value::Number(rps), Value::Null) => {
+            format!("{},{}", rps, DEFAULT_ECS_METADATA_SERVICE_BURST)
+        }
+        (Value::Null, Value::Number(burst)) => {
+            format!("{},{}", DEFAULT_ECS_METADATA_SERVICE_RPS, burst)
+        }
+        (Value::Null, Value::Null) => format!(
+            "{},{}",
+            DEFAULT_ECS_METADATA_SERVICE_RPS, DEFAULT_ECS_METADATA_SERVICE_BURST
+        ),
+        (rps, burst) => {
+            return Err(RenderError::from(
+                error::TemplateHelperError::InvalidMetadataServiceLimits {
+                    rps: rps.to_owned(),
+                    burst: burst.to_owned(),
+                },
+            ))
+        }
+    };
+
+    out.write(&output).context(error::TemplateWriteSnafu {
+        template: template_name.to_owned(),
+    })?;
 
     Ok(())
 }
@@ -3187,3 +3258,56 @@ mod test_negate_or_else {
     }
 }
 
+#[cfg(test)]
+mod test_ecs_metadata_service_limits {
+    use crate::helpers::ecs_metadata_service_limits;
+    use handlebars::{Handlebars, RenderError};
+    use serde::Serialize;
+    use serde_json::json;
+
+    const TEMPLATE: &str = r#"{{ecs_metadata_service_limits settings.rps settings.burst}}"#;
+
+    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
+    where
+        T: Serialize,
+    {
+        let mut registry = Handlebars::new();
+        registry.register_helper(
+            "ecs_metadata_service_limits",
+            Box::new(ecs_metadata_service_limits),
+        );
+
+        registry.render_template(tmpl, data)
+    }
+
+    #[test]
+    fn test_valid_ecs_metadata_service_limits() {
+        let test_cases = vec![
+            (json!({"settings": {"rps": 1, "burst": 1}}), r#"1,1"#),
+            (json!({"settings": {"rps": 1}}), r#"1,60"#),
+            (json!({"settings": {"burst": 1}}), r#"40,1"#),
+            (json!({"settings": {}}), r#"40,60"#),
+        ];
+
+        test_cases.iter().for_each(|test_case| {
+            let (config, expected) = test_case;
+            let rendered = setup_and_render_template(TEMPLATE, config).unwrap();
+            assert!(expected == &rendered);
+        });
+    }
+
+    #[test]
+    fn test_invalid_ecs_metadata_service_limits() {
+        let test_cases = vec![
+            json!({"settings": {"rps": [], "burst": 1}}),
+            json!({"settings": {"rps": 1, "burst": []}}),
+            json!({"settings": {"rps": [], "burst": []}}),
+            json!({"settings": {"rps": {}, "burst": {}}}),
+        ];
+
+        test_cases.iter().for_each(|test_case| {
+            let rendered = setup_and_render_template(TEMPLATE, test_case);
+            assert!(rendered.is_err());
+        });
+    }
+}
