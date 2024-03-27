@@ -37,6 +37,10 @@ fn all_helpers() -> HashMap<ExtensionName, HashMap<HelperName, Box<dyn HelperDef
             "ecr-prefix" => helper!(handlebars_helpers::ecr_prefix),
         },
 
+        "ecs" => hashmap! {
+            "ecs_metadata_service_limits" => helper!(handlebars_helpers::ecs_metadata_service_limits),
+        },
+
         "kubernetes" => hashmap! {
             "join_node_taints" => helper!(handlebars_helpers::join_node_taints),
             "kube_reserve_cpu" => helper!(handlebars_helpers::kube_reserve_cpu),
