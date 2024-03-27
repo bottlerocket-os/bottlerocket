@@ -1,0 +1,26 @@
+[Unit]
+Description=Kubelet
+Documentation=https://github.com/kubernetes/kubernetes
+After=containerd.service configured.target
+Wants=configured.target
+BindsTo=containerd.service
+
+[Service]
+Slice=runtime.slice
+Type=notify
+EnvironmentFile=/etc/network/proxy.env
+EnvironmentFile=/etc/kubernetes/kubelet/env
+ExecStartPre=/sbin/iptables -P FORWARD ACCEPT
+# Must be overridden by a drop-in file or `kubelet` won't start
+ExecStart=/usr/bin/false
+
+Restart=always
+RestartForceExitStatus=SIGPIPE
+RestartSec=5
+Delegate=yes
+KillMode=process
+CPUAccounting=true
+MemoryAccounting=true
+
+[Install]
+WantedBy=multi-user.target
