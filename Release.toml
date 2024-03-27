@@ -290,4 +290,6 @@ version = "1.20.0"
     "migrate_v1.20.0_host-containers-config-list-v0-1-0.lz4",
     "migrate_v1.20.0_corndog-config-file-v0-1-0.lz4",
     "migrate_v1.20.0_corndog-services-cfg-v0-1-0.lz4",
+    "migrate_v1.20.0_bootstrap-containers-config-file-v0-1-0.lz4",
+    "migrate_v1.20.0_bootstrap-containers-services-cfg-v0-1-0.lz4",
 ]

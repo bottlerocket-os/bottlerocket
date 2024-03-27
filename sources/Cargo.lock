@@ -1068,17 +1068,30 @@ dependencies = [
 name = "bootstrap-containers"
 version = "0.1.0"
 dependencies = [
- "apiclient",
  "base64",
  "constants",
- "datastore",
  "generate-readme",
  "log",
- "models",
+ "modeled-types",
+ "serde",
  "serde_json",
  "simplelog",
  "snafu 0.8.2",
- "tokio",
+ "toml",
+]
+
+[[package]]
+name = "bootstrap-containers-config-file-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "bootstrap-containers-services-cfg-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
 ]
 
 [[package]]
