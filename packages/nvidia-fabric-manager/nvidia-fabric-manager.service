@@ -1,0 +1,14 @@
+[Unit]
+Description=FabricManager service
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+User=root
+PrivateTmp=false
+Type=forking
+
+ExecStart=/usr/bin/nv-fabricmanager -c /usr/share/nvidia/nvswitch/fabricmanager.cfg
+
+[Install]
+WantedBy=multi-user.target
