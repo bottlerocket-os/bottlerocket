@@ -1,5 +1,5 @@
 [Unit]
-Description=ECS agent Configuration Directory (/etc/ecs)
+Description=ECS agent drop-ins Directory (/etc/systemd/system/ecs.service.d)
 DefaultDependencies=no
 Conflicts=umount.target
 Before=local-fs.target umount.target
@@ -8,7 +8,7 @@ Wants=selinux-policy-files.service
 
 [Mount]
 What=tmpfs
-Where=/etc/ecs
+Where=/etc/systemd/system/ecs.service.d
 Type=tmpfs
 Options=nosuid,nodev,noexec,noatime,mode=0750,context=system_u:object_r:secret_t:s0
 
