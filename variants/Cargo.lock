@@ -557,7 +557,7 @@ name = "kmod"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "liblzma",
+ "libz",
  "libzstd",
 ]
 
@@ -741,13 +741,6 @@ dependencies = [
 
 [[package]]
 name = "libiw"
-version = "0.1.0"
-dependencies = [
- "glibc",
-]
-
-[[package]]
-name = "liblzma"
 version = "0.1.0"
 dependencies = [
  "glibc",
