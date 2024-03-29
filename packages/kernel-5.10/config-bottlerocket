@@ -91,9 +91,9 @@ CONFIG_ZSTD_COMPRESS=y
 CONFIG_ZSTD_DECOMPRESS=y
 CONFIG_DECOMPRESS_ZSTD=y
 
-# Enable xz modules compression
+# Enable gz modules compression
 CONFIG_MODULE_COMPRESS=y
-CONFIG_MODULE_COMPRESS_XZ=y
+CONFIG_MODULE_COMPRESS_GZIP=y
 
 # Load i8042 controller, keyboard, and mouse as modules, to avoid waiting for
 # them before mounting the root device.

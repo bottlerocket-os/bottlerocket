@@ -6,9 +6,9 @@ License: GPL-2.0-or-later AND LGPL-2.1-or-later
 URL: http://git.kernel.org/?p=utils/kernel/kmod/kmod.git;a=summary
 Source0: https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-%{version}.tar.xz
 BuildRequires: %{_cross_os}glibc-devel
-BuildRequires: %{_cross_os}liblzma-devel
+BuildRequires: %{_cross_os}libz-devel
 BuildRequires: %{_cross_os}libzstd-devel
-Requires: %{_cross_os}liblzma
+Requires: %{_cross_os}libz
 Requires: %{_cross_os}libzstd
 
 %description
@@ -28,10 +28,9 @@ cp tools/COPYING COPYING.GPL
 
 %build
 %cross_configure \
-  --with-xz \
+  --with-zlib \
   --with-zstd \
-  --without-openssl \
-  --without-zlib
+  --without-openssl
 
 %make_build
 
