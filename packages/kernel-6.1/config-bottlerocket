@@ -120,9 +120,9 @@ CONFIG_ZSTD_COMPRESS=y
 CONFIG_ZSTD_DECOMPRESS=y
 CONFIG_DECOMPRESS_ZSTD=y
 
-# Enable xz modules compression
+# Enable gz modules compression
 # CONFIG_MODULE_COMPRESS_NONE is not set
-CONFIG_MODULE_COMPRESS_XZ=y
+CONFIG_MODULE_COMPRESS_GZIP=y
 
 # Add virtio drivers for development setups running as guests in qemu
 CONFIG_VIRTIO_CONSOLE=m
