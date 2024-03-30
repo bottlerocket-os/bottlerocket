@@ -5,13 +5,13 @@ Summary: Library for SELinux binary policy manipulation
 License: LGPL-2.1-or-later
 URL: https://github.com/SELinuxProject/
 Source0: https://github.com/SELinuxProject/selinux/releases/download/%{version}/libsemanage-%{version}.tar.gz
+Patch0001: 0001-remove-bzip2-dependency.patch
+
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}libaudit-devel
-BuildRequires: %{_cross_os}libbzip2-devel
 BuildRequires: %{_cross_os}libselinux-devel
 BuildRequires: %{_cross_os}libsepol-devel
 Requires: %{_cross_os}libaudit
-Requires: %{_cross_os}libbzip2
 Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}libsepol
 
@@ -21,7 +21,6 @@ Requires: %{_cross_os}libsepol
 %package devel
 Summary: Files for development using the library for SELinux binary policy manipulation
 Requires: %{name}
-Requires: %{_cross_os}libbzip2-devel
 
 %description devel
 %{summary}.
