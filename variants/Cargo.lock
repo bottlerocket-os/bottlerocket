@@ -983,7 +983,6 @@ name = "makedumpfile"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "libbzip2",
  "libelf",
  "libz",
 ]
