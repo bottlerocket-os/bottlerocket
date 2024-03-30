@@ -64,7 +64,7 @@ install -d "${moddir}"
 for m in *.cil ; do
   mod="${m%.*}"
   install -d "${moddir}/${mod}"
-  bzip2 -c "${m}" > "${moddir}/${mod}/cil"
+  install -p -m 0644 "${m}" "${moddir}/${mod}/cil"
   echo -n "cil" > "${moddir}/${mod}/lang_ext"
 done
 
