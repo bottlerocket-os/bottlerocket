@@ -76,6 +76,8 @@ members = [
     "api/migration/migrations/v1.20.0/host-containers-config-list-v0-1-0",
     "api/migration/migrations/v1.20.0/corndog-config-file-v0-1-0",
     "api/migration/migrations/v1.20.0/corndog-services-cfg-v0-1-0",
+    "api/migration/migrations/v1.20.0/bootstrap-containers-config-file-v0-1-0",
+    "api/migration/migrations/v1.20.0/bootstrap-containers-services-cfg-v0-1-0",
 
     "bloodhound",
 
