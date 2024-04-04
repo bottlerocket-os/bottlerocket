@@ -1,2 +1,4 @@
 R __PREFIX__/lib/modules/__KERNEL_VERSION__/kernel/drivers/extra/video/nvidia/tesla - - - - -
 d __PREFIX__/lib/modules/__KERNEL_VERSION__/kernel/drivers/extra/video/nvidia/tesla 0755 root root - -
+C /etc/nvidia/fabricmanager.cfg - - - -
+d /run/nvidia 0700 root root -

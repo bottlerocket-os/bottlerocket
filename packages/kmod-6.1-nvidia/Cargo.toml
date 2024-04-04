@@ -22,6 +22,16 @@ url = "https://us.download.nvidia.com/tesla/535.161.07/NVIDIA-Linux-aarch64-535.
 sha512 = "bb96a28b45197003480ae223c71a5426ef5258a31eaa485cab0cf4b86bed166482734784f20c6370a1155f3ff991652cac15f1b1083d2fb056677e6881b219e2"
 force-upstream = true
 
+[[package.metadata.build-package.external-files]]
+url = "https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-x86_64/fabricmanager-linux-x86_64-535.161.07-archive.tar.xz"
+sha512 = "868b35d567e4c6dccbff0f7e8f74bc55781c8d71db995fd9e471829afec0b44fd430caba964377052678e244d18ea999133487f9a3c50c7289f381480b24c55d"
+force-upstream = true
+
+[[package.metadata.build-package.external-files]]
+url = "https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-sbsa/fabricmanager-linux-sbsa-535.161.07-archive.tar.xz"
+sha512 = "f37f7a24e31dd6ed184d1041616abb8cfcb0ddaec79778930db79bbef8b23b3d468daaa9c156a6cf7a7f2ffc0507e78e2bb6215f70bc39d11bb0ee16c5ef4c82"
+force-upstream = true
+
 [build-dependencies]
 glibc = { path = "../glibc" }
 kernel-6_1 = { path = "../kernel-6.1" }

@@ -1,0 +1,18 @@
+[Unit]
+Description=NVIDIA fabric manager service
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+ExecStart=/usr/bin/nvidia-fabricmanager -c /etc/nvidia/fabricmanager.cfg
+Type=simple
+TimeoutSec=0
+RestartSec=5
+Restart=always
+RemainAfterExit=true
+StandardError=journal+console
+SuccessExitStatus=255
+LimitCORE=infinity
+
+[Install]
+WantedBy=multi-user.target
