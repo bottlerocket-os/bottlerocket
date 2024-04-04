@@ -1068,17 +1068,30 @@ dependencies = [
 name = "bootstrap-containers"
 version = "0.1.0"
 dependencies = [
- "apiclient",
  "base64",
  "constants",
- "datastore",
  "generate-readme",
  "log",
- "models",
+ "modeled-types",
+ "serde",
  "serde_json",
  "simplelog",
  "snafu 0.8.2",
- "tokio",
+ "toml",
+]
+
+[[package]]
+name = "bootstrap-containers-config-file-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "bootstrap-containers-services-cfg-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
 ]
 
 [[package]]
@@ -1698,23 +1711,6 @@ dependencies = [
  "tokio",
  "toml",
  "vmw_backdoor",
-]
-
-[[package]]
-name = "ecs-settings-applier"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "constants",
- "generate-readme",
- "log",
- "models",
- "schnauzer",
- "serde",
- "serde_json",
- "simplelog",
- "snafu 0.8.2",
- "tokio",
 ]
 
 [[package]]
@@ -3358,6 +3354,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
 
 [[package]]
+name = "remove-ecs-settings-applier"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "reqwest"
 version = "0.11.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4610,6 +4613,20 @@ name = "untrusted"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
+
+[[package]]
+name = "update-ecs-config-path"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "update-ecs-config-template-path"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
 
 [[package]]
 name = "update_metadata"

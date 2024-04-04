@@ -169,11 +169,15 @@ template-path = "/usr/share/templates/corndog-toml"
 # Bootstrap Containers
 
 [services.bootstrap-containers]
-configuration-files = ["host-ctr-toml"]
+configuration-files = ["host-ctr-toml", "bootstrap-containers-toml"]
 restart-commands = ["/usr/bin/bootstrap-containers create-containers"]
 
 [metadata.settings.bootstrap-containers]
 affected-services = ["bootstrap-containers"]
+
+[configuration-files.bootstrap-containers-toml]
+path = "/etc/bootstrap-containers/bootstrap-containers.toml"
+template-path = "/usr/share/templates/bootstrap-containers-toml"
 
 # Certdog
 
