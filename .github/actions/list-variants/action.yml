@@ -16,7 +16,7 @@ runs:
       shell: bash
       run: |
         cd variants
-        output="variants=$(ls -d */ | cut -d'/' -f 1 | grep -vE '^(shared|target)$' | jq -R -s -c 'split("\n")[:-1]')"
+        output="variants=$(ls -d */ | cut -d'/' -f 1 | grep -vE '^(shared|target)$' | sort | awk '$0 != x "-nvidia" && NR>1 {print x} {x=$0} END {print}' | jq -R -s -c 'split("\n")[:-1]')"
         echo $output
         echo $output >> $GITHUB_OUTPUT
         output="aarch-enemies=$(ls -d */ | cut -d'/' -f 1 | grep -E '(^(metal|vmware)|\-dev$)' | jq -R -s -c 'split("\n")[:-1] | [ .[] | {"variant": ., "arch": "aarch64"}]')"

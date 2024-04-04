@@ -80,5 +80,4 @@ jobs:
           cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} \
             -e BUILDSYS_ARCH=${{ matrix.arch }} \
             -e BUILDSYS_JOBS=12 \
-            -e BUILDSYS_UPSTREAM_SOURCE_FALLBACK="${{ contains(matrix.variant, 'nvidia') }}" \
             -e BUILDSYS_UPSTREAM_LICENSE_FETCH="${{ contains(matrix.variant, 'nvidia') }}"
