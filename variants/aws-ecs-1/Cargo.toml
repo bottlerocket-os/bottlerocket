@@ -22,7 +22,7 @@ included-packages = [
     "docker-engine",
     "docker-init",
 # ecs
-    "ecs-agent",
+    "ecs-agent-config",
 ]
 
 [lib]

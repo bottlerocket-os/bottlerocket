@@ -35,16 +35,18 @@ Source2: https://%{vpccni_goimport}/archive/%{vpccni_gitrev}/%{vpccni_gorepo}.ta
 Source101: ecs.service
 Source102: ecs-tmpfiles.conf
 Source103: ecs-sysctl.conf
-Source104: ecs.config
+Source104: ecs-base-conf
 Source105: pause-image-VERSION
 Source106: pause-config.json
 Source107: pause-manifest.json
 Source108: pause-repositories
 # Bottlerocket-specific - version data can be set with linker options
 Source109: version.go
+Source110: ecs-defaults.conf
+Source111: ecs-nvidia.conf
 
 # Mount for writing ECS agent configuration
-Source200: etc-ecs.mount
+Source200: etc-systemd-system-ecs.service.d.mount
 
 # Ecs logdog configuration
 Source300: logdog.ecs.conf
@@ -84,6 +86,21 @@ Requires: %{_cross_os}iptables
 Requires: %{_cross_os}amazon-ssm-agent
 
 %description
+%{summary}.
+
+%package config
+Summary: Base configuration files for the ECS agent
+Requires: %{name}
+
+%description config
+%{summary}.
+
+%package nvidia-config
+Summary: NVIDIA specific configuration files for the ECS agent
+Requires: %{name}
+Requires: %{name}-config
+
+%description nvidia-config
 %{summary}.
 
 %prep
@@ -260,9 +277,14 @@ install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/vpc-eni %{buildroot}%{_c
 install -d %{buildroot}%{_cross_unitdir}
 install -D -p -m 0644 %{S:101} %{S:200} %{buildroot}%{_cross_unitdir}
 
+install -d %{buildroot}%{_cross_unitdir}/ecs.service.d/
+install -D -p -m 0644 %{S:110} %{buildroot}%{_cross_unitdir}/ecs.service.d/00-defaults.conf
+install -D -p -m 0644 %{S:111} %{buildroot}%{_cross_unitdir}/ecs.service.d/20-nvidia.conf
+
 install -D -p -m 0644 %{S:102} %{buildroot}%{_cross_tmpfilesdir}/ecs.conf
 install -D -p -m 0644 %{S:103} %{buildroot}%{_cross_sysctldir}/90-ecs.conf
-install -D -p -m 0644 %{S:104} %{buildroot}%{_cross_templatedir}/ecs.config
+
+install -D -p -m 0644 %{S:104} %{buildroot}%{_cross_templatedir}/ecs-base-conf
 
 # Directory for agents used by the ECS agent, e.g. SSM, Service Connect
 %global managed_agents %{_cross_libexecdir}/amazon-ecs-agent/managed-agents
@@ -333,11 +355,17 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_datadir}/logdog.d
 %{_cross_libexecdir}/amazon-ecs-agent/vpc-eni
 %{_cross_libexecdir}/amazon-ecs-agent/managed-agents
 %{_cross_unitdir}/ecs.service
-%{_cross_unitdir}/etc-ecs.mount
+%{_cross_unitdir}/etc-systemd-system-ecs.service.d.mount
 %{_cross_tmpfilesdir}/ecs.conf
 %{_cross_sysctldir}/90-ecs.conf
-%{_cross_templatedir}/ecs.config
 %{_cross_libdir}/amazon-ecs-agent/amazon-ecs-pause.tar
 %{_cross_datadir}/logdog.d/logdog.ecs.conf
+
+%files config
+%{_cross_templatedir}/ecs-base-conf
+%{_cross_unitdir}/ecs.service.d/00-defaults.conf
+
+%files nvidia-config
+%{_cross_unitdir}/ecs.service.d/20-nvidia.conf
 
 %changelog

@@ -9,7 +9,6 @@ members = [
     "api/corndog",
     "api/datastore",
     "api/early-boot-config",
-    "api/ecs-settings-applier",
     "api/netdog",
     "api/sundog",
     "api/schnauzer",
@@ -78,6 +77,9 @@ members = [
     "api/migration/migrations/v1.20.0/corndog-services-cfg-v0-1-0",
     "api/migration/migrations/v1.20.0/bootstrap-containers-config-file-v0-1-0",
     "api/migration/migrations/v1.20.0/bootstrap-containers-services-cfg-v0-1-0",
+    "api/migration/migrations/v1.20.0/remove-ecs-settings-applier",
+    "api/migration/migrations/v1.20.0/update-ecs-config-path",
+    "api/migration/migrations/v1.20.0/update-ecs-config-template-path",
 
     "bloodhound",
 
