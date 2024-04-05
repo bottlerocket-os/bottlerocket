@@ -18,6 +18,7 @@ kernel-parameters = [
 ]
 included-packages = [
 # core
+    "early-boot-config-aws",
     "release",
     "kernel-5.10",
 # docker
@@ -38,6 +39,7 @@ path = "../variants.rs"
 [build-dependencies]
 # core
 release = { path = "../../packages/release" }
+early-boot-config = { path = "../../packages/early-boot-config" }
 kernel-5_10 = { path = "../../packages/kernel-5.10" }
 # docker
 docker-cli = { path = "../../packages/docker-cli" }

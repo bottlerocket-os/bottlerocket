@@ -8,7 +8,6 @@ members = [
     "api/certdog",
     "api/corndog",
     "api/datastore",
-    "api/early-boot-config",
     "api/netdog",
     "api/sundog",
     "api/schnauzer",
@@ -90,6 +89,17 @@ members = [
     "imdsclient",
 
     "driverdog",
+
+    "early-boot-config/early-boot-config",
+    "early-boot-config/early-boot-config-provider",
+
+    "early-boot-config/user-data-providers/ec2-identity-doc",
+    "early-boot-config/user-data-providers/ec2-imds",
+    "early-boot-config/user-data-providers/local-defaults",
+    "early-boot-config/user-data-providers/local-file",
+    "early-boot-config/user-data-providers/local-overrides",
+    "early-boot-config/user-data-providers/vmware-cd-rom",
+    "early-boot-config/user-data-providers/vmware-guestinfo",
 
     "generate-readme",
 

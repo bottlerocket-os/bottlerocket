@@ -1692,17 +1692,12 @@ dependencies = [
  "apiclient",
  "async-trait",
  "base64",
- "bottlerocket-variant",
  "constants",
- "flate2",
+ "early-boot-config-provider",
+ "env_logger",
  "generate-readme",
- "hex-literal",
  "http 0.2.12",
- "imdsclient",
- "lazy_static",
  "log",
- "retry-read",
- "serde",
  "serde-xml-rs",
  "serde_json",
  "serde_plain",
@@ -1710,7 +1705,52 @@ dependencies = [
  "snafu 0.8.2",
  "tokio",
  "toml",
- "vmw_backdoor",
+ "walkdir",
+]
+
+[[package]]
+name = "early-boot-config-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "env_logger",
+ "flate2",
+ "generate-readme",
+ "hex-literal",
+ "lazy_static",
+ "log",
+ "retry-read",
+ "serde",
+ "serde_json",
+ "snafu 0.8.2",
+ "toml",
+]
+
+[[package]]
+name = "ec2-identity-doc-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "early-boot-config-provider",
+ "generate-readme",
+ "imdsclient",
+ "log",
+ "serde_json",
+ "snafu 0.8.2",
+ "tokio",
+]
+
+[[package]]
+name = "ec2-imds-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "early-boot-config-provider",
+ "generate-readme",
+ "imdsclient",
+ "log",
+ "snafu 0.8.2",
+ "tokio",
 ]
 
 [[package]]
@@ -2449,6 +2489,30 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "local-waker",
+]
+
+[[package]]
+name = "local-defaults-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "early-boot-config-provider",
+ "generate-readme",
+]
+
+[[package]]
+name = "local-file-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "early-boot-config-provider",
+ "generate-readme",
+]
+
+[[package]]
+name = "local-overrides-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "early-boot-config-provider",
+ "generate-readme",
 ]
 
 [[package]]
@@ -4734,6 +4798,33 @@ dependencies = [
  "libc",
  "log",
  "thiserror",
+]
+
+[[package]]
+name = "vmware-cd-rom-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "early-boot-config-provider",
+ "generate-readme",
+ "log",
+ "serde",
+ "serde-xml-rs",
+ "snafu 0.8.2",
+]
+
+[[package]]
+name = "vmware-guestinfo-user-data-provider"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "early-boot-config-provider",
+ "generate-readme",
+ "log",
+ "serde",
+ "serde_plain",
+ "snafu 0.8.2",
+ "vmw_backdoor",
 ]
 
 [[package]]
