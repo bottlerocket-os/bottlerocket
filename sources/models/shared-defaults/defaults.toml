@@ -119,6 +119,7 @@ template-path = "/usr/share/templates/hosts"
 
 [settings.ntp]
 time-servers = ["169.254.169.123", "2.amazon.pool.ntp.org"]
+options = ["iburst"]
 
 [services.ntp]
 configuration-files = ["chrony-conf"]

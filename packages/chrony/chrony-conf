@@ -2,7 +2,7 @@
 ntp = "v1"
 +++
 {{#each settings.ntp.time-servers}}
-pool {{this}} iburst
+pool {{this}}{{#each ../settings.ntp.options}} {{this}}{{/each}}
 {{/each}}
 driftfile /var/lib/chrony/drift
 makestep 1.0 3
