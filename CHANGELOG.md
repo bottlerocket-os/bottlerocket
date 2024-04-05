@@ -1,3 +1,12 @@
+# v1.19.4 (2024-04-06)
+
+## OS Changes
+* Update kernel to 5.10.213, 5.15.152, 6.1.82 ([#3865])
+* Update containerd to 1.6.31 ([#3869])
+
+[#3865]: https://github.com/bottlerocket-os/bottlerocket/pull/3865
+[#3869]: https://github.com/bottlerocket-os/bottlerocket/pull/3869
+
 # v1.19.3 (2024-03-26)
 
 ## OS Changes
