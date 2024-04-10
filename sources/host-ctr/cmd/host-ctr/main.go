@@ -140,7 +140,7 @@ func App() *cli.App {
 					Value:       false,
 				},
 			},
-			Action: func(c *cli.Context) error {
+			Action: func(_ *cli.Context) error {
 				return runCtr(containerdSocket, namespace, containerID, source, superpowered, registryConfig, containerType(cType), useCachedImage)
 			},
 		},
@@ -191,7 +191,7 @@ func App() *cli.App {
 					Required:    true,
 				},
 			},
-			Action: func(c *cli.Context) error {
+			Action: func(_ *cli.Context) error {
 				return cleanUp(containerdSocket, namespace, containerID)
 			},
 		},
@@ -980,7 +980,7 @@ func withSwapManagement(_ context.Context, _ oci.Client, _ *containers.Container
 
 // withProxyEnv reads proxy environment variables and returns a spec option for passing said proxy environment variables
 func withProxyEnv() oci.SpecOpts {
-	noOp := func(_ context.Context, _ oci.Client, _ *containers.Container, s *runtimespec.Spec) error { return nil }
+	noOp := func(_ context.Context, _ oci.Client, _ *containers.Container, _ *runtimespec.Spec) error { return nil }
 	httpsProxy, httpsProxySet := os.LookupEnv("HTTPS_PROXY")
 	noProxy, noProxySet := os.LookupEnv("NO_PROXY")
 	withHTTPSProxy := noOp
