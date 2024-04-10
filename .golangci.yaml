@@ -12,6 +12,7 @@ linters:
 
 run:
   timeout: 3m
-  skip-dirs:
+issues:
+  exclude-dirs:
     - vendor
     - .gomodcache
