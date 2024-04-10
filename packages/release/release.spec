@@ -9,11 +9,12 @@ License: Apache-2.0 OR MIT
 URL: https://github.com/bottlerocket-os/bottlerocket
 
 Source11: nsswitch.conf
+Source93: release-tmpfiles.conf
+Source94: release-fips-tmpfiles.conf
 Source95: release-systemd-networkd.conf
 Source96: release-repart-local.conf
 Source97: release-sysctl.conf
 Source98: release-systemd-system.conf
-Source99: release-tmpfiles.conf
 
 Source200: motd.template
 Source201: proxy-env
@@ -71,6 +72,8 @@ Source1080: var-lib-kernel-devel-lower.mount.in
 Source1081: usr-src-kernels.mount.in
 Source1082: usr-share-licenses.mount.in
 Source1083: lib-modules.mount.in
+Source1084: usr-bin.mount.in
+Source1085: usr-libexec.mount.in
 
 # Drop-in units to override defaults
 Source1100: systemd-tmpfiles-setup-service-debug.conf
@@ -85,6 +88,9 @@ Source1300: mount-cdrom.rules
 
 # Common logdog configuration
 Source1400: logdog.common.conf
+
+# bootconfig snippets.
+Source1500: bootconfig-fips.conf
 
 Requires: %{_cross_os}acpid
 Requires: %{_cross_os}audit
@@ -118,8 +124,17 @@ Requires: %{_cross_os}shim
 Requires: %{_cross_os}systemd
 Requires: %{_cross_os}util-linux
 Requires: %{_cross_os}xfsprogs
+Requires: (%{name}-fips if %{_cross_os}image-feature(fips))
 
 %description
+%{summary}.
+
+%package fips
+Summary: Bottlerocket release, FIPS edition
+Requires: (%{_cross_os}image-feature(fips) and %{name})
+Conflicts: %{_cross_os}image-feature(no-fips)
+
+%description fips
 %{summary}.
 
 %prep
@@ -129,6 +144,10 @@ Requires: %{_cross_os}xfsprogs
 %install
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 install -p -m 0644 %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
+
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:93} %{buildroot}%{_cross_tmpfilesdir}/release.conf
+install -p -m 0644 %{S:94} %{buildroot}%{_cross_tmpfilesdir}/release-fips.conf
 
 install -d %{buildroot}%{_cross_libdir}/systemd/networkd.conf.d
 install -p -m 0644 %{S:95} %{buildroot}%{_cross_libdir}/systemd/networkd.conf.d/80-release.conf
@@ -144,9 +163,6 @@ install -p -m 0644 %{S:98} %{buildroot}%{_cross_libdir}/systemd/system.conf.d/80
 
 install -d %{buildroot}%{_cross_libdir}/systemd/network
 install -p -m 0644 %{S:1200} %{buildroot}%{_cross_libdir}/systemd/network/80-release.link
-
-install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release.conf
 
 cat >%{buildroot}%{_cross_libdir}/os-release <<EOF
 NAME=Bottlerocket
@@ -195,6 +211,16 @@ LIBDIRPATH=$(systemd-escape --path %{_cross_libdir})
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1083} > ${LIBDIRPATH}-modules.mount
 install -p -m 0644 ${LIBDIRPATH}-modules.mount %{buildroot}%{_cross_unitdir}
 
+# Mounting on usr/bin requires using the real path: %{_cross_bindir}
+BINDIRPATH=$(systemd-escape --path %{_cross_bindir})
+sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:1084} > ${BINDIRPATH}.mount
+install -p -m 0644 ${BINDIRPATH}.mount %{buildroot}%{_cross_unitdir}
+
+# Mounting on usr/libexec requires using the real path: %{_cross_libexecdir}
+LIBEXECDIRPATH=$(systemd-escape --path %{_cross_libexecdir})
+sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:1085} > ${LIBEXECDIRPATH}.mount
+install -p -m 0644 ${LIBEXECDIRPATH}.mount %{buildroot}%{_cross_unitdir}
+
 install -d %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_templatedir}/motd
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_templatedir}/proxy-env
@@ -212,6 +238,9 @@ install -p -m 0644 %{S:1300} %{buildroot}%{_cross_udevrulesdir}/61-mount-cdrom.r
 
 install -d %{buildroot}%{_cross_datadir}/logdog.d
 install -p -m 0644 %{S:1400} %{buildroot}%{_cross_datadir}/logdog.d
+
+install -d %{buildroot}%{_cross_bootconfigdir}
+install -p -m 0644 %{S:1500} %{buildroot}%{_cross_bootconfigdir}/10-fips.conf
 
 ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 
@@ -281,5 +310,11 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_templatedir}/log4j-hotpatch-enabled
 %{_cross_udevrulesdir}/61-mount-cdrom.rules
 %{_cross_datadir}/logdog.d/logdog.common.conf
+
+%files fips
+%{_cross_bootconfigdir}/10-fips.conf
+%{_cross_tmpfilesdir}/release-fips.conf
+%{_cross_unitdir}/*-bin.mount
+%{_cross_unitdir}/*-libexec.mount
 
 %changelog
