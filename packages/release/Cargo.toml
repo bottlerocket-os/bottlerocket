@@ -37,6 +37,7 @@ kexec-tools = { path = "../../packages/kexec-tools" }
 keyutils = { path = "../keyutils" }
 libaudit = { path = "../libaudit" }
 libgcc = { path = "../libgcc" }
+libkcapi = { path = "../libkcapi" }
 libstd-rust = { path = "../libstd-rust" }
 makedumpfile = { path = "../../packages/makedumpfile" }
 os = { path = "../os" }

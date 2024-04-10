@@ -1,0 +1,22 @@
+[Unit]
+Description=Run FIPS kernel integrity check
+RefuseManualStart=true
+RefuseManualStop=true
+DefaultDependencies=no
+Before=fipscheck.target
+After=prepare-boot.service
+Requires=prepare-boot.service
+ConditionKernelCommandLine=fips=1
+ConditionPathExists=!/etc/.fips-kernel-check-passed
+
+[Service]
+Type=oneshot
+WorkingDirectory=/boot
+ExecStart=/usr/bin/sha512hmac -q -c /boot/.vmlinuz.hmac
+ExecStart=/usr/bin/touch /etc/.fips-kernel-check-passed
+RemainAfterExit=true
+StandardOutput=tty
+StandardError=inherit
+
+[Install]
+RequiredBy=fipscheck.target

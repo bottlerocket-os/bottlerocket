@@ -1,0 +1,25 @@
+[Unit]
+Description=Load FIPS crypto module %i
+RefuseManualStart=true
+RefuseManualStop=true
+DefaultDependencies=no
+Before=fipscheck.target
+After=check-kernel-integrity.service
+Requires=check-kernel-integrity.service
+StartLimitIntervalSec=0
+ConditionKernelCommandLine=fips=1
+ConditionPathExists=!/etc/.fips-module-check-passed
+
+[Service]
+Type=oneshot
+# Check if it's a generic algorithm the kernel provides. If so, don't continue.
+ExecCondition=/usr/bin/grep -qvzE '(name|driver)\\s+:\\s+%i\\s+' /proc/crypto
+# Otherwise, attempt to load the module.
+ExecStart=-/sbin/modprobe %i
+# Ensure that the stderr file exists. Otherwise, grep fails on an empty file.
+ExecStart=-/usr/bin/touch /.read-only.%i
+# Succeed unless there was a fatal error.
+ExecStart=/usr/bin/grep -Fqvzw FATAL /etc/.fips-modprobe.%i
+RemainAfterExit=true
+StandardOutput=tty
+StandardError=append:/etc/.fips-modprobe.%i

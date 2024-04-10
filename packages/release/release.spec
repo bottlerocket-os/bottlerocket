@@ -31,10 +31,12 @@ Source209: log4j-hotpatch-enabled
 Source1001: multi-user.target
 Source1002: configured.target
 Source1003: preconfigured.target
-Source1004: activate-configured.service
-Source1005: activate-multi-user.service
-Source1006: set-hostname.service
-Source1007: runtime.slice
+Source1004: fipscheck.target
+Source1005: activate-preconfigured.service
+Source1006: activate-configured.service
+Source1007: activate-multi-user.service
+Source1008: set-hostname.service
+Source1009: runtime.slice
 
 # Mount units.
 Source1020: var.mount
@@ -66,6 +68,9 @@ Source1061: disable-kexec-load.service
 Source1062: load-crash-kernel.service
 Source1063: deprecation-warning@.service
 Source1064: deprecation-warning@.timer
+Source1065: check-kernel-integrity.service
+Source1066: check-fips-modules.service
+Source1067: fips-modprobe@.service
 
 # Mounts that require build-time edits.
 Source1080: var-lib-kernel-devel-lower.mount.in
@@ -133,6 +138,7 @@ Requires: (%{name}-fips if %{_cross_os}image-feature(fips))
 Summary: Bottlerocket release, FIPS edition
 Requires: (%{_cross_os}image-feature(fips) and %{name})
 Conflicts: %{_cross_os}image-feature(no-fips)
+Requires: %{_cross_os}libkcapi
 
 %description fips
 %{summary}.
@@ -172,12 +178,13 @@ EOF
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:1001} %{S:1002} %{S:1003} %{S:1004} %{S:1005} \
-  %{S:1006} %{S:1007} \
+  %{S:1006} %{S:1007} %{S:1008} %{S:1009} \
   %{S:1020} %{S:1021} %{S:1022} %{S:1023} %{S:1024} \
   %{S:1025} %{S:1026} %{S:1027} %{S:1028} %{S:1029} \
   %{S:1040} %{S:1041} %{S:1042} %{S:1043} %{S:1044} \
   %{S:1045} %{S:1046} %{S:1047} %{S:1048} %{S:1049} \
   %{S:1060} %{S:1061} %{S:1062} %{S:1063} %{S:1064} \
+  %{S:1065} %{S:1066} %{S:1067} \
   %{buildroot}%{_cross_unitdir}
 
 install -d %{buildroot}%{_cross_unitdir}/systemd-tmpfiles-setup.service.d
@@ -191,6 +198,10 @@ install -p -m 0644 %{S:1101} \
 install -d %{buildroot}%{_cross_unitdir}/systemd-networkd.service.d
 install -p -m 0644 %{S:1102} \
   %{buildroot}%{_cross_unitdir}/systemd-networkd.service.d/00-env.conf
+
+# Empty (but packaged) directory. The FIPS packages for kernels will add drop-ins to
+# this directory to arrange for the right modules to be loaded before the check runs.
+install -d %{buildroot}%{_cross_unitdir}/check-fips-modules.service.d
 
 LOWERPATH=$(systemd-escape --path %{_cross_sharedstatedir}/kernel-devel/.overlay/lower)
 sed -e 's|PREFIX|%{_cross_prefix}|' %{S:1080} > ${LOWERPATH}.mount
@@ -316,5 +327,11 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_tmpfilesdir}/release-fips.conf
 %{_cross_unitdir}/*-bin.mount
 %{_cross_unitdir}/*-libexec.mount
+%{_cross_unitdir}/fipscheck.target
+%{_cross_unitdir}/activate-preconfigured.service
+%{_cross_unitdir}/check-kernel-integrity.service
+%{_cross_unitdir}/check-fips-modules.service
+%dir %{_cross_unitdir}/check-fips-modules.service.d
+%{_cross_unitdir}/fips-modprobe@.service
 
 %changelog
