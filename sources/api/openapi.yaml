@@ -682,3 +682,28 @@ paths:
           description: "Unprocessable request"
         500:
           description: "Server error"
+
+  /report/fips:
+    get:
+      summary: "Get FIPS Security Policy report"
+      operationId: "fips-report"
+      parameters:
+        - in: query
+          name: format
+          description: "The FIPS Security Policy report format (text or json). Default format is text."
+          schema:
+            type: string
+          required: false
+      responses:
+        200:
+          description: "Successful request"
+          content:
+            application/json:
+              schema:
+                type: string
+        400:
+          description: "Bad request input"
+        422:
+          description: "Unprocessable request"
+        500:
+          description: "Server error"

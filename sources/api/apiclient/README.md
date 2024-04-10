@@ -270,6 +270,19 @@ Refer to the [Kubernetes CIS Benchmark] for detailed audit and remediation steps
 [Bottlerocket CIS Benchmark]: https://www.cisecurity.org/benchmark/bottlerocket
 [Kubernetes CIS Benchmark]: https://www.cisecurity.org/benchmark/kubernetes
 
+#### FIPS Security Policy reports
+
+This command can be used to evaluate the current system state and settings for compliance with the requirements of the FIPS Security Policy.
+
+```shell
+apiclient report fips
+```
+
+The results from each item in the report will be one of:
+
+- **PASS**: The system has been evaluated to be in compliance with the requirements of the FIPS Security Policy.
+- **FAIL**: The system has been evaluated to not be in compliance with the requirements of the FIPS Security Policy.
+
 ## apiclient library
 
 The apiclient library provides high-level methods to interact with the Bottlerocket API.  See

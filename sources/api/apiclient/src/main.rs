@@ -104,12 +104,19 @@ enum UpdateSubcommand {
 enum ReportSubcommand {
     Cis(CisReportArgs),
     CisK8s(CisReportArgs),
+    Fips(FipsReportArgs),
 }
 
 /// Stores common user-supplied arguments for the cis report subcommand.
 #[derive(Debug)]
 struct CisReportArgs {
     level: Option<i32>,
+    format: Option<String>,
+}
+
+/// Stores common user-supplied arguments for the fips report subcommand.
+#[derive(Debug)]
+struct FipsReportArgs {
     format: Option<String>,
 }
 
@@ -153,6 +160,7 @@ fn usage() -> ! {
             exec                       Execute a command in a host container.
             report cis                 Retrieve a Bottlerocket CIS benchmark compliance report.
             report cis-k8s             Retrieve a Kubernetes CIS benchmark compliance report.
+            report fips                Retrieve a FIPS Security Policy compliance report.
 
         raw options:
             -u, --uri URI              Required; URI to request from the server, e.g. /tx
@@ -586,6 +594,7 @@ fn parse_report_args(args: Vec<String>) -> Subcommand {
             // Subcommands
             "cis" if subcommand.is_none() && !arg.starts_with('-') => subcommand = Some(arg),
             "cis-k8s" if subcommand.is_none() && !arg.starts_with('-') => subcommand = Some(arg),
+            "fips" if subcommand.is_none() && !arg.starts_with('-') => subcommand = Some(arg),
 
             // Other arguments are passed to the subcommand parser
             _ => subcommand_args.push(arg),
@@ -595,6 +604,7 @@ fn parse_report_args(args: Vec<String>) -> Subcommand {
     let report_type = match subcommand.as_deref() {
         Some("cis") => parse_report_cis_args(subcommand_args),
         Some("cis-k8s") => parse_report_cis_k8s_args(subcommand_args),
+        Some("fips") => parse_report_fips_args(subcommand_args),
         _ => usage_msg("Missing or unknown subcommand for 'report'"),
     };
 
@@ -640,6 +650,31 @@ fn parse_cis_arguments(args: Vec<String>) -> CisReportArgs {
     }
 
     CisReportArgs { level, format }
+}
+
+/// Parses arguments for the 'report' fips subcommand.
+fn parse_report_fips_args(args: Vec<String>) -> ReportSubcommand {
+    ReportSubcommand::Fips(parse_fips_arguments(args))
+}
+
+fn parse_fips_arguments(args: Vec<String>) -> FipsReportArgs {
+    let mut format = None;
+
+    let mut iter = args.into_iter();
+    while let Some(arg) = iter.next() {
+        match arg.as_ref() {
+            "-f" | "--format" => {
+                format = Some(
+                    iter.next()
+                        .unwrap_or_else(|| usage_msg("Did not give argument to -f | --format")),
+                )
+            }
+
+            x => usage_msg(format!("Unknown argument '{}'", x)),
+        }
+    }
+
+    FipsReportArgs { format }
 }
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
@@ -853,6 +888,16 @@ async fn run() -> Result<()> {
                 )
                 .await
                 .context(error::ReportSnafu)?;
+
+                if !body.is_empty() {
+                    print!("{}", body);
+                }
+            }
+
+            ReportSubcommand::Fips(fips_args) => {
+                let body = report::get_fips_report(&args.socket_path, fips_args.format)
+                    .await
+                    .context(error::ReportSnafu)?;
 
                 if !body.is_empty() {
                     print!("{}", body);

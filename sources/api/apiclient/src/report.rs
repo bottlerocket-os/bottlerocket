@@ -30,6 +30,27 @@ where
     Ok(body)
 }
 
+/// Handles requesting a FIPS report.
+pub async fn get_fips_report<P>(socket_path: P, format: Option<String>) -> Result<String>
+where
+    P: AsRef<Path>,
+{
+    let method = "GET";
+
+    let mut query = Vec::new();
+    if let Some(query_format) = format {
+        query.push(format!("format={}", query_format));
+    }
+
+    let uri = format!("/report/fips?{}", query.join("&"));
+
+    let (_status, body) = crate::raw_request(&socket_path, &uri, method, None)
+        .await
+        .context(error::RequestSnafu { uri, method })?;
+
+    Ok(body)
+}
+
 mod error {
     use snafu::Snafu;
 
