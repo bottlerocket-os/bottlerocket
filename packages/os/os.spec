@@ -26,11 +26,9 @@ Source7: host-ctr-toml
 Source8: oci-default-hooks-json
 Source9: cfsignal-toml
 Source10: warm-pool-wait-toml
-Source11: cis-checks-bottlerocket-metadata-json
+Source11: bottlerocket-cis-checks-metadata-json
 Source12: 00-resolved.conf
-%if %{with k8s_runtime}
-Source13: cis-checks-k8s-metadata-json
-%endif
+Source13: kubernetes-cis-checks-metadata-json
 Source14: certdog-toml
 Source15: prairiedog-toml
 Source16: thar-be-updates-toml
@@ -416,7 +414,7 @@ for p in \
   migrator prairiedog certdog \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
-  shimpei bloodhound bottlerocket-checks \
+  shimpei bloodhound bottlerocket-cis-checks \
   %{?with_aws_platform: shibaken} \
   %{?with_k8s_runtime: static-pods} \
   %{?with_nvidia_flavor: driverdog} \
@@ -434,7 +432,7 @@ done
 %endif
 
 %if %{with k8s_runtime}
-install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/kubernetes-checks %{buildroot}%{_cross_bindir}
+install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/kubernetes-cis-checks %{buildroot}%{_cross_bindir}
 %endif
 install -d %{buildroot}%{_cross_sbindir}
 for p in \
@@ -454,7 +452,8 @@ for p in \
   br03020300 br03020400 br03020500 br03020600 br03020700 br03030100 \
   br03040101 br03040102 br03040201 br03040202 br04010101 br04010200 \
 ; do
-  ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-checks %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
+  ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-cis-checks \
+    %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
 done
 install -m 0644 %{S:11} %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/metadata.json
 
@@ -468,7 +467,8 @@ for p in \
   k8s04020300 k8s04020400 k8s04020500 k8s04020600 k8s04020900 \
   k8s04021000 k8s04021100 k8s04021200 k8s04021300 \
 ; do
-  ln -rs %{buildroot}%{_cross_bindir}/kubernetes-checks %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/${p}
+  ln -rs %{buildroot}%{_cross_bindir}/kubernetes-cis-checks \
+    %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/${p}
 done
 install -m 0644 %{S:13} %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/metadata.json
 %endif
@@ -725,7 +725,7 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 
 %files -n %{_cross_os}bloodhound
 %{_cross_bindir}/bloodhound
-%{_cross_bindir}/bottlerocket-checks
+%{_cross_bindir}/bottlerocket-cis-checks
 %{_cross_libexecdir}/cis-checks/bottlerocket
 
 %files -n %{_cross_os}xfscli
@@ -734,7 +734,7 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 %{_cross_sbindir}/fsck.xfs
 
 %if %{with k8s_runtime}
-%{_cross_bindir}/kubernetes-checks
+%{_cross_bindir}/kubernetes-cis-checks
 %{_cross_libexecdir}/cis-checks/kubernetes
 %endif
 
