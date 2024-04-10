@@ -3,10 +3,5 @@ release-version = "1.19.4"
 
 [sdk]
 registry = "public.ecr.aws/bottlerocket"
-name = "bottlerocket-sdk"
-version = "v0.37.0"
-
-[toolchain]
-registry = "public.ecr.aws/bottlerocket"
-name = "bottlerocket-toolchain"
-version = "v0.37.0"
+repo = "bottlerocket-sdk"
+tag = "v0.40.0"
