@@ -35,6 +35,7 @@ Source16: thar-be-updates-toml
 Source17: corndog-toml
 Source18: bootstrap-containers-toml
 Source19: host-containers-toml
+Source20: bottlerocket-fips-checks-metadata-json
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -283,6 +284,7 @@ Summary: Manages bootstrap-containers
 %package -n %{_cross_os}bloodhound
 Summary: Compliance check framework
 Requires: (%{_cross_os}bloodhound-k8s if %{_cross_os}variant-runtime(k8s))
+Requires: (%{_cross_os}bloodhound-fips if %{_cross_os}image-feature(fips))
 %description -n %{_cross_os}bloodhound
 %{summary}.
 
@@ -290,6 +292,12 @@ Requires: (%{_cross_os}bloodhound-k8s if %{_cross_os}variant-runtime(k8s))
 Summary: Compliance checks for Kubernetes
 Requires: (%{_cross_os}bloodhound and %{_cross_os}variant-runtime(k8s))
 %description -n %{_cross_os}bloodhound-k8s
+%{summary}.
+
+%package -n %{_cross_os}bloodhound-fips
+Summary: Compliance checks for FIPS
+Requires: (%{_cross_os}bloodhound and %{_cross_os}image-feature(fips))
+%description -n %{_cross_os}bloodhound-fips
 %{summary}.
 
 %package -n %{_cross_os}xfscli
@@ -423,6 +431,7 @@ for p in \
   ghostdog bootstrap-containers \
   shimpei bloodhound \
   bottlerocket-cis-checks \
+  bottlerocket-fips-checks \
   kubernetes-cis-checks \
   %{?with_aws_platform: shibaken} \
   %{?with_k8s_runtime: static-pods} \
@@ -462,6 +471,15 @@ for p in \
     %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
 done
 install -m 0644 %{S:11} %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/metadata.json
+
+mkdir -p %{buildroot}%{_cross_libexecdir}/fips-checks/bottlerocket
+for p in \
+  fips01000000 fips01010000 fips01020000 fips01030000 \
+; do
+  ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-fips-checks \
+    %{buildroot}%{_cross_libexecdir}/fips-checks/bottlerocket/${p}
+done
+install -m 0644 %{S:20} %{buildroot}%{_cross_libexecdir}/fips-checks/bottlerocket/metadata.json
 
 # Only add the k8s checks if it is a k8s variant
 mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes
@@ -735,6 +753,10 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 %files -n %{_cross_os}bloodhound-k8s
 %{_cross_bindir}/kubernetes-cis-checks
 %{_cross_libexecdir}/cis-checks/kubernetes
+
+%files -n %{_cross_os}bloodhound-fips
+%{_cross_bindir}/bottlerocket-fips-checks
+%{_cross_libexecdir}/fips-checks/bottlerocket
 
 %files -n %{_cross_os}xfscli
 %{_cross_sbindir}/xfs_admin

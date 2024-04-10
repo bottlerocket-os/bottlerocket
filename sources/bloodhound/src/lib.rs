@@ -44,6 +44,27 @@ pub fn look_for_strings_in_file(path: &str, search_strs: &[&str]) -> Result<bool
     Ok(search_strs.len() <= matched)
 }
 
+/// Check if a given file exists, getting a `CheckerResult` of the finding.
+///
+/// If the file exists, the `CheckerResult` returned will have a `CheckStatus::PASS`.
+///
+/// Otherwise, the `CheckerResult` returned will have a `CheckStatus::FAIL`.
+#[macro_export]
+macro_rules! check_file_exists {
+    ($path:expr, $unable_to_find_error:expr) => {{
+        let mut result = CheckerResult::default();
+
+        if let Ok(file) = std::fs::File::open($path) {
+            result.status = CheckStatus::PASS;
+        } else {
+            result.error = $unable_to_find_error.to_string();
+            result.status = CheckStatus::FAIL;
+        }
+
+        result
+    }};
+}
+
 /// Check if a given file contains all provided strings, getting a `CheckerResult` of its findings.
 ///
 /// If all `strings_to_match` are found in `path`, the `CheckerResult` returned will have a `CheckStatus::PASS`.
