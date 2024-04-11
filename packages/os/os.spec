@@ -315,15 +315,47 @@ migrations=()
 for migration in $(find %{_builddir}/sources/api/migration/migrations/v[0-9]* -mindepth 1 -maxdepth 1 -type d); do
     migrations+=("-p $(basename ${migration})")
 done
+
+# Since RPM automatically logs the commands that run, and since we want to display those commands
+# along with the output from the background job, we do some file descriptor juggling below.
+#  exec 3>&1 4>&2           - save stdout and stderr to fds 3 and 4
+#  exec 1>"${output}" 2>&1  - redirect stdout and stderr to job-specific log
+#  exec 1>&3 2>&4           - restore stdout and stderr from fds 3 and 4
+
 # Store the output so we can print it after waiting for the backgrounded job.
+exec 3>&1 4>&2
 static_output="$(mktemp)"
+exec 1>"${static_output}" 2>&1
 # Build static binaries in the background.
 %cargo_build_static --manifest-path %{_builddir}/sources/Cargo.toml \
     -p apiclient \
     ${migrations[*]} \
-    >> ${static_output} 2>&1 &
+    &
 # Save the PID so we can wait for it later.
 static_pid="$!"
+exec 1>&3 2>&4
+
+%if %{with aws_platform} || %{with aws_k8s_family}
+# The AWS SDK crates are extremely slow to build with only one codegen unit.
+# Pessimize the release build for just the crates that depend on them.
+# Store the output so we can print it after waiting for the backgrounded job.
+exec 3>&1 4>&2
+aws_sdk_output="$(mktemp)"
+exec 1>"${aws_sdk_output}" 2>&1
+RUSTFLAGS="$(echo "%{__global_rustflags_shared}" | sed -e 's,-Ccodegen-units=1,,g')" \
+%{__cargo_cross_env} \
+CARGO_TARGET_DIR="${HOME}/.cache/.aws-sdk" \
+%{__cargo} build \
+    %{__cargo_cross_opts} \
+    --release \
+    --manifest-path %{_builddir}/sources/Cargo.toml \
+    %{?with_aws_platform: -p cfsignal} \
+    %{?with_aws_k8s_family: -p pluto} \
+    &
+# Save the PID so we can wait for it later.
+aws_sdk_pid="$!"
+exec 1>&3 2>&4
+%endif
 
 # Run non-static builds in the foreground.
 echo "** Output from non-static builds:"
@@ -351,8 +383,7 @@ echo "** Output from non-static builds:"
     -p shimpei \
     -p bloodhound \
     -p xfscli \
-    %{?with_aws_platform: -p shibaken -p cfsignal} \
-    %{?with_aws_k8s_family: -p pluto} \
+    %{?with_aws_platform: -p shibaken} \
     %{?with_k8s_runtime: -p static-pods} \
     %{?with_nvidia_flavor: -p driverdog} \
     %{nil}
@@ -365,6 +396,16 @@ if [ "${static_rc}" -ne 0 ]; then
    exit "${static_rc}"
 fi
 
+%if %{with aws_platform} || %{with aws_k8s_family}
+# Wait for AWS SDK builds from the background, if they're not already done.
+set +e; wait "${aws_sdk_pid}"; aws_sdk_rc="${?}"; set -e
+echo -e "\n** Output from AWS SDK builds:"
+cat "${aws_sdk_output}"
+if [ "${aws_sdk_rc}" -ne 0 ]; then
+   exit "${aws_sdk_rc}"
+fi
+%endif
+
 %install
 install -d %{buildroot}%{_cross_bindir}
 for p in \
@@ -376,13 +417,22 @@ for p in \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
   shimpei bloodhound bottlerocket-checks \
-  %{?with_aws_platform: shibaken cfsignal} \
-  %{?with_aws_k8s_family: pluto} \
+  %{?with_aws_platform: shibaken} \
   %{?with_k8s_runtime: static-pods} \
   %{?with_nvidia_flavor: driverdog} \
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
+
+%if %{with aws_platform} || %{with aws_k8s_family}
+for p in \
+  %{?with_aws_platform: cfsignal} \
+  %{?with_aws_k8s_family: pluto} \
+; do
+  install -p -m 0755 ${HOME}/.cache/.aws-sdk/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
+done
+%endif
+
 %if %{with k8s_runtime}
 install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/kubernetes-checks %{buildroot}%{_cross_bindir}
 %endif
