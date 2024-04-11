@@ -15,36 +15,36 @@ BuildRequires: %{_cross_os}glibc-devel
 %description
 %{summary}.
 
-%package -n %{_cross_os}early-boot-config-local
+%package local
 Summary: local-provider
 
-%description -n %{_cross_os}early-boot-config-local
+%description local
 %{summary}.
 
-%package -n %{_cross_os}early-boot-config-aws
+%package aws
 Summary: early-boot-config package for AWS
 Requires: %{name}
-Requires: %{_cross_os}early-boot-config-local
+Requires: %{name}-local
 
-%description -n %{_cross_os}early-boot-config-aws
+%description aws
 %{summary}.
 
 %ifarch x86_64
-%package -n %{_cross_os}early-boot-config-vmware
+%package vmware
 Summary: early-boot-config package for vmware
 Requires: %{name}
-Requires: %{_cross_os}early-boot-config-local
+Requires: %{name}-local
 
-%description -n %{_cross_os}early-boot-config-vmware
+%description vmware
 %{summary}.
 %endif
 
-%package -n %{_cross_os}early-boot-config-metal
+%package metal
 Summary: early-boot-config package for metal
 Requires: %{name}
-Requires: %{_cross_os}early-boot-config-local
+Requires: %{name}-local
 
-%description -n %{_cross_os}early-boot-config-metal
+%description metal
 %{summary}.
 
 %prep
@@ -129,7 +129,7 @@ ln -rs \
 %{_cross_unitdir}/early-boot-config.service
 %dir %{early_boot_config_provider_dir}
 
-%files -n %{_cross_os}early-boot-config-local
+%files local
 %{early_boot_config_bindir}/local-defaults-user-data-provider
 %{early_boot_config_bindir}/local-file-user-data-provider
 %{early_boot_config_bindir}/local-overrides-user-data-provider
@@ -137,14 +137,14 @@ ln -rs \
 %{early_boot_config_provider_dir}/20-local-user-data
 %{early_boot_config_provider_dir}/99-local-overrides
 
-%files -n %{_cross_os}early-boot-config-aws
+%files aws
 %{early_boot_config_bindir}/ec2-identity-doc-user-data-provider
 %{early_boot_config_bindir}/ec2-imds-user-data-provider
 %{early_boot_config_provider_dir}/30-ec2-identity-doc
 %{early_boot_config_provider_dir}/40-ec2-imds
 
 %ifarch x86_64
-%files -n %{_cross_os}early-boot-config-vmware
+%files vmware
 %{early_boot_config_bindir}/vmware-cd-rom-user-data-provider
 %{early_boot_config_bindir}/vmware-guestinfo-user-data-provider
 %{early_boot_config_provider_dir}/30-vmware-cd-rom
@@ -152,4 +152,4 @@ ln -rs \
 %endif
 
 # There are no metal-specific providers, just dependencies like the local file providers.
-%files -n %{_cross_os}early-boot-config-metal
+%files metal
