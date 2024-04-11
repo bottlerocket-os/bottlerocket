@@ -18,7 +18,6 @@ included-packages = [
     "aws-iam-authenticator",
     "cni",
     "cni-plugins",
-    "early-boot-config-aws",
     "kernel-5.15",
     "kubelet-1.26",
     "release",
@@ -41,4 +40,3 @@ cni-plugins = { path = "../../packages/cni-plugins" }
 kernel-5_15 = { path = "../../packages/kernel-5.15" }
 kubernetes-1_26 = { path = "../../packages/kubernetes-1.26" }
 release = { path = "../../packages/release" }
-early-boot-config = { path = "../../packages/early-boot-config" }

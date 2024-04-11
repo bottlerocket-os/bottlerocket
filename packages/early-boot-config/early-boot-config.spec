@@ -12,6 +12,10 @@ Source100: early-boot-config.service
 
 BuildRequires: %{_cross_os}glibc-devel
 
+Requires: (%{name}-aws if %{_cross_os}variant-platform(aws))
+Requires: (%{name}-vmware if %{_cross_os}variant-platform(vmware))
+Requires: (%{name}-metal if %{_cross_os}variant-platform(metal))
+
 %description
 %{summary}.
 
