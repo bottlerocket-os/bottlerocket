@@ -25,7 +25,6 @@ kernel-parameters = [
 ]
 included-packages = [
 # core
-    "early-boot-config-metal",
     "release",
     "kernel-6.1",
     "linux-firmware",
@@ -46,7 +45,6 @@ path = "../variants.rs"
 [build-dependencies]
 # core
 release = { path = "../../packages/release" }
-early-boot-config = { path = "../../packages/early-boot-config" }
 kernel-6_1 = { path = "../../packages/kernel-6.1" }
 linux-firmware = { path = "../../packages/linux-firmware" }
 # docker

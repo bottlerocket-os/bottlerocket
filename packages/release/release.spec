@@ -95,6 +95,7 @@ Requires: %{_cross_os}containerd
 Requires: %{_cross_os}coreutils
 Requires: %{_cross_os}dbus-broker
 Requires: %{_cross_os}e2fsprogs
+Requires: %{_cross_os}early-boot-config
 Requires: %{_cross_os}ethtool
 Requires: %{_cross_os}libgcc
 Requires: %{_cross_os}libstd-rust

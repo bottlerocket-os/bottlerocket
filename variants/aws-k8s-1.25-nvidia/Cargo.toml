@@ -20,7 +20,6 @@ included-packages = [
     "aws-iam-authenticator",
     "cni",
     "cni-plugins",
-    "early-boot-config-aws",
     "kernel-5.15",
     "kubelet-1.25",
     "release",
@@ -46,7 +45,6 @@ cni-plugins = { path = "../../packages/cni-plugins" }
 kernel-5_15 = { path = "../../packages/kernel-5.15" }
 kubernetes-1_25 = { path = "../../packages/kubernetes-1.25" }
 release = { path = "../../packages/release" }
-early-boot-config = { path = "../../packages/early-boot-config" }
 nvidia-container-toolkit = { path = "../../packages/nvidia-container-toolkit" }
 nvidia-k8s-device-plugin = { path = "../../packages/nvidia-k8s-device-plugin" }
 kmod-5_15-nvidia = { path = "../../packages/kmod-5.15-nvidia" }
