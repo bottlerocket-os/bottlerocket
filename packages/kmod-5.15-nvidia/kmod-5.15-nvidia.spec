@@ -2,6 +2,12 @@
 %global tesla_minor 161
 %global tesla_patch 07
 %global tesla_ver %{tesla_major}.%{tesla_minor}.%{tesla_patch}
+%if "%{?_cross_arch}" == "aarch64"
+%global fm_arch sbsa
+%else
+%global fm_arch %{_cross_arch}
+%endif
+
 %global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
 %global license_file %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml path nvidia -p ./licenses)
 
@@ -21,13 +27,20 @@ Summary: NVIDIA drivers for the 5.15 kernel
 License: Apache-2.0 OR MIT
 URL: http://www.nvidia.com/
 
-# NVIDIA .run scripts from 0 to 199
+# NVIDIA archives from 0 to 199
+# NVIDIA .run scripts for kernel and userspace drivers
 Source0: https://us.download.nvidia.com/tesla/%{tesla_ver}/NVIDIA-Linux-x86_64-%{tesla_ver}.run
 Source1: https://us.download.nvidia.com/tesla/%{tesla_ver}/NVIDIA-Linux-aarch64-%{tesla_ver}.run
+
+# fabricmanager for NVSwitch
+Source10: https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-x86_64/fabricmanager-linux-x86_64-%{tesla_ver}-archive.tar.xz
+Source11: https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-sbsa/fabricmanager-linux-sbsa-%{tesla_ver}-archive.tar.xz
 
 # Common NVIDIA conf files from 200 to 299
 Source200: nvidia-tmpfiles.conf.in
 Source202: nvidia-dependencies-modules-load.conf
+Source203: nvidia-fabricmanager.service
+Source204: nvidia-fabricmanager.cfg
 
 # NVIDIA tesla conf files from 300 to 399
 Source300: nvidia-tesla-tmpfiles.conf
@@ -41,11 +54,20 @@ BuildRequires: %{_cross_os}kernel-5.15-archive
 %description
 %{summary}.
 
+%package fabricmanager
+Summary: NVIDIA fabricmanager config and service files
+Requires: %{name}-tesla(fabricmanager)
+
+%description fabricmanager
+%{summary}.
+
 %package tesla-%{tesla_major}
 Summary: NVIDIA %{tesla_major} Tesla driver
 Version: %{tesla_ver}
 License: %{spdx_id}
 Requires: %{name}
+Requires: %{name}-fabricmanager
+Provides: %{name}-tesla(fabricmanager)
 
 %description tesla-%{tesla_major}
 %{summary}
@@ -54,6 +76,10 @@ Requires: %{name}
 # Extract nvidia sources with `-x`, otherwise the script will try to install
 # the driver in the current run
 sh %{_sourcedir}/NVIDIA-Linux-%{_cross_arch}-%{tesla_ver}.run -x
+
+# Extract fabricmanager archive. Use `tar` rather than `%%setup` since the
+# correct source is architecture-dependent.
+tar -xf %{_sourcedir}/fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive.tar.xz
 
 %global kernel_sources %{_builddir}/kernel-devel
 tar -xf %{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
@@ -100,6 +126,11 @@ install -p -m 0644 nvidia.conf %{buildroot}%{_cross_tmpfilesdir}
 # Install modules-load.d drop-in to autoload required kernel modules
 install -d %{buildroot}%{_cross_libdir}/modules-load.d
 install -p -m 0644 %{S:202} %{buildroot}%{_cross_libdir}/modules-load.d/nvidia-dependencies.conf
+
+# NVIDIA fabric manager service unit and config
+install -p -m 0644 %{S:203} %{buildroot}%{_cross_unitdir}
+install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/nvidia
+install -p -m 0644 %{S:204} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/nvidia/fabricmanager.cfg
 
 # Begin NVIDIA tesla driver
 pushd NVIDIA-Linux-%{_cross_arch}-%{tesla_ver}
@@ -178,6 +209,18 @@ install -p -m 0644 firmware/gsp_tu10x.bin %{buildroot}%{_cross_libdir}/firmware/
 
 popd
 
+# Begin NVIDIA fabric manager binaries and topologies
+pushd fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive
+install -p -m 0755 bin/nv-fabricmanager %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
+install -p -m 0755 bin/nvswitch-audit %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
+
+install -d %{buildroot}%{_cross_datadir}/nvidia/tesla/nvswitch
+for t in share/nvidia/nvswitch/*_topology ; do
+  install -p -m 0644 "${t}" %{buildroot}%{_cross_datadir}/nvidia/tesla/nvswitch
+done
+
+popd
+
 %files
 %{_cross_attribution_file}
 %dir %{_cross_libexecdir}/nvidia
@@ -185,12 +228,13 @@ popd
 %dir %{_cross_datadir}/nvidia
 %dir %{_cross_libdir}/modules-load.d
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/drivers
+%dir %{_cross_factorydir}%{_cross_sysconfdir}/nvidia
 %{_cross_tmpfilesdir}/nvidia.conf
-%{_cross_libdir}/systemd/system/
 %{_cross_libdir}/modules-load.d/nvidia-dependencies.conf
 
 %files tesla-%{tesla_major}
 %license %{license_file}
+%license fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive/third-party-notices.txt
 %dir %{_cross_datadir}/nvidia/tesla
 %dir %{_cross_libexecdir}/nvidia/tesla/bin
 %dir %{_cross_libdir}/nvidia/tesla
@@ -201,6 +245,15 @@ popd
 # Binaries
 %{_cross_libexecdir}/nvidia/tesla/bin/nvidia-debugdump
 %{_cross_libexecdir}/nvidia/tesla/bin/nvidia-smi
+%{_cross_libexecdir}/nvidia/tesla/bin/nv-fabricmanager
+%{_cross_libexecdir}/nvidia/tesla/bin/nvswitch-audit
+
+# nvswitch topologies
+%dir %{_cross_datadir}/nvidia/tesla/nvswitch
+%{_cross_datadir}/nvidia/tesla/nvswitch/dgxa100_hgxa100_topology
+%{_cross_datadir}/nvidia/tesla/nvswitch/dgx2_hgx2_topology
+%{_cross_datadir}/nvidia/tesla/nvswitch/dgxh100_hgxh100_topology
+%{_cross_datadir}/nvidia/tesla/nvswitch/dgxh800_hgxh800_topology
 
 # Configuration files
 %{_cross_factorydir}%{_cross_sysconfdir}/drivers/nvidia-tesla.toml
@@ -332,3 +385,7 @@ popd
 %exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-gbm.so.1.1.0
 %exclude %{_cross_libdir}/nvidia/tesla/libnvidia-egl-wayland.so.1.1.11
 %exclude %{_cross_libdir}/nvidia/tesla/libnvidia-wayland-client.so.%{tesla_ver}
+
+%files fabricmanager
+%{_cross_factorydir}%{_cross_sysconfdir}/nvidia/fabricmanager.cfg
+%{_cross_unitdir}/nvidia-fabricmanager.service
