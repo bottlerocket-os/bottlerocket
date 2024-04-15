@@ -990,19 +990,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "metal-k8s-1_25"
-version = "0.1.0"
-dependencies = [
- "aws-iam-authenticator",
- "cni",
- "cni-plugins",
- "kernel-5_15",
- "kubernetes-1_25",
- "linux-firmware",
- "release",
-]
-
-[[package]]
 name = "metal-k8s-1_26"
 version = "0.1.0"
 dependencies = [
@@ -1233,18 +1220,6 @@ dependencies = [
  "open-vm-tools",
  "release",
  "strace",
-]
-
-[[package]]
-name = "vmware-k8s-1_25"
-version = "0.1.0"
-dependencies = [
- "cni",
- "cni-plugins",
- "kernel-5_15",
- "kubernetes-1_25",
- "open-vm-tools",
- "release",
 ]
 
 [[package]]

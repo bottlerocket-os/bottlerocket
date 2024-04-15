@@ -173,13 +173,6 @@ User data will be read from IMDS.
 The [vmware-dev](vmware-dev/Cargo.toml) variant has useful packages for local development of the OS, and is intended to run as a VMware guest.
 It includes tools for troubleshooting as well as Docker for running containers.
 
-### vmware-k8s-1.25: VMware Kubernetes 1.25 node
-
-The [vmware-k8s-1.25](vmware-k8s-1.25/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
-It supports self-hosted clusters.
-
-This variant is compatible with Kubernetes 1.25, 1.26, 1.27, and 1.28 clusters.
-
 ## vmware-k8s-1.26: VMware Kubernetes 1.26 node
 
 The [vmware-k8s-1.26](vmware-k8s-1.26/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
@@ -212,13 +205,6 @@ This variant is compatible with Kubernetes 1.29, 1.30, 1.31, and 1.32 clusters.
 
 The [metal-dev](metal-dev/Cargo.toml) variant has useful packages for local development of the OS and is intended to run bare metal.
 It includes tools for troubleshooting as well as Docker for running containers.
-
-### metal-k8s-1.25: Metal Kubernetes 1.25 node
-
-The [metal-k8s-1.25](metal-k8s-1.25/Cargo.toml) variant includes the packages needed to run a Kubernetes node on bare metal.
-It supports self-hosted clusters.
-
-This variant is compatible with Kubernetes 1.25, 1.26, 1.27, and 1.28 clusters.
 
 ### metal-k8s-1.26: Metal Kubernetes 1.26 node
 
@@ -401,6 +387,20 @@ The metal-k8s-1.24 variant included the packages needed to run a Kubernetes node
 It supported self-hosted clusters.
 
 This variant was compatible with Kubernetes 1.24, 1.25, and 1.26 clusters.
+
+### vmware-k8s-1.25: VMware Kubernetes 1.25 node
+
+The [vmware-k8s-1.25](vmware-k8s-1.25/Cargo.toml) variant included the packages needed to run a Kubernetes worker node as a VMware guest.
+It supported self-hosted clusters.
+
+This variant was compatible with Kubernetes 1.25, 1.26, 1.27, and 1.28 clusters.
+
+### metal-k8s-1.25: Metal Kubernetes 1.25 node
+
+The [metal-k8s-1.25](metal-k8s-1.25/Cargo.toml) variant included the packages needed to run a Kubernetes node on bare metal.
+It supported self-hosted clusters.
+
+This variant was compatible with Kubernetes 1.25, 1.26, 1.27, and 1.28 clusters.
 
 ## Development
 

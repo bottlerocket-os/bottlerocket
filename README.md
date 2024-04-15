@@ -85,7 +85,6 @@ The following variants support ECS:
 
 We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
-* `vmware-k8s-1.25`
 * `vmware-k8s-1.26`
 * `vmware-k8s-1.27`
 * `vmware-k8s-1.28`
@@ -93,7 +92,6 @@ We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
 The following variants are designed to be Kubernetes worker nodes on bare metal:
 
-* `metal-k8s-1.25`
 * `metal-k8s-1.26`
 * `metal-k8s-1.27`
 * `metal-k8s-1.28`
@@ -102,7 +100,7 @@ The following variants are designed to be Kubernetes worker nodes on bare metal:
 The following variants are no longer supported:
 
 * All Kubernetes variants using Kubernetes 1.22 and earlier
-* Bare metal and VMware variants using Kubernetes 1.24 and earlier
+* Bare metal and VMware variants using Kubernetes 1.25 and earlier
 
 We recommend users replace nodes running these variants with the [latest variant compatible with their cluster](variants/).
 
