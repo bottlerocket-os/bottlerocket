@@ -104,6 +104,43 @@ These files are, by default, only fetched from our upstream source mirror, using
 (If `file` is not defined, the text after the last `/` character in `url` is used.)
 
 If your source is not yet available in the upstream source mirror, you can run `cargo make` with `-e BUILDSYS_UPSTREAM_SOURCE_FALLBACK=true`.
+If you download the external source tarball to the package's directory (here, `packages/libwoof`), cargo make will use the tarball it finds there.
+
+#### Metadata: go dependency resolution
+
+Go packages may handle their dependencies by either:
+- **vendoring:** the author runs `go mod vendor` at the appropriate places in their file hierarchy (basically, any directory with a `go.mod` file) and commits the resulting `vendor` directory to git (and thus to any tarball you receive).
+  There is nothing more you need to do if this is the case; the source code comes complete with all of its dependencies.
+- **non-vendoring:** the author does not include the `vendor` directory created by `go mod vendor`.
+  In most environments, this will work; go will fetch dependencies automatically (and cache them).
+  In the Bottlerocket build environment, this will not work.
+  The build runs in an isolated container, and there is no way for go to fetch these files at build time.
+
+For a **non-vendoring** package, the Bottlerocket package build tooling can create the vendor directories and plug them in to your tree for you.
+To do this, include:
+
+```
+bundle-modules = [ "go" ]
+```
+
+in your `[[package.metadata.build-package.external-files]]` section.
+For a package with its only go.mod at the root of the source tree, this will create a tarball
+named `bundled-tarballname.tar.gz` (where you are building from a tarball named `tarballname.tar.gz`).
+
+If you have multiple go.mod files, you can repeat the `[[package.metadata.build-package.external-files]]` once for each go.mod.
+For this more complex scenario, you need a few extra lines:
+
+```
+bundle-root-path = "libwoof-1.0.0/cmd"
+bundle-output-path = "bundled-cmd.tar.gz"
+bundle-modules = [ "go" ]
+```
+
+The `bundle-root-path` variable is the full directory name where the go.mod file resides and `bundle-output-path` sets the name of the tarball to be generated.
+
+In each case, the resulting tarballs can be applied at the root of the source tree and will create a `vendor` directory in parallel with the `go.mod`
+that generated it.
+You will include and  unpack these files in the `.spec` file.
 
 #### Dependencies
 
@@ -214,6 +251,27 @@ $ rpmspec \
   --define "_sourcedir packages/${PKG}" \
   --parse packages/${PKG}/${PKG}.spec
 ```
+
+#### go mod dependencies
+
+If you created `bundled-xxx.tar.gz` files using `Cargo.toml`, the spec file should include them as sources, and unpack them as
+part of `%prep`.
+The `Source` lines will come after the `Source0` line describing the source tarball, and look something like:
+
+```
+Source1: bundled-v0.5.0.tar.gz
+Source2: bundled-cmd.tar.gz
+```
+
+Then in `%prep` after unpacking your main tarball you would have:
+
+```
+%setup -T -D -n libwoof-1.0.0 -b 1 -q
+%setup -T -D -n libwoof-1.0.0 -b 2 -q
+```
+
+The options are `-T` do not unpack source 0 (because we already unpacked it), `-D` also do **not** delete the directory before unpacking, `-n` to
+name the build directory, `-b` to choose a source to unpack (we defined `Source1` and `Source2` above), and `-q` be quiet about it.
 
 ### Next Steps
 
