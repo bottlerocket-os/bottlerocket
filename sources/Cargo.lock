@@ -4095,16 +4095,14 @@ name = "static-pods"
 version = "0.1.0"
 dependencies = [
  "base64",
- "bottlerocket-variant",
- "constants",
  "generate-readme",
  "log",
- "models",
- "schnauzer",
+ "modeled-types",
+ "serde",
  "simplelog",
  "snafu 0.8.2",
  "tempfile",
- "tokio",
+ "toml",
 ]
 
 [[package]]
