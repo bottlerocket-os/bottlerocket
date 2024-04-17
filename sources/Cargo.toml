@@ -89,6 +89,8 @@ members = [
 
     "imdsclient",
 
+    "dogtag",
+
     "driverdog",
 
     "early-boot-config/early-boot-config",
