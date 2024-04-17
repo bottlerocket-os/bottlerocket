@@ -108,10 +108,6 @@ Requires: %{_cross_os}updog
 Requires: %{_cross_os}pluto
 %endif
 
-%if %{with k8s_runtime}
-Requires: %{_cross_os}static-pods
-%endif
-
 %if %{with aws_platform}
 Requires: %{_cross_os}shibaken
 Requires: %{_cross_os}cfsignal
@@ -241,13 +237,6 @@ Summary: Bottlerocket certificates handler
 %package -n %{_cross_os}pluto
 Summary: Dynamic setting generator for kubernetes
 %description -n %{_cross_os}pluto
-%{summary}.
-%endif
-
-%if %{with k8s_runtime}
-%package -n %{_cross_os}static-pods
-Summary: Manages user-defined K8S static pods
-%description -n %{_cross_os}static-pods
 %{summary}.
 %endif
 
@@ -384,7 +373,6 @@ echo "** Output from non-static builds:"
     -p bloodhound \
     -p xfscli \
     %{?with_aws_platform: -p shibaken} \
-    %{?with_k8s_runtime: -p static-pods} \
     %{?with_nvidia_flavor: -p driverdog} \
     %{nil}
 
@@ -418,7 +406,6 @@ for p in \
   ghostdog bootstrap-containers \
   shimpei bloodhound bottlerocket-checks \
   %{?with_aws_platform: shibaken} \
-  %{?with_k8s_runtime: static-pods} \
   %{?with_nvidia_flavor: driverdog} \
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
@@ -697,11 +684,6 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 %{_cross_bindir}/pluto
 %dir %{_cross_datadir}/eks
 %{_cross_datadir}/eks/eni-max-pods
-%endif
-
-%if %{with k8s_runtime}
-%files -n %{_cross_os}static-pods
-%{_cross_bindir}/static-pods
 %endif
 
 %files -n %{_cross_os}shimpei

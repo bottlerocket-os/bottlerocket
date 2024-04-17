@@ -1,0 +1,14 @@
+[package]
+name = "static-pods"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[lib]
+path = "../packages.rs"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+
+[dependencies]

@@ -57,8 +57,12 @@ path = "/etc/kubernetes/kubelet/credential-provider-config.yaml"
 template-path = "/usr/share/templates/credential-provider-config-yaml"
 mode = "0600"
 
+[configuration-files.static-pods-toml]
+path = "/etc/kubernetes/static-pods-manifest.toml"
+template-path = "/usr/share/templates/static-pods-toml"
+
 [services.static-pods]
-configuration-files = []
+configuration-files = ["static-pods-toml"]
 restart-commands = ["/usr/bin/static-pods"]
 
 [metadata.settings.kubernetes.static-pods]

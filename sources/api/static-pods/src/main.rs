@@ -27,7 +27,7 @@ use std::process;
 use std::str::FromStr;
 use tempfile::{NamedTempFile, TempDir};
 
-const DEFAULT_CONFIG_PATH: &str = "/etc/kubernetes/static-pods.toml";
+const DEFAULT_CONFIG_PATH: &str = "/etc/kubernetes/static-pods-manifest.toml";
 const STATIC_POD_DIR: &str = "/etc/kubernetes/static-pods";
 const ETC_KUBE_DIR: &str = "/etc/kubernetes";
 
