@@ -8,7 +8,7 @@ use crate::transport::{reader_from_stream, HttpQueryTransport, QueryParams};
 use bottlerocket_release::BottlerocketRelease;
 use chrono::Utc;
 use log::debug;
-use model::modeled_types::FriendlyVersion;
+use modeled_types::FriendlyVersion;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use signal_hook::consts::SIGTERM;

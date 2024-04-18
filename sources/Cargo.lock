@@ -4741,7 +4741,7 @@ dependencies = [
  "futures-core",
  "log",
  "lz4",
- "models",
+ "modeled-types",
  "semver",
  "serde",
  "serde_json",
