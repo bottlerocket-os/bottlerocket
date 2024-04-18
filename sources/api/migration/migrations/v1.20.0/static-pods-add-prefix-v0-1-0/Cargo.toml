@@ -1,0 +1,11 @@
+[package]
+name = "static-pods-add-prefix-v0-1-0"
+version = "0.1.0"
+authors = ["Jarrett Tierney <jmt@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+exclude = ["README.md"]
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0" }

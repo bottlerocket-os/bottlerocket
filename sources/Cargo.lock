@@ -4106,6 +4106,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "static-pods-add-prefix-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "static-pods-services-cfg-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "storewolf"
 version = "0.1.0"
 dependencies = [

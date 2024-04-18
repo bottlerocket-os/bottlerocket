@@ -5,6 +5,11 @@ edition = "2021"
 publish = false
 build = "../build.rs"
 
+[package.metadata.build-package]
+source-groups = [
+    "api/static-pods"
+]
+
 [lib]
 path = "../packages.rs"
 

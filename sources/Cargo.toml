@@ -80,6 +80,8 @@ members = [
     "api/migration/migrations/v1.20.0/update-ecs-config-path",
     "api/migration/migrations/v1.20.0/update-ecs-config-template-path",
     "api/migration/migrations/v1.20.0/add-ntp-default-options-v0-1-0",
+    "api/migration/migrations/v1.20.0/static-pods-add-prefix-v0-1-0",
+    "api/migration/migrations/v1.20.0/static-pods-services-cfg-v0-1-0",
 
     "bloodhound",
 
