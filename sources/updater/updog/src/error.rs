@@ -22,7 +22,7 @@ pub(crate) enum Error {
     #[snafu(display("Bad version string '{}' in config: {}", version_str, source))]
     BadVersionConfig {
         version_str: String,
-        source: model::modeled_types::error::Error,
+        source: modeled_types::error::Error,
     },
 
     #[snafu(display("Failed to parse config file {}: {}", path.display(), source))]
