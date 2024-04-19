@@ -14,7 +14,7 @@ use snafu::ResultExt;
 use std::{path::PathBuf, process};
 use walkdir::WalkDir;
 
-const DOGTAG_BIN_PATH: &str = "/var/bottlerocket/dogtag";
+const DOGTAG_BIN_PATH: &str = "/usr/libexec/hostname-resolvers";
 
 /// Cli defines the standard cmdline interface for all hostname handlers
 #[derive(FromArgs)]

@@ -8,6 +8,12 @@ build = "../build.rs"
 [lib]
 path = "../packages.rs"
 
+[package.metadata.build-packages]
+source-groups = [
+    "netdog",
+    "dogtag",
+]
+
 # RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }

@@ -47,12 +47,30 @@ Supplements: %{_cross_os}wicked
 %description -n %{_cross_os}netdog-wicked
 %{summary}.
 
+%package -n %{_cross_os}hostname-reverse-dns
+Summary: Reverse DNS Hostname detector
+Supplements: %{_cross_os}netdog-common
+%description -n %{_cross_os}hostname-reverse-dns
+%{summary}
+
+%package -n %{_cross_os}hostname-imds
+Summary: IMDS Hostname detector
+Supplements: %{_cross_os}netdog-common
+%description -n %{_cross_os}hostname-imds
+%{summary}
+
 %prep
 %setup -T -c
 %cargo_prep
 
 %build
 mkdir bin
+
+echo "** Build Dogtag Hostname Helpers"
+%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
+    -p dogtag \
+    --bins \
+    --target-dir=${HOME}/.cache/dogtag
 
 echo "** Build Netdog Binaries"
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
@@ -65,6 +83,10 @@ echo "** Build Netdog Binaries"
     --target-dir=${HOME}/.cache/wicked
 
 %install
+install -d %{buildroot}%{_cross_libexecdir}/hostname-resolvers
+install -p -m 0755 ${HOME}/.cache/dogtag/%{__cargo_target}/release/20-imds %{buildroot}%{_cross_libexecdir}/hostname-resolvers/20-imds
+install -p -m 0755 ${HOME}/.cache/dogtag/%{__cargo_target}/release/10-reverse-dns %{buildroot}%{_cross_libexecdir}/hostname-resolvers/10-reverse-dns
+
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 ${HOME}/.cache/networkd/%{__cargo_target}/release/netdog %{buildroot}%{_cross_bindir}/netdog-systemd-networkd
 install -p -m 0755 ${HOME}/.cache/wicked/%{__cargo_target}/release/netdog %{buildroot}%{_cross_bindir}/netdog-wicked
@@ -84,6 +106,12 @@ posix.link("%{_cross_bindir}/netdog-wicked", "%{_cross_bindir}/netdog")
 
 %post -n %{_cross_os}netdog-systemd-networkd -p <lua>
 posix.link("%{_cross_bindir}/netdog-systemd-networkd", "%{_cross_bindir}/netdog")
+
+%files -n %{_cross_os}hostname-reverse-dns
+%{_cross_libexecdir}/hostname-resolvers/10-reverse-dns
+
+%files -n %{_cross_os}hostname-imds
+%{_cross_libexecdir}/hostname-resolvers/20-imds
 
 %files -n %{_cross_os}netdog-common
 %{_cross_tmpfilesdir}/netdog.conf
