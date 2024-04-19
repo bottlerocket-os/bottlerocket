@@ -626,6 +626,7 @@ dependencies = [
  "aws-signing-helper",
  "ecr-credential-provider",
  "glibc",
+ "static-pods",
 ]
 
 [[package]]
@@ -635,6 +636,7 @@ dependencies = [
  "aws-signing-helper",
  "ecr-credential-provider",
  "glibc",
+ "static-pods",
 ]
 
 [[package]]
@@ -644,6 +646,7 @@ dependencies = [
  "aws-signing-helper",
  "ecr-credential-provider",
  "glibc",
+ "static-pods",
 ]
 
 [[package]]
@@ -653,6 +656,7 @@ dependencies = [
  "aws-signing-helper",
  "ecr-credential-provider",
  "glibc",
+ "static-pods",
 ]
 
 [[package]]
@@ -662,6 +666,7 @@ dependencies = [
  "aws-signing-helper",
  "ecr-credential-provider-1_27",
  "glibc",
+ "static-pods",
 ]
 
 [[package]]
@@ -671,6 +676,7 @@ dependencies = [
  "aws-signing-helper",
  "ecr-credential-provider-1_27",
  "glibc",
+ "static-pods",
 ]
 
 [[package]]
@@ -680,6 +686,7 @@ dependencies = [
  "aws-signing-helper",
  "ecr-credential-provider-1_29",
  "glibc",
+ "static-pods",
 ]
 
 [[package]]
@@ -689,6 +696,7 @@ dependencies = [
  "aws-signing-helper",
  "ecr-credential-provider-1_29",
  "glibc",
+ "static-pods",
 ]
 
 [[package]]
@@ -1172,6 +1180,13 @@ version = "0.1.0"
 [[package]]
 name = "shim"
 version = "0.1.0"
+
+[[package]]
+name = "static-pods"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
 
 [[package]]
 name = "strace"

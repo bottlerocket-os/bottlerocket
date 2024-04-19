@@ -69,6 +69,7 @@ Requires: %{_cross_os}containerd
 Requires: %{_cross_os}findutils
 Requires: %{_cross_os}ecr-credential-provider
 Requires: %{_cross_os}aws-signing-helper
+Requires: %{_cross_os}static-pods
 
 %description -n %{_cross_os}kubelet-1.23
 %{summary}.

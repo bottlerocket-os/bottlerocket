@@ -10,16 +10,14 @@ build = "build.rs"
 exclude = ["README.md"]
 
 [dependencies]
-constants = { path = "../../constants", version = "0.1" }
 base64 = "0.21"
 log = "0.4"
-models = { path = "../../models", version = "0.1" }
-schnauzer = { path = "../schnauzer", version = "0.1" }
+modeled-types = { path = "../../models/modeled-types", version = "0.1" }
+serde = { version = "1", features = ["default"]}
 simplelog = "0.12"
 snafu = "0.8"
-tokio = { version = "~1.32", default-features = false, features = ["macros", "rt-multi-thread", "time"] }  # LTS
+toml = "0.8"
 tempfile = "3"
 
 [build-dependencies]
-bottlerocket-variant = { version = "0.1", path = "../../bottlerocket-variant" }
 generate-readme = { version = "0.1", path = "../../generate-readme" }

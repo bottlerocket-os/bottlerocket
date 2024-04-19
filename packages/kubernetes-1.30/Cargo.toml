@@ -26,6 +26,7 @@ glibc = { path = "../glibc" }
 [dependencies]
 aws-signing-helper = { path = "../aws-signing-helper" }
 ecr-credential-provider-1_29 = { path = "../ecr-credential-provider-1.29" }
+static-pods = { path = "../static-pods" }
 # `conntrack-tools`, `containerd` and `findutils` are only needed at runtime,
 # and are pulled in by `release`.
 # conntrack-tools = { path = "../conntrack-tools" }
