@@ -1697,6 +1697,7 @@ dependencies = [
  "log",
  "snafu 0.8.2",
  "tokio",
+ "tokio-retry",
  "walkdir",
 ]
 
@@ -2804,14 +2805,11 @@ dependencies = [
 name = "netdog"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "argh",
- "bottlerocket-variant",
- "dns-lookup",
+ "dogtag",
  "envy",
  "generate-readme",
  "handlebars",
- "imdsclient",
  "indexmap 1.9.3",
  "ipnet",
  "lazy_static",
@@ -2825,7 +2823,6 @@ dependencies = [
  "systemd-derive",
  "tempfile",
  "tokio",
- "tokio-retry",
  "toml",
 ]
 

@@ -11,6 +11,7 @@ dogtag runs the resolvers in /var/bottlerocket/dogtag in reverse alphanumerical 
 use argh::FromArgs;
 use log::debug;
 use snafu::ResultExt;
+use std::net::IpAddr;
 use std::{path::PathBuf, process};
 use walkdir::WalkDir;
 
@@ -28,7 +29,7 @@ pub struct Cli {
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 /// find_hostname will utilize the helpers located in /var/bottlerocket/dogtag/ to try and discover the hostname
-pub async fn find_hostname() -> Result<String> {
+pub async fn find_hostname(ip_addr: IpAddr) -> Result<String> {
     debug!(
         "attempting to discover hostname helpers in {}",
         DOGTAG_BIN_PATH
@@ -50,6 +51,8 @@ pub async fn find_hostname() -> Result<String> {
 
     for helper in hostname_helpers.iter() {
         let output = process::Command::new(helper)
+            .arg("--ip-address")
+            .arg(ip_addr.to_string())
             .output()
             .map(Some)
             .unwrap_or(None);
