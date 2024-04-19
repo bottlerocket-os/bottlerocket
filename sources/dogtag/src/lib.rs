@@ -1,12 +1,15 @@
 /*!
-dogtag resolves the hostname of a bottlerocket server/instance. It's used to generate settings.network.hostname. To accomplish this, it uses a set of standalone binaries in /var/bottlerocket/dogtag that resolve the hostname via different methods.
+dogtag detects the hostname of a bottlerocket server/instance. It's used to generate settings.network.hostname.
+To accomplish this, it uses a set of standalone binaries in /usr/libexec/hostname-detectors that detect the hostname via different methods.
 
-Currently, bottlerocket ships with two hostname resolver binaries:
+Currently, bottlerocket ships with two hostname detector binaries:
 
 20-imds - Fetches hostname from EC2 Instance Metadata Service
 10-reverse-dns - Uses reverse DNS lookup to resolve the hostname
 
-dogtag runs the resolvers in /var/bottlerocket/dogtag in reverse alphanumerical order until one of them returns a hostname, at which point it will exit early and print the returned hostname to stdout.
+dogtag runs the detectors in /usr/libexec/hostname-detectors in reverse alphanumerical order until one of them returns a hostname,
+at which point it will exit early and print the returned hostname to stdout. If none of the detectors detect the hostname the
+ip address is returned.
  */
 use argh::FromArgs;
 use log::debug;
@@ -15,7 +18,7 @@ use std::net::IpAddr;
 use std::{path::PathBuf, process};
 use walkdir::WalkDir;
 
-const DOGTAG_BIN_PATH: &str = "/usr/libexec/hostname-resolvers";
+const DOGTAG_BIN_PATH: &str = "/usr/libexec/hostname-detectors";
 
 /// Cli defines the standard cmdline interface for all hostname handlers
 #[derive(FromArgs)]
@@ -28,10 +31,10 @@ pub struct Cli {
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
-/// find_hostname will utilize the helpers located in /var/bottlerocket/dogtag/ to try and discover the hostname
+/// find_hostname will utilize the helpers located in /usr/libexec/hostname-detectors to try and discover the hostname
 pub async fn find_hostname(ip_addr: IpAddr) -> Result<String> {
     debug!(
-        "attempting to discover hostname helpers in {}",
+        "attempting to discover hostname detectors in {}",
         DOGTAG_BIN_PATH
     );
     // We want to do reverse sort as we want to prioritize higher numbers first
@@ -64,7 +67,8 @@ pub async fn find_hostname(ip_addr: IpAddr) -> Result<String> {
             }
         }
     }
-    Err(error::Error::NoHelper {})
+    // If we fail to find a hostname return the provided ip address sanitized
+    Ok(ip_addr.to_string().replace(':', "-"))
 }
 
 pub mod error {

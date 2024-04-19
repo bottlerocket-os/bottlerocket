@@ -20,7 +20,6 @@ included-packages = [
 # core
     "release",
     "kernel-5.10",
-    "wicked",
 # docker
     "docker-cli",
     "docker-engine",

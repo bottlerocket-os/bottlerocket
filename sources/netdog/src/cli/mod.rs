@@ -289,6 +289,9 @@ mod error {
         #[snafu(display("Failed to discern primary interface"))]
         GetPrimaryInterface,
 
+        #[snafu(display("Failed to detect hostname: {}", source))]
+        HostnameDetection { source: dogtag::error::Error },
+
         #[snafu(display("Failed to write hostname to '{}': {}", path.display(), source))]
         HostnameWriteFailed { path: PathBuf, source: io::Error },
 

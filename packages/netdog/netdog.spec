@@ -2,13 +2,13 @@
 %undefine _debugsource_packages
 
 Name: %{_cross_os}netdog
-Version: 0.1.0
+Version: 0.1.1
 Release: 0%{?dist}
 Summary: Bottlerocket network configuration helper
 License: Apache-2.0 OR MIT
 URL: https://github.com/bottlerocket-os/bottlerocket
 
-Source2: netdog-tmpfiles.conf
+Source0: netdog-tmpfiles.conf
 
 Source10: run-netdog.mount
 Source11: write-network-status.service
@@ -18,44 +18,38 @@ Source13: disable-udp-offload.service
 Source20: 00-resolved.conf
 
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}netdog
+Requires: %{_cross_os}hostname-reverse-dns
+Requires: (%{_cross_os}hostname-imds if %{_cross_os}variant-platform(aws))
+Requires: (%{_cross_os}netdog-systemd-networkd if %{_cross_os}image-feature(systemd-networkd))
+Requires: (%{_cross_os}netdog-wicked if %{_cross_os}image-feature(no-systemd-networkd))
 
 %description
 %{summary}.
 
-%package -n %{_cross_os}netdog-common
-Summary: Common configuration for Bottlerocket's network configuration helper
-%description -n %{_cross_os}netdog-common
-%{summary}.
-
-%package -n %{_cross_os}netdog-systemd-networkd
+%package systemd-networkd
 Summary: Bottlerocket network configuration helper
-Provides: %{_cross_os}netdog = 2:
-Requires: %{_cross_os}netdog-common
+Requires: %{name}
 Requires: %{_cross_os}systemd-networkd
 Requires: %{_cross_os}systemd-resolved
-Supplements: %{_cross_os}systemd-networkd
+Conflicts: (%{_cross_os}netdog-wicked or %{_cross_os}image-feature(no-systemd-networkd))
 %description -n %{_cross_os}netdog-systemd-networkd
 %{summary}.
 
-%package -n %{_cross_os}netdog-wicked
+%package wicked
 Summary: Bottlerocket network configuration helper
-Provides: %{_cross_os}netdog = 1:
-Requires: %{_cross_os}netdog-common
+Requires: %{name}
 Requires: %{_cross_os}wicked
-Supplements: %{_cross_os}wicked
+Conflicts: (%{_cross_os}netdog-systemd-networkd or %{_cross_os}image-feature(systemd-networkd))
 %description -n %{_cross_os}netdog-wicked
 %{summary}.
 
 %package -n %{_cross_os}hostname-reverse-dns
 Summary: Reverse DNS Hostname detector
-Supplements: %{_cross_os}netdog-common
 %description -n %{_cross_os}hostname-reverse-dns
 %{summary}
 
 %package -n %{_cross_os}hostname-imds
 Summary: IMDS Hostname detector
-Supplements: %{_cross_os}netdog-common
 %description -n %{_cross_os}hostname-imds
 %{summary}
 
@@ -66,7 +60,7 @@ Supplements: %{_cross_os}netdog-common
 %build
 mkdir bin
 
-echo "** Build Dogtag Hostname Helpers"
+echo "** Build Dogtag Hostname Detectors"
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
     -p dogtag \
     --bins \
@@ -83,16 +77,16 @@ echo "** Build Netdog Binaries"
     --target-dir=${HOME}/.cache/wicked
 
 %install
-install -d %{buildroot}%{_cross_libexecdir}/hostname-resolvers
-install -p -m 0755 ${HOME}/.cache/dogtag/%{__cargo_target}/release/20-imds %{buildroot}%{_cross_libexecdir}/hostname-resolvers/20-imds
-install -p -m 0755 ${HOME}/.cache/dogtag/%{__cargo_target}/release/10-reverse-dns %{buildroot}%{_cross_libexecdir}/hostname-resolvers/10-reverse-dns
+install -d %{buildroot}%{_cross_libexecdir}/hostname-detectors
+install -p -m 0755 ${HOME}/.cache/dogtag/%{__cargo_target}/release/20-imds %{buildroot}%{_cross_libexecdir}/hostname-detectors/20-imds
+install -p -m 0755 ${HOME}/.cache/dogtag/%{__cargo_target}/release/10-reverse-dns %{buildroot}%{_cross_libexecdir}/hostname-detectors/10-reverse-dns
 
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 ${HOME}/.cache/networkd/%{__cargo_target}/release/netdog %{buildroot}%{_cross_bindir}/netdog-systemd-networkd
 install -p -m 0755 ${HOME}/.cache/wicked/%{__cargo_target}/release/netdog %{buildroot}%{_cross_bindir}/netdog-wicked
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
-install -p -m 0644 %{S:2} %{buildroot}%{_cross_tmpfilesdir}/netdog.conf
+install -p -m 0644 %{S:0} %{buildroot}%{_cross_tmpfilesdir}/netdog.conf
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:10} %{S:11} %{S:12} %{S:13} %{buildroot}%{_cross_unitdir}
@@ -101,29 +95,29 @@ install -d %{buildroot}%{_cross_libdir}
 install -d %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
 install -p -m 0644 %{S:20} %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
 
-%post -n %{_cross_os}netdog-wicked -p <lua>
-posix.link("%{_cross_bindir}/netdog-wicked", "%{_cross_bindir}/netdog")
+%post wicked -p <lua>
+posix.symlink("netdog-wicked", "%{_cross_bindir}/netdog")
 
-%post -n %{_cross_os}netdog-systemd-networkd -p <lua>
-posix.link("%{_cross_bindir}/netdog-systemd-networkd", "%{_cross_bindir}/netdog")
+%post systemd-networkd -p <lua>
+posix.symlink("netdog-systemd-networkd", "%{_cross_bindir}/netdog")
 
-%files -n %{_cross_os}hostname-reverse-dns
-%{_cross_libexecdir}/hostname-resolvers/10-reverse-dns
-
-%files -n %{_cross_os}hostname-imds
-%{_cross_libexecdir}/hostname-resolvers/20-imds
-
-%files -n %{_cross_os}netdog-common
+%files
 %{_cross_tmpfilesdir}/netdog.conf
 %{_cross_unitdir}/generate-network-config.service
 %{_cross_unitdir}/disable-udp-offload.service
 %{_cross_unitdir}/run-netdog.mount
 
-%files -n %{_cross_os}netdog-systemd-networkd
+%files -n %{_cross_os}hostname-reverse-dns
+%{_cross_libexecdir}/hostname-detectors/10-reverse-dns
+
+%files -n %{_cross_os}hostname-imds
+%{_cross_libexecdir}/hostname-detectors/20-imds
+
+%files systemd-networkd
 %{_cross_bindir}/netdog-systemd-networkd
 %{_cross_unitdir}/write-network-status.service
 %dir %{_cross_libdir}/systemd/resolved.conf.d
 %{_cross_libdir}/systemd/resolved.conf.d/00-resolved.conf
 
-%files -n %{_cross_os}netdog-wicked
+%files wicked
 %{_cross_bindir}/netdog-wicked

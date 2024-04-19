@@ -17,3 +17,7 @@ source-groups = [
 # RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
+
+[dependencies]
+wicked = { path = "../wicked" }
+systemd = { path = "../systemd" }

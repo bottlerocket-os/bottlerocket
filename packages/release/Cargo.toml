@@ -48,5 +48,4 @@ selinux-policy = { path = "../selinux-policy" }
 shim = { path = "../shim" }
 systemd = { path = "../systemd" }
 util-linux = { path = "../util-linux" }
-wicked = { path = "../wicked" }
 xfsprogs = { path = "../xfsprogs" }

@@ -32,7 +32,6 @@ included-packages = [
     "linux-firmware",
     "kubelet-1.26",
     "release",
-    "wicked",
 ]
 
 [lib]

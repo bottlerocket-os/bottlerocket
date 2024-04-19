@@ -507,8 +507,6 @@ install -p -m 0644 \
   %{S:113} %{S:114} %{S:119} %{S:122} \
   %{buildroot}%{_cross_unitdir}
 
-
-
 %if %{with nvidia_flavor}
 sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:115} > link-kernel-modules.service
 sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:116} > load-kernel-modules.service
@@ -532,7 +530,6 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
 install -p -m 0644 %{S:202} %{buildroot}%{_cross_tmpfilesdir}/thar-be-updates.conf
 install -p -m 0644 %{S:203} %{buildroot}%{_cross_tmpfilesdir}/bootstrap-containers.conf
-
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-storage.rules
