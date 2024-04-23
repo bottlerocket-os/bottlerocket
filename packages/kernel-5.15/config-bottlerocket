@@ -204,3 +204,6 @@ CONFIG_MLXFW=m
 # CONFIG_MLX5_IPSEC is not set
 # CONFIG_MLX5_CORE_IPOIB is not set
 # CONFIG_MLX5_SF is not set
+
+# Support filesystem encryption for ext4
+CONFIG_FS_ENCRYPTION=y
