@@ -48,9 +48,9 @@ Patch0010: 0010-linux-firmware-amd-ucode-Remove-amd-microcode.patch
 mkdir -p %{buildroot}/%{fwdir}
 mkdir -p %{buildroot}/%{fwdir}/updates
 
-# Use xz compression for firmware files to reduce size on disk. This relies on
-# kernel support through FW_LOADER_COMPRESS (and FW_LOADER_COMPRESS_XZ for kernels >=5.19)
-make DESTDIR=%{buildroot}/ FIRMWAREDIR=%{fwdir} install-xz
+# Use zstd compression for firmware files to reduce size on disk. This relies on
+# kernel support through FW_LOADER_COMPRESS (and FW_LOADER_COMPRESS_ZSTD for kernels >=5.19)
+make DESTDIR=%{buildroot}/ FIRMWAREDIR=%{fwdir} install-zst
 
 %files
 %dir %{fwdir}
