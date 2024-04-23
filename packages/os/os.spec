@@ -26,17 +26,16 @@ Source7: host-ctr-toml
 Source8: oci-default-hooks-json
 Source9: cfsignal-toml
 Source10: warm-pool-wait-toml
-Source11: cis-checks-bottlerocket-metadata-json
+Source11: bottlerocket-cis-checks-metadata-json
 Source12: 00-resolved.conf
-%if %{with k8s_runtime}
-Source13: cis-checks-k8s-metadata-json
-%endif
+Source13: kubernetes-cis-checks-metadata-json
 Source14: certdog-toml
 Source15: prairiedog-toml
 Source16: thar-be-updates-toml
 Source17: corndog-toml
 Source18: bootstrap-containers-toml
 Source19: host-containers-toml
+Source20: bottlerocket-fips-checks-metadata-json
 
 # 1xx sources: systemd units
 Source100: apiserver.service
@@ -273,7 +272,21 @@ Summary: Manages bootstrap-containers
 
 %package -n %{_cross_os}bloodhound
 Summary: Compliance check framework
+Requires: (%{_cross_os}bloodhound-k8s if %{_cross_os}variant-runtime(k8s))
+Requires: (%{_cross_os}bloodhound-fips if %{_cross_os}image-feature(fips))
 %description -n %{_cross_os}bloodhound
+%{summary}.
+
+%package -n %{_cross_os}bloodhound-k8s
+Summary: Compliance checks for Kubernetes
+Requires: (%{_cross_os}bloodhound and %{_cross_os}variant-runtime(k8s))
+%description -n %{_cross_os}bloodhound-k8s
+%{summary}.
+
+%package -n %{_cross_os}bloodhound-fips
+Summary: Compliance checks for FIPS
+Requires: (%{_cross_os}bloodhound and %{_cross_os}image-feature(fips))
+%description -n %{_cross_os}bloodhound-fips
 %{summary}.
 
 %package -n %{_cross_os}xfscli
@@ -404,7 +417,10 @@ for p in \
   migrator prairiedog certdog \
   signpost updog metricdog logdog \
   ghostdog bootstrap-containers \
-  shimpei bloodhound bottlerocket-checks \
+  shimpei bloodhound \
+  bottlerocket-cis-checks \
+  bottlerocket-fips-checks \
+  kubernetes-cis-checks \
   %{?with_aws_platform: shibaken} \
   %{?with_nvidia_flavor: driverdog} \
 ; do
@@ -420,9 +436,6 @@ for p in \
 done
 %endif
 
-%if %{with k8s_runtime}
-install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/kubernetes-checks %{buildroot}%{_cross_bindir}
-%endif
 install -d %{buildroot}%{_cross_sbindir}
 for p in \
   xfs_admin xfs_info \
@@ -441,12 +454,21 @@ for p in \
   br03020300 br03020400 br03020500 br03020600 br03020700 br03030100 \
   br03040101 br03040102 br03040201 br03040202 br04010101 br04010200 \
 ; do
-  ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-checks %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
+  ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-cis-checks \
+    %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/${p}
 done
 install -m 0644 %{S:11} %{buildroot}%{_cross_libexecdir}/cis-checks/bottlerocket/metadata.json
 
+mkdir -p %{buildroot}%{_cross_libexecdir}/fips-checks/bottlerocket
+for p in \
+  fips01000000 fips01010000 fips01020000 fips01030000 \
+; do
+  ln -rs %{buildroot}%{_cross_bindir}/bottlerocket-fips-checks \
+    %{buildroot}%{_cross_libexecdir}/fips-checks/bottlerocket/${p}
+done
+install -m 0644 %{S:20} %{buildroot}%{_cross_libexecdir}/fips-checks/bottlerocket/metadata.json
+
 # Only add the k8s checks if it is a k8s variant
-%if %{with k8s_runtime}
 mkdir -p %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes
 for p in \
   k8s04010300 k8s04010400 k8s04020700 k8s04020800 \
@@ -455,10 +477,10 @@ for p in \
   k8s04020300 k8s04020400 k8s04020500 k8s04020600 k8s04020900 \
   k8s04021000 k8s04021100 k8s04021200 k8s04021300 \
 ; do
-  ln -rs %{buildroot}%{_cross_bindir}/kubernetes-checks %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/${p}
+  ln -rs %{buildroot}%{_cross_bindir}/kubernetes-cis-checks \
+    %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/${p}
 done
 install -m 0644 %{S:13} %{buildroot}%{_cross_libexecdir}/cis-checks/kubernetes/metadata.json
-%endif
 
 for p in apiclient ; do
   install -p -m 0755 ${HOME}/.cache/.static/%{__cargo_target_static}/release/${p} %{buildroot}%{_cross_bindir}
@@ -707,17 +729,20 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 
 %files -n %{_cross_os}bloodhound
 %{_cross_bindir}/bloodhound
-%{_cross_bindir}/bottlerocket-checks
+%{_cross_bindir}/bottlerocket-cis-checks
 %{_cross_libexecdir}/cis-checks/bottlerocket
+
+%files -n %{_cross_os}bloodhound-k8s
+%{_cross_bindir}/kubernetes-cis-checks
+%{_cross_libexecdir}/cis-checks/kubernetes
+
+%files -n %{_cross_os}bloodhound-fips
+%{_cross_bindir}/bottlerocket-fips-checks
+%{_cross_libexecdir}/fips-checks/bottlerocket
 
 %files -n %{_cross_os}xfscli
 %{_cross_sbindir}/xfs_admin
 %{_cross_sbindir}/xfs_info
 %{_cross_sbindir}/fsck.xfs
-
-%if %{with k8s_runtime}
-%{_cross_bindir}/kubernetes-checks
-%{_cross_libexecdir}/cis-checks/kubernetes
-%endif
 
 %changelog
