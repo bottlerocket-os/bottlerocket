@@ -207,3 +207,4 @@ CONFIG_MLXFW=m
 
 # Support filesystem encryption for ext4
 CONFIG_FS_ENCRYPTION=y
+CONFIG_FS_ENCRYPTION_INLINE_CRYPT=y
