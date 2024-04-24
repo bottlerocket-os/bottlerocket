@@ -282,7 +282,11 @@ version = "1.20.0"
     "migrate_v1.19.3_public-control-container-v0-7-10.lz4",
 ]
 "(1.19.3, 1.19.4)" = []
-"(1.19.4, 1.20.0)" = [
+"(1.19.4, 1.19.5)" = [
+    "migrate_v1.19.5_aws-control-container-v0-7-11.lz4",
+    "migrate_v1.19.5_public-control-container-v0-7-11.lz4",
+]
+"(1.19.5, 1.20.0)" = [
     "migrate_v1.20.0_prairiedog-config-file-v0-1-0.lz4",
     "migrate_v1.20.0_prairiedog-services-cfg-v0-1-0.lz4",
     "migrate_v1.20.0_thar-be-updates-config-file-v0-1-0.lz4",
