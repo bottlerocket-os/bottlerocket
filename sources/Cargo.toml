@@ -13,7 +13,6 @@ members = [
     "api/schnauzer",
     "api/pluto",
     "api/host-containers",
-    "api/static-pods",
     "api/storewolf",
     "api/thar-be-settings",
     "api/thar-be-updates",
@@ -124,6 +123,8 @@ members = [
     "settings-extensions/motd",
     "settings-extensions/ntp",
     "settings-extensions/updates",
+
+    "static-pods",
 
     "parse-datetime",
 

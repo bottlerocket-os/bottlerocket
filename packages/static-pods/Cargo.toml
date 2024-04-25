@@ -7,7 +7,7 @@ build = "../build.rs"
 
 [package.metadata.build-package]
 source-groups = [
-    "api/static-pods"
+    "static-pods"
 ]
 
 [lib]
