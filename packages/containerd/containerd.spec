@@ -55,6 +55,26 @@ Requires: (%{_cross_os}image-feature(fips) and %{name})
 Conflicts: (%{_cross_os}image-feature(no-fips) or %{name}-bin)
 
 %description fips-bin
+
+%package basic
+Summary: Basic containerd configuration
+Requires: %{name}
+
+%description basic
+%{summary}.
+
+%package cri
+Summary: Containerd configuration for CRI
+Requires: %{name}
+
+%description cri
+%{summary}.
+
+%package cri-nvidia
+Summary: Containerd configuration for CRI-nvidia
+Requires: %{name}
+
+%description cri-nvidia
 %{summary}.
 
 %prep
@@ -109,6 +129,15 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
+%post basic -p <lua>
+posix.symlink("containerd-config-toml_basic", "%{_cross_templatedir}/containerd-config")
+
+%post cri -p <lua>
+posix.symlink("containerd-config-toml_k8s_containerd_sock", "%{_cross_templatedir}/containerd-config")
+
+%post cri-nvidia -p <lua>
+posix.symlink("containerd-config-toml_k8s_nvidia_containerd_sock", "%{_cross_templatedir}/containerd-config")
+
 %files
 %license LICENSE NOTICE
 %{_cross_attribution_file}
@@ -117,7 +146,6 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 %{_cross_unitdir}/etc-containerd.mount
 %{_cross_unitdir}/prepare-var-lib-containerd.service
 %dir %{_cross_factorydir}%{_cross_sysconfdir}/containerd
-%{_cross_templatedir}/containerd-config-toml*
 %{_cross_templatedir}/containerd-cri-base-json
 %{_cross_tmpfilesdir}/containerd.conf
 
@@ -134,5 +162,14 @@ install -p -m 0644 %{S:5} %{buildroot}%{_cross_tmpfilesdir}/containerd.conf
 %{_cross_fips_bindir}/containerd-shim-runc-v1
 %{_cross_fips_bindir}/containerd-shim-runc-v2
 %{_cross_fips_bindir}/ctr
+
+%files basic
+%{_cross_templatedir}/containerd-config-toml_basic
+
+%files cri
+%{_cross_templatedir}/containerd-config-toml_k8s_containerd_sock
+
+%files cri-nvidia
+%{_cross_templatedir}/containerd-config-toml_k8s_nvidia_containerd_sock
 
 %changelog

@@ -20,6 +20,7 @@ included-packages = [
     "kernel-5.15",
     "kubelet-1.24",
     "release",
+    "containerd-cri",
 ]
 kernel-parameters = [
     "console=tty0",

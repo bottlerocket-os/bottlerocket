@@ -40,6 +40,8 @@ included-packages = [
     "kubelet-1.28",
     # vmware
     "open-vm-tools",
+     # containerd
+    "containerd-cri",
 ]
 
 [lib]

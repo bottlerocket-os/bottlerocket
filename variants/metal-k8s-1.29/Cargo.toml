@@ -36,6 +36,7 @@ included-packages = [
     "cni",
     "cni-plugins",
     "kubelet-1.29",
+    "containerd-cri",
 ]
 
 [lib]

@@ -25,6 +25,8 @@ included-packages = [
     "docker-init",
 # ecs
     "ecs-agent-config",
+# containerd
+    "containerd-basic",
 ]
 kernel-parameters = [
     "console=tty0",
