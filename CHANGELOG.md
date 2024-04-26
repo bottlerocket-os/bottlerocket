@@ -1,3 +1,26 @@
+# v1.19.5 (2024-05-01)
+
+## OS Changes
+* Update kernel to 5.10.214, 5.15.153, 6.1.84 [#3906]
+* Update third party packages ([#3910], [#3914])
+* Update host containers (#[3911])
+
+## Orchestrator Changes
+
+### Kubernetes
+* Provide runtime cgroup to kubelet ([#3804]) 
+ 
+## Build Changes
+* Update twoliter to v0.1.1 ([#3880], [#3900]) 
+
+[#3804]: https://github.com/bottlerocket-os/bottlerocket/pull/3804
+[#3880]: https://github.com/bottlerocket-os/bottlerocket/pull/3880
+[#3900]: https://github.com/bottlerocket-os/bottlerocket/pull/3900
+[#3906]: https://github.com/bottlerocket-os/bottlerocket/pull/3906
+[#3910]: https://github.com/bottlerocket-os/bottlerocket/pull/3910
+[#3911]: https://github.com/bottlerocket-os/bottlerocket/pull/3911
+[#3914]: https://github.com/bottlerocket-os/bottlerocket/pull/3914
+
 # v1.19.4 (2024-04-06)
 
 ## OS Changes

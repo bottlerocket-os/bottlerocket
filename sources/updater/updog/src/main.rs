@@ -67,7 +67,7 @@ struct Config {
     // mode: Option<{Automatic, Managed, Disabled}>
 }
 
-/// Prints a more specific message before exiting through usage().
+/// Prints a more specific message before exiting through `usage()`.
 fn usage_msg<S: AsRef<str>>(msg: S) -> ! {
     eprintln!("{}\n", msg.as_ref());
     usage();
@@ -248,6 +248,7 @@ async fn write_target_to_disk<P: AsRef<Path>>(
         let mut f = std::fs::OpenOptions::new()
             .write(true)
             .create(true)
+            .truncate(true)
             .open(&disk_path)
             .context(error::OpenPartitionSnafu { path: disk_path })?;
         std::io::copy(&mut reader, &mut f).context(error::WriteUpdateSnafu)?;

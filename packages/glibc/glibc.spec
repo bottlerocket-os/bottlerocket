@@ -63,6 +63,32 @@ Patch0041: 0041-libio-Check-remaining-buffer-size-in-_IO_wdo_write-b.patch
 Patch0042: 0042-syslog-Fix-heap-buffer-overflow-in-__vsyslog_interna.patch
 Patch0043: 0043-syslog-Fix-heap-buffer-overflow-in-__vsyslog_interna.patch
 Patch0044: 0044-syslog-Fix-integer-overflow-in-__vsyslog_internal-CV.patch
+Patch0045: 0045-x86_64-Optimize-ffsll-function-code-size.patch
+Patch0046: 0046-S390-Fix-building-with-disable-mutli-arch-BZ-31196.patch
+Patch0047: 0047-sparc-Fix-broken-memset-for-sparc32-BZ-31068.patch
+Patch0048: 0048-sparc64-Remove-unwind-information-from-signal-return.patch
+Patch0049: 0049-sparc-Fix-sparc64-memmove-length-comparison-BZ-31266.patch
+Patch0050: 0050-sparc-Remove-unwind-information-from-signal-return-s.patch
+Patch0051: 0051-arm-Remove-wrong-ldr-from-_dl_start_user-BZ-31339.patch
+Patch0052: 0052-malloc-Use-__get_nprocs-on-arena_get2-BZ-30945.patch
+Patch0053: 0053-S390-Do-not-clobber-r7-in-clone-BZ-31402.patch
+Patch0054: 0054-linux-Use-rseq-area-unconditionally-in-sched_getcpu-.patch
+Patch0055: 0055-LoongArch-Correct-__ieee754-_-_scalb-__ieee754-_-_sc.patch
+Patch0056: 0056-Add-HWCAP2_MOPS-from-Linux-6.5-to-AArch64-bits-hwcap.patch
+Patch0057: 0057-AArch64-Add-support-for-MOPS-memcpy-memmove-memset.patch
+Patch0058: 0058-AArch64-Cleanup-ifuncs.patch
+Patch0059: 0059-AArch64-Cleanup-emag-memset.patch
+Patch0060: 0060-AArch64-Add-memset_zva64.patch
+Patch0061: 0061-AArch64-Remove-Falkor-memcpy.patch
+Patch0062: 0062-aarch64-correct-CFI-in-rawmemchr-bug-31113.patch
+Patch0063: 0063-aarch64-fix-check-for-SVE-support-in-assembler.patch
+Patch0064: 0064-AArch64-Check-kernel-version-for-SVE-ifuncs.patch
+Patch0065: 0065-powerpc-Fix-ld.so-address-determination-for-PCREL-mo.patch
+Patch0066: 0066-iconv-ISO-2022-CN-EXT-fix-out-of-bound-writes-when-w.patch
+Patch0067: 0067-sparc-Remove-64-bit-check-on-sparc32-wordsize-BZ-275.patch
+Patch0068: 0068-login-Check-default-sizes-of-structs-utmp-utmpx-last.patch
+Patch0069: 0069-login-structs-utmp-utmpx-lastlog-_TIME_BITS-independ.patch
+Patch0070: 0070-nptl-Fix-tst-cancel30-on-kernels-without-ppoll_time6.patch
 
 # Fedora patches
 Patch1001: glibc-cs-path.patch
