@@ -1,0 +1,13 @@
+[package]
+name = "update-containerd-config-template-path"
+version = "0.1.0"
+edition = "2021"
+authors = ["Shikha Vyaghra <vyaghras@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+publish = false
+exclude = ["README.md"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0" }
