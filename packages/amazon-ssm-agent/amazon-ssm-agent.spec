@@ -25,14 +25,15 @@ BuildRequires: %{_cross_os}glibc-devel
 %setup -n %{gorepo}-%{version}
 
 %build
-%set_cross_go_flags
+%set_cross_go_flags_static
 
-# Set CGO_ENABLED=0 to statically link binaries that will be bind-mounted by the ECS agent
-CGO_ENABLED=0 go build ${GOFLAGS} -installsuffix cgo -a -ldflags "-s" -o amazon-ssm-agent \
+go build -ldflags "${GOLDFLAGS}" -o amazon-ssm-agent \
   ./core/agent.go ./core/agent_unix.go ./core/agent_parser.go
-CGO_ENABLED=0 go build ${GOFLAGS} -installsuffix cgo -a -ldflags "-s" -o ssm-agent-worker \
+
+go build -ldflags "${GOLDFLAGS}" -o ssm-agent-worker \
   ./agent/agent.go ./agent/agent_unix.go ./agent/agent_parser.go
-CGO_ENABLED=0 go build ${GOFLAGS} -installsuffix cgo -a -ldflags "-s" -o ssm-session-worker \
+
+go build -ldflags "${GOLDFLAGS}" -o ssm-session-worker \
   ./agent/framework/processor/executer/outofproc/sessionworker/main.go
 
 %install
