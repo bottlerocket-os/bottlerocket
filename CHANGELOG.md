@@ -12,7 +12,7 @@
  
 ## Build Changes
 * Update twoliter to v0.1.1 ([#3880], [#3900]) 
-* Update ecs-gpu-init and amazon-ssm-agent builds for new SDK ([#3920], [#3921])
+* Update ecs-gpu-init, amazon-ssm-agent, and nvidia-k8s-device-plugin builds for new SDK ([#3920], [#3921], [#3924])
 
 [#3804]: https://github.com/bottlerocket-os/bottlerocket/pull/3804
 [#3880]: https://github.com/bottlerocket-os/bottlerocket/pull/3880
@@ -23,6 +23,7 @@
 [#3914]: https://github.com/bottlerocket-os/bottlerocket/pull/3914
 [#3920]: https://github.com/bottlerocket-os/bottlerocket/pull/3920
 [#3921]: https://github.com/bottlerocket-os/bottlerocket/pull/3921
+[#3924]: https://github.com/bottlerocket-os/bottlerocket/pull/3924
 
 # v1.19.4 (2024-04-06)
 
