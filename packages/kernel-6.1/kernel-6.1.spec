@@ -16,6 +16,11 @@ Source200: check-fips-modules.drop-in.conf.in
 Source201: fipsmodules-x86_64
 Source202: fipsmodules-aarch64
 
+# Bootconfig snippets to adjust the default kernel command line for the platform.
+Source300: bootconfig-aws.conf
+Source301: bootconfig-vmware.conf
+Source302: bootconfig-metal.conf
+
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
 # Expose tools/* targets for out-of-tree module builds.
@@ -46,6 +51,11 @@ Requires: %{_cross_os}microcode-licenses
 Requires: %{name}-modules = %{version}-%{release}
 Requires: %{name}-devel = %{version}-%{release}
 
+# Pull in platform-dependent boot config snippets.
+Requires: (%{name}-bootconfig-aws if %{_cross_os}variant-platform(aws))
+Requires: (%{name}-bootconfig-vmware if %{_cross_os}variant-platform(vmware))
+Requires: (%{name}-bootconfig-metal if %{_cross_os}variant-platform(vmware))
+
 # Pull in platform-dependent modules.
 Requires: (%{name}-modules-metal if %{_cross_os}variant-platform(metal))
 
@@ -68,6 +78,24 @@ Summary: Configured Linux kernel source for module building
 Summary: Archived Linux kernel source for module building
 
 %description archive
+%{summary}.
+
+%package bootconfig-aws
+Summary: Boot config snippet for the Linux kernel on AWS
+
+%description bootconfig-aws
+%{summary}.
+
+%package bootconfig-vmware
+Summary: Boot config snippet for the Linux kernel on VMware
+
+%description bootconfig-vmware
+%{summary}.
+
+%package bootconfig-metal
+Summary: Boot config snippet for the Linux kernel on bare metal
+
+%description bootconfig-metal
 %{summary}.
 
 %package modules
@@ -272,6 +300,12 @@ for fipsmod in $(cat %{_sourcedir}/fipsmodules-%{_cross_arch}) ; do
   (( i+=1 ))
 done
 
+# Install platform-specific bootconfig snippets.
+install -d %{buildroot}%{_cross_bootconfigdir}
+install -p -m 0644 %{S:300} %{buildroot}%{_cross_bootconfigdir}/05-aws.conf
+install -p -m 0644 %{S:301} %{buildroot}%{_cross_bootconfigdir}/05-vmware.conf
+install -p -m 0644 %{S:302} %{buildroot}%{_cross_bootconfigdir}/05-metal.conf
+
 %files
 %license COPYING LICENSES/preferred/GPL-2.0 LICENSES/exceptions/Linux-syscall-note
 %{_cross_attribution_file}
@@ -313,6 +347,15 @@ done
 
 %files fips
 %{_cross_unitdir}/check-fips-modules.service.d/*.conf
+
+%files bootconfig-aws
+%{_cross_bootconfigdir}/05-aws.conf
+
+%files bootconfig-vmware
+%{_cross_bootconfigdir}/05-vmware.conf
+
+%files bootconfig-metal
+%{_cross_bootconfigdir}/05-metal.conf
 
 %files modules
 %dir %{_cross_libdir}/modules
