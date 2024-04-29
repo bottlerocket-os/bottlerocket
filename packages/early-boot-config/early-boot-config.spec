@@ -2,7 +2,7 @@
 %undefine _debugsource_packages
 
 Name: %{_cross_os}early-boot-config
-Version: 0.0
+Version: 0.1
 Release: 0%{?dist}
 Summary: early-boot-config
 License: Apache-2.0 OR MIT

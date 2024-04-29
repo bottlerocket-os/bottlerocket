@@ -40,12 +40,12 @@ sha512 = "66bcd6602e974e237c083fafc24e68b88a0010db1e2fe30c1ea41ef3c112d94c639ae8
 # RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
-static-pods = { path = "../static-pods" }
 
 # RPM Requires
 [dependencies]
 aws-signing-helper = { path = "../aws-signing-helper" }
 ecr-credential-provider = { path = "../ecr-credential-provider" }
+static-pods = { path = "../static-pods" }
 # `conntrack-tools`, `containerd` and `findutils` are only needed at runtime,
 # and are pulled in by `release`.
 # conntrack-tools = { path = "../conntrack-tools" }
