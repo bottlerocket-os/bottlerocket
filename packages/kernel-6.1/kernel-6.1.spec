@@ -13,6 +13,12 @@ Source101: config-bottlerocket-aws
 Source102: config-bottlerocket-metal
 Source103: config-bottlerocket-vmware
 
+# This list of FIPS modules is extracted from /etc/fipsmodules in the initramfs
+# after placing AL2023 in FIPS mode.
+Source200: check-fips-modules.drop-in.conf.in
+Source201: fipsmodules-x86_64
+Source202: fipsmodules-aarch64
+
 # Help out-of-tree module builds run `make prepare` automatically.
 Patch1001: 1001-Makefile-add-prepare-target-for-external-modules.patch
 # Expose tools/* targets for out-of-tree module builds.
@@ -43,6 +49,9 @@ Requires: %{_cross_os}microcode-licenses
 Requires: %{name}-modules = %{version}-%{release}
 Requires: %{name}-devel = %{version}-%{release}
 
+# Pull in FIPS-related files if needed.
+Requires: (%{name}-fips if %{_cross_os}image-feature(fips))
+
 %global kernel_sourcedir %{_cross_usrsrc}/kernels
 %global kernel_libdir %{_cross_libdir}/modules/%{version}
 
@@ -71,6 +80,14 @@ Summary: Modules for the Linux kernel
 Summary: Header files for the Linux kernel for use by glibc
 
 %description headers
+%{summary}.
+
+%package fips
+Summary: FIPS related configuration for the Linux kernel
+Requires: (%{_cross_os}image-feature(fips) and %{name})
+Conflicts: %{_cross_os}image-feature(no-fips)
+
+%description fips
 %{summary}.
 
 %prep
@@ -233,6 +250,20 @@ rm -f %{buildroot}%{kernel_libdir}/build %{buildroot}%{kernel_libdir}/source
 ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/build
 ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/source
 
+# Ensure that each required FIPS module is loaded as a dependency of the
+# check-fips-module.service. The list of FIPS modules is different across
+# kernels but the check is consistent: it loads the "tcrypt" module after
+# the other modules are loaded.
+mkdir -p %{buildroot}%{_cross_unitdir}/check-fips-modules.service.d
+i=0
+for fipsmod in $(cat %{_sourcedir}/fipsmodules-%{_cross_arch}) ; do
+  [ "${fipsmod}" == "tcrypt" ] && continue
+  drop_in="$(printf "%03d\n" "${i}")-${fipsmod}.conf"
+  sed -e "s|__FIPS_MODULE__|${fipsmod}|g" %{S:200} \
+    > %{buildroot}%{_cross_unitdir}/check-fips-modules.service.d/"${drop_in}"
+  (( i+=1 ))
+done
+
 %files
 %license COPYING LICENSES/preferred/GPL-2.0 LICENSES/exceptions/Linux-syscall-note
 %{_cross_attribution_file}
@@ -273,5 +304,8 @@ ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{kernel_libdir}/source
 
 %files archive
 %{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
+
+%files fips
+%{_cross_unitdir}/check-fips-modules.service.d/*.conf
 
 %changelog

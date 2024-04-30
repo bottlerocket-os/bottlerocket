@@ -1,0 +1,3 @@
+[Unit]
+Requires=fips-modprobe@__FIPS_MODULE__.service
+After=fips-modprobe@__FIPS_MODULE__.service

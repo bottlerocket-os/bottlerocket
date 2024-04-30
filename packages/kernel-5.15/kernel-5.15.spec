@@ -37,6 +37,9 @@ Requires: %{_cross_os}microcode-licenses
 Requires: %{name}-modules = %{version}-%{release}
 Requires: %{name}-devel = %{version}-%{release}
 
+# The 5.15 kernel is not FIPS certified.
+Conflicts: %{_cross_os}image-feature(fips)
+
 %global kernel_sourcedir %{_cross_usrsrc}/kernels
 %global kernel_libdir %{_cross_libdir}/modules/%{version}
 

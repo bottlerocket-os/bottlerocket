@@ -2,8 +2,7 @@
 Description=Prepare Boot Directory (/boot)
 RefuseManualStart=true
 RefuseManualStop=true
-After=mark-successful-boot.service
-Requires=mark-successful-boot.service
+DefaultDependencies=no
 
 [Service]
 Type=oneshot
@@ -11,7 +10,8 @@ Type=oneshot
 # trivial to figure out which partition set is active
 ExecStart=/usr/bin/prairiedog prepare-boot
 RemainAfterExit=true
-StandardError=journal+console
+StandardOutput=tty
+StandardError=inherit
 
 [Install]
 WantedBy=preconfigured.target

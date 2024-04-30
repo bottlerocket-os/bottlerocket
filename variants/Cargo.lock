@@ -798,6 +798,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "libkcapi"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "libmnl"
 version = "0.1.0"
 dependencies = [
@@ -1151,6 +1158,7 @@ dependencies = [
  "keyutils",
  "libaudit",
  "libgcc",
+ "libkcapi",
  "libstd-rust",
  "makedumpfile",
  "oci-add-hooks",
