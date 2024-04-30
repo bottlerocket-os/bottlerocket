@@ -16,12 +16,13 @@ shibaken can:
 use argh::FromArgs;
 use simplelog::{ColorChoice, Config as LogConfig, LevelFilter, TermLogger, TerminalMode};
 use snafu::ResultExt;
-use std::process;
+use std::process::ExitCode;
 
 use crate::error::Result;
 
 mod admin_userdata;
 pub(crate) mod error;
+mod value_equal;
 mod partition;
 mod warmpool;
 
@@ -42,6 +43,9 @@ enum Commands {
     /// Fetch and populate the admin container's user-data with authorized ssh keys.
     GenerateAdminUserdata(admin_userdata::GenerateAdminUserdata),
 
+    /// Match IMDS against one or more values, return true/false.
+    DoesValueStartWith(value_equal::ValueStartsWith),
+
     /// Fetch and return whether or not this host is in the given partition.
     /// Accepts multiple partitions, returning `true` if the host is in any of the given partitions.
     IsPartition(partition::IsPartition),
@@ -50,7 +54,7 @@ enum Commands {
     WarmPoolWait(warmpool::autoscaling_warm_pool::WarmPoolWait),
 }
 
-async fn run() -> Result<()> {
+async fn run() -> Result<ExitCode> {
     let args: Args = argh::from_env();
 
     // TerminalMode::Stderr will send all logs to stderr, as sundog only expects the json output of
@@ -64,26 +68,28 @@ async fn run() -> Result<()> {
     .context(error::LoggerSnafu)?;
 
     log::info!("shibaken started");
-
+    let mut exit_code = ExitCode::SUCCESS;
     match args.command {
-        Commands::GenerateAdminUserdata(generate_admin_userdata) => {
-            generate_admin_userdata.run().await
-        }
-        Commands::IsPartition(is_partition) => is_partition.run().await,
+        Commands::GenerateAdminUserdata(generate_admin_userdata) => generate_admin_userdata.run().await?,
+        Commands::DoesValueStartWith(does_value_start) => exit_code = does_value_start.run().await?,
+        Commands::IsPartition(is_partition) => is_partition.run().await?,
         Commands::WarmPoolWait(warm_pool_wait) => warm_pool_wait
             .run()
             .await
-            .context(error::WarmPoolCheckFailedSnafu),
+            .context(error::WarmPoolCheckFailedSnafu)?,
     }
+    Ok(exit_code)
 }
 
-// Returning a Result from main makes it print a Debug representation of the error, but with Snafu
-// we have nice Display representations of the error, so we wrap "main" (run) and print any error.
-// https://github.com/shepmaster/snafu/issues/110
+// Returning an ExitCode from main will propagate the success or failure to our caller, and permit
+// normal rust teardown (unlike process::exit()): a kinder, gentler failure branch.
 #[tokio::main]
-async fn main() {
-    if let Err(e) = run().await {
-        eprintln!("{}", e);
-        process::exit(1);
+async fn main() -> ExitCode {
+    match run().await {
+        Err(e) => {
+            eprintln!("{}", e);
+            ExitCode::FAILURE
+        }
+        Ok(code) => code
     }
 }

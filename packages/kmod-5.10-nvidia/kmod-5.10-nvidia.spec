@@ -27,6 +27,11 @@ Source301: nvidia-tesla-build-config.toml.in
 Source302: nvidia-tesla-path.env.in
 Source303: nvidia-ld.so.conf.in
 
+# disable-gsp files from 400 to 499
+Source400: disable-gsp.service.in
+Source401: disable-gsp.conf
+Source402: disable-gsp-tmpfiles.conf
+
 BuildRequires: %{_cross_os}glibc-devel
 BuildRequires: %{_cross_os}kernel-5.10-archive
 
@@ -51,6 +56,9 @@ sh %{_sourcedir}/NVIDIA-Linux-%{_cross_arch}-%{tesla_470}.run -x
 tar -xf %{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
 
 %build
+
+sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:400} > disable-gsp.service
+
 pushd NVIDIA-Linux-%{_cross_arch}-%{tesla_470}/kernel
 
 # This recipe was based in the NVIDIA yum/dnf specs:
@@ -88,6 +96,15 @@ sed \
   -e "s|__KERNEL_VERSION__|${KERNEL_VERSION}|" \
   -e "s|__PREFIX__|%{_cross_prefix}|" %{S:200} > nvidia.conf
 install -p -m 0644 nvidia.conf %{buildroot}%{_cross_tmpfilesdir}
+
+# disable-gsp
+ install -p -m 0644 \
+   disable-gsp.service \
+   %{buildroot}%{_cross_unitdir}
+install -d %{buildroot}%{_cross_factorydir}/etc/modprobe.d
+install -p -m 0644 %{S:401} %{buildroot}%{_cross_factorydir}/etc/modprobe.d
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -p -m 0644 %{S:402} %{buildroot}%{_cross_tmpfilesdir}/disable-gsp.conf
 
 # Install modules-load.d drop-in to autoload required kernel modules
 install -d %{buildroot}%{_cross_libdir}/modules-load.d
@@ -177,6 +194,9 @@ popd
 %{_cross_tmpfilesdir}/nvidia.conf
 %{_cross_libdir}/systemd/system/
 %{_cross_libdir}/modules-load.d/nvidia-dependencies.conf
+%{_cross_unitdir}/disable-gsp.service
+%{_cross_factorydir}/etc/modprobe.d/disable-gsp.conf
+%{_cross_tmpfilesdir}/disable-gsp.conf
 
 %files tesla-470
 %license %{license_file}

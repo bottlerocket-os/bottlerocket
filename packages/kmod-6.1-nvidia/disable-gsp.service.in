@@ -1,0 +1,23 @@
+[Unit]
+Description=Disable GSP for selected instance types
+RequiresMountsFor=/etc/modprobe.d PREFIX/share/factory/etc/modprobe.d
+After=network-online.target
+Before=load-kernel-modules.service
+# Rerunning this service after the system is fully loaded will accomplish
+# nothing except write to a file that will never be used (after boot).
+# Refuse manual intervention.
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+ExecCondition=/usr/bin/shibaken does-value-start-with instance-type \
+  --value g4dn. --value g5. --value g5g.
+ExecStart=-/usr/bin/cp \
+  PREFIX/share/factory/etc/modprobe.d/disable-gsp.conf \
+  /etc/modprobe.d/disable-gsp.conf
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+RequiredBy=preconfigured.target
