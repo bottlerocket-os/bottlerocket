@@ -15,8 +15,27 @@ Source0: https://%{goimport}/archive/v%{gover}/v%{gover}.tar.gz#/k8s-device-plug
 Source1: nvidia-k8s-device-plugin.service
 
 BuildRequires: %{_cross_os}glibc-devel
+Requires: %{name}(binaries)
 
 %description
+%{summary}.
+
+%package bin
+Summary: Kubernetes device plugin for NVIDIA GPUs binaries
+Provides: %{name}(binaries)
+Requires: (%{_cross_os}image-feature(no-fips) and %{name})
+Conflicts: (%{_cross_os}image-feature(fips) or %{name}-fips-bin)
+
+%description bin
+%{summary}.
+
+%package fips-bin
+Summary: Kubernetes device plugin for NVIDIA GPUs binaries, FIPS edition
+Provides: %{name}(binaries)
+Requires: (%{_cross_os}image-feature(fips) and %{name})
+Conflicts: (%{_cross_os}image-feature(no-fips) or %{name}-bin)
+
+%description fips-bin
 %{summary}.
 
 %prep
@@ -29,16 +48,27 @@ BuildRequires: %{_cross_os}glibc-devel
 # to load the NVIDIA libraries in the host
 export CGO_LDFLAGS="-Wl,-z,relro -Wl,--export-dynamic"
 export GOLDFLAGS="-compressdwarf=false -linkmode=external -extldflags '${CGO_LDFLAGS}'"
+
 go build -ldflags="${GOLDFLAGS}" -o nvidia-device-plugin ./cmd/nvidia-device-plugin/
+gofips build -ldflags="${GOLDFLAGS}" -o fips/nvidia-device-plugin ./cmd/nvidia-device-plugin/
 
 %install
 install -d %{buildroot}%{_cross_bindir}
-install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0755 nvidia-device-plugin %{buildroot}%{_cross_bindir}
+
+install -d %{buildroot}%{_cross_fips_bindir}
+install -p -m 0755 fips/nvidia-device-plugin %{buildroot}%{_cross_fips_bindir}
+
+install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}
 
 %files
 %license LICENSE
 %{_cross_attribution_file}
 %{_cross_unitdir}/nvidia-k8s-device-plugin.service
+
+%files bin
 %{_cross_bindir}/nvidia-device-plugin
+
+%files fips-bin
+%{_cross_fips_bindir}/nvidia-device-plugin

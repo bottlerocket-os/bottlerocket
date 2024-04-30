@@ -29,7 +29,7 @@ Requires: %{_cross_os}iptables
 %build
 %set_cross_go_flags
 
-go build -buildmode=pie -ldflags="${GOLDFLAGS}" -o "bin/cnitool" %{goimport}/cnitool
+go build -ldflags="${GOLDFLAGS}" -o "bin/cnitool" %{goimport}/cnitool
 
 %install
 install -d %{buildroot}%{_cross_libexecdir}/cni/bin

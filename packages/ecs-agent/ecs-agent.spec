@@ -84,8 +84,27 @@ BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}docker-engine
 Requires: %{_cross_os}iptables
 Requires: %{_cross_os}amazon-ssm-agent
+Requires: %{name}(binaries)
 
 %description
+%{summary}.
+
+%package bin
+Summary: Amazon Elastic Container Service agent binaries
+Provides: %{name}(binaries)
+Requires: (%{_cross_os}image-feature(no-fips) and %{name})
+Conflicts: (%{_cross_os}image-feature(fips) or %{name}-fips-bin)
+
+%description bin
+%{summary}.
+
+%package fips-bin
+Summary: Amazon Elastic Container Service agent binaries, FIPS edition
+Provides: %{name}(binaries)
+Requires: (%{_cross_os}image-feature(fips) and %{name})
+Conflicts: (%{_cross_os}image-feature(no-fips) or %{name}-bin)
+
+%description fips-bin
 %{summary}.
 
 %package config
@@ -190,11 +209,14 @@ LD_PAUSE_CONTAINER_NAME="-X github.com/aws/amazon-ecs-agent/agent/config.Default
 LD_PAUSE_CONTAINER_TAG="-X github.com/aws/amazon-ecs-agent/agent/config.DefaultPauseContainerTag=${PAUSE_CONTAINER_IMAGE_TAG}"
 LD_VERSION="-X github.com/aws/amazon-ecs-agent/agent/version.Version=%{agent_gover}"
 LD_GIT_REV="-X github.com/aws/amazon-ecs-agent/agent/version.GitShortHash=%{agent_gitrev}"
-go build -a \
-  -buildmode=pie \
-  -ldflags "${GOLDFLAGS} ${LD_PAUSE_CONTAINER_NAME} ${LD_PAUSE_CONTAINER_TAG} ${LD_VERSION} ${LD_GIT_REV}" \
-  -o amazon-ecs-agent \
-  ./agent
+
+declare -a ECS_AGENT_BUILD_ARGS
+ECS_AGENT_BUILD_ARGS=(
+  -ldflags "${GOLDFLAGS} ${LD_PAUSE_CONTAINER_NAME} ${LD_PAUSE_CONTAINER_TAG} ${LD_VERSION} ${LD_GIT_REV}"
+)
+
+go build "${ECS_AGENT_BUILD_ARGS[@]}" -o amazon-ecs-agent ./agent
+gofips build "${ECS_AGENT_BUILD_ARGS[@]}" -o fips/amazon-ecs-agent ./agent
 
 # Build the pause container
 (
@@ -226,21 +248,20 @@ LD_ECS_CNI_VERSION="-X github.com/aws/amazon-ecs-cni-plugins/pkg/version.Version
 ECS_CNI_HASH="%{ecscni_gitrev}"
 LD_ECS_CNI_SHORT_HASH="-X github.com/aws/amazon-ecs-cni-plugins/pkg/version.GitShortHash=${ECS_CNI_HASH::8}"
 LD_ECS_CNI_PORCELAIN="-X github.com/aws/amazon-ecs-cni-plugins/pkg/version.GitPorcelain=0"
-go build -a \
-  -buildmode=pie \
-  -ldflags "${GOLDFLAGS} ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
-  -o ecs-eni \
-  ./plugins/eni
-go build -a \
-  -buildmode=pie \
-  -ldflags "${GOLDFLAGS} ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
-  -o ecs-ipam \
-  ./plugins/ipam
-go build -a \
-  -buildmode=pie \
-  -ldflags "${GOLDFLAGS} ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}" \
-  -o ecs-bridge \
-  ./plugins/ecs-bridge
+
+declare -a ECS_CNI_BUILD_ARGS
+ECS_CNI_BUILD_ARGS=(
+  -ldflags "${GOLDFLAGS} ${LD_ECS_CNI_VERSION} ${LD_ECS_CNI_SHORT_HASH} ${LD_ECS_CNI_PORCELAIN}"
+)
+
+go build "${ECS_CNI_BUILD_ARGS[@]}" -o ecs-eni ./plugins/eni
+gofips build "${ECS_CNI_BUILD_ARGS[@]}" -o fips/ecs-eni ./plugins/eni
+
+go build "${ECS_CNI_BUILD_ARGS[@]}" -o ecs-ipam ./plugins/ipam
+gofips build "${ECS_CNI_BUILD_ARGS[@]}" -o fips/ecs-ipam ./plugins/ipam
+
+go build "${ECS_CNI_BUILD_ARGS[@]}" -o ecs-bridge ./plugins/ecs-bridge
+gofips build "${ECS_CNI_BUILD_ARGS[@]}" -o fips/ecs-bridge ./plugins/ecs-bridge
 
 cd "${BUILD_TOP}"
 
@@ -251,20 +272,22 @@ LD_VPC_CNI_VERSION="-X github.com/aws/amazon-vpc-cni-plugins/version.Version=%{v
 VPC_CNI_HASH="%{vpccni_gitrev}"
 LD_VPC_CNI_SHORT_HASH="-X github.com/aws/amazon-vpc-cni-plugins/version.GitShortHash=${VPC_CNI_HASH::8}"
 
+declare -a VPC_CNI_BUILD_ARGS
+VPC_CNI_BUILD_ARGS=(
+  -ldflags "${GOLDFLAGS} ${LD_VPC_CNI_VERSION} ${LD_VPC_CNI_SHORT_HASH} ${LD_VPC_CNI_PORCELAIN}"
+)
+
 for p in \
   vpc-branch-eni \
   aws-appmesh \
   vpc-eni \
 ; do
-  go build -a \
-  -buildmode=pie \
-  -ldflags "${GOLDFLAGS} ${LD_VPC_CNI_VERSION} ${LD_VPC_CNI_SHORT_HASH} ${LD_VPC_CNI_PORCELAIN}" \
-  -mod=vendor \
-  -o ${p} \
-  ./plugins/${p}
+  go build "${VPC_CNI_BUILD_ARGS[@]}" -mod=vendor -o ${p} ./plugins/${p}
+  gofips build "${VPC_CNI_BUILD_ARGS[@]}" -mod=vendor -o fips/${p} ./plugins/${p}
 done
 
 %install
+install -d %{buildroot}{%{_cross_bindir},%{_cross_libexecdir}}
 install -D -p -m 0755 %{agent_gorepo}-%{agent_gover}/amazon-ecs-agent %{buildroot}%{_cross_bindir}/amazon-ecs-agent
 install -D -p -m 0644 %{agent_gorepo}-%{agent_gover}/amazon-ecs-pause.tar %{buildroot}%{_cross_libdir}/amazon-ecs-agent/amazon-ecs-pause.tar
 install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-bridge %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/ecs-bridge
@@ -273,6 +296,15 @@ install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/ecs-ipam %{buildroot}%{_
 install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/vpc-branch-eni %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
 install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/aws-appmesh %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/aws-appmesh
 install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/vpc-eni %{buildroot}%{_cross_libexecdir}/amazon-ecs-agent/vpc-eni
+
+install -d %{buildroot}{%{_cross_fips_bindir},%{_cross_fips_libexecdir}}
+install -D -p -m 0755 %{agent_gorepo}-%{agent_gover}/fips/amazon-ecs-agent %{buildroot}%{_cross_fips_bindir}/amazon-ecs-agent
+install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/fips/ecs-bridge %{buildroot}%{_cross_fips_libexecdir}/amazon-ecs-agent/ecs-bridge
+install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/fips/ecs-eni %{buildroot}%{_cross_fips_libexecdir}/amazon-ecs-agent/ecs-eni
+install -D -p -m 0755 %{ecscni_gorepo}-%{ecscni_gitrev}/fips/ecs-ipam %{buildroot}%{_cross_fips_libexecdir}/amazon-ecs-agent/ecs-ipam
+install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/fips/vpc-branch-eni %{buildroot}%{_cross_fips_libexecdir}/amazon-ecs-agent/vpc-branch-eni
+install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/fips/aws-appmesh %{buildroot}%{_cross_fips_libexecdir}/amazon-ecs-agent/aws-appmesh
+install -D -p -m 0755 %{vpccni_gorepo}-%{vpccni_gitrev}/fips/vpc-eni %{buildroot}%{_cross_fips_libexecdir}/amazon-ecs-agent/vpc-eni
 
 install -d %{buildroot}%{_cross_unitdir}
 install -D -p -m 0644 %{S:101} %{S:200} %{buildroot}%{_cross_unitdir}
@@ -346,13 +378,6 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_datadir}/logdog.d
 %license %{ecscni_gorepo}-%{ecscni_gitrev}/LICENSE.%{ecscni_gorepo}
 %license %{vpccni_gorepo}-%{vpccni_gitrev}/LICENSE.%{vpccni_gorepo}
 
-%{_cross_bindir}/amazon-ecs-agent
-%{_cross_libexecdir}/amazon-ecs-agent/ecs-bridge
-%{_cross_libexecdir}/amazon-ecs-agent/ecs-eni
-%{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
-%{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
-%{_cross_libexecdir}/amazon-ecs-agent/aws-appmesh
-%{_cross_libexecdir}/amazon-ecs-agent/vpc-eni
 %{_cross_libexecdir}/amazon-ecs-agent/managed-agents
 %{_cross_unitdir}/ecs.service
 %{_cross_unitdir}/etc-systemd-system-ecs.service.d.mount
@@ -360,6 +385,24 @@ install -p -m 0644 %{S:300} %{buildroot}%{_cross_datadir}/logdog.d
 %{_cross_sysctldir}/90-ecs.conf
 %{_cross_libdir}/amazon-ecs-agent/amazon-ecs-pause.tar
 %{_cross_datadir}/logdog.d/logdog.ecs.conf
+
+%files bin
+%{_cross_bindir}/amazon-ecs-agent
+%{_cross_libexecdir}/amazon-ecs-agent/ecs-bridge
+%{_cross_libexecdir}/amazon-ecs-agent/ecs-eni
+%{_cross_libexecdir}/amazon-ecs-agent/ecs-ipam
+%{_cross_libexecdir}/amazon-ecs-agent/vpc-branch-eni
+%{_cross_libexecdir}/amazon-ecs-agent/aws-appmesh
+%{_cross_libexecdir}/amazon-ecs-agent/vpc-eni
+
+%files fips-bin
+%{_cross_fips_bindir}/amazon-ecs-agent
+%{_cross_fips_libexecdir}/amazon-ecs-agent/ecs-bridge
+%{_cross_fips_libexecdir}/amazon-ecs-agent/ecs-eni
+%{_cross_fips_libexecdir}/amazon-ecs-agent/ecs-ipam
+%{_cross_fips_libexecdir}/amazon-ecs-agent/vpc-branch-eni
+%{_cross_fips_libexecdir}/amazon-ecs-agent/aws-appmesh
+%{_cross_fips_libexecdir}/amazon-ecs-agent/vpc-eni
 
 %files config
 %{_cross_templatedir}/ecs-base-conf

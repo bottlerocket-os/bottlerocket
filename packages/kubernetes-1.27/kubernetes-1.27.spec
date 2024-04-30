@@ -71,8 +71,27 @@ Requires: %{_cross_os}findutils
 Requires: %{_cross_os}ecr-credential-provider-1.27
 Requires: %{_cross_os}aws-signing-helper
 Requires: %{_cross_os}static-pods
+Requires: %{_cross_os}kubelet-1.27(binaries)
 
 %description -n %{_cross_os}kubelet-1.27
+%{summary}.
+
+%package -n %{_cross_os}kubelet-1.27-bin
+Summary: Container cluster node agent binaries
+Provides: %{_cross_os}kubelet-1.27(binaries)
+Requires: (%{_cross_os}image-feature(no-fips) and %{_cross_os}kubelet-1.27)
+Conflicts: (%{_cross_os}image-feature(fips) or %{_cross_os}kubelet-1.27-fips-bin)
+
+%description -n %{_cross_os}kubelet-1.27-bin
+%{summary}.
+
+%package -n %{_cross_os}kubelet-1.27-fips-bin
+Summary: Container cluster node agent binaries, FIPS edition
+Provides: %{_cross_os}kubelet-1.27(binaries)
+Requires: (%{_cross_os}image-feature(fips) and %{_cross_os}kubelet-1.27)
+Conflicts: (%{_cross_os}image-feature(no-fips) or %{_cross_os}kubelet-1.27-bin)
+
+%description -n %{_cross_os}kubelet-1.27-fips-bin
 %{summary}.
 
 %prep
@@ -91,16 +110,26 @@ export FORCE_HOST_GO=1
 make hack/update-codegen.sh
 
 # Build kubelet with the target toolchain.
+%set_cross_go_flags
+unset CC
 export KUBE_BUILD_PLATFORMS="linux/%{_cross_go_arch}"
 export %{kube_cc}
-export GOFLAGS='-tags=dockerless'
-export GOLDFLAGS="-buildmode=pie -linkmode=external -compressdwarf=false"
+export GOFLAGS="${GOFLAGS} -tags=dockerless"
+export GOLDFLAGS="${GOLDFLAGS}"
+make WHAT="cmd/kubelet"
+
+export KUBE_OUTPUT_SUBPATH="_fips_output/local"
+export GOEXPERIMENT="boringcrypto"
 make WHAT="cmd/kubelet"
 
 %install
 output="./_output/local/bin/linux/%{_cross_go_arch}"
 install -d %{buildroot}%{_cross_bindir}
 install -p -m 0755 ${output}/kubelet %{buildroot}%{_cross_bindir}
+
+fips_output="./_fips_output/local/bin/linux/%{_cross_go_arch}"
+install -d %{buildroot}%{_cross_fips_bindir}
+install -p -m 0755 ${fips_output}/kubelet %{buildroot}%{_cross_fips_bindir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{S:10} %{S:13} %{buildroot}%{_cross_unitdir}
@@ -139,7 +168,6 @@ install -p -m 0644 %{S:15} %{buildroot}%{_cross_datadir}/logdog.d
 %license LICENSE LICENSE.gonum.graph LICENSE.shell2junit LICENSE.golang PATENTS.golang
 %{_cross_attribution_file}
 %{_cross_attribution_vendor_dir}
-%{_cross_bindir}/kubelet
 %{_cross_unitdir}/kubelet.service
 %{_cross_unitdir}/prepare-var-lib-kubelet.service
 %{_cross_unitdir}/etc-kubernetes-pki-private.mount
@@ -162,5 +190,11 @@ install -p -m 0644 %{S:15} %{buildroot}%{_cross_datadir}/logdog.d
 %dir %{_cross_libexecdir}/kubernetes
 %{_cross_libexecdir}/kubernetes/kubelet-plugins
 %{_cross_datadir}/logdog.d/logdog.kubelet.conf
+
+%files -n %{_cross_os}kubelet-1.27-bin
+%{_cross_bindir}/kubelet
+
+%files -n %{_cross_os}kubelet-1.27-fips-bin
+%{_cross_fips_bindir}/kubelet
 
 %changelog

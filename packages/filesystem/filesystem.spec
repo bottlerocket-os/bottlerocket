@@ -7,8 +7,17 @@ Release: 1%{?dist}
 Summary: The basic directory layout
 License: Apache-2.0 OR MIT
 URL: https://github.com/bottlerocket-os/bottlerocket
+Requires: (%{name}-fips if %{_cross_os}image-feature(fips))
 
 %description
+%{summary}.
+
+%package fips
+Summary: The FIPS directory layout
+Requires: (%{_cross_os}image-feature(fips) and %{name})
+Conflicts: %{_cross_os}image-feature(no-fips)
+
+%description fips
 %{summary}.
 
 %prep
@@ -20,8 +29,10 @@ mkdir -p %{buildroot}%{_cross_rootdir}
 mkdir -p %{buildroot}%{_cross_prefix}
 mkdir -p %{buildroot}%{_cross_bindir}
 mkdir -p %{buildroot}%{_cross_sbindir}
+mkdir -p %{buildroot}%{_cross_fips_bindir}
 mkdir -p %{buildroot}%{_cross_libdir}
 mkdir -p %{buildroot}%{_cross_libexecdir}/{cni,csi}/bin
+mkdir -p %{buildroot}%{_cross_fips_libexecdir}/{cni,csi}/bin
 mkdir -p %{buildroot}%{_cross_includedir}
 mkdir -p %{buildroot}%{_cross_sysconfdir}
 mkdir -p %{buildroot}%{_cross_datadir}
@@ -68,5 +79,14 @@ ln -s .%{_sbindir} %{buildroot}/sbin
 /mnt
 /opt
 /srv
+
+%exclude %{_cross_prefix}/fips
+%exclude %{_cross_fips_bindir}
+%exclude %{_cross_fips_libexecdir}
+
+%files fips
+%{_cross_prefix}/fips
+%{_cross_fips_bindir}
+%{_cross_fips_libexecdir}
 
 %changelog

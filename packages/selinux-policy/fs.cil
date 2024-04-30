@@ -52,10 +52,10 @@
 (filecon "/.*/usr/sbin/wicked.*" file network_exec)
 (filecon "/.*/usr/libexec/wicked/bin/wicked.*" file network_exec)
 (filecon "/.*/usr/lib/systemd/systemd-networkd.*" file network_exec)
-(filecon "/.*/usr/bin/containerd.*" file runtime_exec)
-(filecon "/.*/usr/bin/docker.*" file runtime_exec)
-(filecon "/.*/usr/bin/host-ctr" file runtime_exec)
-(filecon "/.*/usr/bin/runc.*" file runtime_exec)
+(filecon "/.*/usr(/fips)?/bin/containerd.*" file runtime_exec)
+(filecon "/.*/usr(/fips)?/bin/docker.*" file runtime_exec)
+(filecon "/.*/usr(/fips)?/bin/host-ctr" file runtime_exec)
+(filecon "/.*/usr(/fips)?/bin/runc.*" file runtime_exec)
 (filecon "/.*/usr/bin/shibaken" file api_exec)
 
 ; Label local storage mounts.
