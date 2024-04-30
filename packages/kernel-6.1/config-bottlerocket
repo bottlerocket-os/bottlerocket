@@ -37,6 +37,30 @@ CONFIG_VIRTIO=y
 CONFIG_VIRTIO_BLK=y
 CONFIG_VIRTIO_PCI=y
 
+# Support for virtio scsi boot devices for other cloud providers
+CONFIG_SCSI_VIRTIO=y
+
+# IDE, SCSI, and SATA disks
+CONFIG_ATA=y
+CONFIG_ATA_PIIX=y
+CONFIG_SCSI=y
+CONFIG_BLK_DEV_SD=y
+CONFIG_SATA_AHCI=y
+
+# Disable specific SCSI drivers.
+# CONFIG_SCSI_MPI3MR is not set
+
+# LSI Logic's SAS based RAID controllers
+CONFIG_SCSI_MPT3SAS=y
+CONFIG_MEGARAID_SAS=y
+
+# Microsemi PQI controllers
+CONFIG_SCSI_SMARTPQI=y
+
+# Intel Volume Management Device driver, to support boot disks in a separate
+# PCI domain.
+CONFIG_VMD=y
+
 # dm-verity and enabling it on the kernel command line
 CONFIG_BLK_DEV_DM=y
 CONFIG_DAX=y
@@ -119,6 +143,10 @@ CONFIG_DECOMPRESS_ZSTD=y
 # CONFIG_MODULE_COMPRESS_NONE is not set
 CONFIG_MODULE_COMPRESS_GZIP=y
 
+# Support handling of compressed firmware
+CONFIG_FW_LOADER_COMPRESS=y
+CONFIG_FW_LOADER_COMPRESS_XZ=y
+
 # Add virtio drivers for development setups running as guests in qemu
 CONFIG_VIRTIO_CONSOLE=m
 CONFIG_HW_RANDOM_VIRTIO=m
@@ -170,13 +198,6 @@ CONFIG_EXT4_USE_FOR_EXT2=y
 #   - sch_cake targets home routers and residential links
 # CONFIG_NET_SCH_CAKE is not set
 
-# Disable specific SCSI drivers for the generic case. We have enabled necessary
-# drivers on metal specifically
-# CONFIG_SCSI_MPI3MR is not set
-# CONFIG_SCSI_MPT3SAS is not set
-# CONFIG_SCSI_SMARTPQI is not set
-# CONFIG_SCSI_SAS_ATTRS is not set
-
 # Provide minimal iSCSI via TCP support for initiator and target mode
 # initiator side
 CONFIG_ISCSI_TCP=m
@@ -189,13 +210,144 @@ CONFIG_ISCSI_TARGET=m
 # Disable DAMON subsystem. We currently do not have a good use-case for DAMON.
 # CONFIG_DAMON is not set
 
-# Disable unnecessary keyboard and mouse drivers.
-# CONFIG_MOUSE_PS2 is not set
-# CONFIG_SERIO is not set
-# CONFIG_KEYBOARD_ATKBD is not set
+# Load i8042 controller, keyboard, and mouse as modules, to avoid waiting for
+# them before mounting the root device.
+CONFIG_SERIO_I8042=m
+CONFIG_KEYBOARD_ATKBD=m
+CONFIG_MOUSE_PS2=m
+# CONFIG_MOUSE_PS2_ALPS is not set
+# CONFIG_MOUSE_PS2_BYD is not set
+# CONFIG_MOUSE_PS2_CYPRESS is not set
+# CONFIG_MOUSE_PS2_ELANTECH is not set
+# CONFIG_MOUSE_PS2_FOCALTECH is not set
+# CONFIG_MOUSE_PS2_LIFEBOOK is not set
+# CONFIG_MOUSE_PS2_LOGIPS2PP is not set
+# CONFIG_MOUSE_PS2_SENTELIC is not set
+# CONFIG_MOUSE_PS2_SYNAPTICS is not set
+# CONFIG_MOUSE_PS2_SYNAPTICS_SMBUS is not set
+# CONFIG_MOUSE_PS2_TOUCHKIT is not set
+# CONFIG_MOUSE_PS2_TRACKPOINT is not set
+# CONFIG_MOUSE_PS2_VMMOUSE is not set
 
 # Disable unnecessary framebuffer/drm drivers
 # CONFIG_DRM_BOCHS is not set
-# CONFIG_DRM_SIMPLEDRM is not set
 # CONFIG_SYSFB_SIMPLEFB is not set
 
+# With 6.1 some of the functionalities used by the nvidia driver have moved behind
+# some extra config options CONFIG_DRM_KMS_HELPER and CONFIG_DRM_DISPLAY_HELPER.
+# These config options can not be selected individually, but are selected by certain
+# drivers. Enable the SIMPLEDRM driver, which is a minimal drm driver enabling
+# those helpers for platform provided framebuffers.
+CONFIG_DRM_SIMPLEDRM=m
+
+# =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+# Enable various network vendors for bare metal usage.
+
+# Mellanox network support
+CONFIG_NET_SWITCHDEV=y
+CONFIG_NET_VENDOR_MELLANOX=y
+CONFIG_MLX5_CORE=m
+CONFIG_MLX5_CORE_EN=y
+CONFIG_MLX5_INFINIBAND=m
+CONFIG_MLXFW=m
+
+# AMD network support
+CONFIG_NET_VENDOR_AMD=y
+CONFIG_AMD_XGBE=m
+# CONFIG_AMD_XGBE_DCB is not set
+
+# Broadcom network support
+CONFIG_NET_VENDOR_BROADCOM=y
+CONFIG_TIGON3_HWMON=y
+CONFIG_TIGON3=m
+CONFIG_BNX2X=m
+CONFIG_BNX2X_SRIOV=y
+CONFIG_BNXT=m
+
+# Chelsio network support
+CONFIG_NET_VENDOR_CHELSIO=y
+CONFIG_CHELSIO_T4=m
+CONFIG_CHELSIO_T4VF=m
+# CONFIG_CHELSIO_T4_DCB is not set
+# CONFIG_CHELSIO_INLINE_CRYPTO is not set
+# CONFIG_INFINIBAND_CXGB4 is not set
+# CONFIG_ISCSI_TARGET_CXGB4 is not set
+
+# Cisco UCS network support
+CONFIG_NET_VENDOR_CISCO=y
+CONFIG_ENIC=m
+CONFIG_INFINIBAND_USNIC=m
+
+# Emulex network support
+CONFIG_NET_VENDOR_EMULEX=y
+CONFIG_BE2NET=m
+CONFIG_BE2NET_BE2=y
+CONFIG_BE2NET_BE3=y
+CONFIG_BE2NET_LANCER=y
+CONFIG_BE2NET_SKYHAWK=y
+CONFIG_BE2NET_HWMON=y
+
+# Huawei network support
+CONFIG_NET_VENDOR_HUAWEI=y
+CONFIG_HINIC=m
+
+# Intel network support
+CONFIG_NET_VENDOR_INTEL=y
+CONFIG_E1000=m
+CONFIG_E1000E=m
+CONFIG_E1000E_HWTS=y
+CONFIG_IGB=m
+CONFIG_IGB_HWMON=y
+CONFIG_IGBVF=m
+
+# Intel 10G network support
+CONFIG_I40E=m
+# CONFIG_I40E_DCB is not set
+CONFIG_ICE=m
+# CONFIG_ICE_HWTS is not set
+# CONFIG_ICE_SWITCHDEV is not set
+# CONFIG_INFINIBAND_IRDMA is not set
+CONFIG_PLDMFW=y
+CONFIG_IXGB=m
+CONFIG_IXGBE=m
+CONFIG_IXGBE_HWMON=y
+CONFIG_IXGBE_DCB=y
+CONFIG_IXGBEVF=m
+CONFIG_FM10K=m
+
+# Myricom network support
+CONFIG_NET_VENDOR_MYRI=y
+CONFIG_MYRI10GE=m
+CONFIG_MYRI10GE_DCA=y
+
+# Pensando network support
+CONFIG_NET_VENDOR_PENSANDO=y
+CONFIG_IONIC=m
+
+# Solarflare network support
+CONFIG_NET_VENDOR_SOLARFLARE=y
+CONFIG_SFC=m
+CONFIG_SFC_SRIOV=y
+# CONFIG_SFC_MCDI_LOGGING is not set
+CONFIG_SFC_MCDI_MON=y
+CONFIG_SFC_FALCON=m
+
+# QLogic network support
+CONFIG_NET_VENDOR_QLOGIC=y
+CONFIG_QED=m
+CONFIG_QED_SRIOV=y
+CONFIG_QEDE=m
+# CONFIG_INFINIBAND_QEDR is not set
+# CONFIG_QEDF is not set
+# CONFIG_QEDI is not set
+# CONFIG_QLA3XXX is not set
+CONFIG_QLCNIC=m
+CONFIG_QLCNIC_SRIOV=y
+# CONFIG_QLCNIC_DCB is not set
+# CONFIG_QLCNIC_HWMON is not set
+# CONFIG_NETXEN_NIC is not set
+
+# Cisco UCS HBA support
+CONFIG_FCOE_FNIC=m
+CONFIG_SCSI_SNIC=m
