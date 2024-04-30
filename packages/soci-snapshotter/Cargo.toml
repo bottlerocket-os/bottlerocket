@@ -1,0 +1,20 @@
+[package]
+name = "soci-snapshotter"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[lib]
+path = "../packages.rs"
+
+[package.metadata.build-package]
+releases-url = "https://github.com/awslabs/soci-snapshotter/releases"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/awslabs/soci-snapshotter/archive/refs/tags/v0.6.0.tar.gz"
+sha512 = "79d067d379ef01fe130cc7d7cabd786580b49b6744df5ffcc85b28f1cdde0becd72f15a6654622d2a305ad06823c102e379e4606cfc2a01df0d37c6acfc2cd35"
+bundle-modules = ["go"]
+
+[build-dependencies]
+glibc = { path = "../glibc" }
