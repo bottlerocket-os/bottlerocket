@@ -46,6 +46,9 @@ Requires: %{_cross_os}microcode-licenses
 Requires: %{name}-modules = %{version}-%{release}
 Requires: %{name}-devel = %{version}-%{release}
 
+# Pull in platform-dependent modules.
+Requires: (%{name}-modules-metal if %{_cross_os}variant-platform(metal))
+
 # Pull in FIPS-related files if needed.
 Requires: (%{name}-fips if %{_cross_os}image-feature(fips))
 
@@ -71,6 +74,12 @@ Summary: Archived Linux kernel source for module building
 Summary: Modules for the Linux kernel
 
 %description modules
+%{summary}.
+
+%package modules-metal
+Summary: Modules for the Linux kernel on bare metal
+
+%description modules-metal
 %{summary}.
 
 %package headers
@@ -246,6 +255,9 @@ rm -f %{buildroot}%{_cross_kmoddir}/build %{buildroot}%{_cross_kmoddir}/source
 ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{_cross_kmoddir}/build
 ln -sf %{_usrsrc}/kernels/%{version} %{buildroot}%{_cross_kmoddir}/source
 
+# Install a copy of System.map so that module dependencies can be regenerated.
+install -p -m 0600 System.map %{buildroot}%{_cross_kmoddir}
+
 # Ensure that each required FIPS module is loaded as a dependency of the
 # check-fips-module.service. The list of FIPS modules is different across
 # kernels but the check is consistent: it loads the "tcrypt" module after
@@ -318,6 +330,7 @@ done
 %{_cross_kmoddir}/modules.softdep
 %{_cross_kmoddir}/modules.symbols
 %{_cross_kmoddir}/modules.symbols.bin
+%{_cross_kmoddir}/System.map
 
 %if "%{_cross_arch}" == "x86_64"
 %{_cross_kmoddir}/kernel/arch/x86/crypto/aesni-intel.ko.*
@@ -1257,6 +1270,7 @@ done
 %{_cross_kmoddir}/kernel/virt/lib/irqbypass.ko.*
 %endif
 
+%files modules-metal
 %if "%{_cross_arch}" == "x86_64"
 %{_cross_kmoddir}/kernel/drivers/infiniband/hw/usnic/usnic_verbs.ko.gz
 %endif
