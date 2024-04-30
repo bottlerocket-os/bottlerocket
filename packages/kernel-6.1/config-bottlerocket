@@ -145,7 +145,8 @@ CONFIG_MODULE_COMPRESS_GZIP=y
 
 # Support handling of compressed firmware
 CONFIG_FW_LOADER_COMPRESS=y
-CONFIG_FW_LOADER_COMPRESS_XZ=y
+# CONFIG_FW_LOADER_COMPRESS_XZ is not set
+CONFIG_FW_LOADER_COMPRESS_ZSTD=y
 
 # Add virtio drivers for development setups running as guests in qemu
 CONFIG_VIRTIO_CONSOLE=m
