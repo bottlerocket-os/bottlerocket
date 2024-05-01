@@ -14,7 +14,6 @@ partition-plan = "unified"
 
 [package.metadata.build-variant.image-features]
 grub-set-private-var = true
-unified-cgroup-hierarchy = true
 
 [package.metadata.build-variant]
 image-format = "vmdk"
