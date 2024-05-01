@@ -1260,6 +1260,114 @@ mod test_add_metadata {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
+/// We use this migration when we remove metadata
+pub struct RemoveMetadataMigration(pub &'static [SettingMetadata]);
+
+impl Migration for RemoveMetadataMigration {
+    fn forward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        for setting_metadata in self.0 {
+            if let Some(found_metadata) = input.metadata.get_mut(setting_metadata.setting) {
+                for metadata in setting_metadata.metadata {
+                    if let Some(metadata_value) = found_metadata.remove(*metadata) {
+                        println!(
+                            "Removed {}, which was set to '{}'",
+                            metadata, metadata_value
+                        );
+                    } else {
+                        println!(
+                            "Found no metadata '{}' to remove on setting '{}'",
+                            metadata, setting_metadata.setting
+                        );
+                    }
+                }
+            } else {
+                println!(
+                    "Found no metadata for '{}' setting",
+                    setting_metadata.setting
+                );
+            }
+        }
+        Ok(input)
+    }
+
+    fn backward(&mut self, input: MigrationData) -> Result<MigrationData> {
+        println!(
+            "RemoveMetadataMigration({:?}) has no work to do on downgrade.",
+            &self.0
+        );
+        Ok(input)
+    }
+}
+
+#[cfg(test)]
+mod test_remove_metadata {
+    use super::{AddMetadataMigration, RemoveMetadataMigration, SettingMetadata};
+    use crate::{Migration, MigrationData};
+    use maplit::hashmap;
+    use std::collections::HashMap;
+
+    #[test]
+    fn forward() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hi".into() => hashmap!{"there".into() => "whatever".into() },
+            },
+        };
+        let result = RemoveMetadataMigration(&[SettingMetadata {
+            setting: "hi",
+            metadata: &["there"],
+        }])
+        .forward(data)
+        .unwrap();
+        assert_eq!(result.metadata, hashmap! { "hi".into() => HashMap::new() });
+    }
+
+    #[test]
+    fn forward_noop() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hi".into() => hashmap!{"there".into() => "whatever".into() },
+            },
+        };
+        let result = RemoveMetadataMigration(&[SettingMetadata {
+            setting: "hi",
+            metadata: &["which"],
+        }])
+        .forward(data)
+        .unwrap();
+        assert_eq!(
+            result.metadata,
+            hashmap! { "hi".into() => hashmap!{"there".into() => "whatever".into() } }
+        );
+    }
+
+    #[test]
+    fn backward() {
+        let data = MigrationData {
+            data: HashMap::new(),
+            metadata: hashmap! {
+                "hi".into() => hashmap!{"there".into() => "whatever".into()},
+            },
+        };
+        let result = RemoveMetadataMigration(&[SettingMetadata {
+            setting: "hi",
+            metadata: &["there"],
+        }])
+        .backward(data)
+        .unwrap();
+        assert_eq!(
+            result.metadata,
+            hashmap! {
+                "hi".into() => hashmap!{"there".into() => "whatever".into()},
+            }
+        );
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 /// We use this migration when we need to replace metadata that contain lists of string values;
 /// for example, when a release changes the list of 'affected-services' associated with a setting.
 // String is the only type we use today, and handling multiple value types is more complicated than
