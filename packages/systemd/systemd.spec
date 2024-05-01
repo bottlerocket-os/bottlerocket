@@ -14,7 +14,6 @@ Source3: journald.conf
 Source4: issue
 Source5: systemd-journald.conf
 Source6: systemd-sysusers.conf
-Source7: bootconfig-unified-cgroup-hierarchy.conf
 
 # Backport of upstream patches that make the netlink default timeout
 # configurable.  Bottlerocket carries this patch and configures the timeout in
@@ -103,10 +102,6 @@ Requires: %{_cross_os}libselinux
 Requires: %{_cross_os}libuuid
 Requires: %{_cross_os}libxcrypt
 
-# Only require a cgroup hierarchy package when building an image, not
-# for packages that need systemd-devel as a build dependency.
-Requires: (%{name}(cgroup-hierarchy) if %{_cross_os}metadata)
-
 %description
 %{summary}.
 
@@ -133,24 +128,6 @@ Summary: Files for networkd
 Summary: Files for resolved
 
 %description resolved
-%{summary}.
-
-%package hybrid-cgroup-hierarchy
-Summary: No-op dependency for hybrid cgroup hierarchy
-Provides: %{name}(cgroup-hierarchy)
-Requires: (%{_cross_os}image-feature(no-unified-cgroup-hierarchy) and %{name})
-Conflicts: (%{_cross_os}image-feature(unified-cgroup-hierarchy) or %{name}-unified-cgroup-hierarchy)
-
-%description hybrid-cgroup-hierarchy
-%{summary}.
-
-%package unified-cgroup-hierarchy
-Summary: Bootconfig snippet for unified cgroup hierarchy
-Provides: %{name}(cgroup-hierarchy)
-Requires: (%{_cross_os}image-feature(unified-cgroup-hierarchy) and %{name})
-Conflicts: (%{_cross_os}image-feature(no-unified-cgroup-hierarchy) or %{name}-hybrid-cgroup-hierarchy)
-
-%description unified-cgroup-hierarchy
 %{summary}.
 
 %prep
@@ -227,7 +204,7 @@ CONFIGURE_OPTS=(
  -Dpkgconfigdatadir='%{_cross_pkgconfigdir}'
  -Dpkgconfiglibdir='%{_cross_pkgconfigdir}'
 
- -Ddefault-hierarchy=hybrid
+ -Ddefault-hierarchy=unified
 
  -Dadm-group=false
  -Dwheel-group=false
@@ -339,9 +316,6 @@ rm -f %{buildroot}%{_cross_libdir}/systemd/{system,user}/graphical.target
 # Add art to the console
 install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 install -p -m 0644 %{S:4} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/issue
-
-install -d %{buildroot}%{_cross_bootconfigdir}
-install -p -m 0644 %{S:7} %{buildroot}%{_cross_bootconfigdir}/10-unified-cgroup-hierarchy.conf
 
 %files
 %license LICENSE.GPL2 LICENSE.LGPL2.1
@@ -530,10 +504,5 @@ install -p -m 0644 %{S:7} %{buildroot}%{_cross_bootconfigdir}/10-unified-cgroup-
 %{_cross_datadir}/dbus-1/system.d/org.freedesktop.resolve1.conf
 %exclude %{_cross_bindir}/systemd-resolve
 %exclude %{_cross_sbindir}/resolvconf
-
-%files hybrid-cgroup-hierarchy
-
-%files unified-cgroup-hierarchy
-%{_cross_bootconfigdir}/10-unified-cgroup-hierarchy.conf
 
 %changelog
