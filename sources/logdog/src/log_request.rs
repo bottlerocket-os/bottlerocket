@@ -9,9 +9,7 @@
 //! these provide the list of log requests that `logdog` will run.
 
 use crate::error::{self, Result};
-use datastore::deserialization::from_map;
-use datastore::serialization::to_pairs;
-use glob::{glob, Pattern};
+use glob::glob;
 use reqwest::blocking::{Client, Response};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashSet;
@@ -28,15 +26,14 @@ pub(crate) const REQUESTS_DIR: &str = "/usr/share/logdog.d";
 /// Patterns to filter from settings output.  These follow the Unix shell style pattern outlined
 /// here: https://docs.rs/glob/0.3.0/glob/struct.Pattern.html.
 const SENSITIVE_SETTINGS_PATTERNS: &[&str] = &[
-    "*.user-data",
-    "settings.kubernetes.bootstrap-token",
+    "/settings/kubernetes/bootstrap-token",
     // Can contain a username:password component
-    "settings.network.https-proxy",
-    "settings.kubernetes.server-key",
-    "settings.container-registry.credentials",
+    "/settings/network/https-proxy",
+    "/settings/kubernetes/server-key",
+    "/settings/container-registry/credentials",
     // Can be stored in settings.aws.credentials, but user can also add creds here
-    "settings.aws.config",
-    "settings.aws.credentials",
+    "/settings/aws/config",
+    "/settings/aws/credentials",
 ];
 
 /// Returns the list of log requests to run by combining `VARIANT_REQUESTS` and `COMMON_REQUESTS`.
@@ -166,24 +163,44 @@ where
     Ok(())
 }
 
+/// Strips user-data out of the settings model
+fn strip_user_data(input: &mut serde_json::Value) {
+    let redacted = serde_json::Value::String("REDACTED".into());
+    match input {
+        serde_json::Value::Object(map) => {
+            for (key, value) in map.iter_mut() {
+                if key == "user-data" {
+                    *value = redacted.clone();
+                } else {
+                    strip_user_data(value)
+                }
+            }
+        }
+        serde_json::Value::Array(array) => {
+            for child in array {
+                strip_user_data(child)
+            }
+        }
+        _ => {}
+    }
+}
+
 /// Requests settings from the API, filters them, and writes the output to `tempdir`
 async fn handle_settings_request<P>(request: &LogRequest<'_>, tempdir: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    let settings = get_settings().await?;
-    let mut settings_map = to_pairs(&settings).context(error::SerializeSettingsSnafu)?;
+    let mut settings = get_settings().await?;
 
     // Filter all settings that match any of the "sensitive" patterns
+    let redacted = serde_json::Value::String("REDACTED".into());
     for pattern in SENSITIVE_SETTINGS_PATTERNS {
-        let pattern =
-            Pattern::new(pattern).context(error::ParseGlobPatternSnafu { pattern: *pattern })?;
-        settings_map.retain(|k, _| !pattern.matches(k.name().as_str()))
+        if let Some(found) = settings.pointer_mut(pattern) {
+            *found = redacted.clone();
+        }
     }
+    strip_user_data(&mut settings);
 
-    // Serialize the map back to a `Settings` to remove the escaping so it writes nicely to file
-    let settings: model::Settings =
-        from_map(&settings_map).context(error::DeserializeSettingsSnafu)?;
     let outpath = tempdir.as_ref().join(request.filename);
     let outfile = File::create(&outpath).context(error::FileCreateSnafu { path: &outpath })?;
     serde_json::to_writer_pretty(&outfile, &settings)
@@ -191,14 +208,21 @@ where
     Ok(())
 }
 
-/// Uses `apiclient` to request all settings from the apiserver and deserializes into a `Settings`
-async fn get_settings() -> Result<model::Settings> {
-    let uri = constants::API_SETTINGS_URI;
-    let (_status, response_body) = apiclient::raw_request(constants::API_SOCKET, uri, "GET", None)
-        .await
-        .context(error::ApiClientSnafu { uri })?;
+/// Uses `apiclient` to request all settings from the apiserver and deserializes into a `json::Value`
+async fn get_settings() -> Result<serde_json::Value> {
+    let result = Command::new("/usr/bin/apiclient")
+        .arg("get")
+        .output()
+        .context(error::ApiCommandFailureSnafu)?;
 
-    serde_json::from_str(&response_body).context(error::SettingsJsonSnafu)
+    ensure!(
+        result.status.success(),
+        error::ApiExecutionFailureSnafu {
+            reason: String::from_utf8_lossy(&result.stderr)
+        }
+    );
+
+    serde_json::from_slice(result.stdout.as_slice()).context(error::SettingsJsonSnafu)
 }
 
 /// Runs an `exec` `LogRequest`'s `instructions` and writes its output to to `tempdir`.
