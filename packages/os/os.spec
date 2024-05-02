@@ -27,7 +27,6 @@ Source8: oci-default-hooks-json
 Source9: cfsignal-toml
 Source10: warm-pool-wait-toml
 Source11: bottlerocket-cis-checks-metadata-json
-Source12: 00-resolved.conf
 Source13: kubernetes-cis-checks-metadata-json
 Source14: certdog-toml
 Source15: prairiedog-toml
@@ -52,20 +51,15 @@ Source114: bootstrap-containers@.service
 Source115: link-kernel-modules.service.in
 Source116: load-kernel-modules.service.in
 Source117: cfsignal.service
-Source118: generate-network-config.service
 Source119: reboot-if-required.service
 Source120: warm-pool-wait.service
-Source121: disable-udp-offload.service
 Source122: has-boot-ever-succeeded.service
-Source123: run-netdog.mount
-Source124: write-network-status.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
 Source201: host-containers-tmpfiles.conf
 Source202: thar-be-updates-tmpfiles.conf
 Source203: bootstrap-containers-tmpfiles.conf
-Source204: netdog-tmpfiles.conf
 
 # 3xx sources: udev rules
 Source300: ephemeral-storage.rules
@@ -90,7 +84,6 @@ Requires: %{_cross_os}host-containers
 Requires: %{_cross_os}logdog
 Requires: %{_cross_os}metricdog
 Requires: %{_cross_os}migration
-Requires: %{_cross_os}netdog
 Requires: %{_cross_os}prairiedog
 Requires: %{_cross_os}schnauzer
 Requires: %{_cross_os}settings-committer
@@ -127,17 +120,6 @@ Summary: Bottlerocket API server
 %package -n %{_cross_os}apiclient
 Summary: Bottlerocket API client
 %description -n %{_cross_os}apiclient
-%{summary}.
-
-%package -n %{_cross_os}netdog
-Summary: Bottlerocket network configuration helper
-%if %{with systemd_networkd}
-Requires: %{_cross_os}systemd-networkd
-Requires: %{_cross_os}systemd-resolved
-%else
-Requires: %{_cross_os}wicked
-%endif
-%description -n %{_cross_os}netdog
 %{summary}.
 
 %package -n %{_cross_os}sundog
@@ -363,7 +345,6 @@ exec 1>&3 2>&4
 echo "** Output from non-static builds:"
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
     -p apiserver \
-    -p netdog \
     -p sundog \
     -p schnauzer \
     -p bork \
@@ -411,7 +392,7 @@ fi
 install -d %{buildroot}%{_cross_bindir}
 for p in \
   apiserver \
-  netdog sundog schnauzer schnauzer-v2 bork \
+  sundog schnauzer schnauzer-v2 bork \
   corndog thar-be-settings thar-be-updates host-containers \
   storewolf settings-committer \
   migrator prairiedog certdog \
@@ -522,16 +503,9 @@ install -p -m 0644 %{S:5} %{S:6} %{S:7} %{S:8} %{S:14} %{S:15} %{S:16} %{S:17} %
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:102} %{S:103} %{S:105} \
-  %{S:106} %{S:107} %{S:110} %{S:111} \
-  %{S:112} %{S:113} %{S:114} %{S:118} \
-  %{S:119} %{S:122} %{S:123} \
+  %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
+  %{S:113} %{S:114} %{S:119} %{S:122} \
   %{buildroot}%{_cross_unitdir}
-
-%if %{with systemd_networkd}
-install -p -m 0644 %{S:124} %{buildroot}%{_cross_unitdir}
-install -d %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
-install -p -m 0644 %{S:12} %{buildroot}%{_cross_libdir}/systemd/resolved.conf.d
-%endif
 
 %if %{with nvidia_flavor}
 sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:115} > link-kernel-modules.service
@@ -556,16 +530,11 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
 install -p -m 0644 %{S:202} %{buildroot}%{_cross_tmpfilesdir}/thar-be-updates.conf
 install -p -m 0644 %{S:203} %{buildroot}%{_cross_tmpfilesdir}/bootstrap-containers.conf
-install -p -m 0644 %{S:204} %{buildroot}%{_cross_tmpfilesdir}/netdog.conf
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-storage.rules
 install -p -m 0644 %{S:301} %{buildroot}%{_cross_udevrulesdir}/81-ebs-volumes.rules
 install -p -m 0644 %{S:302} %{buildroot}%{_cross_udevrulesdir}/82-supplemental-storage.rules
-
-%if %{with vmware_platform}
-install -p -m 0644 %{S:121} %{buildroot}%{_cross_unitdir}
-%endif
 
 %cross_scan_attribution --clarify %{_builddir}/sources/clarify.toml \
     cargo --offline --locked %{_builddir}/sources/Cargo.toml
@@ -588,20 +557,6 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 
 %files -n %{_cross_os}apiclient
 %{_cross_bindir}/apiclient
-
-%files -n %{_cross_os}netdog
-%{_cross_bindir}/netdog
-%{_cross_tmpfilesdir}/netdog.conf
-%{_cross_unitdir}/generate-network-config.service
-%{_cross_unitdir}/run-netdog.mount
-%if %{with vmware_platform}
-%{_cross_unitdir}/disable-udp-offload.service
-%endif
-%if %{with systemd_networkd}
-%{_cross_unitdir}/write-network-status.service
-%dir %{_cross_libdir}/systemd/resolved.conf.d
-%{_cross_libdir}/systemd/resolved.conf.d/00-resolved.conf
-%endif
 
 %files -n %{_cross_os}corndog
 %{_cross_bindir}/corndog

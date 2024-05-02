@@ -24,7 +24,6 @@ source-groups = [
     "bloodhound",
     "xfscli",
 ]
-package-features = [ "systemd-networkd" ]
 
 [lib]
 path = "../packages.rs"
@@ -46,6 +45,3 @@ glibc = { path = "../glibc" }
 # binutils = { path = "../binutils" }
 # oci-add-hooks required for shimpei functionality
 # oci-add-hooks = { path = "../oci-add-hooks" }
-# wicked and systemd-networkd required for netdog functionality
-# wicked = { path = "../wicked" }
-# systemd-networkd = { path = "../systemd" }

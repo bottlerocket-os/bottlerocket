@@ -20,4 +20,4 @@ quote = "1"
 syn = { version = "2", default-features = false, features = ["derive"] }
 
 [build-dependencies]
-generate-readme = { path = "../../../generate-readme", version = "0.1" }
+generate-readme = { path = "../../generate-readme", version = "0.1" }

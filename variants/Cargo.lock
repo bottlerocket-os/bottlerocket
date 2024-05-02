@@ -1059,6 +1059,15 @@ name = "microcode"
 version = "0.1.0"
 
 [[package]]
+name = "netdog"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "systemd",
+ "wicked",
+]
+
+[[package]]
 name = "nvidia-container-toolkit"
 version = "0.1.0"
 dependencies = [
@@ -1161,6 +1170,7 @@ dependencies = [
  "libkcapi",
  "libstd-rust",
  "makedumpfile",
+ "netdog",
  "oci-add-hooks",
  "os",
  "policycoreutils",
@@ -1169,7 +1179,6 @@ dependencies = [
  "shim",
  "systemd",
  "util-linux",
- "wicked",
  "xfsprogs",
 ]
 

@@ -24,6 +24,7 @@ imdsclient = { version = "0.1", path = "../imdsclient" }
 log = "0.4"
 snafu = "0.8"
 tokio = { version = "~1.32", features = ["macros"]}  # LTS
+tokio-retry = "0.3"
 walkdir = "2"
 
 [build-dependencies]

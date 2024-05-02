@@ -1,0 +1,23 @@
+[package]
+name = "netdog"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[lib]
+path = "../packages.rs"
+
+[package.metadata.build-packages]
+source-groups = [
+    "netdog",
+    "dogtag",
+]
+
+# RPM BuildRequires
+[build-dependencies]
+glibc = { path = "../glibc" }
+
+[dependencies]
+wicked = { path = "../wicked" }
+systemd = { path = "../systemd" }

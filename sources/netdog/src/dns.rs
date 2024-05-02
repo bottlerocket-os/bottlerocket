@@ -10,18 +10,18 @@ use std::fs;
 use std::net::IpAddr;
 use std::path::Path;
 
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 use crate::lease::LeaseInfo;
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 use crate::REAL_RESOLV_CONF;
-#[cfg(net_backend = "wicked")]
+#[cfg(feature = "wicked")]
 use std::fmt::Write;
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 use systemd_derive::{SystemdUnit, SystemdUnitSection};
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 static RESOLVED_CONF_DROPIN_DIR: &str = "/etc/systemd/resolved.conf.d";
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 static RESOLVED_CONF_DROPIN_FILE: &str = "10-resolv.conf";
 
 static DNS_CONFIG: &str = "/etc/netdog.toml";
@@ -37,7 +37,7 @@ pub(crate) struct DnsSettings {
 impl DnsSettings {
     /// Create a DnsSettings from TOML config file, supplementing missing settings with settings
     /// from DHCP lease if provided.  (In the case of static addressing, a DHCP lease won't exist)
-    #[cfg(net_backend = "wicked")]
+    #[cfg(feature = "wicked")]
     pub(crate) fn from_config_or_lease(lease: Option<&LeaseInfo>) -> Result<Self> {
         let mut settings = Self::from_config()?;
         if let Some(lease) = lease {
@@ -47,7 +47,7 @@ impl DnsSettings {
     }
 
     /// Merge missing DNS settings into `self` using DHCP lease
-    #[cfg(net_backend = "wicked")]
+    #[cfg(feature = "wicked")]
     fn merge_lease(&mut self, lease: &LeaseInfo) {
         if self.nameservers.is_none() {
             self.nameservers = lease.dns_servers.clone();
@@ -96,12 +96,12 @@ impl DnsSettings {
     }
 
     /// Write resolver configuration for libc.
-    #[cfg(net_backend = "wicked")]
+    #[cfg(feature = "wicked")]
     pub(crate) fn write_resolv_conf(&self) -> Result<()> {
         Self::write_resolv_conf_impl(self, REAL_RESOLV_CONF)
     }
 
-    #[cfg(net_backend = "wicked")]
+    #[cfg(feature = "wicked")]
     fn write_resolv_conf_impl<P>(&self, path: P) -> Result<()>
     where
         P: AsRef<Path>,
@@ -128,7 +128,7 @@ impl DnsSettings {
     }
 
     /// Write a drop-in file for systemd-resolved
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     pub(crate) fn write_resolved_dropin(&self) -> Result<()> {
         fs::create_dir_all(RESOLVED_CONF_DROPIN_DIR).context(error::CreateDirSnafu {
             path: RESOLVED_CONF_DROPIN_DIR,
@@ -138,7 +138,7 @@ impl DnsSettings {
         Self::write_resolved_dropin_impl(self, dropin_path)
     }
 
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     fn write_resolved_dropin_impl<P>(&self, path: P) -> Result<()>
     where
         P: AsRef<Path>,
@@ -150,24 +150,24 @@ impl DnsSettings {
             .context(error::ResolvConfWriteFailedSnafu { path })
     }
 
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     pub(crate) fn has_name_servers(&self) -> bool {
         self.nameservers.is_some()
     }
 
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     pub(crate) fn has_search_domains(&self) -> bool {
         self.search.is_some()
     }
 }
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 #[derive(Debug, SystemdUnit)]
 struct ResolvedConfDropin {
     resolve: Option<ResolveSection>,
 }
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 #[derive(Debug, SystemdUnitSection)]
 #[systemd(section = "Resolve")]
 struct ResolveSection {
@@ -177,7 +177,7 @@ struct ResolveSection {
     domains: Vec<String>,
 }
 
-#[cfg(net_backend = "systemd-networkd")]
+#[cfg(not(feature = "wicked"))]
 impl ResolvedConfDropin {
     fn from_dns_settings(dns: &DnsSettings) -> Self {
         let domains = if let Some(domains) = &dns.search {
@@ -210,7 +210,7 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(crate)))]
     pub(crate) enum Error {
-        #[cfg(net_backend = "systemd-networkd")]
+        #[cfg(not(feature = "wicked"))]
         #[snafu(display("Unable to create directory '{}': {}", path.display(),source))]
         CreateDir { path: PathBuf, source: io::Error },
 
@@ -276,7 +276,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(net_backend = "wicked")]
+    #[cfg(feature = "wicked")]
     fn dns_from_lease_file() {
         let lease_path = test_data().join("leaseinfo.eth0.dhcp.ipv4");
         let lease = LeaseInfo::from_lease(lease_path).unwrap();
@@ -295,7 +295,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(net_backend = "wicked")]
+    #[cfg(feature = "wicked")]
     fn write_resolv_conf_from_lease_single_nameserver() {
         let lease_path = test_data().join("leaseinfo.eth0.dhcp.ipv4");
         let lease = LeaseInfo::from_lease(lease_path).unwrap();
@@ -310,7 +310,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(net_backend = "wicked")]
+    #[cfg(feature = "wicked")]
     fn write_resolv_conf_from_lease_multiple_nameservers() {
         let lease_path = test_data().join("leaseinfo.eth0.dhcp.ipv4.multiple-dns");
         let lease = LeaseInfo::from_lease(lease_path).unwrap();
@@ -333,7 +333,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(net_backend = "wicked")]
+    #[cfg(feature = "wicked")]
     fn write_resolv_conf_from_config_multiple_nameservers() {
         let fake_file = tempfile::NamedTempFile::new().unwrap();
         let config = test_data().join("netdog.toml");
@@ -351,7 +351,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     fn write_resolved_dropin_single_nameserver() {
         let fake_file = tempfile::NamedTempFile::new().unwrap();
         let config = test_data().join("single_nameserver_netdog.toml");
@@ -364,7 +364,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     fn write_resolved_dropin_multiple_domains() {
         let fake_file = tempfile::NamedTempFile::new().unwrap();
         let config = test_data().join("multiple_domains_netdog.toml");
@@ -377,7 +377,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(net_backend = "systemd-networkd")]
+    #[cfg(not(feature = "wicked"))]
     fn write_resolved_dropin_multiple_domains_nameservers() {
         let fake_file = tempfile::NamedTempFile::new().unwrap();
         let config = test_data().join("netdog.toml");
