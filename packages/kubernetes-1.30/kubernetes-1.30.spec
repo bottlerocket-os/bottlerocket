@@ -10,8 +10,7 @@
 %global gorepo kubernetes
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.29.1
-# %%global gover 1.30.0
+%global gover 1.30.0
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -33,7 +32,7 @@ Summary: Container cluster management
 # base Apache-2.0, third_party Apache-2.0 AND BSD-3-Clause
 License: Apache-2.0 AND BSD-3-Clause
 URL: https://%{goimport}
-Source0: https://distro.eks.amazonaws.com/kubernetes-1-30/releases/7/artifacts/kubernetes/v%{gover}/kubernetes-src.tar.gz
+Source0: https://distro.eks.amazonaws.com/kubernetes-1-30/releases/3/artifacts/kubernetes/v%{gover}/kubernetes-src.tar.gz
 Source1: kubelet.service
 Source2: kubelet-env
 Source3: kubelet-config
@@ -69,8 +68,7 @@ Summary: Container cluster node agent
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
 Requires: %{_cross_os}findutils
-# TODO: update to ecr-credential-provider-1.30
-Requires: %{_cross_os}ecr-credential-provider-1.29
+Requires: %{_cross_os}ecr-credential-provider-1.30
 Requires: %{_cross_os}aws-signing-helper
 Requires: %{_cross_os}static-pods
 Requires: %{_cross_os}kubelet-1.30(binaries)
@@ -108,6 +106,9 @@ cp third_party/forked/golang/PATENTS PATENTS.golang
 
 %build
 export FORCE_HOST_GO=1
+
+export GO_VERSION="1.22.2"
+
 # Build codegen programs with the host toolchain.
 make hack/update-codegen.sh
 

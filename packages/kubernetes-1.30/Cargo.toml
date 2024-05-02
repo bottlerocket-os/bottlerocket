@@ -15,8 +15,8 @@ package-name = "kubernetes-1.30"
 
 [[package.metadata.build-package.external-files]]
 # TODO: update this URL to 1.30 release once available. 
-url = "https://distro.eks.amazonaws.com/kubernetes-1-29/releases/7/artifacts/kubernetes/v1.29.1/kubernetes-src.tar.gz"
-sha512 = "9940027197f83702516775047664d3c30a83e69202dcca5aa89f320e78c27a930eb1373777277f240b3c5a63c351ccab3199c577424e760fe122692065895e2f"
+url = "https://distro.eks.amazonaws.com/kubernetes-1-30/releases/3/artifacts/kubernetes/v1.30.0/kubernetes-src.tar.gz"
+sha512 = "2becf971b5ebbc6752509bc04659b036c4fe99e1638a336436555d6403247094b69ab3bde2187391606de59e3a5b23acfce01a2d3c7f4e4b7516025e2812333c"
 
 # RPM BuildRequires
 [build-dependencies]
@@ -25,7 +25,7 @@ glibc = { path = "../glibc" }
 # RPM Requires
 [dependencies]
 aws-signing-helper = { path = "../aws-signing-helper" }
-ecr-credential-provider-1_29 = { path = "../ecr-credential-provider-1.29" }
+ecr-credential-provider-1_30 = { path = "../ecr-credential-provider-1.30" }
 static-pods = { path = "../static-pods" }
 # `conntrack-tools`, `containerd` and `findutils` are only needed at runtime,
 # and are pulled in by `release`.

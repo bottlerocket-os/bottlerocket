@@ -465,6 +465,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "ecr-credential-provider-1_30"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "ecs-agent"
 version = "0.1.0"
 dependencies = [
@@ -694,7 +701,7 @@ name = "kubernetes-1_30"
 version = "0.1.0"
 dependencies = [
  "aws-signing-helper",
- "ecr-credential-provider-1_29",
+ "ecr-credential-provider-1_30",
  "glibc",
  "static-pods",
 ]
