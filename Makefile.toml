@@ -1,5 +1,6 @@
 [config]
 skip_core_tasks = true
+default_to_workspace = false
 
 [env]
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
