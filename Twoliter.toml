@@ -4,4 +4,4 @@ release-version = "1.20.0"
 [sdk]
 registry = "public.ecr.aws/bottlerocket"
 repo = "bottlerocket-sdk"
-tag = "v0.40.0"
+tag = "v0.41.0"
