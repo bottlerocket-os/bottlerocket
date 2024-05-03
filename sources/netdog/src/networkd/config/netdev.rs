@@ -142,7 +142,7 @@ impl Display for NetDevMacAddress {
 }
 
 impl NetDevConfig {
-    const FILE_EXT: &'static str = "netdev";
+    const FILE_EXT: &str = "netdev";
 
     /// Write the config to the proper directory with the proper prefix and file extention
     pub(crate) fn write_config_file<P: AsRef<Path>>(&self, config_dir: P) -> Result<()> {
