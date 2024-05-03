@@ -9,7 +9,6 @@ exclude = ["README.md"]
 
 [package.metadata.build-variant.image-features]
 grub-set-private-var = true
-unified-cgroup-hierarchy = true
 uefi-secure-boot = true
 xfs-data-partition = true
 systemd-networkd = true
