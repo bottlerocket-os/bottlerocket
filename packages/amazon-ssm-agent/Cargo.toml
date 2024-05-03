@@ -9,8 +9,8 @@ build = "../build.rs"
 path = "../packages.rs"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/aws/amazon-ssm-agent/archive/3.3.131.0/amazon-ssm-agent-3.3.131.0.tar.gz"
-sha512 = "b4c40aabc8da3b5ea3944e420fbe795d0988c57a1eafe8fc6bef6e43f9bf8fb7806213dac7bebe9e5e7e6413a2ddb4057820bcbc399c4c92f6a3ba0078c14bd7"
+url = "https://github.com/aws/amazon-ssm-agent/archive/3.3.418.0/amazon-ssm-agent-3.3.418.0.tar.gz"
+sha512 = "b614803911b5f248dff6882f58da7a37d0d0397ea531f1f9cf30f52762ff2e80a7f0e7bf45b23fdfaecb4106a1acdbbc3b343c16940b5807bea3f953ef8e0e05"
 
 [build-dependencies]
 glibc = { path = "../glibc" }
