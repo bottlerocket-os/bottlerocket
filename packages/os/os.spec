@@ -54,6 +54,7 @@ Source117: cfsignal.service
 Source119: reboot-if-required.service
 Source120: warm-pool-wait.service
 Source122: has-boot-ever-succeeded.service
+Source123: pluto.service
 
 # 2xx sources: tmpfilesd configs
 Source200: migration-tmpfiles.conf
@@ -636,6 +637,7 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 
 %files -n %{_cross_os}pluto
 %{_cross_bindir}/pluto
+%{_cross_unitdir}/pluto.service
 %dir %{_cross_datadir}/eks
 %{_cross_datadir}/eks/eni-max-pods
 

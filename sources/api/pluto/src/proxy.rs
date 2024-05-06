@@ -4,7 +4,6 @@ use hyper::client::HttpConnector;
 use hyper::Uri;
 use hyper_rustls::{HttpsConnector, HttpsConnectorBuilder};
 use snafu::{ResultExt, Snafu};
-use std::env;
 use url::Url;
 
 #[derive(Debug, Snafu)]
@@ -26,21 +25,6 @@ pub(super) enum Error {
 }
 
 type Result<T> = std::result::Result<T, Error>;
-
-/// Fetches `HTTPS_PROXY` and `NO_PROXY` variables from the process environment.
-pub(crate) fn fetch_proxy_env() -> (Option<String>, Option<String>) {
-    let https_proxy = ["https_proxy", "HTTPS_PROXY"]
-        .iter()
-        .map(env::var)
-        .find(|env_var| *env_var != Err(env::VarError::NotPresent))
-        .and_then(|s| s.ok());
-    let no_proxy = ["no_proxy", "NO_PROXY"]
-        .iter()
-        .map(env::var)
-        .find(|env_var| *env_var != Err(env::VarError::NotPresent))
-        .and_then(|s| s.ok());
-    (https_proxy, no_proxy)
-}
 
 /// Setups a hyper-based HTTP client configured with a proxy connector.
 pub(crate) fn setup_http_client(
