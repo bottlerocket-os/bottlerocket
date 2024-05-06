@@ -1,0 +1,15 @@
+[package]
+name = "container-runtime-metadata-nvidia"
+version = "0.1.0"
+edition = "2021"
+authors = ["Matthew Yeazel <yeazelm@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}
+
+[build-dependencies]
+bottlerocket-variant = { version = "0.1", path = "../../../../../bottlerocket-variant" }
