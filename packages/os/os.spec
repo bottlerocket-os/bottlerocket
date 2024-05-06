@@ -96,18 +96,13 @@ Requires: %{_cross_os}thar-be-settings
 Requires: %{_cross_os}thar-be-updates
 Requires: %{_cross_os}updog
 
-%if %{with aws_k8s_family}
-Requires: %{_cross_os}pluto
-%endif
+Requires: (%{_cross_os}pluto if %{_cross_os}variant-family(aws-k8s))
+Requires: (%{_cross_os}shibaken if %{_cross_os}variant-platform(aws))
+Requires: (%{_cross_os}cfsignal if %{_cross_os}variant-platform(aws))
 
-%if %{with aws_platform}
-Requires: %{_cross_os}shibaken
-Requires: %{_cross_os}cfsignal
-%endif
+Requires: (%{_cross_os}warm-pool-wait if %{_cross_os}variant-family(aws-k8s))
 
-%if %{with nvidia_flavor}
-Requires: %{_cross_os}driverdog
-%endif
+Requires: (%{_cross_os}driverdog if %{_cross_os}variant-flavor(nvidia))
 
 %description
 %{summary}.
@@ -214,24 +209,26 @@ Summary: Bottlerocket certificates handler
 %description -n %{_cross_os}certdog
 %{summary}.
 
-%if %{with aws_k8s_family}
 %package -n %{_cross_os}pluto
 Summary: Dynamic setting generator for kubernetes
 %description -n %{_cross_os}pluto
 %{summary}.
-%endif
 
-%if %{with aws_platform}
 %package -n %{_cross_os}shibaken
 Summary: Run tasks reliant on IMDS
 %description -n %{_cross_os}shibaken
+%{summary}.
+
+%package -n %{_cross_os}warm-pool-wait
+Summary: Warm pool wait for aws k8s
+Requires: %{_cross_os}shibaken
+%description -n %{_cross_os}warm-pool-wait
 %{summary}.
 
 %package -n %{_cross_os}cfsignal
 Summary: Bottlerocket CloudFormation Stack signaler
 %description -n %{_cross_os}cfsignal
 %{summary}.
-%endif
 
 %package -n %{_cross_os}shimpei
 Summary: OCI-compatible shim around oci-add-hooks
@@ -239,13 +236,11 @@ Requires: %{_cross_os}oci-add-hooks
 %description -n %{_cross_os}shimpei
 %{summary}.
 
-%if %{with nvidia_flavor}
 %package -n %{_cross_os}driverdog
 Summary: Tool to load additional drivers
 Requires: %{_cross_os}binutils
 %description -n %{_cross_os}driverdog
 %{summary}.
-%endif
 
 %package -n %{_cross_os}bootstrap-containers
 Summary: Manages bootstrap-containers
@@ -319,7 +314,6 @@ exec 1>"${static_output}" 2>&1
 static_pid="$!"
 exec 1>&3 2>&4
 
-%if %{with aws_platform} || %{with aws_k8s_family}
 # The AWS SDK crates are extremely slow to build with only one codegen unit.
 # Pessimize the release build for just the crates that depend on them.
 # Store the output so we can print it after waiting for the backgrounded job.
@@ -333,13 +327,12 @@ CARGO_TARGET_DIR="${HOME}/.cache/.aws-sdk" \
     %{__cargo_cross_opts} \
     --release \
     --manifest-path %{_builddir}/sources/Cargo.toml \
-    %{?with_aws_platform: -p cfsignal} \
-    %{?with_aws_k8s_family: -p pluto} \
+    -p pluto \
+    -p cfsignal \
     &
 # Save the PID so we can wait for it later.
 aws_sdk_pid="$!"
 exec 1>&3 2>&4
-%endif
 
 # Run non-static builds in the foreground.
 echo "** Output from non-static builds:"
@@ -366,8 +359,8 @@ echo "** Output from non-static builds:"
     -p shimpei \
     -p bloodhound \
     -p xfscli \
-    %{?with_aws_platform: -p shibaken} \
-    %{?with_nvidia_flavor: -p driverdog} \
+    -p shibaken \
+    -p driverdog \
     %{nil}
 
 # Wait for static builds from the background, if they're not already done.
@@ -378,7 +371,6 @@ if [ "${static_rc}" -ne 0 ]; then
    exit "${static_rc}"
 fi
 
-%if %{with aws_platform} || %{with aws_k8s_family}
 # Wait for AWS SDK builds from the background, if they're not already done.
 set +e; wait "${aws_sdk_pid}"; aws_sdk_rc="${?}"; set -e
 echo -e "\n** Output from AWS SDK builds:"
@@ -386,7 +378,6 @@ cat "${aws_sdk_output}"
 if [ "${aws_sdk_rc}" -ne 0 ]; then
    exit "${aws_sdk_rc}"
 fi
-%endif
 
 %install
 install -d %{buildroot}%{_cross_bindir}
@@ -402,20 +393,18 @@ for p in \
   bottlerocket-cis-checks \
   bottlerocket-fips-checks \
   kubernetes-cis-checks \
-  %{?with_aws_platform: shibaken} \
-  %{?with_nvidia_flavor: driverdog} \
+  shibaken \
+  driverdog \
 ; do
   install -p -m 0755 ${HOME}/.cache/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
 
-%if %{with aws_platform} || %{with aws_k8s_family}
 for p in \
-  %{?with_aws_platform: cfsignal} \
-  %{?with_aws_k8s_family: pluto} \
+  pluto \
+  cfsignal \
 ; do
   install -p -m 0755 ${HOME}/.cache/.aws-sdk/%{__cargo_target}/release/${p} %{buildroot}%{_cross_bindir}
 done
-%endif
 
 install -d %{buildroot}%{_cross_sbindir}
 for p in \
@@ -488,10 +477,8 @@ install -d %{buildroot}%{_cross_datadir}/bottlerocket
 install -d %{buildroot}%{_cross_sysusersdir}
 install -p -m 0644 %{S:2} %{buildroot}%{_cross_sysusersdir}/api.conf
 
-%if %{with aws_k8s_family}
 install -d %{buildroot}%{_cross_datadir}/eks
 install -p -m 0644 %{S:3} %{buildroot}%{_cross_datadir}/eks
-%endif
 
 install -d %{buildroot}%{_cross_datadir}/updog
 install -p -m 0644 %{_cross_repo_root_json} %{buildroot}%{_cross_datadir}/updog
@@ -504,26 +491,21 @@ install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 \
   %{S:100} %{S:102} %{S:103} %{S:105} \
   %{S:106} %{S:107} %{S:110} %{S:111} %{S:112} \
-  %{S:113} %{S:114} %{S:119} %{S:122} \
+  %{S:113} %{S:114} %{S:119} %{S:122} %{S:123} \
   %{buildroot}%{_cross_unitdir}
 
-%if %{with nvidia_flavor}
 sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:115} > link-kernel-modules.service
 sed -e 's|PREFIX|%{_cross_prefix}|g' %{S:116} > load-kernel-modules.service
 install -p -m 0644 \
   link-kernel-modules.service \
   load-kernel-modules.service \
   %{buildroot}%{_cross_unitdir}
-%endif
 
-%if %{with aws_platform}
-%if %{with aws_k8s_family}
 install -p -m 0644 %{S:10} %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:120} %{buildroot}%{_cross_unitdir}
-%endif
+
 install -p -m 0644 %{S:9} %{buildroot}%{_cross_templatedir}
 install -p -m 0644 %{S:117} %{buildroot}%{_cross_unitdir}
-%endif
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
@@ -633,35 +615,29 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 %files -n %{_cross_os}logdog
 %{_cross_bindir}/logdog
 
-%if %{with aws_platform}
 %files -n %{_cross_os}shibaken
 %{_cross_bindir}/shibaken
 %dir %{_cross_templatedir}
-%if %{with aws_k8s_family}
+
+%files -n %{_cross_os}warm-pool-wait
 %{_cross_templatedir}/warm-pool-wait-toml
 %{_cross_unitdir}/warm-pool-wait.service
-%endif
 
 %files -n %{_cross_os}cfsignal
 %{_cross_bindir}/cfsignal
 %dir %{_cross_templatedir}
 %{_cross_templatedir}/cfsignal-toml
 %{_cross_unitdir}/cfsignal.service
-%endif
 
-%if %{with nvidia_flavor}
 %files -n %{_cross_os}driverdog
 %{_cross_bindir}/driverdog
 %{_cross_unitdir}/link-kernel-modules.service
 %{_cross_unitdir}/load-kernel-modules.service
-%endif
 
-%if %{with aws_k8s_family}
 %files -n %{_cross_os}pluto
 %{_cross_bindir}/pluto
 %dir %{_cross_datadir}/eks
 %{_cross_datadir}/eks/eni-max-pods
-%endif
 
 %files -n %{_cross_os}shimpei
 %{_cross_bindir}/shimpei
