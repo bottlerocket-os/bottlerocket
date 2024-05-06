@@ -4,7 +4,6 @@ use std::io;
 use std::path::PathBuf;
 
 use crate::log_request::REQUESTS_DIR;
-use datastore::{deserialization, serialization};
 use reqwest::Url;
 use snafu::{Backtrace, Snafu};
 
@@ -12,12 +11,14 @@ use snafu::{Backtrace, Snafu};
 #[snafu(visibility(pub(crate)))]
 #[allow(clippy::enum_variant_names)]
 pub(crate) enum Error {
-    #[snafu(display("Error calling Bottlerocket API '{}': {}", uri, source))]
-    ApiClient {
-        #[snafu(source(from(apiclient::Error, Box::new)))]
-        source: Box<apiclient::Error>,
-        uri: String,
+    #[snafu(display("Error calling apiclient: {}", source))]
+    ApiCommandFailure {
+        #[snafu(source(from(std::io::Error, Box::new)))]
+        source: Box<std::io::Error>,
     },
+
+    #[snafu(display("Error fetching settings via apiclient: {}", reason))]
+    ApiExecutionFailure { reason: String },
 
     #[snafu(display("Error creating the command stderr file '{}': {}", path.display(), source))]
     CommandErrFile {
@@ -66,9 +67,6 @@ pub(crate) enum Error {
         path: PathBuf,
         backtrace: Backtrace,
     },
-
-    #[snafu(display("Error deserializing Settings: {} ", source))]
-    DeserializeSettings { source: deserialization::Error },
 
     #[snafu(display("Error creating the error file '{}': {}", path.display(), source))]
     ErrorFile {
@@ -166,9 +164,6 @@ pub(crate) enum Error {
 
     #[snafu(display("Cannot write to / as a file."))]
     RootAsFile { backtrace: Backtrace },
-
-    #[snafu(display("Error serializing Settings: {} ", source))]
-    SerializeSettings { source: serialization::Error },
 
     #[snafu(display("Unable to deserialize Bottlerocket settings: {}", source))]
     SettingsJson { source: serde_json::Error },

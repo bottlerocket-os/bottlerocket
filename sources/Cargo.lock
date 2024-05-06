@@ -2584,14 +2584,9 @@ dependencies = [
 name = "logdog"
 version = "0.1.0"
 dependencies = [
- "apiclient",
- "bottlerocket-variant",
- "constants",
- "datastore",
  "flate2",
  "generate-readme",
  "glob",
- "models",
  "reqwest",
  "serde_json",
  "shell-words",
