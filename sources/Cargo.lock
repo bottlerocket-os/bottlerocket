@@ -3239,6 +3239,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "pluto-remove-generators-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "powerfmt"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
