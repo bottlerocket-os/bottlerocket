@@ -18,6 +18,5 @@ sha512 = "8998b6a1b254a9673b99ae4d70a1edc769bb728a44f573cdf62e0a9c9392b77644ee2d
 [build-dependencies]
 glibc = { path = "../glibc" }
 libaudit = { path = "../libaudit" }
-libbzip2 = { path = "../libbzip2" }
 libselinux = { path = "../libselinux" }
 libsepol = { path = "../libsepol" }

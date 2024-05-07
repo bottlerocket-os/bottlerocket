@@ -8,12 +8,11 @@ Source0: https://github.com/makedumpfile/makedumpfile/archive/%{version}/makedum
 
 # First party patches from 0 to 1000
 Patch0000: 0000-fix-strip-invocation-for-TARGET-env-variable.patch
+Patch0001: 0001-do-not-overlink-with-bzip2.patch
 
-BuildRequires: %{_cross_os}libbzip2-devel
 BuildRequires: %{_cross_os}libz-devel
 BuildRequires: %{_cross_os}libelf-devel
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}libbzip2
 Requires: %{_cross_os}libelf
 Requires: %{_cross_os}libz
 

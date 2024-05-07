@@ -19,4 +19,3 @@ sha512 = "6bb84a87959d2aa530f952acacacc669e888b6a0ae5fe3c6c627647a0e2566a73f05c7
 glibc = { path = "../glibc" }
 libelf = { path = "../libelf" }
 libz = { path = "../libz" }
-libbzip2 = { path = "../libbzip2" }

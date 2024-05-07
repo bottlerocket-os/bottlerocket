@@ -729,13 +729,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "libbzip2"
-version = "0.1.0"
-dependencies = [
- "glibc",
-]
-
-[[package]]
 name = "libcap"
 version = "0.1.0"
 dependencies = [
@@ -921,7 +914,6 @@ version = "0.1.0"
 dependencies = [
  "glibc",
  "libaudit",
- "libbzip2",
  "libselinux",
  "libsepol",
 ]
@@ -990,7 +982,6 @@ name = "makedumpfile"
 version = "0.1.0"
 dependencies = [
  "glibc",
- "libbzip2",
  "libelf",
  "libz",
 ]
