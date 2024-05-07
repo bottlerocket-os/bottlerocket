@@ -20,6 +20,7 @@
 # - ap-southeast-2
 # - ca-central-1
 # - eu-central-1
+# - eu-central-2
 # - eu-north-1
 # - eu-west-1
 # - eu-west-2
@@ -161,11 +162,11 @@ c6in.12xlarge 234
 c6in.16xlarge 737
 c6in.24xlarge 737
 c6in.2xlarge 58
-c6in.32xlarge 345
+c6in.32xlarge 394
 c6in.4xlarge 234
 c6in.8xlarge 234
 c6in.large 29
-c6in.metal 345
+c6in.metal 394
 c6in.xlarge 58
 c7a.12xlarge 234
 c7a.16xlarge 737
@@ -204,6 +205,7 @@ c7gn.4xlarge 234
 c7gn.8xlarge 234
 c7gn.large 29
 c7gn.medium 8
+c7gn.metal 737
 c7gn.xlarge 58
 c7i.12xlarge 234
 c7i.16xlarge 737
@@ -266,6 +268,16 @@ g5g.4xlarge 234
 g5g.8xlarge 234
 g5g.metal 737
 g5g.xlarge 58
+g6.12xlarge 234
+g6.16xlarge 737
+g6.24xlarge 737
+g6.2xlarge 58
+g6.48xlarge 737
+g6.4xlarge 234
+g6.8xlarge 234
+g6.xlarge 58
+gr6.4xlarge 234
+gr6.8xlarge 234
 h1.16xlarge 394
 h1.2xlarge 58
 h1.4xlarge 234
@@ -464,21 +476,21 @@ m6idn.12xlarge 234
 m6idn.16xlarge 737
 m6idn.24xlarge 737
 m6idn.2xlarge 58
-m6idn.32xlarge 345
+m6idn.32xlarge 394
 m6idn.4xlarge 234
 m6idn.8xlarge 234
 m6idn.large 29
-m6idn.metal 345
+m6idn.metal 394
 m6idn.xlarge 58
 m6in.12xlarge 234
 m6in.16xlarge 737
 m6in.24xlarge 737
 m6in.2xlarge 58
-m6in.32xlarge 345
+m6in.32xlarge 394
 m6in.4xlarge 234
 m6in.8xlarge 234
 m6in.large 29
-m6in.metal 345
+m6in.metal 394
 m6in.xlarge 58
 m7a.12xlarge 234
 m7a.16xlarge 737
@@ -665,21 +677,21 @@ r6idn.12xlarge 234
 r6idn.16xlarge 737
 r6idn.24xlarge 737
 r6idn.2xlarge 58
-r6idn.32xlarge 345
+r6idn.32xlarge 394
 r6idn.4xlarge 234
 r6idn.8xlarge 234
 r6idn.large 29
-r6idn.metal 345
+r6idn.metal 394
 r6idn.xlarge 58
 r6in.12xlarge 234
 r6in.16xlarge 737
 r6in.24xlarge 737
 r6in.2xlarge 58
-r6in.32xlarge 345
+r6in.32xlarge 394
 r6in.4xlarge 234
 r6in.8xlarge 234
 r6in.large 29
-r6in.metal 345
+r6in.metal 394
 r6in.xlarge 58
 r7a.12xlarge 234
 r7a.16xlarge 737
