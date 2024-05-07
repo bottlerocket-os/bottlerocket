@@ -1,3 +1,102 @@
+# v1.20.0 (2024-05-13)
+
+## OS Changes
+* Update third party packages ([#3939])
+* Enable file system encryption in 5.15 and 6.1 kernels ([#3906], [#3908])
+* Backport fix for loading SELinux modules ([#3907])
+* Add Fabric Manager support ([#3873])
+* Update host containers ([#3947])
+* Add setting to configure ntp options ([#3852] thanks @domgoodwin)
+* Include swap utilities ([#3829])
+* Update kernels to 6.1.87, 5.15.156, 5.10.215 ([#3934], [#3930])
+
+## Orchestrator Changes
+
+### Kubernetes
+* Drop Kubernetes 1.25 Metal and VMware variants ([#3896])
+* Add Kubernetes 1.30 variants ([#3859], [#3936])
+* Add container-runtime settings to `aws-k8s-*-nvidia` variants ([#3945])
+
+### ECS
+* Update ecs-agent to 1.82.3 ([#3939])
+* Use systemd drop-ins to configure the ECS agent ([#3834])
+
+## Build Changes
+* Update twoliter and the SDK ([#3938], [#3885])
+* Remove libbzip2 ([#3944])
+* Pessimize Rust builds that require the AWS SDK ([#3892])
+* Reduce variant matrix in CI/CD ([#3863])
+* Document package build tools for go dependencies ([#3882])
+* Update Go lints in CI/CD ([#3884])
+* Out-of-tree build enablement
+  * systemd: use build defaults and kernel parameters for unified cgroups ([#3886], [#3935])
+  * early-boot-config: Use standalone provider binaries to fetch user data ([#3637], [#3890])
+  * logdog: retrieve settings via API client ([#3946])
+  * netdog: remove conditional compilation, add hostname helpers ([#3700], [#3898])
+  * schnauzer: add if_not_null template helper ([#3838])
+  * static-pods: remove conditional compilation, switch to config file ([#3891], [#3927], [#3913])
+  * host-containers: switch to config file ([#3777], [#3842])
+  * bootstrap-containers: switch to config file ([#3724])
+  * corndog: switch to config file ([#3715])
+  * prairiedog: switch to config file ([#3713], [#3814], [#3836])
+  * thar-be-updates: switch to config file ([#3721])
+  * updog: use modeled types ([#3901])
+  * kernel: remove variant sensitivity ([#3897], [#3905], [#3932])
+* FIPS enablement
+  * add FIPS report to the API ([#3894])
+  * add release-fips package for FIPS functionality ([#3893])
+  * build Go binaries for FIPS and non-FIPS ([#3887])
+
+[#3637]: https://github.com/bottlerocket-os/bottlerocket/pull/3637
+[#3700]: https://github.com/bottlerocket-os/bottlerocket/pull/3700
+[#3713]: https://github.com/bottlerocket-os/bottlerocket/pull/3713
+[#3715]: https://github.com/bottlerocket-os/bottlerocket/pull/3715
+[#3721]: https://github.com/bottlerocket-os/bottlerocket/pull/3721
+[#3724]: https://github.com/bottlerocket-os/bottlerocket/pull/3724
+[#3777]: https://github.com/bottlerocket-os/bottlerocket/pull/3777
+[#3814]: https://github.com/bottlerocket-os/bottlerocket/pull/3814
+[#3829]: https://github.com/bottlerocket-os/bottlerocket/pull/3829
+[#3834]: https://github.com/bottlerocket-os/bottlerocket/pull/3834
+[#3836]: https://github.com/bottlerocket-os/bottlerocket/pull/3836
+[#3838]: https://github.com/bottlerocket-os/bottlerocket/pull/3838
+[#3842]: https://github.com/bottlerocket-os/bottlerocket/pull/3842
+[#3852]: https://github.com/bottlerocket-os/bottlerocket/pull/3852
+[#3859]: https://github.com/bottlerocket-os/bottlerocket/pull/3859
+[#3863]: https://github.com/bottlerocket-os/bottlerocket/pull/3863
+[#3873]: https://github.com/bottlerocket-os/bottlerocket/pull/3873
+[#3882]: https://github.com/bottlerocket-os/bottlerocket/pull/3882
+[#3884]: https://github.com/bottlerocket-os/bottlerocket/pull/3884
+[#3885]: https://github.com/bottlerocket-os/bottlerocket/pull/3885
+[#3886]: https://github.com/bottlerocket-os/bottlerocket/pull/3886
+[#3887]: https://github.com/bottlerocket-os/bottlerocket/pull/3887
+[#3890]: https://github.com/bottlerocket-os/bottlerocket/pull/3890
+[#3891]: https://github.com/bottlerocket-os/bottlerocket/pull/3891
+[#3892]: https://github.com/bottlerocket-os/bottlerocket/pull/3892
+[#3893]: https://github.com/bottlerocket-os/bottlerocket/pull/3893
+[#3894]: https://github.com/bottlerocket-os/bottlerocket/pull/3894
+[#3896]: https://github.com/bottlerocket-os/bottlerocket/pull/3896
+[#3897]: https://github.com/bottlerocket-os/bottlerocket/pull/3897
+[#3898]: https://github.com/bottlerocket-os/bottlerocket/pull/3898
+[#3901]: https://github.com/bottlerocket-os/bottlerocket/pull/3901
+[#3905]: https://github.com/bottlerocket-os/bottlerocket/pull/3905
+[#3906]: https://github.com/bottlerocket-os/bottlerocket/pull/3906
+[#3907]: https://github.com/bottlerocket-os/bottlerocket/pull/3907
+[#3908]: https://github.com/bottlerocket-os/bottlerocket/pull/3908
+[#3913]: https://github.com/bottlerocket-os/bottlerocket/pull/3913
+[#3927]: https://github.com/bottlerocket-os/bottlerocket/pull/3927
+[#3930]: https://github.com/bottlerocket-os/bottlerocket/pull/3930
+[#3932]: https://github.com/bottlerocket-os/bottlerocket/pull/3932
+[#3934]: https://github.com/bottlerocket-os/bottlerocket/pull/3934
+[#3935]: https://github.com/bottlerocket-os/bottlerocket/pull/3935
+[#3936]: https://github.com/bottlerocket-os/bottlerocket/pull/3936
+[#3938]: https://github.com/bottlerocket-os/bottlerocket/pull/3938
+[#3939]: https://github.com/bottlerocket-os/bottlerocket/pull/3939
+[#3944]: https://github.com/bottlerocket-os/bottlerocket/pull/3944
+[#3945]: https://github.com/bottlerocket-os/bottlerocket/pull/3945
+[#3946]: https://github.com/bottlerocket-os/bottlerocket/pull/3946
+[#3947]: https://github.com/bottlerocket-os/bottlerocket/pull/3947
+
+
 # v1.19.5 (2024-05-01)
 
 ## OS Changes
