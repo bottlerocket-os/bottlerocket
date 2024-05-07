@@ -307,4 +307,8 @@ version = "1.20.0"
     "migrate_v1.20.0_static-pods-services-cfg-v0-1-0.lz4",
     "migrate_v1.20.0_container-runtime-nvidia.lz4",
     "migrate_v1.20.0_container-runtime-metadata-nvidia.lz4",
+    "migrate_v1.20.0_aws-admin-container-v0-11-8.lz4",
+    "migrate_v1.20.0_public-admin-container-v0-11-8.lz4",
+    "migrate_v1.20.0_aws-control-container-v0-7-12.lz4",
+    "migrate_v1.20.0_public-control-container-v0-7-12.lz4",
 ]

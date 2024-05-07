@@ -86,6 +86,10 @@ members = [
     "api/migration/migrations/v1.19.5/public-admin-container-v0-11-7",
     "api/migration/migrations/v1.20.0/container-runtime-nvidia",
     "api/migration/migrations/v1.20.0/container-runtime-metadata-nvidia",
+    "api/migration/migrations/v1.20.0/aws-admin-container-v0-11-8",
+    "api/migration/migrations/v1.20.0/public-admin-container-v0-11-8",
+    "api/migration/migrations/v1.20.0/aws-control-container-v0-7-12",
+    "api/migration/migrations/v1.20.0/public-control-container-v0-7-12",
 
     "bloodhound",
 
