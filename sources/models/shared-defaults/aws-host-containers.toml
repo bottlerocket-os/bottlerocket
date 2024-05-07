@@ -13,4 +13,4 @@ enabled = true
 superpowered = false
 
 [metadata.settings.host-containers.control.source]
-setting-generator = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-control:v0.7.11'"
+setting-generator = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-control:v0.7.12'"
