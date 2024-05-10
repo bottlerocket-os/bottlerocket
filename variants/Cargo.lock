@@ -991,6 +991,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "mdadm"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "systemd",
+]
+
+[[package]]
 name = "metal-dev"
 version = "0.1.0"
 dependencies = [
@@ -1166,6 +1174,7 @@ dependencies = [
  "libkcapi",
  "libstd-rust",
  "makedumpfile",
+ "mdadm",
  "netdog",
  "nvme-cli",
  "oci-add-hooks",

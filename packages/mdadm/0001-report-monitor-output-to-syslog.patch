@@ -1,0 +1,39 @@
+From a277a7b7d171dbc7cee691ee20a9990fec524581 Mon Sep 17 00:00:00 2001
+From: Todd Neal <tnealt@amazon.com>
+Date: Fri, 7 Jun 2024 18:22:52 +0000
+Subject: [PATCH] report monitor output to syslog and remove env script
+
+---
+ systemd/mdmonitor-oneshot.service | 3 +--
+ systemd/mdmonitor.service         | 3 +--
+ 2 files changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/systemd/mdmonitor-oneshot.service b/systemd/mdmonitor-oneshot.service
+index ba86b44..c54f080 100644
+--- a/systemd/mdmonitor-oneshot.service
++++ b/systemd/mdmonitor-oneshot.service
+@@ -10,7 +10,6 @@ Description=Reminder for degraded MD arrays
+ Documentation=man:mdadm(8)
+ 
+ [Service]
+-Environment=MDADM_MONITOR_ARGS=--scan
++Environment=MDADM_MONITOR_ARGS="--scan --syslog"
+ EnvironmentFile=-/run/sysconfig/mdadm
+-ExecStartPre=-/usr/lib/mdadm/mdadm_env.sh
+ ExecStart=BINDIR/mdadm --monitor --oneshot $MDADM_MONITOR_ARGS
+diff --git a/systemd/mdmonitor.service b/systemd/mdmonitor.service
+index 9c36478..fcf895b 100644
+--- a/systemd/mdmonitor.service
++++ b/systemd/mdmonitor.service
+@@ -11,7 +11,6 @@ DefaultDependencies=no
+ Documentation=man:mdadm(8)
+ 
+ [Service]
+-Environment=  MDADM_MONITOR_ARGS=--scan
++Environment=  MDADM_MONITOR_ARGS="--scan --syslog"
+ EnvironmentFile=-/run/sysconfig/mdadm
+-ExecStartPre=-/usr/lib/mdadm/mdadm_env.sh
+ ExecStart=BINDIR/mdadm --monitor $MDADM_MONITOR_ARGS
+-- 
+2.40.1
+
