@@ -352,3 +352,7 @@ CONFIG_QLCNIC_SRIOV=y
 # Cisco UCS HBA support
 CONFIG_FCOE_FNIC=m
 CONFIG_SCSI_SNIC=m
+
+# Enable support for adaptive-tick low-jitter configurations
+CONFIG_RCU_NOCB_CPU=y
+CONFIG_NO_HZ_FULL=y
