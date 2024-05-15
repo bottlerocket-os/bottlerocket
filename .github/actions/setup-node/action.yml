@@ -30,3 +30,5 @@ runs:
     - if: ${{ inputs.perform-cache-cleanup }}
       run: cargo install --no-default-features --features ci-autoclean cargo-cache
       shell: bash
+    - run: rustup install nightly
+      shell: bash
