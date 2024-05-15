@@ -8,7 +8,7 @@ BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 # For binary installation, this should be a released version (prefixed with a v,
 # for example v0.1.0). For the git sourcecode installation method, this can be
 # any git rev, e.g. a tag, sha, or branch name.
-TWOLITER_VERSION = "v0.1.1"
+TWOLITER_VERSION = "9da417bf68654303b2189f2466209b091d735ab0"
 
 # For binary installation, this is the GitHub repository that has binary release artifacts attached
 # to it, for example https://github.com/bottlerocket-os/twoliter. For git sourcecode installation,
@@ -21,14 +21,14 @@ TWOLITER_REUSE_EXISTING_INSTALL="true"
 
 # Allow Twoliter to be installed from a binary distribution if binaries are expected to exist for
 # the host OS and architecture.
-TWOLITER_ALLOW_BINARY_INSTALL="true"
+TWOLITER_ALLOW_BINARY_INSTALL="false"
 
 # Allow Twoliter to be installed by building from sourcecode.
 TWOLITER_ALLOW_SOURCE_INSTALL="true"
 
 # If you know the version string returned by Twoliter will not match TWOLITER_VERSION (e.g. when you
 # are testing changes to Twoliter itself), set this to true to prevent re-installation.
-TWOLITER_SKIP_VERSION_CHECK="false"
+TWOLITER_SKIP_VERSION_CHECK="true"
 
 # Where Twoliter will be installed.
 TWOLITER_INSTALL_DIR = "${BUILDSYS_ROOT_DIR}/tools/twoliter"
