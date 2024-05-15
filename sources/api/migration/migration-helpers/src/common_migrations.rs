@@ -1301,7 +1301,7 @@ impl Migration for RemoveMetadataMigration {
 
 #[cfg(test)]
 mod test_remove_metadata {
-    use super::{AddMetadataMigration, RemoveMetadataMigration, SettingMetadata};
+    use super::{RemoveMetadataMigration, SettingMetadata};
     use crate::{Migration, MigrationData};
     use maplit::hashmap;
     use std::collections::HashMap;

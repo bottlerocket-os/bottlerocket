@@ -21,7 +21,7 @@ address = "/run/containerd/containerd.sock"
 [plugins."io.containerd.grpc.v1.cri"]
 enable_selinux = true
 # Pause container image is specified here, shares the same image as kubelet's pod-infra-container-image
-sandbox_image = "{{settings.kubernetes.pod-infra-container-image}}"
+sandbox_image = "localhost/kubernetes/pause:0.1.0"
 {{#if settings.container-runtime.max-container-log-line-size}}
 max_container_log_line_size = {{settings.container-runtime.max-container-log-line-size}}
 {{/if}}

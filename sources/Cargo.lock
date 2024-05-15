@@ -3249,6 +3249,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "pod-infra-container-image-affected-services"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "pod-infra-container-image-remove-settings-generator"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "pod-infra-container-image-services"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "powerfmt"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
