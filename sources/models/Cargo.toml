@@ -23,6 +23,7 @@ settings-extension-container-registry = { path = "../settings-extensions/contain
 settings-extension-kernel = { path = "../settings-extensions/kernel", version = "0.1" }
 settings-extension-motd = { path = "../settings-extensions/motd", version = "0.1" }
 settings-extension-ntp = { path = "../settings-extensions/ntp", version = "0.1" }
+settings-extension-pki = { path = "../settings-extensions/pki", version = "0.1" }
 settings-extension-updates = { path = "../settings-extensions/updates", version = "0.1" }
 
 [build-dependencies]
