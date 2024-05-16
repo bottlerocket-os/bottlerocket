@@ -3960,6 +3960,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-extension-pki"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "settings-extension-updates"
 version = "0.1.0"
 dependencies = [
