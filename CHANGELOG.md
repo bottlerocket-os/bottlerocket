@@ -23,7 +23,7 @@
 
 ## Build Changes
 * Update twoliter and the SDK ([#3938], [#3885])
-* Remove libbzip2 ([#3944])
+* Remove liblzma and libbzip2 ([#3861], [#3944])
 * Pessimize Rust builds that require the AWS SDK ([#3892])
 * Reduce variant matrix in CI/CD ([#3863])
 * Document package build tools for go dependencies ([#3882])
@@ -62,6 +62,7 @@
 [#3842]: https://github.com/bottlerocket-os/bottlerocket/pull/3842
 [#3852]: https://github.com/bottlerocket-os/bottlerocket/pull/3852
 [#3859]: https://github.com/bottlerocket-os/bottlerocket/pull/3859
+[#3861]: https://github.com/bottlerocket-os/bottlerocket/pull/3861
 [#3863]: https://github.com/bottlerocket-os/bottlerocket/pull/3863
 [#3873]: https://github.com/bottlerocket-os/bottlerocket/pull/3873
 [#3882]: https://github.com/bottlerocket-os/bottlerocket/pull/3882
