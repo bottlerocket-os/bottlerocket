@@ -163,6 +163,16 @@ TESTSYS_STARTING_COMMIT = { script = ["git describe --tag ${TESTSYS_STARTING_VER
 TESTSYS_TESTS_DIR = "${BUILDSYS_ROOT_DIR}/tests"
 TESTSYS_TEST_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Test.toml"
 
+# This is a temporary measure during the development of Kits functionality in Twoliter and Buildsys.
+# For Kits, packages cannot be built with knowledge of the variant they are being built for, but
+# there are still some lingering places in Bottlerocket where packages are variant-sensitive. This
+# environment variable can be deleted once all conditional compilation and variant-sensitivity in
+# packages has been removed from Bottlerocket. Tracked here:
+# https://github.com/bottlerocket-os/bottlerocket/issues/3617
+# https://github.com/bottlerocket-os/bottlerocket/issues/3615
+# TODO - remove this after packages are no longer sensitive to what variant is being built.
+BUILDSYS_DEPRECATED_FEATURE_VARIANT_SENSITIVITY = "true"
+
 [env.development]
 # Certain variables are defined here to allow us to override a component value
 # on the command line.
