@@ -13,6 +13,8 @@ License: Apache-2.0
 URL: https://github.com/NVIDIA/k8s-device-plugin
 Source0: https://%{goimport}/archive/v%{gover}/v%{gover}.tar.gz#/k8s-device-plugin-%{gover}.tar.gz
 Source1: nvidia-k8s-device-plugin.service
+Source2: nvidia-k8s-device-plugin-conf
+Source3: nvidia-k8s-device-plugin-tmpfiles.conf
 
 BuildRequires: %{_cross_os}glibc-devel
 Requires: %{name}(binaries)
@@ -61,11 +63,18 @@ install -p -m 0755 fips/nvidia-device-plugin %{buildroot}%{_cross_fips_bindir}
 
 install -d %{buildroot}%{_cross_unitdir}
 install -p -m 0644 %{S:1} %{buildroot}%{_cross_unitdir}
+install -d %{buildroot}%{_cross_tmpfilesdir}
+install -D -p -m 0644 %{S:2} %{buildroot}%{_cross_templatedir}/nvidia-k8s-device-plugin-conf
+install -m 0644 %{S:3} %{buildroot}%{_cross_tmpfilesdir}/nvidia-k8s-device-plugin-tmpfiles.conf
+install -d %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}/nvidia-k8s-device-plugin
 
 %files
 %license LICENSE
 %{_cross_attribution_file}
 %{_cross_unitdir}/nvidia-k8s-device-plugin.service
+%dir %{_cross_factorydir}%{_cross_sysconfdir}/nvidia-k8s-device-plugin
+%{_cross_templatedir}/nvidia-k8s-device-plugin-conf
+%{_cross_tmpfilesdir}/nvidia-k8s-device-plugin-tmpfiles.conf
 
 %files bin
 %{_cross_bindir}/nvidia-device-plugin

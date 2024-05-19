@@ -1,0 +1,19 @@
+[required-extensions]
+kubernetes = "v1"
++++
+version: v1
+flags:
+  migStrategy: "none"
+  failOnInitError: true
+  plugin:
+    passDeviceSpecs: true
+    deviceListStrategy: "volume-mounts"
+    deviceIDStrategy: "index"
+{{#if (gt settings.kubernetes.nvidia.device-plugin.max-sharing-per-gpu 0)}}
+sharing:
+  timeSlicing:
+    renameByDefault: {{settings.kubernetes.nvidia.device-plugin.rename-shared-gpu}}
+    resources:
+    - name: "nvidia.com/gpu"
+      replicas: {{settings.kubernetes.nvidia.device-plugin.max-sharing-per-gpu}}
+{{/if}}

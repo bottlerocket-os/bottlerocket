@@ -1,0 +1,13 @@
+[package]
+name = "nvidia-k8s-device-plugin-settings"
+version = "0.1.0"
+edition = "2021"
+authors = ["Monirul Islam <monirulu@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}
+
+[build-dependencies]
+bottlerocket-variant = { version = "0.1", path = "../../../../../bottlerocket-variant" }

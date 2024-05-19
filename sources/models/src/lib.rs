@@ -317,6 +317,7 @@ struct KubernetesSettings {
     hostname_override: ValidLinuxHostname,
     // Generated in `k8s-1.25+` variants only
     seccomp_default: bool,
+    nvidia: K8sNvidiaSettings,
 }
 
 // ECS settings.
@@ -571,4 +572,15 @@ struct OciDefaultsResourceLimit {
 struct Report {
     name: String,
     description: String,
+}
+
+#[model]
+struct K8sNvidiaSettings {
+    device_plugin: K8sDevicePluginSettings,
+}
+
+#[model]
+struct K8sDevicePluginSettings {
+    max_sharing_per_gpu: i32,
+    rename_shared_gpu: bool,
 }

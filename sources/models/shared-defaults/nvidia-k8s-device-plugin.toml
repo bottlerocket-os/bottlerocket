@@ -1,0 +1,20 @@
+# nvidia device plugin service
+[services.nvidia-device-plugin]
+restart-commands = ["/bin/systemctl try-reload-or-restart nvidia-k8s-device-plugin.service"]
+configuration-files = ["nvidia-device-plugin"]
+
+[configuration-files.nvidia-device-plugin]
+path = "/etc/nvidia-k8s-device-plugin/settings.yaml"
+template-path = "/usr/share/templates/nvidia-k8s-device-plugin-conf"
+
+[metadata.settings.kubernetes.nvidia.device-plugin]
+affected-services = ["nvidia-device-plugin"]
+
+[settings.kubernetes.nvidia.device-plugin]
+# Set this value to non zero value to enable GPU timeslicing. Timeslicing is not enabled by default.
+max-sharing-per-gpu = 0
+
+# Set this value to true to rename the shared GPUs when timeslicing is enabled.
+# For example, nvidia.com/gpu will be renamed as nvidia.com/gpu.shared.
+# The default value is set to true to match the default behavior of nvidia device plugin.
+rename-shared-gpu = true

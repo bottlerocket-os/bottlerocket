@@ -1,12 +1,10 @@
 [Unit]
 Description=Start NVIDIA kubernetes device plugin
-RefuseManualStart=true
-RefuseManualStop=true
 After=kubelet.service
 Wants=kubelet.service
 
 [Service]
-ExecStart=/usr/bin/nvidia-device-plugin --device-list-strategy volume-mounts --device-id-strategy index --pass-device-specs=true
+ExecStart=/usr/bin/nvidia-device-plugin --config-file=/etc/nvidia-k8s-device-plugin/settings.yaml
 Type=simple
 TimeoutSec=0
 RestartSec=2

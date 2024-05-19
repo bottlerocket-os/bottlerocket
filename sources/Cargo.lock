@@ -2990,6 +2990,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "nvidia-k8s-device-plugin-metadata"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
+name = "nvidia-k8s-device-plugin-settings"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-variant",
+ "migration-helpers",
+]
+
+[[package]]
 name = "object"
 version = "0.32.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
