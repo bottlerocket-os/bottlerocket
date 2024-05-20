@@ -133,6 +133,7 @@ members = [
     "settings-extensions/kernel",
     "settings-extensions/motd",
     "settings-extensions/ntp",
+    "settings-extensions/pki",
     "settings-extensions/updates",
 
     "static-pods",
