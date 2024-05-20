@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use crate::{
     BootSettings, BootstrapContainer, ContainerRuntimeSettings, DnsSettings, HostContainer,
-    KubernetesSettings, MetricsSettings, NetworkSettings, OciDefaults, OciHooks,
+    KubernetesSettings, NetworkSettings, OciDefaults, OciHooks,
 };
 use modeled_types::Identifier;
 
@@ -21,7 +21,7 @@ struct Settings {
     kernel: settings_extension_kernel::KernelSettingsV1,
     boot: BootSettings,
     aws: settings_extension_aws::AwsSettingsV1,
-    metrics: MetricsSettings,
+    metrics: settings_extension_metrics::MetricsSettingsV1,
     pki: settings_extension_pki::PkiSettingsV1,
     container_registry: settings_extension_container_registry::RegistrySettingsV1,
     oci_defaults: OciDefaults,
