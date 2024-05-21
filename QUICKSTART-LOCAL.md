@@ -42,7 +42,7 @@ version = 1
 dhcp4 = true
 ```
 
-This will prompt [netdog](https://github.com/bottlerocket-os/bottlerocket/blob/develop/sources/api/netdog/README.md) to set up `enp0s16` as the primary network interface with IPv4 networking configured via DHCP.
+This will prompt [netdog](https://github.com/bottlerocket-os/bottlerocket/blob/develop/sources/netdog/README.md) to set up `enp0s16` as the primary network interface with IPv4 networking configured via DHCP.
 No dedicated DHCP server needs to be running on the host as QEMU will act as one on the virtual network interface.
 Note that for virtual machines launched with `start-local-vm`, the primary network interface will always be named `enp0s16`.
 The name will differ when running on bare metal or in a cloud environment.
