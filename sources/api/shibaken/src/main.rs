@@ -22,8 +22,8 @@ use crate::error::Result;
 
 mod admin_userdata;
 pub(crate) mod error;
-mod value_equal;
 mod partition;
+mod value_equal;
 mod warmpool;
 
 /// Returns information gathered from the AWS instance metadata service (IMDS).
@@ -70,8 +70,12 @@ async fn run() -> Result<ExitCode> {
     log::info!("shibaken started");
     let mut exit_code = ExitCode::SUCCESS;
     match args.command {
-        Commands::GenerateAdminUserdata(generate_admin_userdata) => generate_admin_userdata.run().await?,
-        Commands::DoesValueStartWith(does_value_start) => exit_code = does_value_start.run().await?,
+        Commands::GenerateAdminUserdata(generate_admin_userdata) => {
+            generate_admin_userdata.run().await?
+        }
+        Commands::DoesValueStartWith(does_value_start) => {
+            exit_code = does_value_start.run().await?
+        }
         Commands::IsPartition(is_partition) => is_partition.run().await?,
         Commands::WarmPoolWait(warm_pool_wait) => warm_pool_wait
             .run()
@@ -90,6 +94,6 @@ async fn main() -> ExitCode {
             eprintln!("{}", e);
             ExitCode::FAILURE
         }
-        Ok(code) => code
+        Ok(code) => code,
     }
 }

@@ -14,14 +14,17 @@ pub(crate) struct ValueStartsWith {
     /// imds variable name (must be instance-type for now)
     variable_name: String,
     #[argh(option)]
-    /// value to compare against that 
+    /// value to compare against that
     value: Vec<String>,
 }
 
 impl ValueStartsWith {
     pub(crate) async fn run(self) -> Result<ExitCode> {
         if self.variable_name != "instance-type" {
-            log::info!("Unknown variable name {}, returning false.", self.variable_name);
+            log::info!(
+                "Unknown variable name {}, returning false.",
+                self.variable_name
+            );
             return Ok(ExitCode::FAILURE);
         }
         if self.value.is_empty() {
