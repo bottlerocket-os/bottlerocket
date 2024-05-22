@@ -2819,6 +2819,7 @@ dependencies = [
  "serde_json",
  "settings-extension-aws",
  "settings-extension-container-registry",
+ "settings-extension-dns",
  "settings-extension-kernel",
  "settings-extension-metrics",
  "settings-extension-motd",
