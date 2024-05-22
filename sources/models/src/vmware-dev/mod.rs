@@ -1,9 +1,7 @@
 use model_derive::model;
 use std::collections::HashMap;
 
-use crate::{
-    BootSettings, BootstrapContainer, DnsSettings, HostContainer, NetworkSettings, OciHooks,
-};
+use crate::{BootSettings, BootstrapContainer, DnsSettings, HostContainer, NetworkSettings};
 use modeled_types::Identifier;
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
@@ -21,6 +19,6 @@ struct Settings {
     metrics: settings_extension_metrics::MetricsSettingsV1,
     pki: settings_extension_pki::PkiSettingsV1,
     container_registry: settings_extension_container_registry::RegistrySettingsV1,
-    oci_hooks: OciHooks,
+    oci_hooks: settings_extension_oci_hooks::OciHooksSettingsV1,
     dns: DnsSettings,
 }

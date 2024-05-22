@@ -2823,6 +2823,7 @@ dependencies = [
  "settings-extension-metrics",
  "settings-extension-motd",
  "settings-extension-ntp",
+ "settings-extension-oci-hooks",
  "settings-extension-pki",
  "settings-extension-updates",
  "toml",
