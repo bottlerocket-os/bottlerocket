@@ -134,6 +134,7 @@ members = [
     "settings-extensions/metrics",
     "settings-extensions/motd",
     "settings-extensions/ntp",
+    "settings-extensions/oci-hooks",
     "settings-extensions/pki",
     "settings-extensions/updates",
 

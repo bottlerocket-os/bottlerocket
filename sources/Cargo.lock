@@ -2823,6 +2823,7 @@ dependencies = [
  "settings-extension-metrics",
  "settings-extension-motd",
  "settings-extension-ntp",
+ "settings-extension-oci-hooks",
  "settings-extension-pki",
  "settings-extension-updates",
  "toml",
@@ -3963,6 +3964,18 @@ dependencies = [
 
 [[package]]
 name = "settings-extension-ntp"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "settings-extension-oci-hooks"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-settings-sdk",
