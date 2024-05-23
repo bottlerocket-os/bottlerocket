@@ -2820,6 +2820,7 @@ dependencies = [
  "settings-extension-aws",
  "settings-extension-container-registry",
  "settings-extension-dns",
+ "settings-extension-ecs",
  "settings-extension-kernel",
  "settings-extension-metrics",
  "settings-extension-motd",
