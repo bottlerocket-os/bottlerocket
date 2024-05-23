@@ -91,6 +91,7 @@ members = [
     "api/migration/migrations/v1.20.0/aws-control-container-v0-7-12",
     "api/migration/migrations/v1.20.0/public-control-container-v0-7-12",
     "api/migration/migrations/v1.21.0/pluto-remove-generators-v0-1-0",
+    "api/migration/migrations/v1.21.0/container-runtime-nvidia-k8s",
 
     "bloodhound",
 

@@ -13,7 +13,7 @@ License: Apache-2.0
 URL: https://%{goimport}
 
 Source0: https://%{goimport}/archive/v%{gover}/nvidia-container-toolkit-%{gover}.tar.gz
-Source1: nvidia-container-toolkit-config-k8s.toml
+Source1: nvidia-container-toolkit-config-k8s
 Source2: nvidia-container-toolkit-config-ecs.toml
 Source3: nvidia-oci-hooks-json
 Source4: nvidia-gpu-devices.rules
@@ -82,5 +82,5 @@ ln -s shimpei %{buildroot}%{_cross_bindir}/nvidia-oci
 %{_cross_tmpfilesdir}/nvidia-container-toolkit-ecs.conf
 
 %files k8s
-%{_cross_factorydir}/nvidia-container-runtime/nvidia-container-toolkit-config-k8s.toml
+%{_cross_factorydir}/nvidia-container-runtime/nvidia-container-toolkit-config-k8s
 %{_cross_tmpfilesdir}/nvidia-container-toolkit-k8s.conf
