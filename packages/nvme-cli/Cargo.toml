@@ -1,0 +1,20 @@
+[package]
+name = "nvme-cli"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[lib]
+path = "../packages.rs"
+
+[package.metadata.build-package]
+releases-url = "https://github.com/linux-nvme/nvme-cli/releases"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/linux-nvme/nvme-cli/archive/v2.9.1/nvme-cli-2.9.1.tar.gz"
+sha512 = "c9c86e7567c2d4c59aff1eb9d18f4775923db3c81a89c628b819121c32150d4bc2d65d0dacac764c64594369890b380d0fd06bc7c1f83f4a7f3e71a51a6fee24"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
+libnvme = { path = "../libnvme" }
