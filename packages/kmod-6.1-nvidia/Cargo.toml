@@ -13,6 +13,10 @@ package-name = "kmod-6.1-nvidia"
 releases-url = "https://docs.nvidia.com/datacenter/tesla/"
 
 [[package.metadata.build-package.external-files]]
+url = "https://s3.amazonaws.com/EULA/NVidiaEULAforAWS.pdf"
+sha512 = "e1926fe99afc3ab5b2f2744fcd53b4046465aefb2793e2e06c4a19455a3fde895e00af1415ff1a5804c32e6a2ed0657e475de63da6c23a0e9c59feeef52f3f58"
+
+[[package.metadata.build-package.external-files]]
 url = "https://us.download.nvidia.com/tesla/535.161.07/NVIDIA-Linux-x86_64-535.161.07.run"
 sha512 = "4e8dd709157c15519f01a8d419daa098da64666d20a80edf3894239707ff1e83b48553f3edc5d567109d36e52b31ac7c0c7218ea77862a04e89aa3cc1f16a5ba"
 force-upstream = true
