@@ -1,0 +1,19 @@
+[package]
+name = "libnvme"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[lib]
+path = "../packages.rs"
+
+[package.metadata.build-package]
+releases-url = "https://github.com/linux-nvme/libnvme/releases"
+
+[[package.metadata.build-package.external-files]]
+url = "https://github.com/linux-nvme/libnvme/archive/v1.9/libnvme-1.9.tar.gz"
+sha512 = "39a3346805143f93a17d00cfcb6fb75f82154658db6079134c09dfa989995ac5de79b1ce1ac091b4e997523d3216829ce9eac44110c9f59f9fd21636529c8b25"
+
+[build-dependencies]
+glibc = { path = "../glibc" }
