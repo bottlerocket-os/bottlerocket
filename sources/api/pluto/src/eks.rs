@@ -1,5 +1,5 @@
 use crate::aws::sdk_config;
-use crate::{aws, proxy};
+use crate::proxy;
 use aws_sdk_eks::types::KubernetesNetworkConfigResponse;
 use aws_smithy_runtime::client::http::hyper_014::HyperClientBuilder;
 use snafu::{OptionExt, ResultExt, Snafu};
@@ -27,9 +27,6 @@ pub(super) enum Error {
 
     #[snafu(context(false), display("{}", source))]
     Proxy { source: proxy::Error },
-
-    #[snafu(context(false), display("{}", source))]
-    SdkConfig { source: aws::Error },
 }
 
 type Result<T> = std::result::Result<T, Error>;
@@ -39,11 +36,10 @@ type Result<T> = std::result::Result<T, Error>;
 pub(super) async fn get_cluster_network_config(
     region: &str,
     cluster: &str,
+    https_proxy: Option<String>,
+    no_proxy: Option<String>,
 ) -> Result<ClusterNetworkConfig> {
-    // Respect proxy environment variables when making AWS EKS API requests
-    let (https_proxy, no_proxy) = proxy::fetch_proxy_env();
-
-    let config = sdk_config(region).await?;
+    let config = sdk_config(region).await;
 
     let client = if let Some(https_proxy) = https_proxy {
         let http_connector = proxy::setup_http_client(https_proxy, no_proxy)?;

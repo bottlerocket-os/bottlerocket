@@ -1,0 +1,20 @@
+[Unit]
+Description=Generate additional settings for Kubernetes
+After=network-online.target apiserver.service sundog.service
+Requires=sundog.service
+# We don't want to restart the unit if the network goes offline or apiserver restarts
+Wants=network-online.target apiserver.service
+# Block manual interactions with this service, since it could leave the system in additional
+# unexpected state
+RefuseManualStart=true
+RefuseManualStop=true
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/settings-committer
+ExecStart=/usr/bin/pluto
+RemainAfterExit=true
+StandardError=journal+console
+
+[Install]
+RequiredBy=preconfigured.target

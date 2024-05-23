@@ -1,8 +1,2 @@
 [settings.kubernetes]
 cloud-provider = "external"
-
-# The host's hostname does not always match the node name expected by the control plane.
-# The EC2 instance's 'PrivateDnsName' is what control plane components match against during node registration when
-# kubelet advertises the node name.
-[metadata.settings.kubernetes]
-hostname-override.setting-generator = "pluto private-dns-name"

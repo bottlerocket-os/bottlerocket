@@ -3214,16 +3214,13 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 name = "pluto"
 version = "0.1.0"
 dependencies = [
- "apiclient",
  "aws-config",
  "aws-sdk-ec2",
  "aws-sdk-eks",
  "aws-smithy-runtime",
  "aws-smithy-types",
  "aws-types",
- "bottlerocket-variant",
  "bytes",
- "constants",
  "futures-util",
  "generate-readme",
  "headers",
@@ -3231,13 +3228,22 @@ dependencies = [
  "hyper",
  "hyper-rustls",
  "imdsclient",
- "models",
+ "log",
+ "modeled-types",
+ "serde",
  "serde_json",
  "snafu 0.8.2",
  "tokio",
  "tokio-retry",
  "tokio-rustls",
  "url",
+]
+
+[[package]]
+name = "pluto-remove-generators-v0-1-0"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
 ]
 
 [[package]]

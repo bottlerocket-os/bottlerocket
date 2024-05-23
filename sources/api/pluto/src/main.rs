@@ -38,14 +38,16 @@ mod eks;
 mod hyper_proxy;
 mod proxy;
 
+use api::AwsK8sInfo;
 use imdsclient::ImdsClient;
+use modeled_types::KubernetesClusterDnsIp;
 use snafu::{ensure, OptionExt, ResultExt};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::net::IpAddr;
+use std::process;
 use std::str::FromStr;
 use std::string::String;
-use std::{env, process};
 
 // This is the default DNS unless our CIDR block begins with "10."
 const DEFAULT_DNS_CLUSTER_IP: &str = "10.100.0.10";
@@ -53,6 +55,8 @@ const DEFAULT_DNS_CLUSTER_IP: &str = "10.100.0.10";
 const DEFAULT_10_RANGE_DNS_CLUSTER_IP: &str = "172.20.0.10";
 
 const ENI_MAX_PODS_PATH: &str = "/usr/share/eks/eni-max-pods";
+
+const NO_HOSTNAME_VARIANTS: &[&str] = &["aws-k8s-1.23", "aws-k8s-1.24", "aws-k8s-1.25"];
 
 mod error {
     use crate::{api, ec2, eks};
@@ -71,8 +75,11 @@ mod error {
         #[snafu(display("Missing AWS region"))]
         AwsRegion,
 
-        #[snafu(display("Missing field '{}' in EKS network config response", field))]
-        MissingNetworkConfig { field: &'static str },
+        #[snafu(display("Failed to parse setting {} as u32: {}", setting, source))]
+        ParseToU32 {
+            setting: String,
+            source: std::num::ParseIntError,
+        },
 
         #[snafu(display("Unable to parse CIDR '{}': {}", cidr, reason))]
         CidrParse { cidr: String, reason: String },
@@ -86,27 +93,8 @@ mod error {
         #[snafu(display("IMDS request failed: {}", source))]
         ImdsRequest { source: imdsclient::Error },
 
-        #[snafu(display("IMDS client failed: {}", source))]
-        ImdsClient { source: imdsclient::Error },
-
         #[snafu(display("IMDS request failed: No '{}' found", what))]
         ImdsNone { what: String },
-
-        #[snafu(display("Error deserializing response into JSON from {}: {}", uri, source))]
-        ImdsJson {
-            uri: String,
-            source: serde_json::error::Error,
-        },
-
-        #[snafu(display(
-            "Error serializing to JSON from command output '{}': {}",
-            output,
-            source
-        ))]
-        OutputJson {
-            output: String,
-            source: serde_json::error::Error,
-        },
 
         #[snafu(display("{}", source))]
         EksError { source: eks::Error },
@@ -120,14 +108,14 @@ mod error {
             source: std::io::Error,
         },
 
-        #[snafu(display("Failed to parse setting {} as u32: {}", setting, source))]
-        ParseToU32 {
-            setting: String,
-            source: std::num::ParseIntError,
-        },
-
         #[snafu(display("Failed to read line: {}", source))]
         IoReadLine { source: std::io::Error },
+
+        #[snafu(display("Failed to serialize generated settings: {}", source))]
+        Serialize { source: serde_json::Error },
+
+        #[snafu(display("Failed to set generated settings: {}", source))]
+        SetFailure { source: api::Error },
 
         #[snafu(display(
             "Unable to find maximum number of pods supported for instance-type {}",
@@ -141,7 +129,15 @@ use error::PlutoError;
 
 type Result<T> = std::result::Result<T, PlutoError>;
 
-async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
+async fn generate_max_pods(client: &mut ImdsClient, aws_k8s_info: &mut AwsK8sInfo) -> Result<()> {
+    if aws_k8s_info.max_pods.is_some() {
+        return Ok(());
+    }
+    aws_k8s_info.max_pods = get_max_pods(client).await.ok();
+    Ok(())
+}
+
+async fn get_max_pods(client: &mut ImdsClient) -> Result<u32> {
     let instance_type = client
         .fetch_instance_type()
         .await
@@ -164,7 +160,8 @@ async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
         }
         let tokens: Vec<_> = line.split_whitespace().collect();
         if tokens.len() == 2 && tokens[0] == instance_type {
-            return Ok(tokens[1].to_string());
+            let setting = tokens[1];
+            return setting.parse().context(error::ParseToU32Snafu { setting });
         }
     }
     error::NoInstanceTypeMaxPodsSnafu { instance_type }.fail()
@@ -176,27 +173,56 @@ async fn get_max_pods(client: &mut ImdsClient) -> Result<String> {
 /// If that works, it returns the expected cluster DNS IP address which is obtained by substituting
 /// `10` for the last octet. If the EKS call is not successful, it falls back to using IMDS MAC CIDR
 /// blocks to return one of two default addresses.
-async fn get_cluster_dns_ip(client: &mut ImdsClient) -> Result<String> {
+async fn generate_cluster_dns_ip(
+    client: &mut ImdsClient,
+    aws_k8s_info: &mut AwsK8sInfo,
+) -> Result<()> {
+    if aws_k8s_info.cluster_dns_ip.is_some() {
+        return Ok(());
+    }
+
     // Retrieve the kubernetes network configuration for the EKS cluster
-    if let Ok(aws_k8s_info) = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu) {
-        if let (Some(region), Some(cluster_name)) = (aws_k8s_info.region, aws_k8s_info.cluster_name)
+    let ip_addr = if let Some(ip) = get_eks_network_config(aws_k8s_info).await? {
+        ip.clone()
+    } else {
+        // If we were unable to obtain or parse the cidr range from EKS, fallback to one of two default
+        // values based on the IPv4 cidr range of our primary network interface
+        get_ipv4_cluster_dns_ip_from_imds_mac(client).await?
+    };
+
+    aws_k8s_info.cluster_dns_ip = Some(KubernetesClusterDnsIp::Scalar(
+        IpAddr::from_str(ip_addr.as_str()).context(error::BadIpSnafu {
+            ip: ip_addr.clone(),
+        })?,
+    ));
+    Ok(())
+}
+
+/// Retrieves the ip address from the kubernetes network configuration for the
+/// EKS Cluster
+async fn get_eks_network_config(aws_k8s_info: &AwsK8sInfo) -> Result<Option<String>> {
+    if let (Some(region), Some(cluster_name)) = (
+        aws_k8s_info.region.as_ref(),
+        aws_k8s_info.cluster_name.as_ref(),
+    ) {
+        if let Ok(config) = eks::get_cluster_network_config(
+            region,
+            cluster_name,
+            aws_k8s_info.https_proxy.clone(),
+            aws_k8s_info.no_proxy.clone(),
+        )
+        .await
+        .context(error::EksSnafu)
         {
-            if let Ok(config) = eks::get_cluster_network_config(&region, &cluster_name)
-                .await
-                .context(error::EksSnafu)
-            {
-                // Derive cluster-dns-ip from the service IPv4 CIDR
-                if let Some(ipv4_cidr) = config.service_ipv4_cidr {
-                    if let Ok(dns_ip) = get_dns_from_ipv4_cidr(&ipv4_cidr) {
-                        return Ok(dns_ip);
-                    }
+            // Derive cluster-dns-ip from the service IPv4 CIDR
+            if let Some(ipv4_cidr) = config.service_ipv4_cidr {
+                if let Ok(dns_ip) = get_dns_from_ipv4_cidr(&ipv4_cidr) {
+                    return Ok(Some(dns_ip));
                 }
             }
         }
     }
-    // If we were unable to obtain or parse the cidr range from EKS, fallback to one of two default
-    // values based on the IPv4 cidr range of our primary network interface
-    get_ipv4_cluster_dns_ip_from_imds_mac(client).await
+    Ok(None)
 }
 
 /// Replicates [this] logic from the EKS AMI:
@@ -260,24 +286,20 @@ async fn get_ipv4_cluster_dns_ip_from_imds_mac(client: &mut ImdsClient) -> Resul
 }
 
 /// Gets the IP address that should be associated with the node.
-async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
-    // Retrieve the user specified cluster DNS IP if it's specified, otherwise use the pluto-generated
-    // cluster DNS IP
-    let aws_k8s_info = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
-    let configured_cluster_dns_ip = aws_k8s_info
+async fn generate_node_ip(client: &mut ImdsClient, aws_k8s_info: &mut AwsK8sInfo) -> Result<()> {
+    if aws_k8s_info.node_ip.is_some() {
+        return Ok(());
+    }
+    // Ensure that this was set in case changes to main occur
+    generate_cluster_dns_ip(client, aws_k8s_info).await?;
+    let cluster_dns_ip = aws_k8s_info
         .cluster_dns_ip
-        .and_then(|cluster_ip| cluster_ip.iter().next().cloned());
-
-    let cluster_dns_ip = if let Some(ip) = configured_cluster_dns_ip {
-        ip.to_owned()
-    } else {
-        let ip = get_cluster_dns_ip(client).await?;
-        IpAddr::from_str(ip.as_str()).context(error::BadIpSnafu { ip })?
-    };
-
+        .as_ref()
+        .and_then(|x| x.iter().next())
+        .context(error::NoIpSnafu)?;
     // If the cluster DNS IP is an IPv4 address, retrieve the IPv4 address for the instance.
     // If the cluster DNS IP is an IPv6 address, retrieve the IPv6 address for the instance.
-    match cluster_dns_ip {
+    let node_ip = match cluster_dns_ip {
         IpAddr::V4(_) => client
             .fetch_local_ipv4_address()
             .await
@@ -292,11 +314,22 @@ async fn get_node_ip(client: &mut ImdsClient) -> Result<String> {
             .context(error::ImdsNoneSnafu {
                 what: "ipv6s associated with primary network interface",
             }),
-    }
+    }?;
+    aws_k8s_info.node_ip = Some(node_ip);
+    Ok(())
 }
 
 /// Gets the provider ID that should be associated with the node
-async fn get_provider_id(client: &mut ImdsClient) -> Result<String> {
+async fn generate_provider_id(
+    client: &mut ImdsClient,
+    aws_k8s_info: &mut AwsK8sInfo,
+) -> Result<()> {
+    if aws_k8s_info.provider_id.is_some()
+        || NO_HOSTNAME_VARIANTS.contains(&aws_k8s_info.variant_id.as_str())
+    {
+        return Ok(());
+    }
+
     let instance_id = client
         .fetch_instance_id()
         .await
@@ -311,14 +344,21 @@ async fn get_provider_id(client: &mut ImdsClient) -> Result<String> {
         .context(error::ImdsRequestSnafu)?
         .context(error::ImdsNoneSnafu { what: "zone" })?;
 
-    Ok(format!("aws:///{}/{}", zone, instance_id))
+    aws_k8s_info.provider_id = Some(format!("aws:///{}/{}", zone, instance_id));
+    Ok(())
 }
 
-async fn get_private_dns_name(client: &mut ImdsClient) -> Result<String> {
-    let region = api::get_aws_k8s_info()
-        .await
-        .context(error::AwsInfoSnafu)?
+async fn generate_private_dns_name(
+    client: &mut ImdsClient,
+    aws_k8s_info: &mut AwsK8sInfo,
+) -> Result<()> {
+    if aws_k8s_info.hostname_override.is_some() {
+        return Ok(());
+    }
+
+    let region = aws_k8s_info
         .region
+        .as_ref()
         .context(error::AwsRegionSnafu)?;
     let instance_id = client
         .fetch_instance_id()
@@ -327,60 +367,38 @@ async fn get_private_dns_name(client: &mut ImdsClient) -> Result<String> {
         .context(error::ImdsNoneSnafu {
             what: "instance ID",
         })?;
-    ec2::get_private_dns_name(&region, &instance_id)
+    aws_k8s_info.hostname_override = Some(
+        ec2::get_private_dns_name(
+            region,
+            &instance_id,
+            aws_k8s_info.https_proxy.clone(),
+            aws_k8s_info.no_proxy.clone(),
+        )
         .await
-        .context(error::Ec2Snafu)
-}
-
-/// Print usage message.
-fn usage() -> ! {
-    let program_name = env::args().next().unwrap_or_else(|| "program".to_string());
-    eprintln!(
-        r"Usage: {} [max-pods | cluster-dns-ip | node-ip | provider-id | private-dns-name]",
-        program_name
+        .context(error::Ec2Snafu)?,
     );
-    process::exit(1);
-}
-
-/// Parses args for the setting key name.
-fn parse_args(mut args: env::Args) -> String {
-    args.nth(1).unwrap_or_else(|| usage())
+    Ok(())
 }
 
 async fn run() -> Result<()> {
-    let setting_name = parse_args(env::args());
     let mut client = ImdsClient::new();
+    let mut aws_k8s_info = api::get_aws_k8s_info().await.context(error::AwsInfoSnafu)?;
 
-    let setting = match setting_name.as_ref() {
-        "cluster-dns-ip" => get_cluster_dns_ip(&mut client).await,
-        "node-ip" => get_node_ip(&mut client).await,
-        // If we want to specify a reasonable default in a template, we can exit 2 to tell
-        // sundog to skip this setting.
-        "max-pods" => get_max_pods(&mut client)
-            .await
-            .map_err(|_| process::exit(2)),
-        "provider-id" => get_provider_id(&mut client).await,
-        "private-dns-name" => get_private_dns_name(&mut client).await,
-        _ => usage(),
-    }?;
+    generate_cluster_dns_ip(&mut client, &mut aws_k8s_info).await?;
+    generate_node_ip(&mut client, &mut aws_k8s_info).await?;
+    generate_max_pods(&mut client, &mut aws_k8s_info).await?;
+    generate_provider_id(&mut client, &mut aws_k8s_info).await?;
+    generate_private_dns_name(&mut client, &mut aws_k8s_info).await?;
 
-    // sundog expects JSON-serialized output so that many types can be represented, allowing the
-    // API model to use more accurate types.
+    let settings = serde_json::to_value(&aws_k8s_info).context(error::SerializeSnafu)?;
+    let generated_settings: serde_json::Value = serde_json::json!({
+        "kubernetes": settings
+    });
+    let json_str = generated_settings.to_string();
+    api::client_command(&["set", "-j", json_str.as_str()])
+        .await
+        .context(error::SetFailureSnafu)?;
 
-    // 'max_pods' setting is an unsigned integer, convert 'settings' to u32 before serializing to JSON
-    if setting_name == "max-pods" {
-        let max_pods = serde_json::to_string(
-            &setting
-                .parse::<u32>()
-                .context(error::ParseToU32Snafu { setting: &setting })?,
-        )
-        .context(error::OutputJsonSnafu { output: &setting })?;
-        println!("{}", max_pods);
-    } else {
-        let output =
-            serde_json::to_string(&setting).context(error::OutputJsonSnafu { output: &setting })?;
-        println!("{}", output);
-    }
     Ok(())
 }
 
