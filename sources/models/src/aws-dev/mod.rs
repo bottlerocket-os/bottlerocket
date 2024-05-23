@@ -2,8 +2,7 @@ use model_derive::model;
 use std::collections::HashMap;
 
 use crate::{
-    BootSettings, BootstrapContainer, CloudFormationSettings, DnsSettings, HostContainer,
-    NetworkSettings,
+    BootSettings, BootstrapContainer, CloudFormationSettings, HostContainer, NetworkSettings,
 };
 use modeled_types::Identifier;
 
@@ -25,5 +24,5 @@ struct Settings {
     container_registry: settings_extension_container_registry::RegistrySettingsV1,
     oci_hooks: settings_extension_oci_hooks::OciHooksSettingsV1,
     cloudformation: CloudFormationSettings,
-    dns: DnsSettings,
+    dns: settings_extension_dns::DnsSettingsV1,
 }

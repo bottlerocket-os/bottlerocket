@@ -2,8 +2,8 @@ use model_derive::model;
 use std::collections::HashMap;
 
 use crate::{
-    AutoScalingSettings, BootstrapContainer, CloudFormationSettings, DnsSettings, ECSSettings,
-    HostContainer, NetworkSettings, OciDefaults,
+    AutoScalingSettings, BootstrapContainer, CloudFormationSettings, ECSSettings, HostContainer,
+    NetworkSettings, OciDefaults,
 };
 use modeled_types::Identifier;
 
@@ -27,5 +27,5 @@ struct Settings {
     oci_hooks: settings_extension_oci_hooks::OciHooksSettingsV1,
     cloudformation: CloudFormationSettings,
     autoscaling: AutoScalingSettings,
-    dns: DnsSettings,
+    dns: settings_extension_dns::DnsSettingsV1,
 }

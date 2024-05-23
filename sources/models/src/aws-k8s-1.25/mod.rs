@@ -1,7 +1,6 @@
 use crate::{
     AutoScalingSettings, BootSettings, BootstrapContainer, CloudFormationSettings,
-    ContainerRuntimeSettings, DnsSettings, HostContainer, KubernetesSettings, NetworkSettings,
-    OciDefaults,
+    ContainerRuntimeSettings, HostContainer, KubernetesSettings, NetworkSettings, OciDefaults,
 };
 use modeled_types::Identifier;
 
@@ -28,7 +27,7 @@ struct Settings {
     oci_defaults: OciDefaults,
     oci_hooks: settings_extension_oci_hooks::OciHooksSettingsV1,
     cloudformation: CloudFormationSettings,
-    dns: DnsSettings,
+    dns: settings_extension_dns::DnsSettingsV1,
     container_runtime: ContainerRuntimeSettings,
     autoscaling: AutoScalingSettings,
 }
