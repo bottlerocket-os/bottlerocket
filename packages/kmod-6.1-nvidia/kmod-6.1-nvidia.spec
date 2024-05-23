@@ -8,9 +8,6 @@
 %global fm_arch %{_cross_arch}
 %endif
 
-%global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
-%global license_file %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml path nvidia -p ./licenses)
-
 # With the split of the firmware binary from firmware/gsp.bin to firmware/gsp_ga10x.bin
 # and firmware/gsp_tu10x.bin the file format changed from executable to relocatable.
 # The __spec_install_post macro will by default try to strip all binary files.
@@ -31,6 +28,7 @@ URL: http://www.nvidia.com/
 # NVIDIA .run scripts for kernel and userspace drivers
 Source0: https://us.download.nvidia.com/tesla/%{tesla_ver}/NVIDIA-Linux-x86_64-%{tesla_ver}.run
 Source1: https://us.download.nvidia.com/tesla/%{tesla_ver}/NVIDIA-Linux-aarch64-%{tesla_ver}.run
+Source2: NVidiaEULAforAWS.pdf
 
 # fabricmanager for NVSwitch
 Source10: https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-x86_64/fabricmanager-linux-x86_64-%{tesla_ver}-archive.tar.xz
@@ -64,7 +62,8 @@ Requires: %{name}-tesla(fabricmanager)
 %package tesla-%{tesla_major}
 Summary: NVIDIA %{tesla_major} Tesla driver
 Version: %{tesla_ver}
-License: %{spdx_id}
+License: LicenseRef-NVIDIA-AWS-EULA
+Requires: %{_cross_os}variant-platform(aws)
 Requires: %{name}
 Requires: %{name}-fabricmanager
 Provides: %{name}-tesla(fabricmanager)
@@ -80,6 +79,9 @@ sh %{_sourcedir}/NVIDIA-Linux-%{_cross_arch}-%{tesla_ver}.run -x
 # Extract fabricmanager archive. Use `tar` rather than `%%setup` since the
 # correct source is architecture-dependent.
 tar -xf %{_sourcedir}/fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive.tar.xz
+
+# Add the license.
+install -p -m 0644 %{S:2} .
 
 %global kernel_sources %{_builddir}/kernel-devel
 tar -xf %{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
@@ -233,7 +235,7 @@ popd
 %{_cross_libdir}/modules-load.d/nvidia-dependencies.conf
 
 %files tesla-%{tesla_major}
-%license %{license_file}
+%license NVidiaEULAforAWS.pdf
 %license fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive/third-party-notices.txt
 %dir %{_cross_datadir}/nvidia/tesla
 %dir %{_cross_libexecdir}/nvidia/tesla/bin

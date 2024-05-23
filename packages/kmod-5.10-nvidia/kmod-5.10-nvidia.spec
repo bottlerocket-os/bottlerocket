@@ -1,8 +1,6 @@
 %global tesla_470 470.239.06
 %global tesla_470_libdir %{_cross_libdir}/nvidia/tesla/%{tesla_470}
 %global tesla_470_bindir %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_470}
-%global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
-%global license_file %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml path nvidia -p ./licenses)
 
 Name: %{_cross_os}kmod-5.10-nvidia
 Version: 1.0.0
@@ -16,6 +14,7 @@ URL: http://www.nvidia.com/
 # NVIDIA .run scripts from 0 to 199
 Source0: https://us.download.nvidia.com/tesla/%{tesla_470}/NVIDIA-Linux-x86_64-%{tesla_470}.run
 Source1: https://us.download.nvidia.com/tesla/%{tesla_470}/NVIDIA-Linux-aarch64-%{tesla_470}.run
+Source2: NVidiaEULAforAWS.pdf
 
 # Common NVIDIA conf files from 200 to 299
 Source200: nvidia-tmpfiles.conf.in
@@ -36,7 +35,8 @@ BuildRequires: %{_cross_os}kernel-5.10-archive
 %package tesla-470
 Summary: NVIDIA 470 Tesla driver
 Version: %{tesla_470}
-License: %{spdx_id}
+License: LicenseRef-NVIDIA-AWS-EULA
+Requires: %{_cross_os}variant-platform(aws)
 Requires: %{name}
 
 %description tesla-470
@@ -46,6 +46,9 @@ Requires: %{name}
 # Extract nvidia sources with `-x`, otherwise the script will try to install
 # the driver in the current run
 sh %{_sourcedir}/NVIDIA-Linux-%{_cross_arch}-%{tesla_470}.run -x
+
+# Add the license.
+install -p -m 0644 %{S:2} .
 
 %global kernel_sources %{_builddir}/kernel-devel
 tar -xf %{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
@@ -179,7 +182,7 @@ popd
 %{_cross_libdir}/modules-load.d/nvidia-dependencies.conf
 
 %files tesla-470
-%license %{license_file}
+%license NVidiaEULAforAWS.pdf
 %dir %{_cross_datadir}/nvidia/tesla/%{tesla_470}
 %dir %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_470}
 %dir %{tesla_470_libdir}
