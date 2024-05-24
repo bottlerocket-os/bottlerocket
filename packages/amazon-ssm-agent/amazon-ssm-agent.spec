@@ -69,6 +69,9 @@ done
 
 %cross_scan_attribution --clarify %{S:1000} go-vendor vendor
 
+ln -sf %{version} %{buildroot}%{_cross_libexecdir}/amazon-ssm-agent/bin/latest
+ln -sf %{version} %{buildroot}%{_cross_fips_libexecdir}/amazon-ssm-agent/bin/latest
+
 %files
 %license LICENSE
 %{_cross_attribution_file}
@@ -79,9 +82,11 @@ done
 %{_cross_libexecdir}/amazon-ssm-agent/bin/%{version}/amazon-ssm-agent
 %{_cross_libexecdir}/amazon-ssm-agent/bin/%{version}/ssm-agent-worker
 %{_cross_libexecdir}/amazon-ssm-agent/bin/%{version}/ssm-session-worker
+%{_cross_libexecdir}/amazon-ssm-agent/bin/latest
 
 %files fips-bin
 %dir %{_cross_fips_libexecdir}/amazon-ssm-agent
 %{_cross_fips_libexecdir}/amazon-ssm-agent/bin/%{version}/amazon-ssm-agent
 %{_cross_fips_libexecdir}/amazon-ssm-agent/bin/%{version}/ssm-agent-worker
 %{_cross_fips_libexecdir}/amazon-ssm-agent/bin/%{version}/ssm-session-worker
+%{_cross_fips_libexecdir}/amazon-ssm-agent/bin/latest
