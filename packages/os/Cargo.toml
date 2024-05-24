@@ -45,3 +45,4 @@ glibc = { path = "../glibc" }
 # binutils = { path = "../binutils" }
 # oci-add-hooks required for shimpei functionality
 # oci-add-hooks = { path = "../oci-add-hooks" }
+# nvme-cli = { path = "../nvme-cli" }

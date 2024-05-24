@@ -8,11 +8,15 @@ use gptman::GPT;
 use hex_literal::hex;
 use lazy_static::lazy_static;
 use signpost::uuid_to_guid;
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 use std::collections::HashSet;
 use std::fs;
 use std::io::{Read, Seek};
 use std::path::PathBuf;
+use std::process::Command;
+
+const NVME_CLI_PATH: &str = "/sbin/nvme";
+const NVME_IDENTIFY_DATA_SIZE: usize = 4096;
 
 #[derive(FromArgs, PartialEq, Debug)]
 /// Manage ephemeral disks.
@@ -25,12 +29,21 @@ struct Args {
 #[argh(subcommand)]
 enum SubCommand {
     Scan(ScanArgs),
+    EbsDeviceName(EbsDeviceNameArgs),
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
 #[argh(subcommand, name = "scan")]
 /// Scan a device to see if it is an ephemeral disk.
 struct ScanArgs {
+    #[argh(positional)]
+    device: PathBuf,
+}
+
+#[derive(FromArgs, PartialEq, Debug)]
+#[argh(subcommand, name = "ebs-device-name")]
+/// Returns the device name used for the EBS device
+struct EbsDeviceNameArgs {
     #[argh(positional)]
     device: PathBuf,
 }
@@ -44,6 +57,11 @@ fn run() -> Result<()> {
             let mut f = fs::File::open(&path).context(error::DeviceOpenSnafu { path })?;
             let device_type = find_device_type(&mut f)?;
             emit_device_type(&device_type);
+        }
+        SubCommand::EbsDeviceName(ebs_device_name) => {
+            let path = ebs_device_name.device;
+            let device_name = find_device_name(format!("{}", path.display()))?;
+            emit_device_name(&device_name);
         }
     }
     Ok(())
@@ -75,9 +93,41 @@ where
     Ok(device_type.to_string())
 }
 
+/// Finds the device name using the nvme-cli
+fn find_device_name(path: String) -> Result<String> {
+    // nvme-cli writes the binary data to STDOUT
+    let output = Command::new(NVME_CLI_PATH)
+        .args(["id-ctrl", &path, "-b"])
+        .output()
+        .context(error::NvmeCommandSnafu { path: path.clone() })?;
+
+    parse_device_name(&output.stdout, path)
+}
+
+/// Parses the device name from the binary data returned by nvme-cli
+fn parse_device_name(device_info: &[u8], path: String) -> Result<String> {
+    // Bail out if the data returned isn't complete
+    ensure!(
+        device_info.len() == NVME_IDENTIFY_DATA_SIZE,
+        error::InvalidDeviceInfoSnafu { path }
+    );
+
+    // The vendor data is stored at the last 1024 bytes
+    // The device name is stored at the first 32 bytes of the vendor data
+    let offset = NVME_IDENTIFY_DATA_SIZE - 1024;
+    let device_name = &device_info[offset..offset + 32];
+
+    Ok(String::from_utf8_lossy(device_name).trim_end().to_string())
+}
+
 /// Print the device type in the environment key format udev expects.
 fn emit_device_type(device_type: &str) {
     println!("BOTTLEROCKET_DEVICE_TYPE={}", device_type);
+}
+
+/// Print the device name in the environment key format udev expects.
+fn emit_device_name(device_name: &str) {
+    println!("XVD_DEVICE_NAME={}", device_name)
 }
 
 // Known system partition types for Bottlerocket.
@@ -114,6 +164,13 @@ mod error {
             path: std::path::PathBuf,
             source: std::io::Error,
         },
+        #[snafu(display("Failed to execute NVMe command for device '{}': {}", path.display(), source))]
+        NvmeCommand {
+            path: std::path::PathBuf,
+            source: std::io::Error,
+        },
+        #[snafu(display("Invalid device info for device '{}'", path.display()))]
+        InvalidDeviceInfo { path: std::path::PathBuf },
     }
 }
 
