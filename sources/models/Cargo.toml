@@ -21,6 +21,7 @@ toml = "0.8"
 settings-extension-aws = { path = "../settings-extensions/aws", version = "0.1" }
 settings-extension-container-registry = { path = "../settings-extensions/container-registry", version = "0.1" }
 settings-extension-dns = { path = "../settings-extensions/dns", version = "0.1" }
+settings-extension-ecs = { path = "../settings-extensions/ecs", version = "0.1" }
 settings-extension-kernel = { path = "../settings-extensions/kernel", version = "0.1" }
 settings-extension-metrics = { path = "../settings-extensions/metrics", version = "0.1" }
 settings-extension-motd = { path = "../settings-extensions/motd", version = "0.1" }

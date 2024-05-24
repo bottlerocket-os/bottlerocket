@@ -2820,6 +2820,7 @@ dependencies = [
  "settings-extension-aws",
  "settings-extension-container-registry",
  "settings-extension-dns",
+ "settings-extension-ecs",
  "settings-extension-kernel",
  "settings-extension-metrics",
  "settings-extension-motd",
@@ -3937,6 +3938,18 @@ dependencies = [
 
 [[package]]
 name = "settings-extension-dns"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "settings-extension-ecs"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-settings-sdk",
