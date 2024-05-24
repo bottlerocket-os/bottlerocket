@@ -154,6 +154,10 @@ impl<'a> ser::Serializer for Serializer<'a> {
         concrete_output!(self, v);
     }
 
+    fn serialize_u64(self, v: u64) -> Result<()> {
+        concrete_output!(self, v);
+    }
+
     fn serialize_f32(self, v: f32) -> Result<()> {
         concrete_output!(self, v);
     }
@@ -214,11 +218,6 @@ impl<'a> ser::Serializer for Serializer<'a> {
     }
 
     // Types we can't (or don't want to) represent.
-    // Can't fit u64 into signed 64-bit range.
-    fn serialize_u64(self, _v: u64) -> Result<()> {
-        bad_type("u64")
-    }
-
     // No char type, and using String would lose the distinction you were trying to make by
     // using a char.
     fn serialize_char(self, _v: char) -> Result<()> {
