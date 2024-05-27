@@ -390,10 +390,14 @@ where
 
     /// Scalar types, and compound types we can't use at the root, are forwarded here to be
     /// rejected.  (Compound types need to have a name to serve at the root level.)
-    fn deserialize_any<V>(self, _visitor: V) -> Result<V::Value>
+    fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
+        if self.path.is_none() {
+            return self.deserialize_struct("settings", &[], visitor);
+        }
+
         bad_root()
     }
 

@@ -11,7 +11,7 @@ use std::process::{Command, Stdio};
 use crate::server::error::{self, Result};
 use actix_web::HttpResponse;
 use datastore::deserialization::{from_map, from_map_with_prefix};
-use datastore::serialization::to_pairs;
+use datastore::serialization::to_pairs_with_prefix;
 use datastore::{deserialize_scalar, Committed, DataStore, Key, KeyType, ScalarError, Value};
 use model::{ConfigurationFiles, Services, Settings};
 use num::FromPrimitive;
@@ -366,8 +366,8 @@ pub(crate) fn set_settings<D: DataStore>(
     transaction: &str,
 ) -> Result<()> {
     trace!("Serializing Settings to write to data store");
-    let pairs =
-        to_pairs(settings).context(error::DataStoreSerializationSnafu { given: "Settings" })?;
+    let pairs = to_pairs_with_prefix("settings", settings)
+        .context(error::DataStoreSerializationSnafu { given: "Settings" })?;
     let pending = Committed::Pending {
         tx: transaction.into(),
     };
