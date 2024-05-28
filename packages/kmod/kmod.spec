@@ -27,6 +27,24 @@ cp COPYING COPYING.LGPL
 cp tools/COPYING COPYING.GPL
 
 %build
+
+%define _configure ../configure
+
+mkdir static-build
+pushd static-build
+
+%cross_configure \
+  --with-zlib \
+  --with-zstd \
+  --without-openssl
+
+%make_build LDFLAGS="-all-static"
+
+popd
+
+mkdir dynamic-build
+pushd dynamic-build
+
 %cross_configure \
   --with-zlib \
   --with-zstd \
@@ -34,8 +52,15 @@ cp tools/COPYING COPYING.GPL
 
 %make_build
 
+popd
+
 %install
+pushd dynamic-build
 %make_install
+popd
+
+pushd static-build
+install -p tools/kmod %{buildroot}%{_cross_bindir}
 
 for b in depmod insmod lsmod modinfo modprobe rmmod ; do
   ln -s kmod %{buildroot}%{_cross_bindir}/${b}
@@ -43,6 +68,7 @@ done
 
 install -d %{buildroot}%{_cross_sbindir}
 ln -s ../bin/kmod %{buildroot}%{_cross_sbindir}/modprobe
+popd
 
 %files
 %license COPYING.LGPL COPYING.GPL
