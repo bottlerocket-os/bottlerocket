@@ -1,3 +1,13 @@
+# v1.20.1 (2024-06-04)
+
+## OS Changes
+* Update kernels to 6.1.90, 5.15.158, and 5.10.216 ([#3976], [#3972])
+* Include statically linked version of kmod ([#3981])
+
+[#3972]: https://github.com/bottlerocket-os/bottlerocket/pull/3972
+[#3976]: https://github.com/bottlerocket-os/bottlerocket/pull/3976
+[#3981]: https://github.com/bottlerocket-os/bottlerocket/pull/3981
+
 # v1.20.0 (2024-05-13)
 
 ## OS Changes
