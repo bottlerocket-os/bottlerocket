@@ -17,7 +17,7 @@ use hyper::{body, header, Body, Client, Request};
 use hyper_unix_connector::{UnixClient, Uri};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use snafu::{ensure, ResultExt};
-use std::path::Path;
+use std::{fmt, fmt::Display, path::Path};
 
 pub mod apply;
 pub mod exec;
@@ -38,6 +38,9 @@ mod error {
 
         #[snafu(display("Failed to send request: {}", source))]
         RequestSend { source: hyper::Error },
+
+        #[snafu(display("{}", body))]
+        CliResponseStatus { body: String },
 
         #[snafu(display("Status {} when {}ing {}: {}", code.as_str(), method, uri, body))]
         ResponseStatus {
@@ -86,15 +89,7 @@ where
     let (status, body) = raw_request_unchecked(&socket_path, &uri, &method, data).await?;
 
     // Error if the response status is in not in the 2xx range.
-    ensure!(
-        status.is_success(),
-        error::ResponseStatusSnafu {
-            method: method.as_ref(),
-            code: status,
-            uri: uri.as_ref(),
-            body,
-        }
-    );
+    ensure!(status.is_success(), error::CliResponseStatusSnafu { body });
 
     Ok((status, body))
 }
@@ -155,4 +150,20 @@ pub(crate) fn rando() -> String {
         .take(16)
         .map(char::from)
         .collect()
+}
+
+/// Different input types supported by the Settings API.
+#[derive(Debug)]
+pub enum SettingsInput {
+    KeyPair(String),
+    Json(String),
+}
+
+impl Display for SettingsInput {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SettingsInput::KeyPair(value) => write!(f, "{}", value),
+            SettingsInput::Json(value) => write!(f, "{}", value),
+        }
+    }
 }
