@@ -391,6 +391,18 @@ run_task = "run-twoliter"
 [tasks.build-variant]
 run_task = "run-twoliter"
 
+[tasks.repack-variant]
+run_task = "run-twoliter"
+
+[tasks.fetch-variant]
+run_task = "run-twoliter"
+
+[tasks.fetch-friendly-variant]
+run_task = "run-twoliter"
+
+[tasks.fetch-ova]
+run_task = "run-twoliter"
+
 [tasks.check-licenses]
 run_task = "run-twoliter"
 
