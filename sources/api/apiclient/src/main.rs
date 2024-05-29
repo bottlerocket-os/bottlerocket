@@ -6,14 +6,13 @@
 // library calls based on the given flags, etc.)  The library modules contain the code for talking
 // to the API, which is intended to be reusable by other crates.
 
-use apiclient::{apply, exec, get, reboot, report, set, update};
-use datastore::{serialize_scalar, Key, KeyType};
+use apiclient::{apply, exec, get, reboot, report, set, update, SettingsInput};
 use log::{info, log_enabled, trace, warn};
+use serde::{Deserialize, Serialize};
 use simplelog::{
     ColorChoice, ConfigBuilder as LogConfigBuilder, LevelFilter, TermLogger, TerminalMode,
 };
 use snafu::ResultExt;
-use std::collections::HashMap;
 use std::env;
 use std::ffi::OsString;
 use std::process;
@@ -84,10 +83,16 @@ struct RawArgs {
 #[derive(Debug)]
 struct RebootArgs {}
 
+/// Stores a vector of user-supplied key-value pairs for the 'set' subcommand.
+#[derive(Serialize, Deserialize)]
+pub struct SetKeyPairSettings {
+    request_payload: Vec<String>,
+}
+
 /// Stores user-supplied arguments for the 'set' subcommand.
 #[derive(Debug)]
 enum SetArgs {
-    Simple(HashMap<Key, String>),
+    Simple(Vec<String>),
     Json(serde_json::Value),
 }
 
@@ -449,7 +454,7 @@ fn parse_reboot_args(args: Vec<String>) -> Subcommand {
 // what formats to accept.  This code currently makes it as convenient as possible to set settings,
 // by adding/removing a "settings" prefix as necessary.
 fn parse_set_args(args: Vec<String>) -> Subcommand {
-    let mut simple = HashMap::new();
+    let mut simple = Vec::new();
     let mut json = None;
 
     let mut iter = args.into_iter();
@@ -491,22 +496,8 @@ fn parse_set_args(args: Vec<String>) -> Subcommand {
             }
 
             x if x.contains('=') => {
-                let (raw_key, value) = x.split_once('=').unwrap();
-
-                let mut key = Key::new(KeyType::Data, raw_key).unwrap_or_else(|_| {
-                    usage_msg(format!("Given key '{}' is not a valid format", raw_key))
-                });
-
-                // Add "settings" prefix if the user didn't give a known prefix, to ease usage
-                let key_prefix = &key.segments()[0];
-                if key_prefix != "settings" {
-                    let mut segments = key.segments().clone();
-                    segments.insert(0, "settings".to_string());
-                    key = Key::from_segments(KeyType::Data, &segments)
-                        .expect("Adding prefix to key resulted in invalid key?!");
-                }
-
-                simple.insert(key, value.to_string());
+                // Push each key=value pair to vector.
+                simple.push(x.to_string());
             }
 
             x => usage_msg(format!("Unknown argument '{}'", x)),
@@ -698,41 +689,6 @@ async fn check(args: &Args) -> Result<String> {
     Ok(output)
 }
 
-/// We want the key=val form of 'set' to be as simple as possible; we don't want users to have to
-/// annotate or structure their input too much just to tell us the data type, but unfortunately
-/// knowledge of the data type is required to deserialize with the current datastore ser/de code.
-///
-/// To simplify usage, we use some heuristics to determine the type of each input.  We try to parse
-/// each value as a number and boolean, and if those fail, we assume a string.  (API communication
-/// is in JSON form, limiting the set of types; the API doesn't allow arrays or null, and "objects"
-/// (maps) are represented natively through our nested tree-like settings structure.)
-///
-/// If this goes wrong -- for example the user wants a string "42" -- we'll get a deserialization
-/// error, and can print a clear error and request the user use JSON input form to handle
-/// situations with more complex types.
-///
-/// If you have an idea for how to improve deserialization so we don't have to do this, please say!
-fn massage_set_input(input_map: HashMap<Key, String>) -> Result<HashMap<Key, String>> {
-    // Deserialize the given value into the matching Rust type.  When we find a matching type, we
-    // serialize back out to the data store format, which is required to build a Settings object
-    // through the data store deserialization code.
-    let mut massaged_map = HashMap::with_capacity(input_map.len());
-    for (key, in_val) in input_map {
-        let serialized = if let Ok(b) = serde_json::from_str::<bool>(&in_val) {
-            serialize_scalar(&b).context(error::SerializeSnafu)?
-        } else if let Ok(u) = serde_json::from_str::<u64>(&in_val) {
-            serialize_scalar(&u).context(error::SerializeSnafu)?
-        } else if let Ok(f) = serde_json::from_str::<f64>(&in_val) {
-            serialize_scalar(&f).context(error::SerializeSnafu)?
-        } else {
-            // No deserialization, already a string, just serialize
-            serialize_scalar(&in_val).context(error::SerializeSnafu)?
-        };
-        massaged_map.insert(key, serialized);
-    }
-    Ok(massaged_map)
-}
-
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 // Main dispatch
 
@@ -803,25 +759,24 @@ async fn run() -> Result<()> {
 
         Subcommand::Set(set) => {
             let settings = match set {
-                SetArgs::Simple(input_map) => {
-                    // For key=val, we need some type information to deserialize into a Settings.
-                    trace!("Original key=value input: {:#?}", input_map);
-                    let massaged_map = massage_set_input(input_map)?;
-                    trace!("Massaged key=value input: {:#?}", massaged_map);
-
-                    // The data store deserialization code understands how to turn the key names
-                    // (a.b.c) and serialized values into the nested Settings structure.
-                    datastore::deserialization::from_map(&massaged_map)
-                        .context(error::DeserializeMapSnafu)?
+                SetArgs::Simple(simple) => {
+                    trace!("User supplied Key Value settings {:#?}", simple);
+                    // Construct the Key Pair struct.
+                    let set_key_pair = SetKeyPairSettings {
+                        request_payload: simple,
+                    };
+                    let settings_string =
+                        serde_json::to_string(&set_key_pair).context(error::SerializeSnafu)?;
+                    SettingsInput::KeyPair(settings_string)
                 }
                 SetArgs::Json(json) => {
-                    // No processing to do on JSON input; the format determines the types.  serde
-                    // can turn a Value into the nested Settings structure itself.
-                    serde_json::from_value(json).context(error::DeserializeJsonSnafu)?
+                    trace!("User supplied Json settings {:#?}", json);
+                    // Convert JSON Value to a string.
+                    SettingsInput::Json(json.to_string())
                 }
             };
 
-            set::set(&args.socket_path, &settings)
+            set::set(&args.socket_path, settings)
                 .await
                 .context(error::SetSnafu)?;
         }
@@ -929,17 +884,6 @@ mod error {
     pub(crate) enum Error {
         #[snafu(display("Failed to apply settings: {}", source))]
         Apply { source: apply::Error },
-
-        #[snafu(display("Unable to deserialize input JSON into model: {}", source))]
-        DeserializeJson { source: serde_json::Error },
-
-        // This is an important error, it's shown when the user uses 'apiclient set' with the
-        // key=value form and we don't have enough data to deserialize the value.  It's not the
-        // user's fault and so we want to be very clear and give an alternative.
-        #[snafu(display("Unable to match your input to the data model.  We may not have enough type information.  Please try the --json input form.  Cause: {}", source))]
-        DeserializeMap {
-            source: datastore::deserialization::Error,
-        },
 
         #[snafu(display("Failed to exec: {}", source))]
         Exec { source: exec::Error },
