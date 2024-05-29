@@ -39,6 +39,7 @@ libaudit = { path = "../libaudit" }
 libgcc = { path = "../libgcc" }
 libkcapi = { path = "../libkcapi" }
 libstd-rust = { path = "../libstd-rust" }
+nvme-cli = { path = "../nvme-cli" }
 makedumpfile = { path = "../../packages/makedumpfile" }
 netdog = {path = "../netdog" }
 os = { path = "../os" }

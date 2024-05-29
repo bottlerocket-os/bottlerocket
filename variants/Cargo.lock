@@ -887,6 +887,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "libnvme"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
+
+[[package]]
 name = "libpcre"
 version = "0.1.0"
 dependencies = [
@@ -1082,6 +1089,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "nvme-cli"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libnvme",
+]
+
+[[package]]
 name = "oci-add-hooks"
 version = "0.1.0"
 dependencies = [
@@ -1170,6 +1185,7 @@ dependencies = [
  "libstd-rust",
  "makedumpfile",
  "netdog",
+ "nvme-cli",
  "oci-add-hooks",
  "os",
  "policycoreutils",

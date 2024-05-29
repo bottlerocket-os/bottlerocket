@@ -170,6 +170,7 @@ Summary: Commits settings from user data, defaults, and generators at boot
 
 %package -n %{_cross_os}ghostdog
 Summary: Tool to manage ephemeral disks
+Requires: %{_cross_os}nvme-cli
 %description -n %{_cross_os}ghostdog
 %{summary}.
 
