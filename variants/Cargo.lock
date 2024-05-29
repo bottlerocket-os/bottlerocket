@@ -334,10 +334,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ca-certificates"
-version = "0.1.0"
-
-[[package]]
 name = "chrony"
 version = "0.1.0"
 dependencies = [
@@ -1160,7 +1156,6 @@ version = "0.0.0"
 dependencies = [
  "acpid",
  "binutils",
- "ca-certificates",
  "chrony",
  "conntrack-tools",
  "containerd",
