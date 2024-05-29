@@ -28,6 +28,7 @@ dependencies = [
  "kernel-6_1",
  "login",
  "release",
+ "soci-snapshotter",
  "strace",
 ]
 
@@ -1195,6 +1196,14 @@ version = "0.1.0"
 [[package]]
 name = "shim"
 version = "0.1.0"
+
+[[package]]
+name = "soci-snapshotter"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+ "libz",
+]
 
 [[package]]
 name = "static-pods"
