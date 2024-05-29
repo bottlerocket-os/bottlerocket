@@ -130,6 +130,7 @@ members = [
     "models",
 
     "settings-extensions/aws",
+    "settings-extensions/cloudformation",
     "settings-extensions/container-registry",
     "settings-extensions/dns",
     "settings-extensions/ecs",
