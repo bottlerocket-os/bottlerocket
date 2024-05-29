@@ -2,8 +2,8 @@ use model_derive::model;
 use std::collections::HashMap;
 
 use crate::{
-    AutoScalingSettings, BootSettings, BootstrapContainer, CloudFormationSettings, HostContainer,
-    NetworkSettings, OciDefaults,
+    AutoScalingSettings, BootSettings, BootstrapContainer, HostContainer, NetworkSettings,
+    OciDefaults,
 };
 use modeled_types::Identifier;
 
@@ -26,7 +26,7 @@ struct Settings {
     container_registry: settings_extension_container_registry::RegistrySettingsV1,
     oci_defaults: OciDefaults,
     oci_hooks: settings_extension_oci_hooks::OciHooksSettingsV1,
-    cloudformation: CloudFormationSettings,
+    cloudformation: settings_extension_cloudformation::CloudFormationSettingsV1,
     autoscaling: AutoScalingSettings,
     dns: settings_extension_dns::DnsSettingsV1,
 }
