@@ -462,6 +462,11 @@ See the [`settings.aws.*` reference](https://bottlerocket.dev/en/os/latest/#/api
 ### Logs
 
 You can use `logdog` through the [admin container](#admin-container) to obtain an archive of log files from your Bottlerocket host.
+
+For a list of what is collected, see the logdog [command list](sources/logdog/src/log_request.rs).
+
+#### Generating logs
+
 SSH to the Bottlerocket host or `apiclient exec admin bash` to access the admin container, then run:
 
 ```shell
@@ -471,18 +476,29 @@ logdog
 
 This will write an archive of the logs to `/var/log/support/bottlerocket-logs.tar.gz`.
 This archive is accessible from host containers at `/.bottlerocket/support`.
-You can use SSH to retrieve the file.
-Once you have exited from the Bottlerocket host, run a command like:
 
-```shell
-ssh -i YOUR_KEY_FILE \
-  ec2-user@YOUR_HOST \
-  "cat /.bottlerocket/support/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
-```
+#### Fetching logs
 
-(If your instance isn't accessible through SSH, you can use [SSH over SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started-enable-ssh-connections.html).)
+There are multiple methods to retrieve the generated log archive.
 
-For a list of what is collected, see the logdog [command list](sources/logdog/src/log_request.rs).
+- **Via SSH if already enabled**
+
+    Once you have exited from the Bottlerocket host, run a command like:
+
+    ```shell
+    ssh -i YOUR_KEY_FILE \
+    ec2-user@YOUR_HOST \
+    "cat /.bottlerocket/support/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
+    ```
+
+- **With `kubectl get` if running Kubernetes**
+
+    ```shell
+    kubectl get --raw \
+    "/api/v1/nodes/NODE_NAME/proxy/logs/support/bottlerocket-logs.tar.gz" > bottlerocket-logs.tar.gz
+    ```
+
+- **Using [SSH over SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started-enable-ssh-connections.html) if your instance isn't accessible through SSH or Kubernetes**
 
 ### Kdump Support
 
