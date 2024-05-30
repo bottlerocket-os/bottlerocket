@@ -101,8 +101,8 @@ install -p -m 0644 nvidia.conf %{buildroot}%{_cross_tmpfilesdir}
  install -p -m 0644 \
    disable-gsp.service \
    %{buildroot}%{_cross_unitdir}
-install -d %{buildroot}%{_cross_factorydir}/etc/modprobe.d
-install -p -m 0644 %{S:401} %{buildroot}%{_cross_factorydir}/etc/modprobe.d
+install -d %{buildroot}%{_cross_datadir}/nvidia/modprobe.d
+install -p -m 0644 %{S:401} %{buildroot}%{_cross_datadir}/nvidia/modprobe.d
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:402} %{buildroot}%{_cross_tmpfilesdir}/disable-gsp.conf
 
@@ -195,7 +195,7 @@ popd
 %{_cross_libdir}/systemd/system/
 %{_cross_libdir}/modules-load.d/nvidia-dependencies.conf
 %{_cross_unitdir}/disable-gsp.service
-%{_cross_factorydir}/etc/modprobe.d/disable-gsp.conf
+%{_cross_datadir}/nvidia/modprobe.d/disable-gsp.conf
 %{_cross_tmpfilesdir}/disable-gsp.conf
 
 %files tesla-470
