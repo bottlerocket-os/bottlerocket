@@ -30,6 +30,7 @@ Source100: prepare-var-lib-docker.service
 Source1000: clarify.toml
 
 Patch0001: 0001-Change-default-capabilities-using-daemon-config.patch
+Patch0002: 0002-oci-inject-kmod-in-all-containers.patch
 
 BuildRequires: git
 BuildRequires: %{_cross_os}glibc-devel
