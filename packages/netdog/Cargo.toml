@@ -8,7 +8,7 @@ build = "../build.rs"
 [lib]
 path = "../packages.rs"
 
-[package.metadata.build-packages]
+[package.metadata.build-package]
 source-groups = [
     "netdog",
     "dogtag",

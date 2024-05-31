@@ -15,6 +15,7 @@ Source95: release-systemd-networkd.conf
 Source96: release-repart-local.conf
 Source97: release-sysctl.conf
 Source98: release-systemd-system.conf
+Source99: release-ca-certificates-tmpfiles.conf
 
 Source200: motd.template
 Source201: proxy-env
@@ -99,7 +100,6 @@ Source1500: bootconfig-fips.conf
 
 Requires: %{_cross_os}acpid
 Requires: %{_cross_os}audit
-Requires: %{_cross_os}ca-certificates
 Requires: %{_cross_os}chrony
 Requires: %{_cross_os}conntrack-tools
 Requires: %{_cross_os}containerd
@@ -154,6 +154,7 @@ install -p -m 0644 %{S:11} %{buildroot}%{_cross_factorydir}%{_cross_sysconfdir}
 
 install -d %{buildroot}%{_cross_tmpfilesdir}
 install -p -m 0644 %{S:93} %{buildroot}%{_cross_tmpfilesdir}/release.conf
+install -p -m 0644 %{S:99} %{buildroot}%{_cross_tmpfilesdir}/release-ca-certificates.conf
 install -p -m 0644 %{S:94} %{buildroot}%{_cross_tmpfilesdir}/release-fips.conf
 
 install -d %{buildroot}%{_cross_libdir}/systemd/networkd.conf.d
@@ -260,6 +261,7 @@ ln -s preconfigured.target %{buildroot}%{_cross_unitdir}/default.target
 %{_cross_factorydir}%{_cross_sysconfdir}/nsswitch.conf
 %{_cross_sysctldir}/80-release.conf
 %{_cross_tmpfilesdir}/release.conf
+%{_cross_tmpfilesdir}/release-ca-certificates.conf
 %{_cross_libdir}/os-release
 %dir %{_cross_libdir}/repart.d
 %{_cross_libdir}/repart.d/80-local.conf
