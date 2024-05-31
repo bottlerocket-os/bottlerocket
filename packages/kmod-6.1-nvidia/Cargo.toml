@@ -27,13 +27,13 @@ sha512 = "bb96a28b45197003480ae223c71a5426ef5258a31eaa485cab0cf4b86bed1664827347
 force-upstream = true
 
 [[package.metadata.build-package.external-files]]
-url = "https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-x86_64/fabricmanager-linux-x86_64-535.161.07-archive.tar.xz"
-sha512 = "868b35d567e4c6dccbff0f7e8f74bc55781c8d71db995fd9e471829afec0b44fd430caba964377052678e244d18ea999133487f9a3c50c7289f381480b24c55d"
+url = "https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/nvidia-fabric-manager-535.161.07-1.x86_64.rpm"
+sha512 = "6710c40b0e50f974697d2c7078281cd2d28a685c138c20cfe9da4696431a5aceb56f04a30e29f4fe05f2b5eddccb7e456897053051ad91d89d40383629525245"
 force-upstream = true
 
 [[package.metadata.build-package.external-files]]
-url = "https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-sbsa/fabricmanager-linux-sbsa-535.161.07-archive.tar.xz"
-sha512 = "f37f7a24e31dd6ed184d1041616abb8cfcb0ddaec79778930db79bbef8b23b3d468daaa9c156a6cf7a7f2ffc0507e78e2bb6215f70bc39d11bb0ee16c5ef4c82"
+url = "https://developer.download.nvidia.com/compute/cuda/repos/rhel9/sbsa/nvidia-fabric-manager-535.161.07-1.aarch64.rpm"
+sha512 = "3ac673b6f38fd5fbdca021fbc910b6ec6a506dd34ec814ee0003da59de600d044b11c5a97f087080c8581910db33aef71bace5ddb601ee39474d7fde3deeeaa2"
 force-upstream = true
 
 [build-dependencies]
