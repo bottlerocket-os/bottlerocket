@@ -2818,6 +2818,7 @@ dependencies = [
  "serde",
  "serde_json",
  "settings-extension-aws",
+ "settings-extension-cloudformation",
  "settings-extension-container-registry",
  "settings-extension-dns",
  "settings-extension-ecs",
@@ -3914,6 +3915,18 @@ dependencies = [
 
 [[package]]
 name = "settings-extension-aws"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "settings-extension-cloudformation"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-settings-sdk",
