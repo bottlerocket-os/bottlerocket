@@ -1,4 +1,4 @@
-%global tesla_470 470.239.06
+%global tesla_470 470.256.02
 %global tesla_470_libdir %{_cross_libdir}/nvidia/tesla/%{tesla_470}
 %global tesla_470_bindir %{_cross_libexecdir}/nvidia/tesla/bin/%{tesla_470}
 

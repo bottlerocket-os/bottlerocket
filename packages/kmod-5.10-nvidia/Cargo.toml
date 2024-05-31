@@ -17,13 +17,13 @@ url = "https://s3.amazonaws.com/EULA/NVidiaEULAforAWS.pdf"
 sha512 = "e1926fe99afc3ab5b2f2744fcd53b4046465aefb2793e2e06c4a19455a3fde895e00af1415ff1a5804c32e6a2ed0657e475de63da6c23a0e9c59feeef52f3f58"
 
 [[package.metadata.build-package.external-files]]
-url = "https://us.download.nvidia.com/tesla/470.239.06/NVIDIA-Linux-x86_64-470.239.06.run"
-sha512 = "92bdfb11db405071cd58deed2a0853448932657e256258e0a0bda5069f00485e2b6e49b4a0eeff499a4991be4f884273f3564c164110b1ed1f5d924506f13e2d"
+url = "https://us.download.nvidia.com/tesla/470.256.02/NVIDIA-Linux-x86_64-470.256.02.run"
+sha512 = "a837946dd24d7945c1962a695f1f31965f3ceb6927f52cd08fd51b8db138b7a888bbeab69243f5c8468a7bd7ccd47f5dbdb48a1ca81264866c1ebb7d88628f88"
 force-upstream = true
 
 [[package.metadata.build-package.external-files]]
-url = "https://us.download.nvidia.com/tesla/470.239.06/NVIDIA-Linux-aarch64-470.239.06.run"
-sha512 = "e448c18cf243233387d3bde4fff4d6fa1eaccc743706f18fd3c6431ce73c8f4ac49009a18ff6bd7796456ce719905bb7611548bf68d61259285f5d5f1d061c0f"
+url = "https://us.download.nvidia.com/tesla/470.256.02/NVIDIA-Linux-aarch64-470.256.02.run"
+sha512 = "38eee5933355c34ca816a2ac0fbc4f55c19c20e1322891bfc98cb6b37d99a31218eea9314877ab0e3cf3ac6eb61f9d9d4d09d0af304b689f18b4efa721b65d5c"
 force-upstream = true
 
 [build-dependencies]
