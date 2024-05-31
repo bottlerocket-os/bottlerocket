@@ -1,6 +1,6 @@
 %global tesla_major 535
-%global tesla_minor 161
-%global tesla_patch 07
+%global tesla_minor 183
+%global tesla_patch 01
 %global tesla_ver %{tesla_major}.%{tesla_minor}.%{tesla_patch}
 %if "%{?_cross_arch}" == "aarch64"
 %global fm_arch sbsa
