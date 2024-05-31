@@ -3,10 +3,16 @@
 ## OS Changes
 * Update kernels to 6.1.90, 5.15.158, and 5.10.216 ([#3976], [#3972])
 * Include statically linked version of kmod ([#3981])
+* Specify AWS EULA as license for kmod-*-nvidia packages ([#3991])
+* Update source for Fabric Manager binaries ([#4015])
+* Update NVIDIA driver versions to 470.256.02 and 535.183.01 ([#4029])
 
 [#3972]: https://github.com/bottlerocket-os/bottlerocket/pull/3972
 [#3976]: https://github.com/bottlerocket-os/bottlerocket/pull/3976
 [#3981]: https://github.com/bottlerocket-os/bottlerocket/pull/3981
+[#3991]: https://github.com/bottlerocket-os/bottlerocket/pull/3991
+[#4015]: https://github.com/bottlerocket-os/bottlerocket/pull/4015
+[#4029]: https://github.com/bottlerocket-os/bottlerocket/pull/4029
 
 # v1.20.0 (2024-05-13)
 
