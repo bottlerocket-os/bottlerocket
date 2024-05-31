@@ -31,8 +31,8 @@ Source1: https://us.download.nvidia.com/tesla/%{tesla_ver}/NVIDIA-Linux-aarch64-
 Source2: NVidiaEULAforAWS.pdf
 
 # fabricmanager for NVSwitch
-Source10: https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-x86_64/fabricmanager-linux-x86_64-%{tesla_ver}-archive.tar.xz
-Source11: https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-sbsa/fabricmanager-linux-sbsa-%{tesla_ver}-archive.tar.xz
+Source10: https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/nvidia-fabric-manager-%{tesla_ver}-1.x86_64.rpm
+Source11: https://developer.download.nvidia.com/compute/cuda/repos/rhel9/sbsa/nvidia-fabric-manager-%{tesla_ver}-1.aarch64.rpm
 
 # Common NVIDIA conf files from 200 to 299
 Source200: nvidia-tmpfiles.conf.in
@@ -76,9 +76,10 @@ Provides: %{name}-tesla(fabricmanager)
 # the driver in the current run
 sh %{_sourcedir}/NVIDIA-Linux-%{_cross_arch}-%{tesla_ver}.run -x
 
-# Extract fabricmanager archive. Use `tar` rather than `%%setup` since the
+# Extract fabricmanager from the rpm via cpio rather than `%%setup` since the
 # correct source is architecture-dependent.
-tar -xf %{_sourcedir}/fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive.tar.xz
+mkdir fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive
+rpm2cpio %{_sourcedir}/nvidia-fabric-manager-%{tesla_ver}-1.%{_cross_arch}.rpm | cpio -idmV -D fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive
 
 # Add the license.
 install -p -m 0644 %{S:2} .
@@ -213,11 +214,11 @@ popd
 
 # Begin NVIDIA fabric manager binaries and topologies
 pushd fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive
-install -p -m 0755 bin/nv-fabricmanager %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
-install -p -m 0755 bin/nvswitch-audit %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
+install -p -m 0755 usr/bin/nv-fabricmanager %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
+install -p -m 0755 usr/bin/nvswitch-audit %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
 
 install -d %{buildroot}%{_cross_datadir}/nvidia/tesla/nvswitch
-for t in share/nvidia/nvswitch/*_topology ; do
+for t in usr/share/nvidia/nvswitch/*_topology ; do
   install -p -m 0644 "${t}" %{buildroot}%{_cross_datadir}/nvidia/tesla/nvswitch
 done
 
@@ -236,7 +237,7 @@ popd
 
 %files tesla-%{tesla_major}
 %license NVidiaEULAforAWS.pdf
-%license fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive/third-party-notices.txt
+%license fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive/usr/share/doc/nvidia-fabricmanager/third-party-notices.txt
 %dir %{_cross_datadir}/nvidia/tesla
 %dir %{_cross_libexecdir}/nvidia/tesla/bin
 %dir %{_cross_libdir}/nvidia/tesla
