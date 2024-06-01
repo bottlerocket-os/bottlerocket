@@ -1,11 +1,10 @@
+use bottlerocket_settings_plugin::SettingsPlugin;
+use model::{BootSettings, KubernetesSettings};
 use model_derive::model;
 
-use crate::{BootSettings, KubernetesSettings};
-
-// Note: we have to use 'rename' here because the top-level Settings structure is the only one
-// that uses its name in serialization; internal structures use the field name that points to it
+#[derive(SettingsPlugin)]
 #[model(rename = "settings", impl_default = true)]
-struct Settings {
+struct VmwareK8sSettings {
     motd: settings_extension_motd::MotdV1,
     kubernetes: KubernetesSettings,
     updates: settings_extension_updates::UpdatesSettingsV1,
