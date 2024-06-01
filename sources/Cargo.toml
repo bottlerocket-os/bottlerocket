@@ -89,6 +89,7 @@ members = [
     "settings-plugins/aws-ecs-2",
     "settings-plugins/aws-k8s",
     "settings-plugins/metal-dev",
+    "settings-plugins/metal-k8s",
 
     "static-pods",
 
