@@ -564,7 +564,27 @@ mod test {
     use datastore::{Committed, DataStore, Key, KeyType};
     use maplit::{hashmap, hashset};
     use model::{ConfigurationFile, Service};
+    use serde::{Deserialize, Serialize};
     use std::convert::TryInto;
+
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+    struct TestSettings {
+        motd: Option<String>,
+        ntp: Option<NtpSettings>,
+    }
+
+    #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+    struct NtpSettings {
+        time_servers: Option<String>,
+    }
+
+    macro_rules! extract {
+        ($settings:ident.$field:ident) => {{
+            let json = serde_json::to_string(&$settings).unwrap();
+            let settings = serde_json::from_str::<TestSettings>(&json).unwrap();
+            settings.$field
+        }};
+    }
 
     #[test]
     fn get_settings_works() {
@@ -579,7 +599,7 @@ mod test {
 
         // Retrieve with helper
         let settings = get_settings(&ds, &Committed::Live).unwrap();
-        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
+        assert_eq!(extract!(settings.motd), Some("json string".into()));
     }
 
     #[test]
@@ -597,13 +617,13 @@ mod test {
         let settings = get_settings_prefix(&ds, "settings.", &Committed::Live)
             .unwrap() // Result Ok
             .unwrap(); // got Some result
-        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
+        assert_eq!(extract!(settings.motd), Some("json string".into()));
 
         // Retrieve with more specific prefix OK
         let settings = get_settings_prefix(&ds, "settings.mot", &Committed::Live)
             .unwrap() // Result Ok
             .unwrap(); // got Some result
-        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
+        assert_eq!(extract!(settings.motd), Some("json string".into()));
 
         // No match should return None; the "view" layer of the API, in mod.rs, turns this into an
         // empty object if desired.
@@ -636,8 +656,8 @@ mod test {
         // Retrieve with helper
         let settings =
             get_settings_keys(&ds, &hashset!("settings.motd"), &Committed::Live).unwrap();
-        assert_eq!(settings.motd, Some("json string 1".try_into().unwrap()));
-        assert_eq!(settings.ntp, None);
+        assert_eq!(extract!(settings.motd), Some("json string 1".into()));
+        assert_eq!(extract!(settings.ntp), None);
     }
 
     #[test]
@@ -754,10 +774,7 @@ mod test {
 
     #[test]
     fn set_settings_works() {
-        let settings = model::Settings {
-            motd: Some("tz".try_into().unwrap()),
-            ..Default::default()
-        };
+        let settings = serde_json::from_str::<model::Settings>("{\"motd\": \"tz\"}").unwrap();
 
         // Set with helper
         let mut ds = MemoryDataStore::new();
@@ -835,7 +852,7 @@ mod test {
 
         // Confirm pending
         let settings = get_settings(&ds, &pending).unwrap();
-        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
+        assert_eq!(extract!(settings.motd), Some("json string".into()));
         // No live settings yet
         get_settings(&ds, &Committed::Live).unwrap_err();
 
@@ -846,6 +863,6 @@ mod test {
         get_settings(&ds, &pending).unwrap_err();
         // Confirm live
         let settings = get_settings(&ds, &Committed::Live).unwrap();
-        assert_eq!(settings.motd, Some("json string".try_into().unwrap()));
+        assert_eq!(extract!(settings.motd), Some("json string".into()));
     }
 }

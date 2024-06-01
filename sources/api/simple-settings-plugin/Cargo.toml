@@ -1,0 +1,32 @@
+[package]
+name = "simple-settings-plugin"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+name = "settings"
+path = "src/lib.rs"
+
+[build-dependencies]
+generate-readme = { version = "0.1", path = "../../generate-readme" }
+
+[dependencies]
+abi_stable = "0.11.3"
+serde = "1.0.198"
+serde_json = "1.0.116"
+model-derive = { path = "../../models/model-derive", version = "0.1" }
+modeled-types = { path = "../../models/modeled-types", version = "0.1" }
+models = { path = "../../models", version = "0.1" }
+
+# settings extensions
+settings-extension-motd = { path = "../../settings-extensions/motd", version = "0.1" }
+settings-extension-ntp = { path = "../../settings-extensions/ntp", version = "0.1" }
+
+# settings plugins
+[dependencies.bottlerocket-settings-plugin]
+git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
+tag = "bottlerocket-settings-plugin-v0.1.0"
+version = "0.1.0"

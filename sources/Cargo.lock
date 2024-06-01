@@ -433,6 +433,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "simple-settings-plugin",
  "simplelog",
  "snafu",
  "thar-be-updates",
@@ -4173,6 +4174,22 @@ dependencies = [
  "serde",
  "serde_plain",
  "snafu",
+]
+
+[[package]]
+name = "simple-settings-plugin"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "generate-readme",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-motd",
+ "settings-extension-ntp",
 ]
 
 [[package]]
