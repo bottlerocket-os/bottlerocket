@@ -222,14 +222,13 @@ use std::net::IpAddr;
 use crate::de::{deserialize_limit, deserialize_mirrors, deserialize_node_taints};
 use modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, CredentialProvider,
-    DNSDomain, ECSAgentImagePullBehavior, ECSAgentLogLevel, ECSAttributeKey, ECSAttributeValue,
-    ECSDurationValue, EtcHostsEntries, FriendlyVersion, Identifier, IntegerPercent, KmodKey,
-    KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesCloudProvider,
-    KubernetesClusterDnsIp, KubernetesClusterName, KubernetesDurationValue, KubernetesLabelKey,
-    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
-    KubernetesTaintValue, KubernetesThresholdValue, Lockdown, OciDefaultsCapability,
-    OciDefaultsResourceLimitType, PemCertificateString, SingleLineString, SysctlKey,
-    TopologyManagerPolicy, TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
+    DNSDomain, EtcHostsEntries, Identifier, IntegerPercent, KubernetesAuthenticationMode,
+    KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterDnsIp,
+    KubernetesClusterName, KubernetesDurationValue, KubernetesLabelKey, KubernetesLabelValue,
+    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
+    KubernetesThresholdValue, OciDefaultsCapability, OciDefaultsResourceLimitType,
+    PemCertificateString, SingleLineString, TopologyManagerPolicy, TopologyManagerScope, Url,
+    ValidBase64, ValidLinuxHostname,
 };
 
 // Kubernetes static pod manifest settings
@@ -309,30 +308,6 @@ struct KubernetesSettings {
     seccomp_default: bool,
 }
 
-// ECS settings.
-#[model]
-struct ECSSettings {
-    cluster: String,
-    instance_attributes: HashMap<ECSAttributeKey, ECSAttributeValue>,
-    allow_privileged_containers: bool,
-    logging_drivers: Vec<SingleLineString>,
-    loglevel: ECSAgentLogLevel,
-    enable_spot_instance_draining: bool,
-    image_pull_behavior: ECSAgentImagePullBehavior,
-    container_stop_timeout: ECSDurationValue,
-    task_cleanup_wait: ECSDurationValue,
-    metadata_service_rps: i64,
-    metadata_service_burst: i64,
-    reserved_memory: u16,
-    image_cleanup_wait: ECSDurationValue,
-    image_cleanup_delete_per_cycle: i64,
-    image_cleanup_enabled: bool,
-    image_cleanup_age: ECSDurationValue,
-    backend_host: String,
-    awsvpc_block_imds: bool,
-    enable_container_metadata: bool,
-}
-
 #[model]
 struct RegistryMirror {
     registry: SingleLineString,
@@ -362,18 +337,6 @@ struct RegistrySettings {
     credentials: Vec<RegistryCredential>,
 }
 
-// Update settings. Taken from userdata. The 'seed' setting is generated
-// by the "Bork" settings generator at runtime.
-#[model]
-struct UpdatesSettings {
-    metadata_base_url: Url,
-    targets_base_url: Url,
-    seed: u32,
-    // Version to update to when updating via the API.
-    version_lock: FriendlyVersion,
-    ignore_waves: bool,
-}
-
 #[model]
 struct HostContainer {
     source: Url,
@@ -390,28 +353,6 @@ struct NetworkSettings {
     https_proxy: Url,
     // We allow some flexibility in NO_PROXY values because different services support different formats.
     no_proxy: Vec<SingleLineString>,
-}
-
-// NTP settings
-#[model]
-struct NtpSettings {
-    time_servers: Vec<Url>,
-}
-
-// DNS Settings
-#[model]
-struct DnsSettings {
-    name_servers: Vec<IpAddr>,
-    search_list: Vec<ValidLinuxHostname>,
-}
-
-// Kernel settings
-#[model]
-struct KernelSettings {
-    lockdown: Lockdown,
-    modules: HashMap<KmodKey, KmodSetting>,
-    // Values are almost always a single line and often just an integer... but not always.
-    sysctl: HashMap<SysctlKey, String>,
 }
 
 // Kernel module settings
@@ -439,31 +380,6 @@ struct BootSettings {
         skip_serializing_if = "Option::is_none"
     )]
     init_parameters: HashMap<BootConfigKey, Vec<BootConfigValue>>,
-}
-
-// Platform-specific settings
-#[model]
-struct AwsSettings {
-    region: SingleLineString,
-    config: ValidBase64,
-    credentials: ValidBase64,
-    profile: SingleLineString,
-}
-
-// Metrics settings
-#[model]
-struct MetricsSettings {
-    metrics_url: Url,
-    send_metrics: bool,
-    service_checks: Vec<String>,
-}
-
-// CloudFormation settings
-#[model]
-struct CloudFormationSettings {
-    should_signal: bool,
-    stack_name: SingleLineString,
-    logical_resource_id: SingleLineString,
 }
 
 // AutoScaling settings
@@ -532,12 +448,6 @@ struct BootstrapContainer {
 struct PemCertificate {
     data: PemCertificateString,
     trusted: bool,
-}
-
-///// OCI hooks
-#[model]
-struct OciHooks {
-    log4j_hotpatch_enabled: bool,
 }
 
 ///// OCI defaults specifies the default values that will be used in cri-base-json.
