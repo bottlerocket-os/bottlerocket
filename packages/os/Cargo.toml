@@ -33,6 +33,9 @@ glibc = { path = "../glibc" }
 
 # RPM Requires
 [dependencies]
+# FIXME: this dependency will be removed when this package moves out of tree.
+settings-plugins = { path = "../settings-plugins" }
+
 # We depend on these packages at runtime, and are expected to be pulled in
 # by way of the `release` package.
 # `host-ctr` for host containers functionality

@@ -1101,6 +1101,7 @@ name = "os"
 version = "0.1.0"
 dependencies = [
  "glibc",
+ "settings-plugins",
 ]
 
 [[package]]
@@ -1190,6 +1191,13 @@ dependencies = [
 [[package]]
 name = "selinux-policy"
 version = "0.1.0"
+
+[[package]]
+name = "settings-plugins"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
 
 [[package]]
 name = "shim"

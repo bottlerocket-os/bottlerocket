@@ -107,6 +107,7 @@ Requires: (%{_cross_os}driverdog if %{_cross_os}variant-flavor(nvidia))
 
 %package -n %{_cross_os}apiserver
 Summary: Bottlerocket API server
+Requires: %{_cross_os}settings-plugins
 %description -n %{_cross_os}apiserver
 %{summary}.
 
