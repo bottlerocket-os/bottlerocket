@@ -90,6 +90,7 @@ members = [
     "settings-plugins/aws-k8s",
     "settings-plugins/metal-dev",
     "settings-plugins/metal-k8s",
+    "settings-plugins/vmware-dev",
 
     "static-pods",
 
