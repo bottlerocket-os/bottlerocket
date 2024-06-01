@@ -346,7 +346,7 @@ struct HostContainer {
 }
 
 // Network settings. These settings will affect host service components' network behavior
-#[model]
+#[model(impl_default = true)]
 struct NetworkSettings {
     hostname: ValidLinuxHostname,
     hosts: EtcHostsEntries,
@@ -363,7 +363,7 @@ struct KmodSetting {
 }
 
 // Kernel boot settings
-#[model]
+#[model(impl_default = true)]
 struct BootSettings {
     reboot_to_reconcile: bool,
     #[serde(

@@ -5,7 +5,7 @@ use modeled_types::{Identifier, PemCertificateString};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{collections::HashMap, convert::Infallible};
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct PkiSettingsV1 {
     pub pki: HashMap<Identifier, PemCertificate>,
 }
