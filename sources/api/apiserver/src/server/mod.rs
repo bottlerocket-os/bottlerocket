@@ -10,13 +10,14 @@ pub use error::Error;
 use actix_web::{
     body::BoxBody, error::ResponseError, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
 };
-use datastore::{Committed, FilesystemDataStore, Key, Value};
+use datastore::{serialize_scalar, Committed, FilesystemDataStore, Key, KeyType, Value};
 use error::Result;
 use fs2::FileExt;
 use http::StatusCode;
 use log::info;
 use model::{ConfigurationFiles, Model, Report, Services, Settings};
 use nix::unistd::{chown, Gid};
+use serde::{Deserialize, Serialize};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::{HashMap, HashSet};
 use std::env;
@@ -89,7 +90,8 @@ where
             .service(
                 web::scope("/settings")
                     .route("", web::get().to(get_settings))
-                    .route("", web::patch().to(patch_settings)),
+                    .route("", web::patch().to(patch_settings))
+                    .route("/keypair", web::patch().to(patch_settings_key_pair)),
             )
             .service(
                 // Transaction support
@@ -286,6 +288,25 @@ async fn patch_settings(
     let transaction = transaction_name(&query);
     let mut datastore = data.ds.write().ok().context(error::DataStoreLockSnafu)?;
     controller::set_settings(&mut *datastore, &settings, transaction)?;
+    Ok(HttpResponse::NoContent().finish()) // 204
+}
+
+// Apply the requested settings in Key Value pair.
+async fn patch_settings_key_pair(
+    settings: web::Json<SetKeyPairSettings>,
+    query: web::Query<HashMap<String, String>>,
+    data: web::Data<SharedData>,
+) -> Result<HttpResponse> {
+    // Convert to a Map of Key Value pairs.
+    let settings_key_pair_map = construct_key_pair_map(&settings.request_payload)?;
+    let transaction = transaction_name(&query);
+    let mut datastore = data.ds.write().ok().context(error::DataStoreLockSnafu)?;
+    // We massage the values in the input key pair map.
+    // The data store deserialization code understands how to turn the key names
+    // (a.b.c) and serialized values into the nested Settings structure.
+    let settings_model = datastore::deserialization::from_map(&settings_key_pair_map)
+        .context(error::DeserializeMapSnafu)?;
+    controller::set_settings(&mut *datastore, &settings_model, transaction)?;
     Ok(HttpResponse::NoContent().finish()) // 204
 }
 
@@ -646,6 +667,76 @@ fn transaction_name(query: &web::Query<HashMap<String, String>>) -> &str {
     }
 }
 
+// Helpers methods for the 'set' API
+
+fn construct_key_pair_map(settings_key_pair_vec: &Vec<String>) -> Result<HashMap<Key, String>> {
+    let mut settings_key_pair_map = HashMap::new();
+    for settings_key_pair in settings_key_pair_vec {
+        // If we see an invalid key pair. We will return the result with an error immediately.
+        let (raw_key, value) =
+            settings_key_pair
+                .split_once('=')
+                .ok_or_else(|| Error::InvalidKeyPair {
+                    input: settings_key_pair.clone(),
+                })?;
+        let mut key = Key::new(KeyType::Data, raw_key)
+            .context(error::InvalidPrefixSnafu { prefix: raw_key })?;
+        // Add "settings" prefix if the user didn't give a known prefix, to ease usage
+        let key_prefix = &key.segments()[0];
+
+        if key_prefix != "settings" {
+            let mut segments = key.segments().clone();
+            segments.insert(0, "settings".to_string());
+            key = Key::from_segments(KeyType::Data, &segments)
+                .context(error::InvalidPrefixSnafu { prefix: raw_key })?;
+        }
+
+        settings_key_pair_map.insert(key, value.to_string());
+    }
+    trace!("Key=Value map: {:#?}", settings_key_pair_map);
+    // We massage the map values to determine type of each input
+    massage_set_input(settings_key_pair_map)
+}
+
+/// We want the key=val form of 'set' to be as simple as possible; we don't want users to have to
+/// annotate or structure their input too much just to tell us the data type, but unfortunately
+/// knowledge of the data type is required to deserialize with the current datastore ser/de code.
+///
+/// To simplify usage, we use some heuristics to determine the type of each input.  We try to parse
+/// each value as a number and boolean, and if those fail, we assume a string.  (API communication
+/// is in JSON form, limiting the set of types; the API doesn't allow arrays or null, and "objects"
+/// (maps) are represented natively through our nested tree-like settings structure.)
+///
+/// If this goes wrong -- for example the user wants a string "42" -- we'll get a deserialization
+/// error, and can print a clear error and request the user use JSON input form to handle
+/// situations with more complex types.g
+///
+/// If you have an idea for how to improve deserialization so we don't have to do this, please say!
+fn massage_set_input(input_map: HashMap<Key, String>) -> Result<HashMap<Key, String>> {
+    // Deserialize the given value into the matching Rust type.  When we find a matching type, we
+    // serialize back out to the data store format, which is required to build a Settings object
+    // through the data store deserialization code.
+    let mut massaged_map = HashMap::with_capacity(input_map.len());
+    for (key, in_val) in input_map {
+        let serialized = if let Ok(b) = serde_json::from_str::<bool>(&in_val) {
+            serialize_scalar(&b).context(error::SerializeSnafu)?
+        } else if let Ok(u) = serde_json::from_str::<u64>(&in_val) {
+            trace!("Serializing scalar of type u64");
+            serialize_scalar(&u).context(error::SerializeSnafu)?
+        } else if let Ok(f) = serde_json::from_str::<f64>(&in_val) {
+            trace!("Serializing scalar of type f64");
+            serialize_scalar(&f).context(error::SerializeSnafu)?
+        } else {
+            trace!("Serializing scalar of type string");
+            // No deserialization, already a string, just serialize
+            serialize_scalar(&in_val).context(error::SerializeSnafu)?
+        };
+        massaged_map.insert(key, serialized);
+    }
+    trace!("Massaged key=value input: {:#?}", massaged_map);
+    Ok(massaged_map)
+}
+
 // Can also override `render_response` if we want to change headers, content type, etc.
 impl ResponseError for error::Error {
     /// Maps our error types to the HTTP error code they should return.
@@ -657,6 +748,11 @@ impl ResponseError for error::Error {
             EmptyInput { .. } => StatusCode::BAD_REQUEST,
             NewKey { .. } => StatusCode::BAD_REQUEST,
             ReportTypeMissing { .. } => StatusCode::BAD_REQUEST,
+            Serialize { .. } => StatusCode::BAD_REQUEST,
+            DeserializeMap { .. } => StatusCode::BAD_REQUEST,
+            InvalidPrefix { .. } => StatusCode::BAD_REQUEST,
+            DeserializeJson { .. } => StatusCode::BAD_REQUEST,
+            InvalidKeyPair { .. } => StatusCode::BAD_REQUEST,
 
             // 404 Not Found
             MissingData { .. } => StatusCode::NOT_FOUND,
@@ -710,6 +806,12 @@ impl ResponseError for error::Error {
 
         HttpResponse::build(status_code).body(self.to_string())
     }
+}
+
+/// A struct used by actix for the 'set' subcommand when user-supplied values are key-pairs.
+#[derive(Serialize, Deserialize)]
+struct SetKeyPairSettings {
+    request_payload: Vec<String>,
 }
 
 /// SharedData is responsible for any data needed by web handlers that isn't provided by the client

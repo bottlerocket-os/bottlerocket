@@ -31,7 +31,7 @@ where
     let get_request_stream = stream::iter(get_requests).buffered(4);
     let get_responses: Vec<(&String, Result<String>)> = get_request_stream.collect().await;
 
-    // Reformat the responses to (model-verified) JSON we can send to the API.
+    // Reformat the responses to JSON we can send to the API.
     let mut changes = Vec::with_capacity(get_responses.len());
     for (input_source, get_response) in get_responses {
         let response = get_response?;
@@ -44,16 +44,12 @@ where
 
     // Send the settings changes to the server in the same transaction.  (They're quick local
     // requests, so don't add the complexity of making them run concurrently.)
-    for (input_source, json) in changes {
+    for (_input_source, json) in changes {
         let uri = format!("/settings?tx={}", transaction);
         let method = "PATCH";
         let (_status, _body) = crate::raw_request(&socket_path, &uri, method, Some(json))
             .await
-            .context(error::PatchSnafu {
-                input_source,
-                uri,
-                method,
-            })?;
+            .context(error::PatchSnafu)?;
     }
 
     // Commit the transaction and apply it to the system.
@@ -109,7 +105,7 @@ where
     }
 }
 
-/// Takes a string of TOML or JSON settings data, verifies that it fits the model, and reserializes
+/// Takes a string of TOML or JSON settings data and reserializes
 /// it to JSON for sending to the API.
 fn format_change(input: &str, input_source: &str) -> Result<String> {
     // Try to parse the input as (arbitrary) TOML.  If that fails, try to parse it as JSON.
@@ -138,11 +134,6 @@ fn format_change(input: &str, input_source: &str) -> Result<String> {
     let json_inner = json_object
         .remove("settings")
         .context(error::MissingSettingsSnafu { input_source })?;
-
-    // Deserialize into the model to confirm the settings are valid.
-    let _settings = model::Settings::deserialize(&json_inner)
-        .context(error::ModelDeserializeSnafu { input_source })?;
-
     // Return JSON text we can send to the API.
     serde_json::to_string(&json_inner).context(error::JsonSerializeSnafu { input_source })
 }
@@ -198,30 +189,11 @@ mod error {
         ))]
         MissingSettings { input_source: String },
 
-        #[snafu(display(
-            "Failed to deserialize settings from '{}' into this variant's model: {}",
-            input_source,
-            source
-        ))]
-        ModelDeserialize {
-            input_source: String,
-            source: serde_json::Error,
-        },
-
         #[snafu(display("Settings from '{}' are not a TOML table / JSON object", input_source))]
         ModelType { input_source: String },
 
-        #[snafu(display(
-            "Failed to {} settings from '{}' to '{}': {}",
-            method,
-            input_source,
-            uri,
-            source
-        ))]
+        #[snafu(display("{}", source))]
         Patch {
-            input_source: String,
-            uri: String,
-            method: String,
             #[snafu(source(from(crate::Error, Box::new)))]
             source: Box<crate::Error>,
         },

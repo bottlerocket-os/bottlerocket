@@ -100,6 +100,11 @@ components:
           $ref: '#/components/schemas/StagedImage'
         most-recent-command:
           $ref: '#/components/schemas/CommandResult'
+    SettingsKeyPair:
+      type: object
+      properties:
+        request_payload:
+          type: string
     Settings:
       type: object
       properties:
@@ -270,7 +275,30 @@ paths:
           description: "Invalid body"
         500:
           description: "Server error"
-
+  /settings/keypair/:
+    patch:
+      summary: "Update settings which come in key value form"
+      operationId: "set_key_pair_settings"
+      parameters:
+        - in: query
+          name: tx
+          description: "Transaction in which to update settings; defaults to user 'default' transaction"
+          schema:
+            type: string
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "SettingsKeyPair"
+      responses:
+        204:
+          description: "Settings successfully staged for update"
+        400:
+          description: "Invalid body"
+        500:
+          description: "Server error"
   /tx:
     get:
       summary: "Get pending settings in a transaction"

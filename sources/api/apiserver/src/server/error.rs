@@ -83,11 +83,25 @@ pub enum Error {
         source: deserialization::Error,
     },
 
+    // This is an important error, it's shown when the user uses 'apiclient set' with the
+    // key=value form and we don't have enough data to deserialize the value.  It's not the
+    // user's fault and so we want to be very clear and give an alternative.
+    #[snafu(display("Unable to match your input to the data model.  We may not have enough type information.  Please try the --json input form.  Cause: {}", source))]
+    DeserializeMap {
+        source: datastore::deserialization::Error,
+    },
+
+    #[snafu(display("Unable to serialize data: {}", source))]
+    Serialize { source: serde_json::Error },
+
     #[snafu(display("Error serializing {}: {} ", given, source))]
     DataStoreSerialization {
         given: String,
         source: serialization::Error,
     },
+
+    #[snafu(display("Unable to deserialize input JSON into model: {}", source))]
+    DeserializeJson { source: serde_json::Error },
 
     #[snafu(display("Error serializing {}: {} ", given, source))]
     CommandSerialization {
@@ -107,6 +121,16 @@ pub enum Error {
     InvalidMetadata {
         key: String,
         source: serde_json::Error,
+    },
+
+    #[snafu(display("Failed to split the string: {}", input))]
+    InvalidKeyPair { input: String },
+
+    #[snafu(display("Prefix '{}' is not a valid key: {}", prefix, source))]
+    InvalidPrefix {
+        prefix: String,
+        #[snafu(source(from(datastore::Error, Box::new)))]
+        source: Box<datastore::Error>,
     },
 
     #[snafu(display("Config applier was unable to fork child, returned {}", code))]
