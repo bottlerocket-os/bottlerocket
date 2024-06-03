@@ -2542,14 +2542,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "merge-toml"
-version = "0.1.0"
-dependencies = [
- "snafu",
- "toml",
-]
-
-[[package]]
 name = "metricdog"
 version = "0.1.0"
 dependencies = [
@@ -4397,19 +4389,16 @@ name = "storewolf"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
- "bottlerocket-variant",
  "constants",
  "datastore",
  "generate-readme",
  "log",
- "merge-toml",
  "models",
  "rand",
  "semver",
  "simplelog",
  "snafu",
  "toml",
- "walkdir",
 ]
 
 [[package]]

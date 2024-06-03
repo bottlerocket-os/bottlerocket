@@ -4,7 +4,7 @@
 storewolf creates the filesystem datastore used by the API system.
 
 It creates the datastore at a provided path and populates any default settings, as given in the
-TOML files of the current variant's `defaults.d` directory, unless the datastore already exists.
+TOML file in `/etc/storewolf/defaults.toml`, unless the datastore already exists.
 */
 #[macro_use]
 extern crate log;
@@ -24,6 +24,9 @@ use datastore::key::{Key, KeyType};
 use datastore::serialization::{to_pairs, to_pairs_with_prefix};
 use datastore::{self, DataStore, FilesystemDataStore, ScalarError};
 use model::modeled_types::SingleLineString;
+
+// The default path to defaults.toml.
+const DEFAULTS_TOML: &str = "/etc/storewolf/defaults.toml";
 
 // The default path to the RPM inventory json file
 const INVENTORY_PATH: &str = "/usr/share/bottlerocket/application-inventory.json";
@@ -123,6 +126,9 @@ mod error {
 
         #[snafu(display("Could not create new inventory symlink: {}", source))]
         SymlinkCreate { source: io::Error },
+
+        #[snafu(display("Could not read defaults from '{}': {}", path.display(), source))]
+        ReadDefaults { path: PathBuf, source: io::Error },
     }
 }
 
@@ -260,11 +266,13 @@ fn populate_default_datastore<P: AsRef<Path>>(
         create_new_datastore(&base_path, version).context(error::DatastoreCreationSnafu)?;
     }
 
-    // Here we read in the merged settings file built by build.rs.
-    let defaults_str = include_str!(concat!(env!("OUT_DIR"), "/defaults.toml"));
+    // Here we read in the merged settings file from the system.
+    let defaults_str = fs::read_to_string(DEFAULTS_TOML).context(error::ReadDefaultsSnafu {
+        path: DEFAULTS_TOML,
+    })?;
     let mut defaults_val: toml::Value =
-        toml::from_str(defaults_str).context(error::DefaultsFormattingSnafu {
-            path: concat!(env!("OUT_DIR"), "/defaults.toml"),
+        toml::from_str(&defaults_str).context(error::DefaultsFormattingSnafu {
+            path: DEFAULTS_TOML,
         })?;
 
     // Check if we have metadata and settings. If so, pull them out

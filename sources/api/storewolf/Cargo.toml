@@ -22,18 +22,7 @@ snafu = "0.8"
 toml = "0.8"
 
 [build-dependencies]
-bottlerocket-variant = { version = "0.1", path = "../../bottlerocket-variant" }
 generate-readme = { version = "0.1", path = "../../generate-readme" }
-merge-toml = { path = "merge-toml", version = "0.1" }
-# We have a models build-dep because we read default settings from the models
-# directory and need its build.rs to run first; we also reflect the dependency
-# with cargo:rerun-if-changed statements in our build.rs.  The models build.rs
-# runs twice, once for the above dependency and once for this build-dependency,
-# so it's important that it remains reentrant.
-models = { path = "../../models", version = "0.1" }
-snafu = "0.8"
-toml = "0.8"
-walkdir = "2"
 
 [[bin]]
 name = "storewolf"
