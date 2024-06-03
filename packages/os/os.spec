@@ -58,6 +58,7 @@ Source200: migration-tmpfiles.conf
 Source201: host-containers-tmpfiles.conf
 Source202: thar-be-updates-tmpfiles.conf
 Source203: bootstrap-containers-tmpfiles.conf
+Source204: storewolf-tmpfiles.conf
 
 # 3xx sources: udev rules
 Source300: ephemeral-storage.rules
@@ -154,6 +155,7 @@ Requires: %{_cross_os}host-ctr
 
 %package -n %{_cross_os}storewolf
 Summary: Data store creator
+Requires: %{_cross_os}settings-defaults
 %description -n %{_cross_os}storewolf
 %{summary}.
 
@@ -520,6 +522,7 @@ install -p -m 0644 %{S:200} %{buildroot}%{_cross_tmpfilesdir}/migration.conf
 install -p -m 0644 %{S:201} %{buildroot}%{_cross_tmpfilesdir}/host-containers.conf
 install -p -m 0644 %{S:202} %{buildroot}%{_cross_tmpfilesdir}/thar-be-updates.conf
 install -p -m 0644 %{S:203} %{buildroot}%{_cross_tmpfilesdir}/bootstrap-containers.conf
+install -p -m 0644 %{S:204} %{buildroot}%{_cross_tmpfilesdir}/storewolf.conf
 
 install -d %{buildroot}%{_cross_udevrulesdir}
 install -p -m 0644 %{S:300} %{buildroot}%{_cross_udevrulesdir}/80-ephemeral-storage.rules
@@ -583,6 +586,7 @@ install -p -m 0644 %{S:400} %{S:401} %{S:402} %{buildroot}%{_cross_licensedir}
 %files -n %{_cross_os}storewolf
 %{_cross_bindir}/storewolf
 %{_cross_unitdir}/storewolf.service
+%{_cross_tmpfilesdir}/storewolf.conf
 
 %files -n %{_cross_os}migration
 %{_cross_bindir}/migrator
