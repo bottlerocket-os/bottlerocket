@@ -1,6 +1,10 @@
 [Unit]
 Description=Generate additional settings for Kubernetes
+# Treat pluto as an honorary settings generator. It should run after sundog runs other
+# settings generators, and before settings-applier commits all the settings, renders
+# config files, and restarts services.
 After=network-online.target apiserver.service sundog.service
+Before=settings-applier.service
 Requires=sundog.service
 # We don't want to restart the unit if the network goes offline or apiserver restarts
 Wants=network-online.target apiserver.service
@@ -11,10 +15,16 @@ RefuseManualStop=true
 
 [Service]
 Type=oneshot
+# pluto needs access to any Kubernetes settings supplied through user-data, along with
+# network-related settings such as proxy servers. Commit any settings that might have
+# been generated during the sundog phase.
 ExecStartPre=/usr/bin/settings-committer
 ExecStart=/usr/bin/pluto
 RemainAfterExit=true
 StandardError=journal+console
 
 [Install]
-RequiredBy=preconfigured.target
+# settings-applier requires sundog to succeed as a signal that all settings generators ran
+# successfully. Since pluto is an honorary settings generator, settings-applier also needs
+# it to succeed before it can start.
+RequiredBy=settings-applier.service
