@@ -8,7 +8,7 @@ linters:
     - staticcheck
     - unconvert
     - unused
-    - vet
+    - govet
 
 run:
   timeout: 3m
