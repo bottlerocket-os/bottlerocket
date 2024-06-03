@@ -2940,6 +2940,7 @@ dependencies = [
  "aws-smithy-types",
  "aws-types",
  "bytes",
+ "constants",
  "futures-util",
  "generate-readme",
  "headers",
