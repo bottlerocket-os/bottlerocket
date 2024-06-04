@@ -3,10 +3,9 @@ name = "os"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [package.metadata.build-package]
-variant-sensitive = true
 source-groups = [
     "api",
     "bottlerocket-release",
