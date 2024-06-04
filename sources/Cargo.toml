@@ -68,6 +68,7 @@ members = [
 
     "settings-defaults/aws-dev",
     "settings-defaults/aws-ecs-1",
+    "settings-defaults/aws-ecs-2",
 
     "settings-extensions/autoscaling",
     "settings-extensions/aws",
