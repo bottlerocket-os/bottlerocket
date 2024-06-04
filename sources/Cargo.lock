@@ -3741,6 +3741,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-defaults-metal-k8s-1_30"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
 name = "settings-extension-autoscaling"
 version = "0.1.0"
 dependencies = [
