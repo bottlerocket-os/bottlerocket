@@ -1,15 +1,12 @@
 %global tesla_major 535
-%global tesla_minor 161
-%global tesla_patch 07
+%global tesla_minor 183
+%global tesla_patch 01
 %global tesla_ver %{tesla_major}.%{tesla_minor}.%{tesla_patch}
 %if "%{?_cross_arch}" == "aarch64"
 %global fm_arch sbsa
 %else
 %global fm_arch %{_cross_arch}
 %endif
-
-%global spdx_id %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml spdx-id nvidia)
-%global license_file %(bottlerocket-license-tool -l %{_builddir}/Licenses.toml path nvidia -p ./licenses)
 
 # With the split of the firmware binary from firmware/gsp.bin to firmware/gsp_ga10x.bin
 # and firmware/gsp_tu10x.bin the file format changed from executable to relocatable.
@@ -31,10 +28,11 @@ URL: http://www.nvidia.com/
 # NVIDIA .run scripts for kernel and userspace drivers
 Source0: https://us.download.nvidia.com/tesla/%{tesla_ver}/NVIDIA-Linux-x86_64-%{tesla_ver}.run
 Source1: https://us.download.nvidia.com/tesla/%{tesla_ver}/NVIDIA-Linux-aarch64-%{tesla_ver}.run
+Source2: NVidiaEULAforAWS.pdf
 
 # fabricmanager for NVSwitch
-Source10: https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-x86_64/fabricmanager-linux-x86_64-%{tesla_ver}-archive.tar.xz
-Source11: https://developer.download.nvidia.com/compute/nvidia-driver/redist/fabricmanager/linux-sbsa/fabricmanager-linux-sbsa-%{tesla_ver}-archive.tar.xz
+Source10: https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/nvidia-fabric-manager-%{tesla_ver}-1.x86_64.rpm
+Source11: https://developer.download.nvidia.com/compute/cuda/repos/rhel9/sbsa/nvidia-fabric-manager-%{tesla_ver}-1.aarch64.rpm
 
 # Common NVIDIA conf files from 200 to 299
 Source200: nvidia-tmpfiles.conf.in
@@ -64,7 +62,8 @@ Requires: %{name}-tesla(fabricmanager)
 %package tesla-%{tesla_major}
 Summary: NVIDIA %{tesla_major} Tesla driver
 Version: %{tesla_ver}
-License: %{spdx_id}
+License: LicenseRef-NVIDIA-AWS-EULA
+Requires: %{_cross_os}variant-platform(aws)
 Requires: %{name}
 Requires: %{name}-fabricmanager
 Provides: %{name}-tesla(fabricmanager)
@@ -77,9 +76,13 @@ Provides: %{name}-tesla(fabricmanager)
 # the driver in the current run
 sh %{_sourcedir}/NVIDIA-Linux-%{_cross_arch}-%{tesla_ver}.run -x
 
-# Extract fabricmanager archive. Use `tar` rather than `%%setup` since the
+# Extract fabricmanager from the rpm via cpio rather than `%%setup` since the
 # correct source is architecture-dependent.
-tar -xf %{_sourcedir}/fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive.tar.xz
+mkdir fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive
+rpm2cpio %{_sourcedir}/nvidia-fabric-manager-%{tesla_ver}-1.%{_cross_arch}.rpm | cpio -idmV -D fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive
+
+# Add the license.
+install -p -m 0644 %{S:2} .
 
 %global kernel_sources %{_builddir}/kernel-devel
 tar -xf %{_cross_datadir}/bottlerocket/kernel-devel.tar.xz
@@ -211,11 +214,11 @@ popd
 
 # Begin NVIDIA fabric manager binaries and topologies
 pushd fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive
-install -p -m 0755 bin/nv-fabricmanager %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
-install -p -m 0755 bin/nvswitch-audit %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
+install -p -m 0755 usr/bin/nv-fabricmanager %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
+install -p -m 0755 usr/bin/nvswitch-audit %{buildroot}%{_cross_libexecdir}/nvidia/tesla/bin
 
 install -d %{buildroot}%{_cross_datadir}/nvidia/tesla/nvswitch
-for t in share/nvidia/nvswitch/*_topology ; do
+for t in usr/share/nvidia/nvswitch/*_topology ; do
   install -p -m 0644 "${t}" %{buildroot}%{_cross_datadir}/nvidia/tesla/nvswitch
 done
 
@@ -233,8 +236,8 @@ popd
 %{_cross_libdir}/modules-load.d/nvidia-dependencies.conf
 
 %files tesla-%{tesla_major}
-%license %{license_file}
-%license fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive/third-party-notices.txt
+%license NVidiaEULAforAWS.pdf
+%license fabricmanager-linux-%{fm_arch}-%{tesla_ver}-archive/usr/share/doc/nvidia-fabricmanager/third-party-notices.txt
 %dir %{_cross_datadir}/nvidia/tesla
 %dir %{_cross_libexecdir}/nvidia/tesla/bin
 %dir %{_cross_libdir}/nvidia/tesla
