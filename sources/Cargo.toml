@@ -70,6 +70,7 @@ members = [
     "settings-defaults/aws-ecs-1",
     "settings-defaults/aws-ecs-1-nvidia",
     "settings-defaults/aws-ecs-2",
+    "settings-defaults/aws-ecs-2-nvidia",
 
     "settings-extensions/autoscaling",
     "settings-extensions/aws",

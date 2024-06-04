@@ -3671,6 +3671,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-defaults-aws-ecs-2-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
 name = "settings-extension-autoscaling"
 version = "0.1.0"
 dependencies = [
