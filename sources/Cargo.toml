@@ -81,6 +81,7 @@ members = [
     "settings-defaults/aws-k8s-1.30-nvidia",
     "settings-defaults/metal-dev",
     "settings-defaults/metal-k8s-1.30",
+    "settings-defaults/vmware-dev",
 
     "settings-extensions/autoscaling",
     "settings-extensions/aws",

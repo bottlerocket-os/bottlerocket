@@ -3748,6 +3748,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-defaults-vmware-dev"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
 name = "settings-extension-autoscaling"
 version = "0.1.0"
 dependencies = [
