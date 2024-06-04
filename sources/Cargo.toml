@@ -71,6 +71,7 @@ members = [
     "settings-defaults/aws-ecs-1-nvidia",
     "settings-defaults/aws-ecs-2",
     "settings-defaults/aws-ecs-2-nvidia",
+    "settings-defaults/aws-k8s-1.24",
 
     "settings-extensions/autoscaling",
     "settings-extensions/aws",
