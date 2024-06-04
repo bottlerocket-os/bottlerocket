@@ -3713,6 +3713,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-defaults-aws-k8s-1_26-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
 name = "settings-extension-autoscaling"
 version = "0.1.0"
 dependencies = [
