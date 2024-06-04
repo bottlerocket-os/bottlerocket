@@ -25,7 +25,13 @@ func generateGPUInfoConfig() error {
 	if ret := nvml.Init(); ret != nvml.SUCCESS {
 		return fmt.Errorf("Failed to initialize NVML, got ret %v", ret)
 	}
-	defer nvml.Shutdown()
+	defer func() {
+		ret := nvml.Shutdown()
+		if ret != nvml.SUCCESS {
+			fmt.Printf("Failed to shutdown NVML, got ret %v", ret)
+		}
+	}()
+
 	version, ret := nvml.SystemGetDriverVersion()
 	if ret != nvml.SUCCESS {
 		return fmt.Errorf("Failed to get version, got ret %v", ret)
