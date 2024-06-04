@@ -218,27 +218,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "add-additional-ecs-settings"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "add-ecs-enable-container-metadata"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "add-ntp-default-options-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -534,62 +513,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "aws-admin-container-v0-11-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-11-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-11-2"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-11-3"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-11-4"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-11-6"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-11-7"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-admin-container-v0-11-8"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "aws-config"
 version = "1.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -617,62 +540,6 @@ dependencies = [
  "tokio",
  "tracing",
  "zeroize",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-10"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-11"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-12"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-4"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-5"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-6"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-7"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "aws-control-container-v0-7-8"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -1116,20 +983,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bootstrap-containers-config-file-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "bootstrap-containers-services-cfg-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "bork"
 version = "0.1.0"
 dependencies = [
@@ -1316,20 +1169,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "certdog-config-file-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "certdog-service-cfg-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1419,22 +1258,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "container-runtime-metadata-nvidia"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
-name = "container-runtime-nvidia"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1468,20 +1291,6 @@ dependencies = [
  "simplelog",
  "snafu 0.8.2",
  "toml",
-]
-
-[[package]]
-name = "corndog-config-file-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "corndog-services-cfg-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -1631,13 +1440,6 @@ dependencies = [
  "snafu 0.8.2",
  "toml",
  "walkdir",
-]
-
-[[package]]
-name = "deprecate-log4j-hotpatch-enabled"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -2222,20 +2024,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "host-containers-config-file-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "host-containers-config-list-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "http"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2492,37 +2280,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kernel-modules-autoload-configs"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
-]
-
-[[package]]
-name = "kernel-modules-autoload-files"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
-]
-
-[[package]]
-name = "kernel-modules-autoload-restart"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
- "serde_json",
-]
-
-[[package]]
-name = "kernel-modules-autoload-settings"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "language-tags"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2602,13 +2359,6 @@ name = "log"
 version = "0.4.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90ed8c1e510134f979dbc4f070f87d4313098b704861a105fe34231c70a3901c"
-
-[[package]]
-name = "log4j-hotpatch-enabled-metadata"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
 
 [[package]]
 name = "logdog"
@@ -3001,39 +2751,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oci-defaults-docker-setting"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
-name = "oci-defaults-docker-setting-metadata"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
-name = "oci-defaults-max-open-files"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
- "serde_json",
-]
-
-[[package]]
-name = "oci-defaults-resource-setting"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
 name = "oid-registry"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3282,138 +2999,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "prairiedog-config-file-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "prairiedog-services-cfg-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e835ff2298f5721608eb1a980ecaee1aef2c132bf95ecc026a11b7bf3c01c02e"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "public-admin-container-v0-11-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-11-1"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-11-2"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-11-3"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-11-4"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-11-6"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-11-7"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-admin-container-v0-11-8"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-10"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-11"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-12"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-4"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-5"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-6"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-7"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "public-control-container-v0-7-8"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -3514,13 +3105,6 @@ name = "regex-syntax"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
-
-[[package]]
-name = "remove-ecs-settings-applier"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
 
 [[package]]
 name = "reqwest"
@@ -3750,14 +3334,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "schnauzer-v2-generators"
-version = "0.1.0"
-dependencies = [
- "bottlerocket-variant",
- "migration-helpers",
-]
-
-[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3771,13 +3347,6 @@ checksum = "da046153aa2352493d6cb7da4b6e5c0c057d8a1d0a9aa8560baffdd945acd414"
 dependencies = [
  "ring",
  "untrusted",
-]
-
-[[package]]
-name = "seccomp-default-setting"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -4255,20 +3824,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "static-pods-add-prefix-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "static-pods-services-cfg-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "storewolf"
 version = "0.1.0"
 dependencies = [
@@ -4479,20 +4034,6 @@ dependencies = [
  "tempfile",
  "toml",
  "update_metadata",
-]
-
-[[package]]
-name = "thar-be-updates-affected-services-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "thar-be-updates-config-file-v0-1-0"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
@@ -4861,20 +4402,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
-name = "update-ecs-config-path"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
-name = "update-ecs-config-template-path"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "update_metadata"
 version = "0.1.0"
 dependencies = [
@@ -4918,13 +4445,6 @@ dependencies = [
  "tough",
  "update_metadata",
  "url",
-]
-
-[[package]]
-name = "updog-network-affected"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
 ]
 
 [[package]]
