@@ -66,6 +66,8 @@ members = [
 
     "models",
 
+    "settings-defaults/aws-dev",
+
     "settings-extensions/autoscaling",
     "settings-extensions/aws",
     "settings-extensions/bootstrap-containers",
