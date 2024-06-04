@@ -75,6 +75,7 @@ members = [
     "settings-defaults/aws-k8s-1.24-nvidia",
     "settings-defaults/aws-k8s-1.25",
     "settings-defaults/aws-k8s-1.25-nvidia",
+    "settings-defaults/aws-k8s-1.26",
 
     "settings-extensions/autoscaling",
     "settings-extensions/aws",
