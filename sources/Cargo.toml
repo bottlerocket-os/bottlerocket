@@ -67,6 +67,7 @@ members = [
     "models",
 
     "settings-defaults/aws-dev",
+    "settings-defaults/aws-ecs-1",
 
     "settings-extensions/autoscaling",
     "settings-extensions/aws",
