@@ -2673,13 +2673,10 @@ version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
  "bottlerocket-settings-plugin",
- "bottlerocket-variant",
- "filetime",
  "generate-readme",
  "libc",
  "model-derive",
  "modeled-types",
- "rand",
  "serde",
  "serde_json",
  "settings-extension-autoscaling",

@@ -45,13 +45,10 @@ tag = "bottlerocket-settings-plugin-v0.1.0"
 version = "0.1.0"
 
 [build-dependencies]
-bottlerocket-variant = { version = "0.1", path = "../bottlerocket-variant" }
 generate-readme = { version = "0.1", path = "../generate-readme" }
-filetime = "0.2"
-rand = "0.8"
 
 [lib]
-# We're picking the current *model* with build.rs, so users shouldn't think
-# about importing *models* (plural), just the one current model.
+# We're loading the correct *model* at runtime, so users shouldn't think about
+# importing *models* (plural), just the one current model.
 name = "model"
 path = "src/lib.rs"
