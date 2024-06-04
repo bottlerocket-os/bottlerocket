@@ -82,6 +82,7 @@ members = [
     "settings-defaults/metal-dev",
     "settings-defaults/metal-k8s-1.30",
     "settings-defaults/vmware-dev",
+    "settings-defaults/vmware-k8s-1.30",
 
     "settings-extensions/autoscaling",
     "settings-extensions/aws",
