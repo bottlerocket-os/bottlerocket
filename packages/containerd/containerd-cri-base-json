@@ -102,15 +102,6 @@ oci-defaults = { version = "v1", helpers = ["oci_defaults"] }
                 "mode=755",
                 "size=65536k"
             ]
-        },
-        {
-            "destination": "/sbin/modprobe",
-            "source": "/usr/bin/kmod",
-            "options": [
-                "exec",
-		"bind",
-                "ro"
-            ]
         }
     ],
     "linux": {
