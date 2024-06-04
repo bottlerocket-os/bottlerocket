@@ -68,6 +68,7 @@ The following variants support EKS, as described above:
 * `aws-k8s-1.27`
 * `aws-k8s-1.28`
 * `aws-k8s-1.29`
+* `aws-k8s-1.30`
 * `aws-k8s-1.23-nvidia`
 * `aws-k8s-1.24-nvidia`
 * `aws-k8s-1.25-nvidia`
@@ -75,6 +76,7 @@ The following variants support EKS, as described above:
 * `aws-k8s-1.27-nvidia`
 * `aws-k8s-1.28-nvidia`
 * `aws-k8s-1.29-nvidia`
+* `aws-k8s-1.30-nvidia`
 
 The following variants support ECS:
 
@@ -85,14 +87,13 @@ The following variants support ECS:
 
 We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
-* `vmware-k8s-1.26`
 * `vmware-k8s-1.27`
 * `vmware-k8s-1.28`
 * `vmware-k8s-1.29`
+* `vmware-k8s-1.30`
 
 The following variants are designed to be Kubernetes worker nodes on bare metal:
 
-* `metal-k8s-1.26`
 * `metal-k8s-1.27`
 * `metal-k8s-1.28`
 * `metal-k8s-1.29`
@@ -100,7 +101,7 @@ The following variants are designed to be Kubernetes worker nodes on bare metal:
 The following variants are no longer supported:
 
 * All Kubernetes variants using Kubernetes 1.22 and earlier
-* Bare metal and VMware variants using Kubernetes 1.25 and earlier
+* Bare metal and VMware variants using Kubernetes 1.26 and earlier
 
 We recommend users replace nodes running these variants with the [latest variant compatible with their cluster](variants/).
 
