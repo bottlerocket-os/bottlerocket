@@ -896,6 +896,12 @@ func withPrivilegedMounts() oci.SpecOpts {
 			Source:      "/mnt",
 			Type:        "bind",
 		},
+		{
+			Options:     []string{"bind", "ro", "exec"},
+			Destination: "/usr/local/sbin/modprobe",
+			Source:      "/usr/bin/kmod",
+			Type:        "bind",
+		},
 	})
 }
 
