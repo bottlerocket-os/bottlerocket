@@ -21,14 +21,14 @@ where
     let method = "PATCH";
     let (_status, _body) = crate::raw_request(&socket_path, &uri, method, Some(settings_data))
         .await
-        .context(error::RequestSnafu)?;
+        .context(error::RequestSnafu { uri, method })?;
 
     // Commit the transaction and apply it to the system.
     let uri = format!("/tx/commit_and_apply?tx={}", transaction);
     let method = "POST";
     let (_status, _body) = crate::raw_request(&socket_path, &uri, method, None)
         .await
-        .context(error::RequestSnafu)?;
+        .context(error::RequestSnafu { uri, method })?;
 
     Ok(())
 }
@@ -42,8 +42,10 @@ mod error {
         #[snafu(display("Unable to serialize data: {}", source))]
         Serialize { source: serde_json::Error },
 
-        #[snafu(display("{}", source))]
+        #[snafu(display("Failed {} request to '{}': {}", method, uri, source))]
         Request {
+            method: String,
+            uri: String,
             #[snafu(source(from(crate::Error, Box::new)))]
             source: Box<crate::Error>,
         },

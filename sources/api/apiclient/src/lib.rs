@@ -39,9 +39,6 @@ mod error {
         #[snafu(display("Failed to send request: {}", source))]
         RequestSend { source: hyper::Error },
 
-        #[snafu(display("{}", body))]
-        CliResponseStatus { body: String },
-
         #[snafu(display("Status {} when {}ing {}: {}", code.as_str(), method, uri, body))]
         ResponseStatus {
             method: String,
@@ -89,7 +86,15 @@ where
     let (status, body) = raw_request_unchecked(&socket_path, &uri, &method, data).await?;
 
     // Error if the response status is in not in the 2xx range.
-    ensure!(status.is_success(), error::CliResponseStatusSnafu { body });
+    ensure!(
+        status.is_success(),
+        error::ResponseStatusSnafu {
+            method: method.as_ref(),
+            code: status,
+            uri: uri.as_ref(),
+            body,
+        }
+    );
 
     Ok((status, body))
 }
@@ -139,7 +144,6 @@ where
         .await
         .context(error::ResponseBodyReadSnafu)?;
     let body = String::from_utf8(body_bytes.to_vec()).context(error::NonUtf8ResponseSnafu)?;
-
     Ok((status, body))
 }
 
