@@ -44,12 +44,16 @@ where
 
     // Send the settings changes to the server in the same transaction.  (They're quick local
     // requests, so don't add the complexity of making them run concurrently.)
-    for (_input_source, json) in changes {
+    for (input_source, json) in changes {
         let uri = format!("/settings?tx={}", transaction);
         let method = "PATCH";
         let (_status, _body) = crate::raw_request(&socket_path, &uri, method, Some(json))
             .await
-            .context(error::PatchSnafu)?;
+            .context(error::PatchSnafu {
+                input_source,
+                uri,
+                method,
+            })?;
     }
 
     // Commit the transaction and apply it to the system.
@@ -192,8 +196,17 @@ mod error {
         #[snafu(display("Settings from '{}' are not a TOML table / JSON object", input_source))]
         ModelType { input_source: String },
 
-        #[snafu(display("{}", source))]
+        #[snafu(display(
+            "Failed to {} settings from '{}' to '{}': {}",
+            method,
+            input_source,
+            uri,
+            source
+        ))]
         Patch {
+            input_source: String,
+            uri: String,
+            method: String,
             #[snafu(source(from(crate::Error, Box::new)))]
             source: Box<crate::Error>,
         },
