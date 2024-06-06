@@ -16,15 +16,6 @@ use std::process;
 /// We create a link from 'current' to the variant selected by the environment variable above.
 const VARIANT_LINK: &str = "src/variant/current";
 
-/// We create a link for the 'variant' module's mod.rs; this can't be checked into the repo because
-/// the `src/variant` directory is a cache mount created by Docker before building a package.
-/// This isn't variant-specific, so we can have a fixed link target.  The file has top-level
-/// definitions that apply to all models, and defines a 'current' submodule (that Rust will be able
-/// to find through the 'current' link mentioned above) and re-exports everything in 'current' so
-/// that consumers of the model don't have to care what the current variant is.
-const MOD_LINK: &str = "src/variant/mod.rs";
-const MOD_LINK_TARGET: &str = "../variant_mod.rs";
-
 fn main() {
     // The VARIANT variable is originally BUILDSYS_VARIANT, set in the top-level Makefile.toml,
     // and is passed through as VARIANT by the top-level Dockerfile. It represents which OS variant
@@ -45,7 +36,6 @@ fn main() {
     // after changing the variant we're building for.
     Variant::rerun_if_changed();
     println!("cargo:rerun-if-changed={}", VARIANT_LINK);
-    println!("cargo:rerun-if-changed={}", MOD_LINK);
 
     generate_readme::from_lib().unwrap();
     link_current_variant(variant);
@@ -68,13 +58,6 @@ fn link_current_variant(variant: Variant) {
         process::exit(1);
     });
 
-    // Also create the link for mod.rs so Rust can import source from the "current" link
-    // created above.
-    symlink_safe(MOD_LINK_TARGET, MOD_LINK).unwrap_or_else(|e| {
-        eprintln!("Failed to create symlink at '{}' pointing to '{}' - we need this to build a Rust module structure through the `current` link.  Error: {}", MOD_LINK, MOD_LINK_TARGET, e);
-        process::exit(1);
-    });
-
     // Set the mtime of the links to a fixed time, the epoch.  This is because cargo decides
     // whether to rerun build.rs based on the "rerun-if-changed" statements printed above and the
     // mtime of the files they reference.  If the mtime of the file doesn't match the mtime of the
@@ -86,7 +69,7 @@ fn link_current_variant(variant: Variant) {
     // Note that we still use rerun-if-changed for these links in case someone changes them outside
     // of this build.rs.  If they really want to get around our system, they'd also need to set the
     // mtime to epoch, and then hopefully they know what they're doing.
-    for link in &[VARIANT_LINK, MOD_LINK] {
+    for link in &[VARIANT_LINK] {
         // Do our best, but if we fail, rebuilding isn't the end of the world.
         // Note: set_symlink_file_times is the only method that operates on the symlink rather than
         // its target, and it also updates atime, which we don't care about but isn't harmful.

@@ -193,9 +193,6 @@ Note: all models share the same `Cargo.toml`.
 // Clippy has a false positive in the presence of the Scalar macro.
 #![allow(clippy::derived_hash_with_manual_eq)]
 
-// The "variant" module is just a directory where we symlink in the user's requested build
-// variant; each variant defines a top-level Settings structure and we re-export the current one.
-mod variant;
 // The "de" module contains custom deserialization trait implementation for models.
 mod de;
 
@@ -205,7 +202,6 @@ use modeled_types::KubernetesEvictionKey;
 use modeled_types::KubernetesMemoryManagerPolicy;
 use modeled_types::KubernetesMemoryReservation;
 use modeled_types::NonNegativeInteger;
-pub use variant::*;
 
 // Types used to communicate between client and server for 'apiclient exec'.
 pub mod exec;
@@ -214,6 +210,8 @@ pub mod exec;
 // structure based on these, and that's what gets exposed via the API.  (Specific variants' models
 // are in subdirectories and linked into place by build.rs at variant/current.)
 
+use bottlerocket_release::BottlerocketRelease;
+use bottlerocket_settings_plugin::BottlerocketSettings;
 use model_derive::model;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -230,6 +228,23 @@ use modeled_types::{
     PemCertificateString, SingleLineString, TopologyManagerPolicy, TopologyManagerScope, Url,
     ValidBase64, ValidLinuxHostname,
 };
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct Settings {
+    inner: BottlerocketSettings,
+}
+
+// This is the top-level model exposed by the API system. It contains the common sections for all
+// variants.  This allows a single API call to retrieve everything the API system knows, which is
+// useful as a check and also, for example, as a data source for templated configuration files.
+#[model]
+pub struct Model {
+    settings: Settings,
+    services: Services,
+    configuration_files: ConfigurationFiles,
+    os: BottlerocketRelease,
+}
 
 // Kubernetes static pod manifest settings
 #[model]

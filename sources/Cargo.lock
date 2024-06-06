@@ -2679,6 +2679,7 @@ name = "models"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
+ "bottlerocket-settings-plugin",
  "bottlerocket-variant",
  "filetime",
  "generate-readme",
