@@ -1,0 +1,6 @@
+[required-extensions]
+kubernetes = { version = "v1", optional = true }
++++
+{{~#if settings.kubernetes.pod-infra-container-image~}}
+DEPRECATED_SETTING=settings.kubernetes.pod-infra-container-image
+{{~/if~}}

@@ -24,6 +24,9 @@ members = [
     # "api/migration/migrations/vX.Y.Z/..."
     # (all previous migrations archived; add new ones after this line)
     "api/migration/migrations/v1.21.0/pluto-remove-generators-v0-1-0",
+    "api/migration/migrations/v1.21.0/pod-infra-container-image-affected-services",
+    "api/migration/migrations/v1.21.0/pod-infra-container-image-remove-settings-generator",
+    "api/migration/migrations/v1.21.0/pod-infra-container-image-services",
 
     "bloodhound",
 

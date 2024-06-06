@@ -15,6 +15,11 @@
 
 %global _dwz_low_mem_die_limit 0
 
+# Construct reproducible tar archives
+# See https://reproducible-builds.org/docs/archives/
+%global source_date_epoch 1234567890
+%global tar_cf tar --sort=name --mtime="@%{source_date_epoch}" --owner=0 --group=0 --numeric-owner -cf
+
 # The kubernetes build process expects the cross-compiler to be specified via `KUBE_*_CC`
 # Here we generate that variable to use bottlerocket-specific compile aliases
 # Examples of the generated variable:
@@ -50,9 +55,14 @@ Source14: credential-provider-config-yaml
 Source15: logdog.kubelet.conf
 
 # ExecStartPre drop-ins
-Source20: prestart-pull-pause-ctr.conf
+Source20: prestart-load-pause-ctr.conf
 Source21: dockershim-symlink.conf
 Source22: make-kubelet-dirs.conf
+
+# pause image components
+Source100: pause-config.json
+Source101: pause-manifest.json
+Source102: pod-infra-container-image
 
 Source1000: clarify.toml
 
@@ -125,6 +135,23 @@ export KUBE_OUTPUT_SUBPATH="_fips_output/local"
 export GOEXPERIMENT="boringcrypto"
 make WHAT="cmd/kubelet"
 
+# build the pause container
+cd build/pause/linux/
+
+# Build static pause executable for container image.
+mkdir -p rootfs/usr/bin
+%{_cross_triple}-musl-gcc %{_cross_cflags} %{_cross_ldflags} -static-pie pause.c -o rootfs/pause
+
+# Construct container image.
+mkdir -p image/rootfs
+%tar_cf image/rootfs/layer.tar -C rootfs .
+DIGEST=$(sha256sum image/rootfs/layer.tar | sed -e 's/ .*//')
+install -m 0644 %{S:100} image/config.json
+sed -i "s/~~digest~~/${DIGEST}/" image/config.json
+install -m 0644 %{S:101} image/manifest.json
+
+%tar_cf ../../../_output/local/bin/linux/%{_cross_go_arch}/kubernetes-pause.tar -C image .
+
 %install
 output="./_output/local/bin/linux/%{_cross_go_arch}"
 install -d %{buildroot}%{_cross_bindir}
@@ -167,6 +194,10 @@ ln -rs \
 install -d %{buildroot}%{_cross_datadir}/logdog.d
 install -p -m 0644 %{S:15} %{buildroot}%{_cross_datadir}/logdog.d
 
+install -d %{buildroot}%{_cross_libexecdir}/kubernetes
+install -p -m 0644 ${output}/kubernetes-pause.tar %{buildroot}%{_cross_libexecdir}/kubernetes
+install -p -m 0644 %{S:102} %{buildroot}%{_cross_templatedir}/pod-infra-container-image
+
 %files -n %{_cross_os}kubelet-1.30
 %license LICENSE LICENSE.gonum.graph LICENSE.shell2junit LICENSE.golang PATENTS.golang
 %{_cross_attribution_file}
@@ -175,7 +206,7 @@ install -p -m 0644 %{S:15} %{buildroot}%{_cross_datadir}/logdog.d
 %{_cross_unitdir}/prepare-var-lib-kubelet.service
 %{_cross_unitdir}/etc-kubernetes-pki-private.mount
 %dir %{_cross_unitdir}/kubelet.service.d
-%{_cross_unitdir}/kubelet.service.d/prestart-pull-pause-ctr.conf
+%{_cross_unitdir}/kubelet.service.d/prestart-load-pause-ctr.conf
 %{_cross_unitdir}/kubelet.service.d/make-kubelet-dirs.conf
 %{_cross_unitdir}/kubelet.service.d/dockershim-symlink.conf
 %dir %{_cross_templatedir}
@@ -192,6 +223,8 @@ install -p -m 0644 %{S:15} %{buildroot}%{_cross_datadir}/logdog.d
 %{_cross_sysctldir}/90-kubelet.conf
 %dir %{_cross_libexecdir}/kubernetes
 %{_cross_libexecdir}/kubernetes/kubelet-plugins
+%{_cross_libexecdir}/kubernetes/kubernetes-pause.tar
+%{_cross_templatedir}/pod-infra-container-image
 %{_cross_datadir}/logdog.d/logdog.kubelet.conf
 
 %files -n %{_cross_os}kubelet-1.30-bin

@@ -9,8 +9,15 @@ cloud-provider = "aws"
 affected-services = ["kubernetes"]
 
 [metadata.settings.kubernetes.pod-infra-container-image]
-setting-generator = "schnauzer-v2 render --requires 'aws@v1' --requires 'kubernetes@v1(helpers=[pause-prefix])' --template '{{ pause-prefix settings.aws.region }}/eks/pause:3.1-eksbuild.1'"
-affected-services = ["kubernetes", "containerd"]
+affected-services = ["pod-infra-container-image"]
+
+[services.pod-infra-container-image]
+configuration-files = ["pod-infra-container-image-log-message"]
+restart-commands = ["systemctl restart deprecation-warning@pod-infra-container-image.timer"]
+
+[configuration-files.pod-infra-container-image-log-message]
+path = "/etc/deprecated-settings/pod-infra-container-image"
+template-path = "/usr/share/templates/pod-infra-container-image"
 
 [settings.metrics]
 service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kubelet"]
