@@ -150,6 +150,9 @@ pub mod error {
             input: String,
             source: std::num::ParseIntError,
         },
+
+        #[snafu(display("Invalid Kernel CpuSet value '{}'", input))]
+        InvalidKernelCpuSetValue { input: String },
     }
 
     /// Creates a `ValidationError` with a consistent message for strings with regex validations

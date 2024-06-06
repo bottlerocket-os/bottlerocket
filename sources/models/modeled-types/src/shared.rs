@@ -1178,3 +1178,78 @@ mod test_positive_integer {
         assert!(NonNegativeInteger::try_from(-1).is_err());
     }
 }
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
+/// KernelCpuSetValue represents a string that contains a valid Kernel CpuSet Value from
+/// here: https://man7.org/linux/man-pages/man7/cpuset.7.html#FORMATS. This matches the
+/// logic from https://github.com/kubernetes/utils/blob/d93618cff8a22d3aea7bf78d9d528fd859720c2d/cpuset/cpuset.go#L203
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct KernelCpuSetValue {
+    inner: String,
+}
+
+lazy_static! {
+    pub(crate) static ref KERNAL_CPU_SET_VALUE: Regex =
+        Regex::new(r"^([0-9]+(-[0-9]+)?,?)*([0-9]+(-[0-9]+)?)+$").unwrap();
+}
+
+impl TryFrom<&str> for KernelCpuSetValue {
+    type Error = error::Error;
+
+    fn try_from(input: &str) -> Result<Self, Self::Error> {
+        ensure!(
+            !input.is_empty(),
+            error::InvalidKernelCpuSetValueSnafu { input }
+        );
+        ensure!(
+            KERNAL_CPU_SET_VALUE.is_match(input),
+            error::InvalidKernelCpuSetValueSnafu { input }
+        );
+        Ok(KernelCpuSetValue {
+            inner: input.to_string(),
+        })
+    }
+}
+
+string_impls_for!(KernelCpuSetValue, "KernelCpuSetValue");
+
+#[cfg(test)]
+mod test_kernel_cpu_set_value {
+    use super::KernelCpuSetValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn good_tokens() {
+        for ok in &[
+            "1",
+            "0,1,2,3",
+            "1-4",
+            "1,6-9",
+            "1-4,6",
+            "1-3,6-9,10-15",
+            "100,101",
+            "1,2,3,4,5,6,7,8,9,10",
+        ] {
+            KernelCpuSetValue::try_from(*ok).unwrap();
+        }
+    }
+
+    #[test]
+    fn bad_names() {
+        for err in &[
+            "",
+            "100.0",
+            "0...4",
+            "1..5",
+            "ten",
+            "1-",
+            "-3",
+            "9,-10",
+            "1,2,3,4,5,6,7,8,9,10,",
+            &"a".repeat(23),
+        ] {
+            KernelCpuSetValue::try_from(*err).unwrap_err();
+        }
+    }
+}
