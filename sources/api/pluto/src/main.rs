@@ -395,7 +395,12 @@ async fn run() -> Result<()> {
         "kubernetes": settings
     });
     let json_str = generated_settings.to_string();
-    api::client_command(&["set", "-j", json_str.as_str()])
+    let uri = &format!(
+        "{}?tx={}",
+        constants::API_SETTINGS_URI,
+        constants::LAUNCH_TRANSACTION
+    );
+    api::client_command(&["raw", "-m", "PATCH", "-u", uri, "-d", json_str.as_str()])
         .await
         .context(error::SetFailureSnafu)?;
 
