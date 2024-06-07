@@ -1,0 +1,10 @@
+[package]
+name = "k8s-reserved-cpus-v0-1-0"
+version = "0.1.0"
+authors = ["James Masson <james.masson@weareadaptive.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0" }
