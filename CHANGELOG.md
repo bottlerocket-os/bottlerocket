@@ -1,3 +1,12 @@
+# v1.20.2 (2024-06-12)
+
+## OS Changes
+* Update kernel to 5.10.217 [#4039]
+* Mount static kmod as /usr/local/sbin/modprobe [#4037]
+
+[#4037]: https://github.com/bottlerocket-os/bottlerocket/pull/4037
+[#4039]: https://github.com/bottlerocket-os/bottlerocket/pull/4039
+
 # v1.20.1 (2024-06-04)
 
 ## OS Changes
