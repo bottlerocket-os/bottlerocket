@@ -1,4 +1,4 @@
-version = "1.20.1"
+version = "1.20.2"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -314,9 +314,3 @@ version = "1.20.1"
 ]
 "(1.20.0, 1.20.1)" = []
 "(1.20.1, 1.20.2)" = []
-"(1.20.2, 1.21.0)" = [
-    "migrate_v1.21.0_pluto-remove-generators-v0-1-0.lz4",
-    "migrate_v1.21.0_pod-infra-container-image-remove-settings-generator.lz4",
-    "migrate_v1.21.0_pod-infra-container-image-affected-services.lz4",
-    "migrate_v1.21.0_pod-infra-container-image-services.lz4",
-]
