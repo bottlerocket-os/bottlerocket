@@ -40,6 +40,9 @@ Supported variants and architectures are described in the [README](README.md#var
 For the purposes of SSM parameters, the valid architecture names are `x86_64` and `arm64` (also known as `aarch64`).
 Also, if you know a specific Bottlerocket version you'd like to use, for example `1.0.6`, you can replace `latest` with that version.
 
+Bottlerocket ECS variants with NVIDIA support append `-nvidia` to the variant name.
+For instance, the NVIDIA variant corresponding to `aws-ecs-2` is `aws-ecs-2-nvidia`.
+
 Once you have the parameter name you want to use, the easiest way to use it is to pass it directly to EC2.
 Just prefix the parameter name with `resolve:ssm:` and EC2 will fetch the current value for you.
 (You can also use this method for CloudFormation and other services that launch EC2 instances for you.)
