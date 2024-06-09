@@ -2568,6 +2568,7 @@ dependencies = [
  "serde",
  "serde_json",
  "settings-extension-aws",
+ "settings-extension-bootstrap-container",
  "settings-extension-cloudformation",
  "settings-extension-container-registry",
  "settings-extension-dns",

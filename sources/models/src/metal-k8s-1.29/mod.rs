@@ -2,8 +2,8 @@ use model_derive::model;
 use std::collections::HashMap;
 
 use crate::{
-    BootSettings, BootstrapContainer, ContainerRuntimeSettings, HostContainer, KubernetesSettings,
-    NetworkSettings, OciDefaults,
+    BootSettings, ContainerRuntimeSettings, HostContainer, KubernetesSettings, NetworkSettings,
+    OciDefaults,
 };
 use modeled_types::Identifier;
 
@@ -15,7 +15,7 @@ struct Settings {
     kubernetes: KubernetesSettings,
     updates: settings_extension_updates::UpdatesSettingsV1,
     host_containers: HashMap<Identifier, HostContainer>,
-    bootstrap_containers: HashMap<Identifier, BootstrapContainer>,
+    bootstrap_containers: settings_extension_bootstrap_container::BootstrapContainerSettingsV1,
     ntp: settings_extension_ntp::NtpSettingsV1,
     network: NetworkSettings,
     kernel: settings_extension_kernel::KernelSettingsV1,
