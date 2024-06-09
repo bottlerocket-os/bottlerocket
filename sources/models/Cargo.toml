@@ -18,6 +18,7 @@ serde = { version = "1", features = ["derive"] }
 toml = "0.8"
 
 # settings extensions
+settings-extension-autoscaling = { path = "../settings-extensions/autoscaling", version = "0.1" }
 settings-extension-aws = { path = "../settings-extensions/aws", version = "0.1" }
 settings-extension-bootstrap-container = { path = "../settings-extensions/bootstrap-container", version = "0.1" }
 settings-extension-cloudformation = { path = "../settings-extensions/cloudformation", version = "0.1" }

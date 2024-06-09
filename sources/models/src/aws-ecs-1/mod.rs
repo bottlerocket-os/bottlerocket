@@ -1,7 +1,7 @@
 use model_derive::model;
 use std::collections::HashMap;
 
-use crate::{AutoScalingSettings, HostContainer, NetworkSettings, OciDefaults};
+use crate::{HostContainer, NetworkSettings, OciDefaults};
 use modeled_types::Identifier;
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
@@ -23,6 +23,6 @@ struct Settings {
     oci_defaults: OciDefaults,
     oci_hooks: settings_extension_oci_hooks::OciHooksSettingsV1,
     cloudformation: settings_extension_cloudformation::CloudFormationSettingsV1,
-    autoscaling: AutoScalingSettings,
+    autoscaling: settings_extension_autoscaling::AutoScalingSettingsV1,
     dns: settings_extension_dns::DnsSettingsV1,
 }

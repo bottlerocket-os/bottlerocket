@@ -2567,6 +2567,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "settings-extension-autoscaling",
  "settings-extension-aws",
  "settings-extension-bootstrap-container",
  "settings-extension-cloudformation",
