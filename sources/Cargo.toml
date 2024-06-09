@@ -72,6 +72,7 @@ members = [
     "settings-extensions/container-registry",
     "settings-extensions/dns",
     "settings-extensions/ecs",
+    "settings-extensions/host-containers",
     "settings-extensions/kernel",
     "settings-extensions/metrics",
     "settings-extensions/motd",
