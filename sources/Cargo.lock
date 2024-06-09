@@ -2574,6 +2574,7 @@ dependencies = [
  "settings-extension-container-registry",
  "settings-extension-dns",
  "settings-extension-ecs",
+ "settings-extension-host-containers",
  "settings-extension-kernel",
  "settings-extension-metrics",
  "settings-extension-motd",
