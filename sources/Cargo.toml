@@ -65,6 +65,7 @@ members = [
 
     "models",
 
+    "settings-extensions/autoscaling",
     "settings-extensions/aws",
     "settings-extensions/bootstrap-container",
     "settings-extensions/cloudformation",
