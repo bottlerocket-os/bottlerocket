@@ -3517,6 +3517,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-extension-bootstrap-container"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "settings-extension-cloudformation"
 version = "0.1.0"
 dependencies = [
