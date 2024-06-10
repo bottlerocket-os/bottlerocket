@@ -3638,6 +3638,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-extension-network"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-settings-sdk",
+ "env_logger",
+ "model-derive",
+ "modeled-types",
+ "serde",
+ "serde_json",
+ "snafu 0.7.5",
+]
+
+[[package]]
 name = "settings-extension-ntp"
 version = "0.1.0"
 dependencies = [

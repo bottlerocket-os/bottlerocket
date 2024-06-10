@@ -76,6 +76,7 @@ members = [
     "settings-extensions/kernel",
     "settings-extensions/metrics",
     "settings-extensions/motd",
+    "settings-extensions/network",
     "settings-extensions/ntp",
     "settings-extensions/oci-hooks",
     "settings-extensions/pki",
