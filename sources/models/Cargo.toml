@@ -29,6 +29,7 @@ settings-extension-host-containers = { path = "../settings-extensions/host-conta
 settings-extension-kernel = { path = "../settings-extensions/kernel", version = "0.1" }
 settings-extension-metrics = { path = "../settings-extensions/metrics", version = "0.1" }
 settings-extension-motd = { path = "../settings-extensions/motd", version = "0.1" }
+settings-extension-network = { path = "../settings-extensions/network", version = "0.1" }
 settings-extension-ntp = { path = "../settings-extensions/ntp", version = "0.1" }
 settings-extension-oci-hooks = { path = "../settings-extensions/oci-hooks", version = "0.1" }
 settings-extension-pki = { path = "../settings-extensions/pki", version = "0.1" }

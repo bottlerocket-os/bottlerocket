@@ -1,8 +1,6 @@
 use model_derive::model;
-use std::collections::HashMap;
 
-use crate::{BootSettings, NetworkSettings};
-use modeled_types::Identifier;
+use crate::BootSettings;
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
 // that uses its name in serialization; internal structures use the field name that points to it
@@ -13,7 +11,7 @@ struct Settings {
     host_containers: settings_extension_host_containers::HostContainersSettingsV1,
     bootstrap_containers: settings_extension_bootstrap_container::BootstrapContainerSettingsV1,
     ntp: settings_extension_ntp::NtpSettingsV1,
-    network: NetworkSettings,
+    network: settings_extension_network::NetworkSettingsV1,
     kernel: settings_extension_kernel::KernelSettingsV1,
     boot: BootSettings,
     metrics: settings_extension_metrics::MetricsSettingsV1,

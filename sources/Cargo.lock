@@ -2578,6 +2578,7 @@ dependencies = [
  "settings-extension-kernel",
  "settings-extension-metrics",
  "settings-extension-motd",
+ "settings-extension-network",
  "settings-extension-ntp",
  "settings-extension-oci-hooks",
  "settings-extension-pki",
