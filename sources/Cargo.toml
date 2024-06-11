@@ -70,6 +70,7 @@ members = [
     "settings-extensions/bootstrap-container",
     "settings-extensions/cloudformation",
     "settings-extensions/container-registry",
+    "settings-extensions/container-runtime",
     "settings-extensions/dns",
     "settings-extensions/ecs",
     "settings-extensions/host-containers",
