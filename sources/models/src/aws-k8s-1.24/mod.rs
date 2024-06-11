@@ -1,4 +1,4 @@
-use crate::{BootSettings, ContainerRuntimeSettings, KubernetesSettings, OciDefaults};
+use crate::{BootSettings, KubernetesSettings, OciDefaults};
 
 use model_derive::model;
 
@@ -23,6 +23,6 @@ struct Settings {
     oci_hooks: settings_extension_oci_hooks::OciHooksSettingsV1,
     cloudformation: settings_extension_cloudformation::CloudFormationSettingsV1,
     dns: settings_extension_dns::DnsSettingsV1,
-    container_runtime: ContainerRuntimeSettings,
+    container_runtime: settings_extension_container_runtime::ContainerRuntimeSettingsV1,
     autoscaling: settings_extension_autoscaling::AutoScalingSettingsV1,
 }

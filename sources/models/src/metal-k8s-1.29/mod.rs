@@ -1,6 +1,6 @@
 use model_derive::model;
 
-use crate::{BootSettings, ContainerRuntimeSettings, KubernetesSettings, OciDefaults};
+use crate::{BootSettings, KubernetesSettings, OciDefaults};
 
 // Note: we have to use 'rename' here because the top-level Settings structure is the only one
 // that uses its name in serialization; internal structures use the field name that points to it
@@ -22,5 +22,5 @@ struct Settings {
     oci_defaults: OciDefaults,
     oci_hooks: settings_extension_oci_hooks::OciHooksSettingsV1,
     dns: settings_extension_dns::DnsSettingsV1,
-    container_runtime: ContainerRuntimeSettings,
+    container_runtime: settings_extension_container_runtime::ContainerRuntimeSettingsV1,
 }

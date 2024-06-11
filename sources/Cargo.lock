@@ -2572,6 +2572,7 @@ dependencies = [
  "settings-extension-bootstrap-container",
  "settings-extension-cloudformation",
  "settings-extension-container-registry",
+ "settings-extension-container-runtime",
  "settings-extension-dns",
  "settings-extension-ecs",
  "settings-extension-host-containers",
