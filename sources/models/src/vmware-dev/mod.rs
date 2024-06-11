@@ -9,7 +9,7 @@ struct Settings {
     motd: settings_extension_motd::MotdV1,
     updates: settings_extension_updates::UpdatesSettingsV1,
     host_containers: settings_extension_host_containers::HostContainersSettingsV1,
-    bootstrap_containers: settings_extension_bootstrap_container::BootstrapContainerSettingsV1,
+    bootstrap_containers: settings_extension_bootstrap_containers::BootstrapContainersSettingsV1,
     ntp: settings_extension_ntp::NtpSettingsV1,
     network: settings_extension_network::NetworkSettingsV1,
     kernel: settings_extension_kernel::KernelSettingsV1,

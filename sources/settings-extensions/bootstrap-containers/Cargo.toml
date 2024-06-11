@@ -1,5 +1,5 @@
 [package]
-name = "settings-extension-bootstrap-container"
+name = "settings-extension-bootstrap-containers"
 version = "0.1.0"
 authors = ["Gaurav Sharma <mgsharm@amazon.com>"]
 license = "Apache-2.0 OR MIT"

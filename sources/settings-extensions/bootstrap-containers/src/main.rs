@@ -1,13 +1,13 @@
 use bottlerocket_settings_sdk::{BottlerocketSetting, NullMigratorExtensionBuilder};
-use settings_extension_bootstrap_container::BootstrapContainerSettingsV1;
+use settings_extension_bootstrap_containers::BootstrapContainersSettingsV1;
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
     env_logger::init();
 
-    match NullMigratorExtensionBuilder::with_name("bootstrap-container")
+    match NullMigratorExtensionBuilder::with_name("bootstrap-containers")
         .with_models(vec![
-            BottlerocketSetting::<BootstrapContainerSettingsV1>::model(),
+            BottlerocketSetting::<BootstrapContainersSettingsV1>::model(),
         ])
         .build()
     {

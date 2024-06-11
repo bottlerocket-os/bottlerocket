@@ -43,7 +43,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_generate_oci_hooks() {
+    fn test_generate_autoscaling() {
         assert_eq!(
             AutoScalingSettingsV1::generate(None, None).unwrap(),
             GenerateResult::Complete(AutoScalingSettingsV1 { should_wait: None })
@@ -51,7 +51,7 @@ mod test {
     }
 
     #[test]
-    fn test_serde_oci_hooks() {
+    fn test_serde_autoscaling() {
         let test_json = r#"{"should-wait":true}"#;
 
         let autoscaling: AutoScalingSettingsV1 = serde_json::from_str(test_json).unwrap();

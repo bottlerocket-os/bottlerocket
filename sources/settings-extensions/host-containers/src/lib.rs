@@ -11,6 +11,8 @@ pub struct HostContainersSettingsV1 {
     pub host_containers: HashMap<Identifier, HostContainer>,
 }
 
+// Custom serializer/deserializer added to maintain backwards
+// compatibility with models created prior to settings extensions.
 impl Serialize for HostContainersSettingsV1 {
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
@@ -54,12 +56,12 @@ impl SettingsModel for HostContainersSettingsV1 {
     }
 
     fn generate(
-        _existing_partial: Option<Self::PartialKind>,
+        existing_partial: Option<Self::PartialKind>,
         _dependent_settings: Option<serde_json::Value>,
     ) -> Result<GenerateResult<Self::PartialKind, Self>> {
-        Ok(GenerateResult::Complete(HostContainersSettingsV1 {
-            host_containers: HashMap::new(),
-        }))
+        Ok(GenerateResult::Complete(
+            existing_partial.unwrap_or_default(),
+        ))
     }
 
     fn validate(_value: Self, _validated_settings: Option<serde_json::Value>) -> Result<()> {

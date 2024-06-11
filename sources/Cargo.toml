@@ -67,7 +67,7 @@ members = [
 
     "settings-extensions/autoscaling",
     "settings-extensions/aws",
-    "settings-extensions/bootstrap-container",
+    "settings-extensions/bootstrap-containers",
     "settings-extensions/cloudformation",
     "settings-extensions/container-registry",
     "settings-extensions/container-runtime",

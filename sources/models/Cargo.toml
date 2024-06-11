@@ -20,7 +20,7 @@ toml = "0.8"
 # settings extensions
 settings-extension-autoscaling = { path = "../settings-extensions/autoscaling", version = "0.1" }
 settings-extension-aws = { path = "../settings-extensions/aws", version = "0.1" }
-settings-extension-bootstrap-container = { path = "../settings-extensions/bootstrap-container", version = "0.1" }
+settings-extension-bootstrap-containers = { path = "../settings-extensions/bootstrap-containers", version = "0.1" }
 settings-extension-cloudformation = { path = "../settings-extensions/cloudformation", version = "0.1" }
 settings-extension-container-registry = { path = "../settings-extensions/container-registry", version = "0.1" }
 settings-extension-container-runtime = { path = "../settings-extensions/container-runtime", version = "0.1" }
@@ -32,6 +32,7 @@ settings-extension-metrics = { path = "../settings-extensions/metrics", version 
 settings-extension-motd = { path = "../settings-extensions/motd", version = "0.1" }
 settings-extension-network = { path = "../settings-extensions/network", version = "0.1" }
 settings-extension-ntp = { path = "../settings-extensions/ntp", version = "0.1" }
+settings-extension-oci-defaults = { path = "../settings-extensions/oci-defaults", version = "0.1" }
 settings-extension-oci-hooks = { path = "../settings-extensions/oci-hooks", version = "0.1" }
 settings-extension-pki = { path = "../settings-extensions/pki", version = "0.1" }
 settings-extension-updates = { path = "../settings-extensions/updates", version = "0.1" }

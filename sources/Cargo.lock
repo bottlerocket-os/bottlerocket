@@ -2569,7 +2569,7 @@ dependencies = [
  "serde_json",
  "settings-extension-autoscaling",
  "settings-extension-aws",
- "settings-extension-bootstrap-container",
+ "settings-extension-bootstrap-containers",
  "settings-extension-cloudformation",
  "settings-extension-container-registry",
  "settings-extension-container-runtime",
@@ -2581,6 +2581,7 @@ dependencies = [
  "settings-extension-motd",
  "settings-extension-network",
  "settings-extension-ntp",
+ "settings-extension-oci-defaults",
  "settings-extension-oci-hooks",
  "settings-extension-pki",
  "settings-extension-updates",
@@ -3534,7 +3535,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "settings-extension-bootstrap-container"
+name = "settings-extension-bootstrap-containers"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-settings-sdk",

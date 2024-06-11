@@ -6,11 +6,13 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{collections::HashMap, convert::Infallible};
 
 #[derive(Debug, Default, PartialEq)]
-pub struct BootstrapContainerSettingsV1 {
+pub struct BootstrapContainersSettingsV1 {
     pub bootstrap_containers: HashMap<Identifier, BootstrapContainer>,
 }
 
-impl Serialize for BootstrapContainerSettingsV1 {
+// Custom serializer/deserializer added to maintain backwards
+// compatibility with models created prior to settings extensions.
+impl Serialize for BootstrapContainersSettingsV1 {
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -19,7 +21,7 @@ impl Serialize for BootstrapContainerSettingsV1 {
     }
 }
 
-impl<'de> Deserialize<'de> for BootstrapContainerSettingsV1 {
+impl<'de> Deserialize<'de> for BootstrapContainersSettingsV1 {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -41,7 +43,7 @@ struct BootstrapContainer {
 
 type Result<T> = std::result::Result<T, Infallible>;
 
-impl SettingsModel for BootstrapContainerSettingsV1 {
+impl SettingsModel for BootstrapContainersSettingsV1 {
     type PartialKind = Self;
     type ErrorKind = Infallible;
 
@@ -50,7 +52,7 @@ impl SettingsModel for BootstrapContainerSettingsV1 {
     }
 
     fn set(_current_value: Option<Self>, _target: Self) -> Result<()> {
-        // Set anything that parses as BootstrapContainerSettingsV1.
+        // Set anything that parses as BootstrapContainersSettingsV1.
         Ok(())
     }
 
@@ -64,7 +66,7 @@ impl SettingsModel for BootstrapContainerSettingsV1 {
     }
 
     fn validate(_value: Self, _validated_settings: Option<serde_json::Value>) -> Result<()> {
-        // Validate anything that parses as BootstrapContainerSettingsV1.
+        // Validate anything that parses as BootstrapContainersSettingsV1.
         Ok(())
     }
 }
@@ -75,12 +77,12 @@ mod test {
     use serde_json::json;
 
     #[test]
-    fn test_generate_bootstarp_container_settings() {
-        let generated = BootstrapContainerSettingsV1::generate(None, None).unwrap();
+    fn test_generate_bootstrap_container_settings() {
+        let generated = BootstrapContainersSettingsV1::generate(None, None).unwrap();
 
         assert_eq!(
             generated,
-            GenerateResult::Complete(BootstrapContainerSettingsV1 {
+            GenerateResult::Complete(BootstrapContainersSettingsV1 {
                 bootstrap_containers: HashMap::new(),
             })
         )
@@ -99,7 +101,7 @@ mod test {
 
         let test_json_str = test_json.to_string();
 
-        let bootstrap_containers: BootstrapContainerSettingsV1 =
+        let bootstrap_containers: BootstrapContainersSettingsV1 =
             serde_json::from_str(&test_json_str).unwrap();
 
         let mut expected_bootstrap_container: HashMap<Identifier, BootstrapContainer> =
@@ -121,7 +123,7 @@ mod test {
 
         assert_eq!(
             bootstrap_containers,
-            BootstrapContainerSettingsV1 {
+            BootstrapContainersSettingsV1 {
                 bootstrap_containers: expected_bootstrap_container
             }
         );
