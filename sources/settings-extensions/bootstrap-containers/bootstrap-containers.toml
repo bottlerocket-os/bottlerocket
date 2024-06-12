@@ -1,0 +1,13 @@
+[extension]
+supported-versions = [
+    "v1"
+]
+default-version = "v1"
+
+[v1]
+[v1.validation.cross-validates]
+
+[v1.templating]
+helpers = []
+
+[v1.generation.requires]
