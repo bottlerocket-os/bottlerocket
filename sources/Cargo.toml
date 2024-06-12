@@ -84,6 +84,8 @@ members = [
     "settings-extensions/pki",
     "settings-extensions/updates",
 
+    "settings-plugins/aws-dev",
+
     "static-pods",
 
     "parse-datetime",

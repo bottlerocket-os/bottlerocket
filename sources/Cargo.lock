@@ -3857,6 +3857,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-plugin-aws-dev"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-aws",
+ "settings-extension-bootstrap-containers",
+ "settings-extension-cloudformation",
+ "settings-extension-container-registry",
+ "settings-extension-dns",
+ "settings-extension-host-containers",
+ "settings-extension-kernel",
+ "settings-extension-metrics",
+ "settings-extension-motd",
+ "settings-extension-network",
+ "settings-extension-ntp",
+ "settings-extension-oci-hooks",
+ "settings-extension-pki",
+ "settings-extension-updates",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
