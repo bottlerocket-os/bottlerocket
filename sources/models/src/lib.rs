@@ -307,6 +307,7 @@ struct KubernetesSettings {
     hostname_override: ValidLinuxHostname,
     // Generated in `k8s-1.25+` variants only
     seccomp_default: bool,
+    nvidia: K8sNvidiaSettings,
 }
 
 // ECS settings.
@@ -561,4 +562,15 @@ struct OciDefaultsResourceLimit {
 struct Report {
     name: String,
     description: String,
+}
+
+#[model]
+struct K8sNvidiaSettings {
+    container_runtime: K8sContainerRuntimeSettings,
+}
+
+#[model]
+struct K8sContainerRuntimeSettings {
+    visible_devices_as_volume_mounts: bool,
+    visible_devices_envvar_when_unprivileged: bool,
 }

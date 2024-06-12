@@ -1,0 +1,13 @@
+[required-extensions]
+kubernetes = "v1"
+std = { version = "v1", helpers = ["default"] }
+
++++
+accept-nvidia-visible-devices-as-volume-mounts = {{default true settings.kubernetes.nvidia.container-runtime.visible-devices-as-volume-mounts}}
+accept-nvidia-visible-devices-envvar-when-unprivileged = {{default false settings.kubernetes.nvidia.container-runtime.visible-devices-envvar-when-unprivileged}}
+
+[nvidia-container-cli]
+root = "/"
+path = "/usr/bin/nvidia-container-cli"
+environment = []
+ldconfig = "@/sbin/ldconfig"

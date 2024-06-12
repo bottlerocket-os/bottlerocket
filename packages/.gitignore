@@ -1,3 +1,4 @@
 *.patch.bz2
 *.src.rpm
 *.zip
+*.rpm
