@@ -86,6 +86,7 @@ members = [
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
+    "settings-plugins/aws-ecs-2",
 
     "static-pods",
 

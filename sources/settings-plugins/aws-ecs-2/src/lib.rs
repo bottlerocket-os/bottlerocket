@@ -1,11 +1,10 @@
+use bottlerocket_settings_plugin::SettingsPlugin;
+use model::BootSettings;
 use model_derive::model;
 
-use crate::BootSettings;
-
-// Note: we have to use 'rename' here because the top-level Settings structure is the only one
-// that uses its name in serialization; internal structures use the field name that points to it
+#[derive(SettingsPlugin)]
 #[model(rename = "settings", impl_default = true)]
-struct Settings {
+struct AwsEcs2Settings {
     motd: settings_extension_motd::MotdV1,
     updates: settings_extension_updates::UpdatesSettingsV1,
     host_containers: settings_extension_host_containers::HostContainersSettingsV1,
