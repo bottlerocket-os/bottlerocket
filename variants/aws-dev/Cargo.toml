@@ -37,6 +37,7 @@ included-packages = [
     "strace",
     "chrony-tools",
     "soci-snapshotter",
+    "socat",
 ]
 
 [lib]
@@ -56,3 +57,4 @@ iputils = { path = "../../packages/iputils" }
 strace = { path = "../../packages/strace" }
 chrony = { path = "../../packages/chrony" }
 soci-snapshotter = { path = "../../packages/soci-snapshotter" }
+socat = { path = "../../packages/socat" }
