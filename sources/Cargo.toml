@@ -5,13 +5,6 @@ members = [
     "api/apiclient",
     "api/migration/migration-helpers",
 
-    # "api/migration/migrations/vX.Y.Z/..."
-    # (all previous migrations archived; add new ones after this line)
-    "api/migration/migrations/v1.21.0/pluto-remove-generators-v0-1-0",
-    "api/migration/migrations/v1.21.0/pod-infra-container-image-affected-services",
-    "api/migration/migrations/v1.21.0/pod-infra-container-image-remove-settings-generator",
-    "api/migration/migrations/v1.21.0/pod-infra-container-image-services",
-    "api/migration/migrations/v1.21.0/k8s-reserved-cpus-v0-1-0",
     "api/schnauzer",
 
     "bottlerocket-release",
@@ -59,6 +52,13 @@ members = [
     "settings-extensions/oci-hooks",
     "settings-extensions/pki",
     "settings-extensions/updates",
+
+    # (all previous migrations archived; add new ones after this line)
+    "settings-migrations/v1.21.0/pluto-remove-generators-v0-1-0",
+    "settings-migrations/v1.21.0/pod-infra-container-image-affected-services",
+    "settings-migrations/v1.21.0/pod-infra-container-image-remove-settings-generator",
+    "settings-migrations/v1.21.0/pod-infra-container-image-services",
+    "settings-migrations/v1.21.0/k8s-reserved-cpus-v0-1-0",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",

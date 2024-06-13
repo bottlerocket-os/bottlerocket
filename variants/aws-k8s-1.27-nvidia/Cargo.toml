@@ -41,3 +41,4 @@ path = "../variants.rs"
 [build-dependencies]
 settings-defaults = { path = "../../packages/settings-defaults" }
 settings-plugins = { path = "../../packages/settings-plugins" }
+settings-migrations = { path = "../../packages/settings-migrations" }

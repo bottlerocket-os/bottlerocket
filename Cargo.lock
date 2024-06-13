@@ -7,6 +7,7 @@ name = "aws-dev"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -15,6 +16,7 @@ name = "aws-ecs-1"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -23,6 +25,7 @@ name = "aws-ecs-1-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -31,6 +34,7 @@ name = "aws-ecs-2"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -39,6 +43,7 @@ name = "aws-ecs-2-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -47,6 +52,7 @@ name = "aws-k8s-1_23"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -55,6 +61,7 @@ name = "aws-k8s-1_23-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -63,6 +70,7 @@ name = "aws-k8s-1_24"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -71,6 +79,7 @@ name = "aws-k8s-1_24-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -79,6 +88,7 @@ name = "aws-k8s-1_25"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -87,6 +97,7 @@ name = "aws-k8s-1_25-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -95,6 +106,7 @@ name = "aws-k8s-1_26"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -103,6 +115,7 @@ name = "aws-k8s-1_26-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -111,6 +124,7 @@ name = "aws-k8s-1_27"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -119,6 +133,7 @@ name = "aws-k8s-1_27-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -127,6 +142,7 @@ name = "aws-k8s-1_28"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -135,6 +151,7 @@ name = "aws-k8s-1_28-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -143,6 +160,7 @@ name = "aws-k8s-1_29"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -151,6 +169,7 @@ name = "aws-k8s-1_29-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -159,6 +178,7 @@ name = "aws-k8s-1_30"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -167,6 +187,7 @@ name = "aws-k8s-1_30-nvidia"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -175,6 +196,7 @@ name = "metal-dev"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -183,6 +205,7 @@ name = "metal-k8s-1_27"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -191,6 +214,7 @@ name = "metal-k8s-1_28"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -199,11 +223,16 @@ name = "metal-k8s-1_29"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
 [[package]]
 name = "settings-defaults"
+version = "0.1.0"
+
+[[package]]
+name = "settings-migrations"
 version = "0.1.0"
 
 [[package]]
@@ -215,6 +244,7 @@ name = "vmware-dev"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -223,6 +253,7 @@ name = "vmware-k8s-1_27"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -231,6 +262,7 @@ name = "vmware-k8s-1_28"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -239,6 +271,7 @@ name = "vmware-k8s-1_29"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]
 
@@ -247,5 +280,6 @@ name = "vmware-k8s-1_30"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
+ "settings-migrations",
  "settings-plugins",
 ]

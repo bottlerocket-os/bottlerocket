@@ -7,4 +7,4 @@ edition = "2021"
 publish = false
 
 [dependencies]
-migration-helpers = { path = "../../../migration-helpers", version = "0.1.0" }
+migration-helpers = { path = "../../../api/migration/migration-helpers", version = "0.1.0" }
