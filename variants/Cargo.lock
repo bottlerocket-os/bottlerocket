@@ -28,6 +28,7 @@ dependencies = [
  "kernel-6_1",
  "login",
  "release",
+ "socat",
  "soci-snapshotter",
  "strace",
 ]
@@ -1210,6 +1211,13 @@ dependencies = [
 [[package]]
 name = "shim"
 version = "0.1.0"
+
+[[package]]
+name = "socat"
+version = "0.1.0"
+dependencies = [
+ "glibc",
+]
 
 [[package]]
 name = "soci-snapshotter"
