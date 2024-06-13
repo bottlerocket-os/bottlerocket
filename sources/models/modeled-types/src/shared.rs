@@ -1142,7 +1142,7 @@ mod test_valid_kmod_key {
 
 /// Input value that needs to be a positive value, but should not be greater
 /// than an i32::MAX.
-#[derive(Debug, PartialEq, Scalar)]
+#[derive(Clone, Debug, PartialEq, Scalar)]
 pub struct NonNegativeInteger {
     inner: i32,
 }

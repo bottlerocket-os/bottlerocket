@@ -3,10 +3,9 @@ name = "os"
 version = "0.1.0"
 edition = "2021"
 publish = false
-build = "build.rs"
+build = "../build.rs"
 
 [package.metadata.build-package]
-variant-sensitive = true
 source-groups = [
     "api",
     "bottlerocket-release",
@@ -34,6 +33,12 @@ glibc = { path = "../glibc" }
 
 # RPM Requires
 [dependencies]
+# FIXME: this dependency will be removed when this package moves out of tree.
+settings-plugins = { path = "../settings-plugins" }
+
+# FIXME: this dependency will also be removed
+settings-defaults = { path = "../settings-defaults" }
+
 # We depend on these packages at runtime, and are expected to be pulled in
 # by way of the `release` package.
 # `host-ctr` for host containers functionality

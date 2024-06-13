@@ -16,6 +16,7 @@ allow = [
     "OpenSSL",
     "Unlicense",
     "Zlib",
+    "MPL-2.0",
 ]
 
 exceptions = [
@@ -52,13 +53,8 @@ wildcards = "deny"
 deny = [{ name = "structopt" }, { name = "clap", wrappers = ["cargo-readme"] }]
 
 skip = [
-    # settings sdk still uses 0.7.5 but everything in this repo now uses 0.8.2
-    # this can be removed once settings sdk is updated to snafu 0.8.2
-    { name = "heck", version = "=0.4.1" },
-    # this can be removed once settings sdk is updated to snafu 0.8.2
-    { name = "snafu", version = "=0.7.5" },
-    # this can be removed once settings sdk is updated to snafu 0.8.2
-    { name = "snafu-derive", version = "=0.7.5" },
+    # this can be removed once settings sdk is updated to base64 0.22.1
+    { name = "base64", version = "=0.21.7" },
 ]
 
 skip-tree = [
@@ -71,6 +67,12 @@ skip-tree = [
     { name = "httptest", version = "=0.15" },
     # schnauzer uses cached, which uses an older version of darling
     { name = "darling", version = "=0.14" },
+]
+
+[advisories]
+# generational-arena is currently unmaintained.
+ignore = [
+    "RUSTSEC-2024-0014",
 ]
 
 [sources]

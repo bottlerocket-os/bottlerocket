@@ -4,7 +4,7 @@ use bottlerocket_settings_sdk::{GenerateResult, LinearlyMigrateable, NoMigration
 use std::convert::Infallible;
 use string_impls_for::string_impls_for;
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct MotdV1 {
     inner: String,
 }

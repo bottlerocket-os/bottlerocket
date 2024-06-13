@@ -5,7 +5,7 @@ use modeled_types::{BootstrapContainerMode, Identifier, Url, ValidBase64};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{collections::HashMap, convert::Infallible};
 
-#[derive(Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct BootstrapContainersSettingsV1 {
     pub bootstrap_containers: HashMap<Identifier, BootstrapContainer>,
 }

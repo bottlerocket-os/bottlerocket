@@ -20,6 +20,7 @@ members = [
     "api/migration/migration-helpers",
     "api/shibaken",
     "api/prairiedog",
+    "api/simple-settings-plugin",
 
     # "api/migration/migrations/vX.Y.Z/..."
     # (all previous migrations archived; add new ones after this line)
@@ -65,6 +66,24 @@ members = [
 
     "models",
 
+    "settings-defaults/aws-dev",
+    "settings-defaults/aws-ecs-1",
+    "settings-defaults/aws-ecs-1-nvidia",
+    "settings-defaults/aws-ecs-2",
+    "settings-defaults/aws-ecs-2-nvidia",
+    "settings-defaults/aws-k8s-1.24",
+    "settings-defaults/aws-k8s-1.24-nvidia",
+    "settings-defaults/aws-k8s-1.25",
+    "settings-defaults/aws-k8s-1.25-nvidia",
+    "settings-defaults/aws-k8s-1.26",
+    "settings-defaults/aws-k8s-1.26-nvidia",
+    "settings-defaults/aws-k8s-1.30",
+    "settings-defaults/aws-k8s-1.30-nvidia",
+    "settings-defaults/metal-dev",
+    "settings-defaults/metal-k8s-1.30",
+    "settings-defaults/vmware-dev",
+    "settings-defaults/vmware-k8s-1.30",
+
     "settings-extensions/autoscaling",
     "settings-extensions/aws",
     "settings-extensions/bootstrap-containers",
@@ -83,6 +102,15 @@ members = [
     "settings-extensions/oci-hooks",
     "settings-extensions/pki",
     "settings-extensions/updates",
+
+    "settings-plugins/aws-dev",
+    "settings-plugins/aws-ecs-1",
+    "settings-plugins/aws-ecs-2",
+    "settings-plugins/aws-k8s",
+    "settings-plugins/metal-dev",
+    "settings-plugins/metal-k8s",
+    "settings-plugins/vmware-dev",
+    "settings-plugins/vmware-k8s",
 
     "static-pods",
 

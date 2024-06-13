@@ -13,5 +13,5 @@ string_impls_for = { version = "0.1", path = "../../models/string_impls_for" }
 
 [dependencies.bottlerocket-settings-sdk]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-sdk-v0.1.0-alpha.2"
-version = "0.1.0-alpha"
+tag = "bottlerocket-settings-sdk-v0.1.0"
+version = "0.1.0"

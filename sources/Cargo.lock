@@ -3,6 +3,54 @@
 version = 3
 
 [[package]]
+name = "abi_stable"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69d6512d3eb05ffe5004c59c206de7f99c34951504056ce23fc953842f12c445"
+dependencies = [
+ "abi_stable_derive",
+ "abi_stable_shared",
+ "const_panic",
+ "core_extensions",
+ "crossbeam-channel",
+ "generational-arena",
+ "libloading",
+ "lock_api",
+ "parking_lot",
+ "paste",
+ "repr_offset",
+ "rustc_version",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
+name = "abi_stable_derive"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7178468b407a4ee10e881bc7a328a65e739f0863615cca4429d43916b05e898"
+dependencies = [
+ "abi_stable_shared",
+ "as_derive_utils",
+ "core_extensions",
+ "proc-macro2",
+ "quote",
+ "rustc_version",
+ "syn 1.0.109",
+ "typed-arena",
+]
+
+[[package]]
+name = "abi_stable_shared"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2b5df7688c123e63f4d4d649cba63f2967ba7f7861b1664fca3f77d3dad2b63"
+dependencies = [
+ "core_extensions",
+]
+
+[[package]]
 name = "actix"
 version = "0.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -86,7 +134,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e01ed3140b2f8d422c68afa1ed2e85d996ea619c988ac834d255db32138655cb"
 dependencies = [
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -214,7 +262,7 @@ checksum = "7c7db3d5a9718568e4cf4a537cfd7070e6e6ff7481510d0237fb529ac850f6d3"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -354,7 +402,7 @@ dependencies = [
  "serde_json",
  "signal-hook",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
  "tokio-tungstenite",
  "toml",
@@ -385,8 +433,9 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
+ "simple-settings-plugin",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "thar-be-updates",
  "tokio",
  "toml",
@@ -411,7 +460,7 @@ dependencies = [
  "argh_shared",
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -421,6 +470,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5693f39141bda5760ecc4111ab08da40565d1771038c4a0250f03457ec707531"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "as_derive_utils"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff3c96645900a44cf11941c111bd08a6573b0e2f9f69bc9264b179d8fae753c4"
+dependencies = [
+ "core_extensions",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -470,7 +531,7 @@ checksum = "30c5ef0ede93efbf733c1a727f3b6b5a1060bbedd5600183e66f6e4be4af0ec5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -492,7 +553,7 @@ checksum = "16e62a023e7c117e27523144c5d2459f4397fcc3cab0085af8e2224f643a0193"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -503,7 +564,7 @@ checksum = "461abc97219de0eaaf81fe3ef974a540158f3d079c2ab200f891f1a2ef201e85"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -948,7 +1009,7 @@ dependencies = [
 name = "block-party"
 version = "0.1.0"
 dependencies = [
- "snafu 0.8.2",
+ "snafu",
 ]
 
 [[package]]
@@ -978,7 +1039,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "toml",
 ]
 
@@ -991,6 +1052,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bottlerocket-defaults-helper"
+version = "0.1.0"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-defaults-helper-v0.1.0#9cb0286b59cd4fcb5df9dd441aee8521ea5698e6"
+dependencies = [
+ "snafu",
+ "toml",
+ "walkdir",
+]
+
+[[package]]
 name = "bottlerocket-release"
 version = "0.1.0"
 dependencies = [
@@ -999,32 +1070,55 @@ dependencies = [
  "log",
  "semver",
  "serde",
- "snafu 0.8.2",
+ "snafu",
+]
+
+[[package]]
+name = "bottlerocket-settings-derive"
+version = "0.1.0"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-plugin-v0.1.0#9cb0286b59cd4fcb5df9dd441aee8521ea5698e6"
+dependencies = [
+ "darling 0.20.8",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.66",
+]
+
+[[package]]
+name = "bottlerocket-settings-plugin"
+version = "0.1.0"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-plugin-v0.1.0#9cb0286b59cd4fcb5df9dd441aee8521ea5698e6"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-derive",
+ "lazy_static",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
 name = "bottlerocket-settings-sdk"
-version = "0.1.0-alpha.2"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.2#7a138e9de9d99944fbedc6a35c4d08607e459b24"
+version = "0.1.0"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0#9cb0286b59cd4fcb5df9dd441aee8521ea5698e6"
 dependencies = [
  "argh",
  "bottlerocket-template-helper",
  "serde",
  "serde_json",
- "snafu 0.7.5",
+ "snafu",
  "tracing",
 ]
 
 [[package]]
 name = "bottlerocket-template-helper"
-version = "0.1.0-alpha.0"
-source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0-alpha.2#7a138e9de9d99944fbedc6a35c4d08607e459b24"
+version = "0.1.0"
+source = "git+https://github.com/bottlerocket-os/bottlerocket-settings-sdk?tag=bottlerocket-settings-sdk-v0.1.0#9cb0286b59cd4fcb5df9dd441aee8521ea5698e6"
 dependencies = [
  "darling 0.20.8",
  "proc-macro2",
  "quote",
  "serde_json",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -1033,7 +1127,7 @@ version = "0.1.0"
 dependencies = [
  "generate-readme",
  "serde",
- "snafu 0.8.2",
+ "snafu",
 ]
 
 [[package]]
@@ -1162,7 +1256,7 @@ dependencies = [
  "modeled-types",
  "serde",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
  "toml",
  "x509-parser",
@@ -1186,7 +1280,7 @@ dependencies = [
  "log",
  "serde",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
  "toml",
 ]
@@ -1232,10 +1326,10 @@ version = "4.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90239a040c80f5e14809ca132ddc4176ab33d5e17e49691793296e3fcb34d72f"
 dependencies = [
- "heck 0.5.0",
+ "heck",
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -1249,6 +1343,12 @@ name = "colorchoice"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acbf1af155f9b9ef647e42cdc158db4b64a1b61f743629225fde6f3e0be2a7c7"
+
+[[package]]
+name = "const_panic"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6051f239ecec86fde3410901ab7860d458d160371533842974fc61f96d15879b"
 
 [[package]]
 name = "constants"
@@ -1280,6 +1380,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 
 [[package]]
+name = "core_extensions"
+version = "1.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92c71dc07c9721607e7a16108336048ee978c3a8b129294534272e8bac96c0ee"
+dependencies = [
+ "core_extensions_proc_macros",
+]
+
+[[package]]
+name = "core_extensions_proc_macros"
+version = "1.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "69f3b219d28b6e3b4ac87bc1fc522e0803ab22e055da177bff0068c4150c61a6"
+
+[[package]]
 name = "corndog"
 version = "0.1.0"
 dependencies = [
@@ -1289,7 +1404,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "toml",
 ]
 
@@ -1396,7 +1511,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "strsim 0.10.0",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -1418,7 +1533,7 @@ checksum = "a668eda54683121533a393014d8692171709ff57a7d61f187b6e782719f8933f"
 dependencies = [
  "darling_core 0.20.8",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -1437,7 +1552,7 @@ dependencies = [
  "percent-encoding",
  "serde",
  "serde_json",
- "snafu 0.8.2",
+ "snafu",
  "toml",
  "walkdir",
 ]
@@ -1497,7 +1612,7 @@ checksum = "487585f4d0c6655fe74905e2504d8ad6908e4db67f744eb140876906c2f3175d"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -1513,12 +1628,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "doc-comment"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
-
-[[package]]
 name = "dogtag"
 version = "0.1.0"
 dependencies = [
@@ -1527,7 +1636,7 @@ dependencies = [
  "generate-readme",
  "imdsclient",
  "log",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
  "tokio-retry",
  "walkdir",
@@ -1542,7 +1651,7 @@ dependencies = [
  "log",
  "serde",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
  "toml",
 ]
@@ -1570,7 +1679,7 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
  "toml",
  "walkdir",
@@ -1590,7 +1699,7 @@ dependencies = [
  "retry-read",
  "serde",
  "serde_json",
- "snafu 0.8.2",
+ "snafu",
  "toml",
 ]
 
@@ -1604,7 +1713,7 @@ dependencies = [
  "imdsclient",
  "log",
  "serde_json",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
 ]
 
@@ -1617,7 +1726,7 @@ dependencies = [
  "generate-readme",
  "imdsclient",
  "log",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
 ]
 
@@ -1783,7 +1892,7 @@ checksum = "87750cf4b7a4c0625b1529e4c543c2182106e4dedc60a2a6455e00d212c489ac"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -1821,7 +1930,16 @@ name = "generate-readme"
 version = "0.1.0"
 dependencies = [
  "cargo-readme",
- "snafu 0.8.2",
+ "snafu",
+]
+
+[[package]]
+name = "generational-arena"
+version = "0.2.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "877e94aff08e743b651baaea359664321055749b398adff8740a7399af7796e7"
+dependencies = [
+ "cfg-if",
 ]
 
 [[package]]
@@ -1855,7 +1973,7 @@ dependencies = [
  "hex-literal",
  "lazy_static",
  "signpost",
- "snafu 0.8.2",
+ "snafu",
 ]
 
 [[package]]
@@ -1970,12 +2088,6 @@ dependencies = [
 
 [[package]]
 name = "heck"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
-
-[[package]]
-name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
@@ -2018,7 +2130,7 @@ dependencies = [
  "modeled-types",
  "serde",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
  "toml",
 ]
@@ -2198,7 +2310,7 @@ dependencies = [
  "log",
  "reqwest",
  "serde_json",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
  "tokio-retry",
  "tokio-test",
@@ -2298,6 +2410,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c198f91728a82281a64e1f4f9eeb25d82cb32a5de251c6bd1b5154d63a8e7bd"
 
 [[package]]
+name = "libloading"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b67380fd3b2fbe7527a606e18729d21c6f3951633d0500574c4dc22d2d638b9f"
+dependencies = [
+ "cfg-if",
+ "winapi",
+]
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2370,7 +2492,7 @@ dependencies = [
  "reqwest",
  "serde_json",
  "shell-words",
- "snafu 0.8.2",
+ "snafu",
  "tar",
  "tempfile",
  "tokio",
@@ -2420,14 +2542,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "merge-toml"
-version = "0.1.0"
-dependencies = [
- "snafu 0.8.2",
- "toml",
-]
-
-[[package]]
 name = "metricdog"
 version = "0.1.0"
 dependencies = [
@@ -2440,7 +2554,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
  "toml",
  "url",
@@ -2458,7 +2572,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shlex",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
 ]
 
@@ -2479,7 +2593,7 @@ dependencies = [
  "rand",
  "semver",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "storewolf",
  "tempfile",
  "tokio",
@@ -2529,7 +2643,7 @@ dependencies = [
  "darling 0.20.8",
  "generate-readme",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -2547,7 +2661,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "snafu 0.8.2",
+ "snafu",
  "string_impls_for",
  "url",
  "x509-parser",
@@ -2558,13 +2672,11 @@ name = "models"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
- "bottlerocket-variant",
- "filetime",
+ "bottlerocket-settings-plugin",
  "generate-readme",
  "libc",
  "model-derive",
  "modeled-types",
- "rand",
  "serde",
  "serde_json",
  "settings-extension-autoscaling",
@@ -2606,7 +2718,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "snafu 0.8.2",
+ "snafu",
  "systemd-derive",
  "tempfile",
  "tokio",
@@ -2823,7 +2935,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "generate-readme",
- "snafu 0.8.2",
+ "snafu",
 ]
 
 [[package]]
@@ -2889,7 +3001,7 @@ dependencies = [
  "pest_meta",
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -2920,7 +3032,7 @@ checksum = "2f38a4412a78282e09a2cf38d195ea5420d15ba0602cb375210efbc877243965"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -2958,7 +3070,7 @@ dependencies = [
  "modeled-types",
  "serde",
  "serde_json",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
  "tokio-retry",
  "tokio-rustls",
@@ -3022,15 +3134,15 @@ dependencies = [
  "serde_json",
  "signpost",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "toml",
 ]
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.79"
+version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e835ff2298f5721608eb1a980ecaee1aef2c132bf95ecc026a11b7bf3c01c02e"
+checksum = "22244ce15aa966053a896d1accb3a6e68469b97c7f33f284b99f0d576879fc23"
 dependencies = [
  "unicode-ident",
 ]
@@ -3047,9 +3159,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.35"
+version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "291ec9ab5efd934aaf503a6466c5d5251535d108ee747472c3977cc5acc868ef"
+checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
 dependencies = [
  "proc-macro2",
 ]
@@ -3133,6 +3245,15 @@ name = "regex-syntax"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
+
+[[package]]
+name = "repr_offset"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb1070755bd29dffc19d0971cab794e607839ba2ef4b69a9e6fbc8733c1b72ea"
+dependencies = [
+ "tstr",
+]
 
 [[package]]
 name = "reqwest"
@@ -3314,7 +3435,7 @@ dependencies = [
  "scalar",
  "serde",
  "serde_plain",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -3355,7 +3476,7 @@ dependencies = [
  "serde_json",
  "serde_plain",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
  "toml",
  "url",
@@ -3411,9 +3532,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.197"
+version = "1.0.203"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fb1c873e1b9b056a4dc4c0c198b24c3ffa059243875552b2bd0933b1aee4ce2"
+checksum = "7253ab4de971e72fb7be983802300c30b5a7f0c2e56fab8abfc6a214307c0094"
 dependencies = [
  "serde_derive",
 ]
@@ -3432,20 +3553,20 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.197"
+version = "1.0.203"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7eb0b34b42edc17f6b7cac84a52a1c5f0e1bb2227e997ca9011ea3dd34e8610b"
+checksum = "500cbc0ebeb6f46627f50f3f5811ccf6bf00643be300b4c3eabc0ef55dc5b5ba"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
 name = "serde_json"
-version = "1.0.114"
+version = "1.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5f09b1bd632ef549eaa9f60a1f8de742bdbc698e6cee2095fc84dde5f549ae0"
+checksum = "455182ea6142b14f93f4bc5320a2b31c1f266b66a4a5c858b013302a5d8cbfc3"
 dependencies = [
  "itoa",
  "ryu",
@@ -3463,9 +3584,9 @@ dependencies = [
 
 [[package]]
 name = "serde_spanned"
-version = "0.6.5"
+version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb3622f419d1296904700073ea6cc23ad690adbd66f13ea683df73298736f0c1"
+checksum = "79e674e01f999af37c49f70a6ede167a8a60b2503e56c5599532a65baa5969a0"
 dependencies = [
  "serde",
 ]
@@ -3506,8 +3627,127 @@ dependencies = [
  "log",
  "serde_json",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
+]
+
+[[package]]
+name = "settings-defaults-aws-dev"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-ecs-1"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-ecs-1-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-ecs-2"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-ecs-2-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-k8s-1_24"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-k8s-1_24-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-k8s-1_25"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-k8s-1_25-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-k8s-1_26"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-k8s-1_26-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-k8s-1_30"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-k8s-1_30-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-metal-dev"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-metal-k8s-1_30"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-vmware-dev"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-vmware-k8s-1_30"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
 ]
 
 [[package]]
@@ -3662,7 +3902,6 @@ dependencies = [
  "modeled-types",
  "serde",
  "serde_json",
- "snafu 0.7.5",
 ]
 
 [[package]]
@@ -3728,6 +3967,229 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-plugin-aws-dev"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-aws",
+ "settings-extension-bootstrap-containers",
+ "settings-extension-cloudformation",
+ "settings-extension-container-registry",
+ "settings-extension-dns",
+ "settings-extension-host-containers",
+ "settings-extension-kernel",
+ "settings-extension-metrics",
+ "settings-extension-motd",
+ "settings-extension-network",
+ "settings-extension-ntp",
+ "settings-extension-oci-hooks",
+ "settings-extension-pki",
+ "settings-extension-updates",
+]
+
+[[package]]
+name = "settings-plugin-aws-ecs-1"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-autoscaling",
+ "settings-extension-aws",
+ "settings-extension-bootstrap-containers",
+ "settings-extension-cloudformation",
+ "settings-extension-container-registry",
+ "settings-extension-dns",
+ "settings-extension-ecs",
+ "settings-extension-host-containers",
+ "settings-extension-kernel",
+ "settings-extension-metrics",
+ "settings-extension-motd",
+ "settings-extension-network",
+ "settings-extension-ntp",
+ "settings-extension-oci-defaults",
+ "settings-extension-oci-hooks",
+ "settings-extension-pki",
+ "settings-extension-updates",
+]
+
+[[package]]
+name = "settings-plugin-aws-ecs-2"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-autoscaling",
+ "settings-extension-aws",
+ "settings-extension-bootstrap-containers",
+ "settings-extension-cloudformation",
+ "settings-extension-container-registry",
+ "settings-extension-dns",
+ "settings-extension-ecs",
+ "settings-extension-host-containers",
+ "settings-extension-kernel",
+ "settings-extension-metrics",
+ "settings-extension-motd",
+ "settings-extension-network",
+ "settings-extension-ntp",
+ "settings-extension-oci-defaults",
+ "settings-extension-oci-hooks",
+ "settings-extension-pki",
+ "settings-extension-updates",
+]
+
+[[package]]
+name = "settings-plugin-aws-k8s"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-autoscaling",
+ "settings-extension-aws",
+ "settings-extension-bootstrap-containers",
+ "settings-extension-cloudformation",
+ "settings-extension-container-registry",
+ "settings-extension-container-runtime",
+ "settings-extension-dns",
+ "settings-extension-host-containers",
+ "settings-extension-kernel",
+ "settings-extension-metrics",
+ "settings-extension-motd",
+ "settings-extension-network",
+ "settings-extension-ntp",
+ "settings-extension-oci-defaults",
+ "settings-extension-oci-hooks",
+ "settings-extension-pki",
+ "settings-extension-updates",
+]
+
+[[package]]
+name = "settings-plugin-metal-dev"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-bootstrap-containers",
+ "settings-extension-container-registry",
+ "settings-extension-dns",
+ "settings-extension-host-containers",
+ "settings-extension-kernel",
+ "settings-extension-metrics",
+ "settings-extension-motd",
+ "settings-extension-network",
+ "settings-extension-ntp",
+ "settings-extension-oci-hooks",
+ "settings-extension-pki",
+ "settings-extension-updates",
+]
+
+[[package]]
+name = "settings-plugin-metal-k8s"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-aws",
+ "settings-extension-bootstrap-containers",
+ "settings-extension-container-registry",
+ "settings-extension-container-runtime",
+ "settings-extension-dns",
+ "settings-extension-host-containers",
+ "settings-extension-kernel",
+ "settings-extension-metrics",
+ "settings-extension-motd",
+ "settings-extension-network",
+ "settings-extension-ntp",
+ "settings-extension-oci-defaults",
+ "settings-extension-oci-hooks",
+ "settings-extension-pki",
+ "settings-extension-updates",
+]
+
+[[package]]
+name = "settings-plugin-vmware-dev"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-bootstrap-containers",
+ "settings-extension-container-registry",
+ "settings-extension-dns",
+ "settings-extension-host-containers",
+ "settings-extension-kernel",
+ "settings-extension-metrics",
+ "settings-extension-motd",
+ "settings-extension-network",
+ "settings-extension-ntp",
+ "settings-extension-oci-hooks",
+ "settings-extension-pki",
+ "settings-extension-updates",
+]
+
+[[package]]
+name = "settings-plugin-vmware-k8s"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-aws",
+ "settings-extension-bootstrap-containers",
+ "settings-extension-container-registry",
+ "settings-extension-container-runtime",
+ "settings-extension-dns",
+ "settings-extension-host-containers",
+ "settings-extension-kernel",
+ "settings-extension-metrics",
+ "settings-extension-motd",
+ "settings-extension-network",
+ "settings-extension-ntp",
+ "settings-extension-oci-defaults",
+ "settings-extension-oci-hooks",
+ "settings-extension-pki",
+ "settings-extension-updates",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3767,7 +4229,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
  "tokio",
  "toml",
@@ -3781,7 +4243,7 @@ dependencies = [
  "log",
  "nix",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
 ]
 
 [[package]]
@@ -3819,7 +4281,23 @@ dependencies = [
  "hex-literal",
  "serde",
  "serde_plain",
- "snafu 0.8.2",
+ "snafu",
+]
+
+[[package]]
+name = "simple-settings-plugin"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-plugin",
+ "generate-readme",
+ "model-derive",
+ "modeled-types",
+ "models",
+ "serde",
+ "serde_json",
+ "settings-extension-motd",
+ "settings-extension-ntp",
 ]
 
 [[package]]
@@ -3850,48 +4328,26 @@ checksum = "e6ecd384b10a64542d77071bd64bd7b231f4ed5940fba55e98c3de13824cf3d7"
 
 [[package]]
 name = "snafu"
-version = "0.7.5"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4de37ad025c587a29e8f3f5605c00f70b98715ef90b9061a815b9e59e9042d6"
-dependencies = [
- "doc-comment",
- "snafu-derive 0.7.5",
-]
-
-[[package]]
-name = "snafu"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75976f4748ab44f6e5332102be424e7c2dc18daeaf7e725f2040c3ebb133512e"
+checksum = "418b8136fec49956eba89be7da2847ec1909df92a9ae4178b5ff0ff092c8d95e"
 dependencies = [
  "backtrace",
  "futures-core",
  "pin-project",
- "snafu-derive 0.8.2",
+ "snafu-derive",
 ]
 
 [[package]]
 name = "snafu-derive"
-version = "0.7.5"
+version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "990079665f075b699031e9c08fd3ab99be5029b96f3b78dc0709e8f77e4efebf"
+checksum = "1a4812a669da00d17d8266a0439eddcacbc88b17f732f927e52eeb9d196f7fb5"
 dependencies = [
- "heck 0.4.1",
+ "heck",
  "proc-macro2",
  "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "snafu-derive"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4b19911debfb8c2fb1107bc6cb2d61868aaf53a988449213959bb1b5b1ed95f"
-dependencies = [
- "heck 0.4.1",
- "proc-macro2",
- "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -3920,7 +4376,7 @@ dependencies = [
  "modeled-types",
  "serde",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
  "toml",
 ]
@@ -3930,19 +4386,16 @@ name = "storewolf"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-release",
- "bottlerocket-variant",
  "constants",
  "datastore",
  "generate-readme",
  "log",
- "merge-toml",
  "models",
  "rand",
  "semver",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "toml",
- "walkdir",
 ]
 
 [[package]]
@@ -3985,7 +4438,7 @@ dependencies = [
  "serde_json",
  "shlex",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
 ]
 
@@ -4002,9 +4455,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.53"
+version = "2.0.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7383cd0e49fff4b6b90ca5670bfd3e9d6a733b3f90c686605aa7eec8c4996032"
+checksum = "c42f3f41a2de00b01c0aaad383c5a45241efc8b2d1eda5661812fda5f3cdcff5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4058,7 +4511,7 @@ dependencies = [
  "generate-readme",
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -4109,7 +4562,7 @@ dependencies = [
  "schnauzer",
  "serde_json",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tokio",
 ]
 
@@ -4132,7 +4585,7 @@ dependencies = [
  "serde_plain",
  "signpost",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
  "toml",
  "update_metadata",
@@ -4155,7 +4608,7 @@ checksum = "c61f3ba182994efc43764a46c018c347bc492c79f024e705f46567b418f6d4f7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -4233,7 +4686,7 @@ checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -4310,9 +4763,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.8.12"
+version = "0.8.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9dd1545e8208b4a5af1aa9bbd0b4cf7e9ea08fabc5d0a5c67fcaafa17433aa3"
+checksum = "6f49eb2ab21d2f26bd6db7bf383edc527a7ebaee412d17af4d40fdccd442f335"
 dependencies = [
  "indexmap 2.2.5",
  "serde",
@@ -4323,18 +4776,18 @@ dependencies = [
 
 [[package]]
 name = "toml_datetime"
-version = "0.6.5"
+version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3550f4e9685620ac18a50ed434eb3aec30db8ba93b0287467bca5826ea25baf1"
+checksum = "4badfd56924ae69bcc9039335b2e017639ce3f9b001c393c1b2d1ef846ce2cbf"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "toml_edit"
-version = "0.22.8"
+version = "0.22.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c12219811e0c1ba077867254e5ad62ee2c9c190b0d957110750ac0cda1ae96cd"
+checksum = "f21c7aaf97f1bd9ca9d4f9e73b0a6c74bd5afef56f2bc931943a6e1c37e04e38"
 dependencies = [
  "indexmap 2.2.5",
  "serde",
@@ -4367,7 +4820,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
  "tokio",
  "tokio-util",
@@ -4403,7 +4856,7 @@ checksum = "34704c8d6ebcbc939824180af020566b01a7c01f80641264eba0999f6c2b6be7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]
@@ -4420,6 +4873,21 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
+name = "tstr"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f8e0294f14baae476d0dd0a2d780b2e24d66e349a9de876f5126777a37bdba7"
+dependencies = [
+ "tstr_proc_macros",
+]
+
+[[package]]
+name = "tstr_proc_macros"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e78122066b0cb818b8afd08f7ed22f7fdbc3e90815035726f0840d0d26c0747a"
 
 [[package]]
 name = "tungstenite"
@@ -4439,6 +4907,12 @@ dependencies = [
  "url",
  "utf-8",
 ]
+
+[[package]]
+name = "typed-arena"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6af6ae20167a9ece4bcb41af5b80f8a1f1df981f6391189ce00fd257af04126a"
 
 [[package]]
 name = "typed-path"
@@ -4514,7 +4988,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_plain",
- "snafu 0.8.2",
+ "snafu",
  "toml",
 ]
 
@@ -4539,7 +5013,7 @@ dependencies = [
  "signal-hook",
  "signpost",
  "simplelog",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
  "tokio",
  "tokio-util",
@@ -4614,7 +5088,7 @@ dependencies = [
  "log",
  "serde",
  "serde-xml-rs",
- "snafu 0.8.2",
+ "snafu",
 ]
 
 [[package]]
@@ -4627,7 +5101,7 @@ dependencies = [
  "log",
  "serde",
  "serde_plain",
- "snafu 0.8.2",
+ "snafu",
  "vmw_backdoor",
 ]
 
@@ -4683,7 +5157,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
  "wasm-bindgen-shared",
 ]
 
@@ -4717,7 +5191,7 @@ checksum = "e94f17b526d0a461a191c78ea52bbce64071ed5c04c9ffe424dcb38f74171bb7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -4964,7 +5438,7 @@ name = "xfscli"
 version = "0.1.0"
 dependencies = [
  "argh",
- "snafu 0.8.2",
+ "snafu",
  "tempfile",
 ]
 
@@ -4997,7 +5471,7 @@ checksum = "9ce1b18ccd8e73a9321186f97e46f9f04b778851177567b1975109d26a08d2a6"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.53",
+ "syn 2.0.66",
 ]
 
 [[package]]

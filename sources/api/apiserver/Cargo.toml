@@ -38,3 +38,4 @@ generate-readme = { version = "0.1", path = "../../generate-readme" }
 [dev-dependencies]
 maplit = "1"
 toml = "0.8"
+simple-settings-plugin = { path = "../simple-settings-plugin", version = "0.1" }
