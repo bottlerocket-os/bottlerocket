@@ -121,6 +121,7 @@ Requires: %{_cross_os}iptables
 Requires: %{_cross_os}kexec-tools
 Requires: %{_cross_os}keyutils
 Requires: %{_cross_os}makedumpfile
+Requires: %{_cross_os}mdadm
 Requires: %{_cross_os}netdog
 Requires: %{_cross_os}os
 Requires: %{_cross_os}policycoreutils
