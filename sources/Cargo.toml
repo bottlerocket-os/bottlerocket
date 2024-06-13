@@ -28,6 +28,7 @@ members = [
     "api/migration/migrations/v1.21.0/pod-infra-container-image-affected-services",
     "api/migration/migrations/v1.21.0/pod-infra-container-image-remove-settings-generator",
     "api/migration/migrations/v1.21.0/pod-infra-container-image-services",
+    "api/migration/migrations/v1.21.0/k8s-reserved-cpus-v0-1-0",
 
     "bloodhound",
 

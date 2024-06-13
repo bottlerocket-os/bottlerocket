@@ -91,13 +91,17 @@ kubeReserved:
   {{/if}}
   {{/if}}
   ephemeral-storage: "{{default "1Gi" settings.kubernetes.kube-reserved.ephemeral-storage}}"
+{{#unless settings.kubernetes.reserved-cpus}}
 kubeReservedCgroup: "/runtime"
+{{/unless}}
 {{#if settings.kubernetes.system-reserved}}
 systemReserved:
   {{#each settings.kubernetes.system-reserved}}
   {{@key}}: "{{this}}"
   {{/each}}
+{{#unless settings.kubernetes.reserved-cpus}}
 systemReservedCgroup: "/system"
+{{/unless}}
 {{/if}}
 cpuCFSQuota: {{default true settings.kubernetes.cpu-cfs-quota-enforced}}
 cpuManagerPolicy: {{default "none" settings.kubernetes.cpu-manager-policy}}
@@ -180,4 +184,7 @@ reservedMemory:
 {{/if}}
 {{/each}}
 {{/if}}
+{{/if}}
+{{#if settings.kubernetes.reserved-cpus}}
+reservedSystemCPUs: {{settings.kubernetes.reserved-cpus}}
 {{/if}}

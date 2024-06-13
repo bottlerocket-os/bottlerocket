@@ -48,13 +48,13 @@ use std::net::IpAddr;
 use crate::de::{deserialize_limit, deserialize_mirrors, deserialize_node_taints};
 use modeled_types::{
     BootConfigKey, BootConfigValue, BootstrapContainerMode, CpuManagerPolicy, CredentialProvider,
-    DNSDomain, EtcHostsEntries, Identifier, IntegerPercent, KubernetesAuthenticationMode,
-    KubernetesBootstrapToken, KubernetesCloudProvider, KubernetesClusterDnsIp,
-    KubernetesClusterName, KubernetesDurationValue, KubernetesLabelKey, KubernetesLabelValue,
-    KubernetesQuantityValue, KubernetesReservedResourceKey, KubernetesTaintValue,
-    KubernetesThresholdValue, OciDefaultsCapability, OciDefaultsResourceLimitType,
-    PemCertificateString, SingleLineString, TopologyManagerPolicy, TopologyManagerScope, Url,
-    ValidBase64, ValidLinuxHostname,
+    DNSDomain, EtcHostsEntries, Identifier, IntegerPercent, KernelCpuSetValue,
+    KubernetesAuthenticationMode, KubernetesBootstrapToken, KubernetesCloudProvider,
+    KubernetesClusterDnsIp, KubernetesClusterName, KubernetesDurationValue, KubernetesLabelKey,
+    KubernetesLabelValue, KubernetesQuantityValue, KubernetesReservedResourceKey,
+    KubernetesTaintValue, KubernetesThresholdValue, OciDefaultsCapability,
+    OciDefaultsResourceLimitType, PemCertificateString, SingleLineString, TopologyManagerPolicy,
+    TopologyManagerScope, Url, ValidBase64, ValidLinuxHostname,
 };
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
@@ -137,6 +137,7 @@ struct KubernetesSettings {
     shutdown_grace_period_for_critical_pods: KubernetesDurationValue,
     memory_manager_reserved_memory: HashMap<Identifier, KubernetesMemoryReservation>,
     memory_manager_policy: KubernetesMemoryManagerPolicy,
+    reserved_cpus: KernelCpuSetValue,
 
     // Settings where we generate a value based on the runtime environment.  The user can specify a
     // value to override the generated one, but typically would not.
