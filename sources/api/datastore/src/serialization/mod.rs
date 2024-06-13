@@ -131,14 +131,14 @@ impl ser::Serializer for &MapKeySerializer {
         self.serialize_str(variant)
     }
 
-    fn serialize_newtype_struct<T: ?Sized>(self, _name: &'static str, _value: &T) -> Result<String>
+    fn serialize_newtype_struct<T>(self, _name: &'static str, _value: &T) -> Result<String>
     where
-        T: Serialize,
+        T: Serialize + ?Sized,
     {
         bad_key("newtype_struct")
     }
 
-    fn serialize_newtype_variant<T: ?Sized>(
+    fn serialize_newtype_variant<T>(
         self,
         _name: &'static str,
         _variant_index: u32,
@@ -146,7 +146,7 @@ impl ser::Serializer for &MapKeySerializer {
         _value: &T,
     ) -> Result<String>
     where
-        T: Serialize,
+        T: Serialize + ?Sized,
     {
         bad_key("newtype_variant")
     }
@@ -155,9 +155,9 @@ impl ser::Serializer for &MapKeySerializer {
         bad_key("none")
     }
 
-    fn serialize_some<T: ?Sized>(self, _value: &T) -> Result<String>
+    fn serialize_some<T>(self, _value: &T) -> Result<String>
     where
-        T: Serialize,
+        T: Serialize + ?Sized,
     {
         bad_key("some")
     }

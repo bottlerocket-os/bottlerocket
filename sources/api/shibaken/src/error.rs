@@ -1,6 +1,7 @@
 use crate::warmpool::error::WarmPoolCheckError;
 use snafu::Snafu;
 
+#[allow(dead_code)]
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(super)))]
 pub(crate) enum Error {

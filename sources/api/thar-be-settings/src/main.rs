@@ -15,20 +15,12 @@ use thar_be_settings::{config, get_changed_settings, service};
 
 mod error {
     use snafu::Snafu;
-    use std::path::PathBuf;
 
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
-
-        #[snafu(display("Failure to read template '{}' from '{}': {}", name, path.display(), source))]
-        TemplateRegister {
-            name: String,
-            path: PathBuf,
-            source: handlebars::TemplateError,
-        },
     }
 }
 

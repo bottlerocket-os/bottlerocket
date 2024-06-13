@@ -272,12 +272,6 @@ mod error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
 
-        #[snafu(display("Invalid log level '{}'", log_level))]
-        LogLevel {
-            log_level: String,
-            source: log::ParseLevelError,
-        },
-
         #[snafu(display("Failed to parse PEM: {}", source))]
         ParsePEM {
             source: x509_parser::error::PEMError,

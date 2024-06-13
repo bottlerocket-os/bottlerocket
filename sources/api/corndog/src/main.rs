@@ -266,6 +266,7 @@ mod error {
         #[snafu(display("Logger setup error: {}", source))]
         Logger { source: log::SetLoggerError },
 
+        #[allow(dead_code)]
         #[snafu(display(
             "Error deserializing response as JSON from {} to '{}': {}",
             method,

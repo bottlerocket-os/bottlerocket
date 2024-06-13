@@ -176,12 +176,6 @@ mod error {
         },
 
         #[snafu(display(
-            "Expected ecr helper to be called with either 'registry' or 'region', got '{}'",
-            value,
-        ))]
-        EcrParam { value: String },
-
-        #[snafu(display(
             "Incorrect number of params provided to helper '{}' in template '{}' - {} expected, {} received",
             helper,
             template,

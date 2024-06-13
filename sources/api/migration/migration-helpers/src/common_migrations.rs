@@ -203,7 +203,7 @@ impl Migration for ReplaceStringMigration {
             match data {
                 serde_json::Value::String(data) => {
                     if data == self.old_val {
-                        *data = self.new_val.to_owned();
+                        self.new_val.clone_into(data);
                         println!(
                             "Changed value of '{}' from '{}' to '{}' on upgrade",
                             self.setting, self.old_val, self.new_val
@@ -233,7 +233,7 @@ impl Migration for ReplaceStringMigration {
             match data {
                 serde_json::Value::String(data) => {
                     if data == self.new_val {
-                        *data = self.old_val.to_owned();
+                        self.old_val.clone_into(data);
                         println!(
                             "Changed value of '{}' from '{}' to '{}' on downgrade",
                             self.setting, self.new_val, self.old_val
@@ -1725,7 +1725,7 @@ impl MetadataReplacement {
             })
             .and_then(|data| {
                 if data == self.old_val {
-                    *data = self.new_val.to_owned();
+                    self.new_val.clone_into(data);
                     println!(
                         "Changed value of metadata '{}' for setting '{}' from '{}' to '{}'.",
                         self.metadata,

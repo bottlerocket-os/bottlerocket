@@ -136,12 +136,6 @@ mod error {
         #[snafu(display("Error interpreting JSON value as API model: {}", source))]
         InterpretModel { source: serde_json::Error },
 
-        #[snafu(display("Can't deserialize {} from command output '{}'", expected, input,))]
-        CommandJsonType {
-            expected: &'static str,
-            input: serde_json::Value,
-        },
-
         #[snafu(display("Error deserializing HashMap to Settings: {}", source))]
         Deserialize { source: deserialization::Error },
 

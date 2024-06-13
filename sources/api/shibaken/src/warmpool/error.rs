@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 pub type Result<T> = std::result::Result<T, WarmPoolCheckError>;
 
+#[allow(dead_code)]
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(super)))]
 pub enum WarmPoolCheckError {

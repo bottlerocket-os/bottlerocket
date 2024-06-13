@@ -86,12 +86,6 @@ mod error {
         #[snafu(display("Failed to setup logger: {}", source))]
         Logger { source: log::SetLoggerError },
 
-        #[snafu(display("Invalid log level '{}'", log_level))]
-        LogLevel {
-            log_level: String,
-            source: log::ParseLevelError,
-        },
-
         #[snafu(display("Couldn't create CString from '{}': {}", input, source))]
         InvalidString {
             input: String,

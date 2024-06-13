@@ -6,6 +6,7 @@ use update_metadata::error::Error as update_metadata_error;
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
+#[allow(dead_code)]
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(crate)))]
 pub(crate) enum Error {

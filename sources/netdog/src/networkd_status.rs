@@ -118,6 +118,7 @@ mod error {
         #[snafu(display("No IP Address for Primary Interface: {:?}", interface))]
         NoIpAddress { interface: InterfaceId },
 
+        #[allow(dead_code)]
         #[snafu(display("Failed to parse 'networkctl' output: {}", source))]
         NetworkctlParsing { source: FromUtf8Error },
 

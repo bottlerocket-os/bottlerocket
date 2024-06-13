@@ -2,6 +2,7 @@
 //!
 //! We use `pest` to disambiguate the TOML frontmatter from the body of the template, then serde to
 //! extract the contents of the frontmatter.
+#![allow(clippy::empty_docs)]
 use pest::Parser;
 use pest_derive::Parser;
 use serde::Deserialize;

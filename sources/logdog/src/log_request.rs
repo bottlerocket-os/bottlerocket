@@ -13,6 +13,7 @@ use glob::glob;
 use reqwest::blocking::{Client, Response};
 use snafu::{ensure, OptionExt, ResultExt};
 use std::collections::HashSet;
+use std::fmt::{Display, Formatter};
 use std::fs;
 use std::fs::File;
 use std::path::Path;
@@ -109,12 +110,12 @@ struct LogRequest<'a> {
 }
 
 /// This is used in error construction.
-impl ToString for LogRequest<'_> {
-    fn to_string(&self) -> String {
+impl Display for LogRequest<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if self.instructions.is_empty() {
-            format!("{} {}", self.mode, self.filename)
+            write!(f, "{} {}", self.mode, self.filename)
         } else {
-            format!("{} {} {}", self.mode, self.filename, self.instructions)
+            write!(f, "{} {} {}", self.mode, self.filename, self.instructions)
         }
     }
 }

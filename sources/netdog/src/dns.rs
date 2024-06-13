@@ -229,6 +229,7 @@ mod error {
             source: toml::de::Error,
         },
 
+        #[allow(dead_code)]
         #[snafu(display("Failed to build resolver configuration: {}", source))]
         ResolvConfBuildFailed { source: std::fmt::Error },
 

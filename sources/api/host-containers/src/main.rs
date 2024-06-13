@@ -60,9 +60,6 @@ mod error {
         #[snafu(display("Host containers '{}' missing field '{}'", name, field))]
         MissingField { name: String, field: String },
 
-        #[snafu(display("Unable to create host-containers config dir {}: {}", path.display(), source))]
-        EnvFileDirCreate { path: PathBuf, source: io::Error },
-
         #[snafu(display("Failed to build EnvironmentFile for {}: {}", name, source))]
         EnvFileBuildFailed { name: String, source: fmt::Error },
 

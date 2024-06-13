@@ -26,12 +26,6 @@ pub(super) enum Error {
     #[snafu(display("Failed to setup logger: {}", source))]
     Logger { source: log::SetLoggerError },
 
-    #[snafu(display("Invalid log level '{}'", log_level))]
-    LogLevel {
-        log_level: String,
-        source: log::ParseLevelError,
-    },
-
     #[snafu(display("Failed to create mount '{}': '{}'", path, source))]
     Mount { path: String, source: nix::Error },
 

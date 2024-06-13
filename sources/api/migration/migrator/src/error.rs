@@ -10,9 +10,6 @@ use std::process::Output;
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(crate)))]
 pub(crate) enum Error {
-    #[snafu(display("Internal error: {}", msg))]
-    Internal { msg: String },
-
     #[snafu(display("Data store path '{}' contains invalid UTF-8", path.display()))]
     DataStorePathNotUTF8 { path: PathBuf },
 
@@ -32,12 +29,6 @@ pub(crate) enum Error {
 
     #[snafu(display("Data store path '{}' contains invalid version: {}", path.display(), source))]
     InvalidDataStoreVersion {
-        path: PathBuf,
-        source: semver::Error,
-    },
-
-    #[snafu(display("Migration '{}' contains invalid version: {}", path.display(), source))]
-    InvalidMigrationVersion {
         path: PathBuf,
         source: semver::Error,
     },
@@ -66,9 +57,6 @@ pub(crate) enum Error {
 
     #[snafu(display("Failed to read symlink at {} to find version: {}", link.display(), source))]
     LinkRead { link: PathBuf, source: io::Error },
-
-    #[snafu(display("Failed listing migration directory '{}': {}", dir.display(), source))]
-    ListMigrations { dir: PathBuf, source: io::Error },
 
     #[snafu(display("Invalid target name '{}': {}", target, source))]
     TargetName {
@@ -113,23 +101,11 @@ pub(crate) enum Error {
         source: std::io::Error,
     },
 
-    #[snafu(display("Failed reading migration directory entry: {}", source))]
-    ReadMigrationEntry { source: io::Error },
-
     #[snafu(display("Failed to load TUF repo: {}", source))]
     RepoLoad {
         #[snafu(source(from(tough::error::Error, Box::new)))]
         source: Box<tough::error::Error>,
     },
-
-    #[snafu(display("Failed reading metadata of '{}': {}", path.display(), source))]
-    PathMetadata { path: PathBuf, source: io::Error },
-
-    #[snafu(display("Failed setting permissions of '{}': {}", path.display(), source))]
-    SetPermissions { path: PathBuf, source: io::Error },
-
-    #[snafu(display("Migration path '{}' contains invalid UTF-8", path.display()))]
-    MigrationNameNotUTF8 { path: PathBuf },
 }
 
 /// Result alias containing our Error type.

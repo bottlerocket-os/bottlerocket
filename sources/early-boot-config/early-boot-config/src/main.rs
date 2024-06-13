@@ -260,6 +260,7 @@ mod error {
     use snafu::Snafu;
     use std::path::PathBuf;
 
+    #[allow(dead_code)]
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(super) enum Error {

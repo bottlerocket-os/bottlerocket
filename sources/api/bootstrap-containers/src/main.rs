@@ -640,27 +640,6 @@ mod error {
             source: std::io::Error,
         },
 
-        #[snafu(display(
-            "Error deserializing response as JSON from {} to {}: {}",
-            method,
-            uri,
-            source
-        ))]
-        ResponseJson {
-            method: &'static str,
-            uri: String,
-            source: serde_json::Error,
-        },
-
-        #[snafu(display("Unable to serialize data: {}", source))]
-        Serialize { source: serde_json::Error },
-
-        #[snafu(display("Failed to change settings via apiclient: {}", source))]
-        Set { source: io::Error },
-
-        #[snafu(display("Failed to change settings, apiclient returned an error"))]
-        SetClient,
-
         #[snafu(display("{}", message))]
         Usage { message: String },
 
