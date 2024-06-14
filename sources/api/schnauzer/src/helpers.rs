@@ -3,17 +3,17 @@
 // text at render time.
 
 use base64::Engine;
+use bottlerocket_modeled_types::{OciDefaultsCapability, OciDefaultsResourceLimitType};
 use dns_lookup::lookup_host;
 use handlebars::{
     handlebars_helper, Context, Handlebars, Helper, HelperDef, Output, RenderContext, RenderError,
     Renderable,
 };
 use lazy_static::lazy_static;
-use model::modeled_types::{OciDefaultsCapability, OciDefaultsResourceLimitType};
-use model::OciDefaultsResourceLimit;
 use serde::Deserialize;
 use serde_json::value::Value;
 use serde_plain::derive_fromstr_from_deserialize;
+use settings_extension_oci_defaults::OciDefaultsResourceLimitV1;
 use snafu::{OptionExt, ResultExt};
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -1263,7 +1263,7 @@ pub fn localhost_aliases(
 
     let mut results: Vec<String> = vec![];
 
-    let hosts: Option<model::modeled_types::EtcHostsEntries> = (!hosts_value.is_null())
+    let hosts: Option<bottlerocket_modeled_types::EtcHostsEntries> = (!hosts_value.is_null())
         .then(|| {
             serde_json::from_value(hosts_value.clone()).context(
                 error::UnparseableTemplateValueSnafu {
@@ -1342,12 +1342,14 @@ pub fn etc_hosts_entries(
     // Otherwise we need to generate /etc/hosts lines, ignoring loopback.
     let mut result_lines: Vec<String> = Vec::new();
 
-    let hosts: model::modeled_types::EtcHostsEntries = serde_json::from_value(hosts_value.clone())
-        .context(error::UnparseableTemplateValueSnafu {
-            expected: "EtcHostsEntries",
-            value: hosts_value.to_owned(),
-            template: template_name.to_owned(),
-        })?;
+    let hosts: bottlerocket_modeled_types::EtcHostsEntries = serde_json::from_value(
+        hosts_value.clone(),
+    )
+    .context(error::UnparseableTemplateValueSnafu {
+        expected: "EtcHostsEntries",
+        value: hosts_value.to_owned(),
+        template: template_name.to_owned(),
+    })?;
     trace!("Hosts from template: {:?}", hosts);
 
     hosts
@@ -1565,7 +1567,7 @@ impl Runtime {
     fn get_resource_limits(
         &self,
         rlimit_type: &OciDefaultsResourceLimitType,
-        values: &OciDefaultsResourceLimit,
+        values: &OciDefaultsResourceLimitV1,
     ) -> String {
         match self {
             Self::Docker => Docker::get_resource_limits(rlimit_type, values),
@@ -1586,7 +1588,7 @@ impl Docker {
     /// Formats resource limits for Docker
     fn get_resource_limits(
         rlimit_type: &OciDefaultsResourceLimitType,
-        values: &OciDefaultsResourceLimit,
+        values: &OciDefaultsResourceLimitV1,
     ) -> String {
         format!(
             r#" "{}":{{ "Name": "{}", "Hard": {}, "Soft": {} }}"#,
@@ -1628,7 +1630,7 @@ impl Containerd {
     /// Formats resource limits for Containerd
     fn get_resource_limits(
         rlimit_type: &OciDefaultsResourceLimitType,
-        values: &OciDefaultsResourceLimit,
+        values: &OciDefaultsResourceLimitV1,
     ) -> String {
         format!(
             r#"{{ "type": "{}", "hard": {}, "soft": {} }}"#,
@@ -1771,7 +1773,7 @@ fn oci_spec_capabilities(value: &Value) -> Result<String, RenderError> {
 /// the settings data from the datastore (`settings.oci-defaults.resource-limits`).
 fn oci_spec_resource_limits(
     value: &Value,
-) -> Result<HashMap<OciDefaultsResourceLimitType, OciDefaultsResourceLimit>, RenderError> {
+) -> Result<HashMap<OciDefaultsResourceLimitType, OciDefaultsResourceLimitV1>, RenderError> {
     Ok(serde_json::from_value(value.clone())?)
 }
 
@@ -1915,7 +1917,7 @@ fn kube_cpu_helper(num_cores: usize) -> Result<String, TemplateHelperError> {
 /// If `configured_hosts` is set, the hostname will be considered resolvable if it is listed as an alias for any given IP address.
 fn hostname_resolveable(
     hostname: &str,
-    configured_hosts: Option<&model::modeled_types::EtcHostsEntries>,
+    configured_hosts: Option<&bottlerocket_modeled_types::EtcHostsEntries>,
 ) -> bool {
     // If the hostname is in our configured hosts, then it *will* be resolvable when /etc/hosts is rendered.
     // Note that DNS search paths in /etc/resolv.conf are not relevant here, as they are not checked when searching /etc/hosts.
@@ -2836,7 +2838,7 @@ mod test_etc_hosts_helpers {
         assert!(hostname_resolveable(
             "unresolveable.irrelevanthostname.tld",
             Some(
-                &serde_json::from_str::<model::modeled_types::EtcHostsEntries>(
+                &serde_json::from_str::<bottlerocket_modeled_types::EtcHostsEntries>(
                     r#"[["10.0.0.1", ["unresolveable.irrelevanthostname.tld"]]]"#
                 )
                 .unwrap()

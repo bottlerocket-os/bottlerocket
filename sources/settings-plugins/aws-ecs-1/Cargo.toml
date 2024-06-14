@@ -13,31 +13,14 @@ name = "settings_aws_ecs_1"
 abi_stable = "0.11.3"
 serde = "1.0.198"
 serde_json = "1.0.116"
-model-derive = { path = "../../models/model-derive", version = "0.1" }
-modeled-types = { path = "../../models/modeled-types", version = "0.1" }
-models = { path = "../../models", version = "0.1" }
-
-# settings extensions
-settings-extension-autoscaling = { path = "../../settings-extensions/autoscaling", version = "0.1" }
-settings-extension-aws = { path = "../../settings-extensions/aws", version = "0.1" }
-settings-extension-bootstrap-containers = { path = "../../settings-extensions/bootstrap-containers", version = "0.1" }
-settings-extension-cloudformation = { path = "../../settings-extensions/cloudformation", version = "0.1" }
-settings-extension-container-registry = { path = "../../settings-extensions/container-registry", version = "0.1" }
-settings-extension-dns = { path = "../../settings-extensions/dns", version = "0.1" }
-settings-extension-ecs = { path = "../../settings-extensions/ecs", version = "0.1" }
-settings-extension-host-containers = { path = "../../settings-extensions/host-containers", version = "0.1" }
-settings-extension-kernel = { path = "../../settings-extensions/kernel", version = "0.1" }
-settings-extension-metrics = { path = "../../settings-extensions/metrics", version = "0.1" }
-settings-extension-motd = { path = "../../settings-extensions/motd", version = "0.1" }
-settings-extension-network = { path = "../../settings-extensions/network", version = "0.1" }
-settings-extension-ntp = { path = "../../settings-extensions/ntp", version = "0.1" }
-settings-extension-oci-defaults = { path = "../../settings-extensions/oci-defaults", version = "0.1" }
-settings-extension-oci-hooks = { path = "../../settings-extensions/oci-hooks", version = "0.1" }
-settings-extension-pki = { path = "../../settings-extensions/pki", version = "0.1" }
-settings-extension-updates = { path = "../../settings-extensions/updates", version = "0.1" }
 
 # settings plugins
 [dependencies.bottlerocket-settings-plugin]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
 tag = "bottlerocket-settings-plugin-v0.1.0"
+version = "0.1.0"
+
+[dependencies.bottlerocket-settings-models]
+git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
+tag = "bottlerocket-settings-models-v0.1.0"
 version = "0.1.0"
