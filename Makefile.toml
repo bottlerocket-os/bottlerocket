@@ -1,5 +1,6 @@
 [config]
 skip_core_tasks = true
+default_to_workspace = false
 
 [env]
 BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
@@ -7,7 +8,7 @@ BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 # For binary installation, this should be a released version (prefixed with a v,
 # for example v0.1.0). For the git sourcecode installation method, this can be
 # any git rev, e.g. a tag, sha, or branch name.
-TWOLITER_VERSION = "v0.2.0"
+TWOLITER_VERSION = "v0.4.1"
 
 # For binary installation, this is the GitHub repository that has binary release artifacts attached
 # to it, for example https://github.com/bottlerocket-os/twoliter. For git sourcecode installation,
@@ -129,7 +130,7 @@ BUILDSYS_JOBS = "8"
 CARGO_HOME = "${BUILDSYS_ROOT_DIR}/.cargo"
 # This needs to end with pkg/mod so that we can mount the parent of pkg/mod as GOPATH.
 GO_MOD_CACHE = "${BUILDSYS_ROOT_DIR}/.gomodcache/pkg/mod"
-GO_MODULES = "ecs-gpu-init host-ctr"
+GO_MODULES = ""
 DOCKER_BUILDKIT = "1"
 
 # This is the filename suffix for operations that write out AMI information to
@@ -334,6 +335,16 @@ run_task = "run-twoliter"
 [tasks.fetch-vendored]
 run_task = "run-twoliter"
 
+[tasks.fetch-external-kits]
+dependencies = ["install-twoliter"]
+command = "${TWOLITER}"
+args = [
+    "--log-level=${TWOLITER_LOG_LEVEL}",
+    "fetch",
+    "--project-path=${TWOLITER_PROJECT}",
+    "--arch=${BUILDSYS_ARCH}",
+]
+
 [tasks.unit-tests]
 run_task = "run-twoliter"
 
@@ -386,9 +397,11 @@ run_task = "run-twoliter"
 
 # Builds a package including its build-time and runtime dependency packages.
 [tasks.build-package]
+dependencies = ["fetch-external-kits"]
 run_task = "run-twoliter"
 
 [tasks.build-variant]
+dependencies = ["fetch-external-kits"]
 run_task = "run-twoliter"
 
 [tasks.repack-variant]
@@ -410,6 +423,7 @@ run_task = "run-twoliter"
 run_task = "run-twoliter"
 
 [tasks.build]
+dependencies = ["fetch-external-kits"]
 run_task = "run-twoliter"
 
 [tasks.tuftool]
