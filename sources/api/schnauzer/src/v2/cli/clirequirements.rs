@@ -161,7 +161,7 @@ mod test {
             ),
         ];
 
-        for (requirement_string, expected) in test_cases.into_iter() {
+        for (requirement_string, expected) in test_cases.iter() {
             let parsed: ExtensionRequirement = requirement_string
                 .parse::<CLIExtensionRequirement>()
                 .unwrap()
@@ -181,7 +181,7 @@ mod test {
             "needs-named-params@v1(helper1, helper2, helper3)",
         ];
 
-        for requirement_string in test_cases.into_iter() {
+        for requirement_string in test_cases.iter() {
             assert!(requirement_string
                 .parse::<CLIExtensionRequirement>()
                 .is_err());

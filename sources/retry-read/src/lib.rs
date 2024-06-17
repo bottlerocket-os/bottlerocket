@@ -49,7 +49,7 @@ mod test {
         let mut output = vec![0; data.len()];
         let count = (&data[..]).retry_read(&mut output).unwrap();
         assert_eq!(count, data.len());
-        assert_eq!(&data[..], &output);
+        assert_eq!(data, &output);
     }
 
     #[test]

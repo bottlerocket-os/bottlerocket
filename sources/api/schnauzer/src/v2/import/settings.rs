@@ -263,7 +263,7 @@ mod test {
 
         for (all_settings, extension_requirements, expected_settings) in test_cases.into_iter() {
             let minimized_settings = BottlerocketSettingsResolver::minimize_settings(
-                &all_settings.as_object().unwrap(),
+                all_settings.as_object().unwrap(),
                 extension_requirements.into_iter(),
             );
             assert_eq!(
