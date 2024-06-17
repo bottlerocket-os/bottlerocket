@@ -17,8 +17,6 @@ on:
       - '**.tpl'
       # Sample config files and OpenAPI docs
       - '**.yaml'
-      # Other files that don't affect the build
-      - 'packages/os/eni-max-pods'
 
 concurrency:
   group: ${{ github.ref }}
@@ -61,23 +59,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Preflight step to set up the runner
         uses: ./.github/actions/setup-node
-      - if: contains(matrix.variant, 'nvidia')
-        run: |
-          cat <<-EOF > Licenses.toml
-          [nvidia]
-          spdx-id = "LICENSE-LicenseRef-NVIDIA-Customer"
-          licenses = [
-            { path = "NVIDIA", license-url = "https://www.nvidia.com/en-us/drivers/nvidia-license/" }
-          ]
-          EOF
       - run: rustup component add rustfmt
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} unit-tests
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-fmt
-      # Avoid running Go lint check via `cargo make check-lints` since there's a separate golangci-lint workflow
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-clippy
       - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-shell
       - run: |
           cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} \
             -e BUILDSYS_ARCH=${{ matrix.arch }} \
-            -e BUILDSYS_JOBS=12 \
-            -e BUILDSYS_UPSTREAM_LICENSE_FETCH="${{ contains(matrix.variant, 'nvidia') }}"
+            -e BUILDSYS_JOBS=12
