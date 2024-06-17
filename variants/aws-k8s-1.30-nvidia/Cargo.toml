@@ -45,15 +45,5 @@ kernel-parameters = [
 path = "../variants.rs"
 
 [build-dependencies]
-# core
-release = { path = "../../packages/release" }
-kernel-6_1 = { path = "../../packages/kernel-6.1" }
-# k8s
-cni = { path = "../../packages/cni" }
-cni-plugins = { path = "../../packages/cni-plugins" }
-kubernetes-1_30 = { path = "../../packages/kubernetes-1.30" }
-aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
-# nvidia
-nvidia-container-toolkit = { path = "../../packages/nvidia-container-toolkit" }
-nvidia-k8s-device-plugin = { path = "../../packages/nvidia-k8s-device-plugin" }
-kmod-6_1-nvidia = { path = "../../packages/kmod-6.1-nvidia" }
+settings-defaults = { path = "../../packages/settings-defaults" }
+settings-plugins = { path = "../../packages/settings-plugins" }

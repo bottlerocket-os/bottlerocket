@@ -45,16 +45,5 @@ path = "../variants.rs"
 
 [build-dependencies]
 # core
-release = { path = "../../packages/release" }
-kernel-6_1 = { path = "../../packages/kernel-6.1" }
-# docker
-docker-cli = { path = "../../packages/docker-cli" }
-docker-engine = { path = "../../packages/docker-engine" }
-docker-init = { path = "../../packages/docker-init" }
-# tools
-login = { path = "../../packages/login" }
-iputils = { path = "../../packages/iputils" }
-strace = { path = "../../packages/strace" }
-chrony = { path = "../../packages/chrony" }
-soci-snapshotter = { path = "../../packages/soci-snapshotter" }
-socat = { path = "../../packages/socat" }
+settings-defaults = { path = "../../packages/settings-defaults" }
+settings-plugins = { path = "../../packages/settings-plugins" }

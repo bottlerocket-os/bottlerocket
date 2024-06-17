@@ -33,9 +33,5 @@ kernel-parameters = [
 path = "../variants.rs"
 
 [build-dependencies]
-aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
-cni = { path = "../../packages/cni" }
-cni-plugins = { path = "../../packages/cni-plugins" }
-kernel-5_15 = { path = "../../packages/kernel-5.15" }
-kubernetes-1_27 = { path = "../../packages/kubernetes-1.27" }
-release = { path = "../../packages/release" }
+settings-defaults = { path = "../../packages/settings-defaults" }
+settings-plugins = { path = "../../packages/settings-plugins" }
