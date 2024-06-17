@@ -1,5 +1,0 @@
-[required-extensions]
-updates = "v1"
-std = { version = "v1", helpers = ["default"] }
-+++
-version-lock = "{{{default "latest" settings.updates.version-lock}}}"

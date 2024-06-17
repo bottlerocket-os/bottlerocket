@@ -15,7 +15,6 @@ source-groups = [
 
 # RPM BuildRequires
 [build-dependencies]
-glibc = { path = "../glibc" }
 
 # RPM Requires
 [dependencies]

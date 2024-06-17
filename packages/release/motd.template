@@ -1,4 +1,0 @@
-[required-extensions]
-motd = "v1"
-+++
-{{ settings.motd }}
