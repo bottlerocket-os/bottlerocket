@@ -1,5 +1,0 @@
-[NetDev]
-Name=mystaticvlan
-Kind=vlan
-[VLAN]
-Id=42

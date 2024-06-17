@@ -1,7 +1,0 @@
-version = {{version}}
-
-[vlan6]
-kind = "vlan"
-device = "eno1"
-id = 4095
-dhcp4 = true

@@ -1,6 +1,0 @@
-[Match]
-Name=eno1000
-[Network]
-IPv6AcceptRA=false
-LinkLocalAddressing=no
-VLAN=mystaticvlan

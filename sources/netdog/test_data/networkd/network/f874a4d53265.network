@@ -1,9 +1,0 @@
-[Match]
-PermanentMACAddress=f8:74:a4:d5:32:65
-[Link]
-RequiredForOnline=true
-[Network]
-DHCP=ipv4
-KeepConfiguration=dhcp
-[DHCPv4]
-UseMTU=true

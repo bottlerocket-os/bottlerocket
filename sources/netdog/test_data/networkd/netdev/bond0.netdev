@@ -1,9 +1,0 @@
-[NetDev]
-Name=bond0
-Kind=bond
-MACAddress=none
-[Bond]
-Mode=active-backup
-MIIMonitorSec=100
-UpDelaySec=200
-DownDelaySec=200

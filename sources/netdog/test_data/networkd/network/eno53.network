@@ -1,6 +1,0 @@
-[Match]
-Name=eno53
-[Network]
-Bond=bond1
-LinkLocalAddressing=no
-PrimarySlave=true

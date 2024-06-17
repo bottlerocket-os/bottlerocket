@@ -63,8 +63,6 @@ skip-tree = [
     # dependency tree because windows-sys has many sub-crates
     # that differ in major version.
     { name = "windows-sys" },
-    # httptest uses an older version of bstr
-    { name = "httptest", version = "=0.15" },
     # schnauzer uses cached, which uses an older version of darling
     { name = "darling", version = "=0.14" },
 ]
