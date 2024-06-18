@@ -22,6 +22,7 @@ http = "0.2"
 libc = "0.2"
 log = "0.4"
 models = { path = "../../models", version = "0.1" }
+apitypes = { path = "../apitypes", version = "0.1" }
 nix = "0.26"
 num = "0.4"
 rand = "0.8"

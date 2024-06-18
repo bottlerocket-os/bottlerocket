@@ -2,9 +2,9 @@
 //! settings, resetting them to their original state when the Terminal is dropped.
 
 use super::get_winsize;
+use apitypes::exec::TtyInit;
 use libc::{STDIN_FILENO, STDOUT_FILENO};
 use log::{debug, warn};
-use model::exec::TtyInit;
 use nix::{
     sys::termios::{cfmakeraw, tcgetattr, tcsetattr, SetArg, Termios},
     unistd::isatty,

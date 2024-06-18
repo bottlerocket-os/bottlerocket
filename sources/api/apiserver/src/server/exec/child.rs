@@ -20,10 +20,10 @@
 
 use super::{message, WsExec, CAPACITY_UPDATE_INTERVAL, MAX_MESSAGES_OUTSTANDING};
 use actix::prelude::{Addr, SendError};
+use apitypes::exec::{Capacity, Initialize, Size, TtyInit};
 use bytes::Bytes;
 use libc::{ioctl, login_tty, winsize as WinSize, TIOCSWINSZ as SetWinSize};
 use log::{debug, error};
-use model::exec::{Capacity, Initialize, Size, TtyInit};
 use nix::{
     errno::Errno,
     fcntl::{fcntl, FcntlArg, FdFlag, OFlag},

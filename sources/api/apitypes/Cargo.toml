@@ -1,0 +1,17 @@
+[package]
+name = "apitypes"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sumukh Ballal <sballal@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+publish = false
+build = "build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[dependencies]
+libc = "0.2"
+serde = { version = "1", features = ["derive"] }
+
+[build-dependencies]
+generate-readme = { version = "0.1", path = "../../generate-readme" }

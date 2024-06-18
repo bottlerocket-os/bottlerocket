@@ -13,11 +13,11 @@
 // it and give it a channel it can use to send to the server, it starts a thread, and you get back
 // the struct, which contains a channel that tells you if the heartbeat dies.
 
+use apitypes::exec::{ClientMessage, Initialize, ServerMessage, Size};
 use futures::{Future, FutureExt, Stream, StreamExt, TryStream, TryStreamExt};
 use futures_channel::{mpsc, oneshot};
 use libc::{ioctl, winsize as WinSize, STDOUT_FILENO, TIOCGWINSZ as GetWinSize};
 use log::{debug, error, trace, warn};
-use model::exec::{ClientMessage, Initialize, ServerMessage, Size};
 use retry_read::RetryRead;
 use signal_hook::{consts::signal, iterator::Signals};
 use snafu::{OptionExt, ResultExt};

@@ -381,6 +381,7 @@ checksum = "0952808a6c2afd1aa8947271f3a60f1a6763c7b912d210184c5149b5cf147247"
 name = "apiclient"
 version = "0.1.0"
 dependencies = [
+ "apitypes",
  "base64",
  "constants",
  "datastore",
@@ -393,7 +394,6 @@ dependencies = [
  "hyper-unix-connector",
  "libc",
  "log",
- "models",
  "nix",
  "rand",
  "reqwest",
@@ -418,6 +418,7 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "actix-web-actors",
+ "apitypes",
  "bottlerocket-release",
  "bytes",
  "datastore",
@@ -439,6 +440,15 @@ dependencies = [
  "thar-be-updates",
  "tokio",
  "toml",
+]
+
+[[package]]
+name = "apitypes"
+version = "0.1.0"
+dependencies = [
+ "generate-readme",
+ "libc",
+ "serde",
 ]
 
 [[package]]

@@ -13,8 +13,8 @@
 use actix::prelude::{Actor, ActorContext, AsyncContext, Handler, StreamHandler};
 use actix_web::{web, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws::{self, Message};
+use apitypes::exec::{Capacity, ClientMessage, ServerMessage};
 use log::{debug, error, info};
-use model::exec::{Capacity, ClientMessage, ServerMessage};
 use std::convert::TryFrom;
 use std::fmt::Debug;
 use std::path::PathBuf;

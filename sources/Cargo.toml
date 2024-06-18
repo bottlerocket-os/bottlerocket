@@ -129,6 +129,7 @@ members = [
     "shimpei",
 
     "xfscli",
+    "api/apitypes",
 ]
 
 [profile.release]
