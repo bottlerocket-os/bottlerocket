@@ -21,7 +21,16 @@ where
     let method = "PATCH";
     let (_status, _body) = crate::raw_request(&socket_path, &uri, method, Some(settings_data))
         .await
-        .context(error::RequestSnafu { uri, method })?;
+        .map_err(|e| match e {
+            crate::Error::Raw { body } => Error::Raw {
+                source: Box::new(crate::Error::Raw { body }),
+            },
+            _ => Error::Request {
+                method: method.to_string(),
+                uri,
+                source: Box::new(e),
+            },
+        })?;
 
     // Commit the transaction and apply it to the system.
     let uri = format!("/tx/commit_and_apply?tx={}", transaction);
@@ -46,6 +55,13 @@ mod error {
         Request {
             method: String,
             uri: String,
+            #[snafu(source(from(crate::Error, Box::new)))]
+            source: Box<crate::Error>,
+        },
+
+        // This type of error just returns the source.
+        #[snafu(display("{}", source))]
+        Raw {
             #[snafu(source(from(crate::Error, Box::new)))]
             source: Box<crate::Error>,
         },

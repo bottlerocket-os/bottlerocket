@@ -47,6 +47,10 @@ mod error {
             body: String,
         },
 
+        // This type of error just returns the source.
+        #[snafu(display("{}", body))]
+        Raw { body: String },
+
         #[snafu(display("Failed to read body of response: {}", source))]
         ResponseBodyRead { source: hyper::Error },
 
@@ -84,18 +88,7 @@ where
     S2: AsRef<str>,
 {
     let (status, body) = raw_request_unchecked(&socket_path, &uri, &method, data).await?;
-
-    // Error if the response status is in not in the 2xx range.
-    ensure!(
-        status.is_success(),
-        error::ResponseStatusSnafu {
-            method: method.as_ref(),
-            code: status,
-            uri: uri.as_ref(),
-            body,
-        }
-    );
-
+    check_invalid_client_input(body.as_ref(), status, method.as_ref(), uri.as_ref())?;
     Ok((status, body))
 }
 
@@ -154,6 +147,50 @@ pub(crate) fn rando() -> String {
         .take(16)
         .map(char::from)
         .collect()
+}
+
+/// Different Client type errors we expect.
+const CLIENT_DESERIALIZATION_MAP_ERROR: &str = "Unable to match your input to the data model.  We may not have enough type information.  Please try the --json input form";
+const CLIENT_DESERIALIZATION_JSON_ERROR: &str = "Unable to deserialize input JSON into model";
+const SERVER_DESERIALIZATION_JSON_ERROR: &str = "Json deserialize error";
+const CLIENT_SERIALIZATION_ERROR: &str = "Unable to serialize data";
+
+#[derive(Debug)]
+enum ClientTypeErrors {}
+
+impl ClientTypeErrors {
+    fn from(input: &str) -> Option<&str> {
+        if input.contains(CLIENT_DESERIALIZATION_JSON_ERROR)
+            || input.contains(CLIENT_DESERIALIZATION_MAP_ERROR)
+            || input.contains(SERVER_DESERIALIZATION_JSON_ERROR)
+            || input.contains(CLIENT_SERIALIZATION_ERROR)
+        {
+            Some("client_error")
+        } else {
+            None
+        }
+    }
+}
+
+fn check_invalid_client_input(
+    body: &str,
+    status: http::StatusCode,
+    method: &str,
+    uri: &str,
+) -> Result<()> {
+    match ClientTypeErrors::from(body) {
+        Some(_) => ensure!(status.is_success(), error::RawSnafu { body }),
+        None => ensure!(
+            status.is_success(),
+            error::ResponseStatusSnafu {
+                method: method.to_string(),
+                code: status,
+                uri: uri.to_string(),
+                body,
+            }
+        ),
+    };
+    Ok(())
 }
 
 /// Different input types supported by the Settings API.

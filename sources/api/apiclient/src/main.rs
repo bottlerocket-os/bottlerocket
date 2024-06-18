@@ -778,7 +778,12 @@ async fn run() -> Result<()> {
 
             set::set(&args.socket_path, settings)
                 .await
-                .context(error::SetSnafu)?;
+                .map_err(|e| match e {
+                    set::Error::Raw { source: _ } => error::Error::Raw {
+                        source: Box::new(e),
+                    },
+                    _ => error::Error::Set { source: e },
+                })?;
         }
 
         Subcommand::Update(subcommand) => match subcommand {
@@ -905,6 +910,12 @@ mod error {
             source: Box<apiclient::Error>,
         },
 
+        // This type of error just returns the source.
+        #[snafu(display("{}", source))]
+        Raw {
+            #[snafu(source(from(apiclient::set::Error, Box::new)))]
+            source: Box<apiclient::set::Error>,
+        },
         #[snafu(display("Failed to get report: {}", source))]
         Report { source: report::Error },
 
@@ -924,4 +935,5 @@ mod error {
         UpdateCheck { source: update::Error },
     }
 }
+
 type Result<T> = std::result::Result<T, error::Error>;
