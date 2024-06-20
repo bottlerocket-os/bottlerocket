@@ -42,6 +42,16 @@ tokio = { version = "~1.32", default-features = false, features = ["macros", "rt
 toml = "0.8"
 url = "2"
 
+[dependencies.bottlerocket-modeled-types]
+git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
+tag = "bottlerocket-settings-models-v0.1.0"
+version = "0.1.0"
+
+[dependencies.settings-extension-oci-defaults]
+git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
+tag = "bottlerocket-settings-models-v0.1.0"
+version = "0.1.0"
+
 [dev-dependencies]
 # Workaround to enable a feature during integration tests.
 schnauzer = { path = ".", version = "0.1.0", features = ["testfakes"] }

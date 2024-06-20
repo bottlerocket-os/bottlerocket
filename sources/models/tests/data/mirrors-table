@@ -1,3 +1,0 @@
-[mirrors]
-"*" = ["hello"]
-"example" = ["hello", "hellohello"]
