@@ -30,12 +30,6 @@ included-packages = [
 path = "../variants.rs"
 
 [build-dependencies]
-# core
-release = { path = "../../packages/release" }
-kernel-5_10 = { path = "../../packages/kernel-5.10" }
-# docker
-docker-cli = { path = "../../packages/docker-cli" }
-docker-engine = { path = "../../packages/docker-engine" }
-docker-init = { path = "../../packages/docker-init" }
-# ecs
-ecs-agent = { path = "../../packages/ecs-agent" }
+settings-defaults = { path = "../../packages/settings-defaults" }
+settings-plugins = { path = "../../packages/settings-plugins" }
+settings-migrations = { path = "../../packages/settings-migrations" }

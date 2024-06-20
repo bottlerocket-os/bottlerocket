@@ -1,71 +1,20 @@
 [workspace]
 resolver = "1"
 members = [
-    "api/apiserver",
-    "api/apiclient",
-    "api/bootstrap-containers",
-    "api/bork",
-    "api/certdog",
-    "api/corndog",
     "api/datastore",
-    "api/sundog",
-    "api/schnauzer",
-    "api/pluto",
-    "api/host-containers",
-    "api/storewolf",
-    "api/thar-be-settings",
-    "api/thar-be-updates",
-    "api/settings-committer",
-    "api/migration/migrator",
+    "api/apiclient",
     "api/migration/migration-helpers",
-    "api/shibaken",
-    "api/prairiedog",
-    "api/simple-settings-plugin",
 
-    # "api/migration/migrations/vX.Y.Z/..."
-    # (all previous migrations archived; add new ones after this line)
-    "api/migration/migrations/v1.21.0/pluto-remove-generators-v0-1-0",
-    "api/migration/migrations/v1.21.0/pod-infra-container-image-affected-services",
-    "api/migration/migrations/v1.21.0/pod-infra-container-image-remove-settings-generator",
-    "api/migration/migrations/v1.21.0/pod-infra-container-image-services",
-    "api/migration/migrations/v1.21.0/k8s-reserved-cpus-v0-1-0",
-
-    "bloodhound",
+    "api/schnauzer",
 
     "bottlerocket-release",
-
-    "bottlerocket-variant",
-
-    "imdsclient",
-
-    "dogtag",
-
-    "driverdog",
-
-    "early-boot-config/early-boot-config",
-    "early-boot-config/early-boot-config-provider",
-
-    "early-boot-config/user-data-providers/ec2-identity-doc",
-    "early-boot-config/user-data-providers/ec2-imds",
-    "early-boot-config/user-data-providers/local-defaults",
-    "early-boot-config/user-data-providers/local-file",
-    "early-boot-config/user-data-providers/local-overrides",
-    "early-boot-config/user-data-providers/vmware-cd-rom",
-    "early-boot-config/user-data-providers/vmware-guestinfo",
+    "constants",
 
     "generate-readme",
 
-    "ghostdog",
-
-    "metricdog",
-
-    "netdog",
-
-    "cfsignal",
-
-    "logdog",
-
     "models",
+
+    "retry-read",
 
     "settings-defaults/aws-dev",
     "settings-defaults/aws-ecs-1",
@@ -104,6 +53,13 @@ members = [
     "settings-extensions/pki",
     "settings-extensions/updates",
 
+    # (all previous migrations archived; add new ones after this line)
+    "settings-migrations/v1.21.0/pluto-remove-generators-v0-1-0",
+    "settings-migrations/v1.21.0/pod-infra-container-image-affected-services",
+    "settings-migrations/v1.21.0/pod-infra-container-image-remove-settings-generator",
+    "settings-migrations/v1.21.0/pod-infra-container-image-services",
+    "settings-migrations/v1.21.0/k8s-reserved-cpus-v0-1-0",
+
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
     "settings-plugins/aws-ecs-2",
@@ -113,22 +69,7 @@ members = [
     "settings-plugins/vmware-dev",
     "settings-plugins/vmware-k8s",
 
-    "static-pods",
-
-    "parse-datetime",
-
-    "retry-read",
-
-    "updater/block-party",
-    "updater/signpost",
-    "updater/update_metadata",
-    "updater/updog",
-
     "constants",
-
-    "shimpei",
-
-    "xfscli",
 ]
 
 [profile.release]

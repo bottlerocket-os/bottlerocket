@@ -39,9 +39,6 @@ included-packages = [
 path = "../variants.rs"
 
 [build-dependencies]
-cni = { path = "../../packages/cni" }
-cni-plugins = { path = "../../packages/cni-plugins" }
-kernel-6_1 = { path = "../../packages/kernel-6.1" }
-kubernetes-1_27 = { path = "../../packages/kubernetes-1.27" }
-open-vm-tools = { path = "../../packages/open-vm-tools" }
-release = { path = "../../packages/release" }
+settings-defaults = { path = "../../packages/settings-defaults" }
+settings-plugins = { path = "../../packages/settings-plugins" }
+settings-migrations = { path = "../../packages/settings-migrations" }

@@ -1,8 +1,0 @@
-[Unit]
-Description=Bottlerocket final configuration complete
-After=preconfigured.target
-Requires=preconfigured.target
-AllowIsolate=yes
-
-[Install]
-RequiredBy=multi-user.target

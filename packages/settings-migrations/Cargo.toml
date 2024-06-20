@@ -1,5 +1,5 @@
 [package]
-name = "settings-defaults"
+name = "settings-migrations"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -10,7 +10,7 @@ path = "../packages.rs"
 
 [package.metadata.build-package]
 source-groups = [
-    "settings-defaults"
+    "settings-migrations"
 ]
 
 # RPM BuildRequires

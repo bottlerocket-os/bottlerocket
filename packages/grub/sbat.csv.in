@@ -1,3 +1,0 @@
-sbat,1,SBAT Version,sbat,1,https://github.com/rhboot/shim/blob/main/SBAT.md
-grub,4,Free Software Foundation,grub,__VERSION__,https://www.gnu.org/software/grub/
-grub.bottlerocket,1,Bottlerocket,grub,__VERSION__,https://github.com/bottlerocket-os/bottlerocket/blob/develop/SECURITY.md

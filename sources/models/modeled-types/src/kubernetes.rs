@@ -758,7 +758,8 @@ mod test_kubernetes_cloud_provider {
 
     #[test]
     fn disallowed_providers() {
-        for err in &["internal"] {
+        {
+            let err = &"internal";
             KubernetesCloudProvider::try_from(*err).unwrap_err();
         }
     }
@@ -1327,7 +1328,8 @@ mod test_kubernetes_cpu_manager_policy_option {
 
     #[test]
     fn good_cpu_manager_policy_option() {
-        for ok in &["full-pcpus-only"] {
+        {
+            let ok = &"full-pcpus-only";
             KubernetesCPUManagerPolicyOption::try_from(*ok).unwrap();
         }
     }

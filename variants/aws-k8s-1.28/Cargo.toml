@@ -38,11 +38,6 @@ kernel-parameters = [
 path = "../variants.rs"
 
 [build-dependencies]
-# core
-release = { path = "../../packages/release" }
-kernel-6_1 = { path = "../../packages/kernel-6.1" }
-# k8s
-cni = { path = "../../packages/cni" }
-cni-plugins = { path = "../../packages/cni-plugins" }
-kubernetes-1_28 = { path = "../../packages/kubernetes-1.28" }
-aws-iam-authenticator = { path = "../../packages/aws-iam-authenticator" }
+settings-defaults = { path = "../../packages/settings-defaults" }
+settings-plugins = { path = "../../packages/settings-plugins" }
+settings-migrations = { path = "../../packages/settings-migrations" }

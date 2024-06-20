@@ -283,7 +283,7 @@ mod test {
             ("kubernetes", "v1", vec!["pause-prefix"]),
         ];
 
-        for (setting_name, version, helpers) in fail_cases.into_iter() {
+        for (setting_name, version, helpers) in fail_cases.iter() {
             println!(
                 "Checking {}@{}.{}",
                 setting_name,
@@ -299,7 +299,7 @@ mod test {
             assert!(StaticHelperResolver::ensure_helpers_exist(&extension_requirement).is_err());
         }
 
-        for (setting_name, version, helpers) in success_cases.into_iter() {
+        for (setting_name, version, helpers) in success_cases.iter() {
             println!(
                 "Checking {}@{}.{}",
                 setting_name,
@@ -337,7 +337,7 @@ mod test {
             ),
         ];
 
-        for (extension_name, version, expected_helpers) in test_cases.into_iter() {
+        for (extension_name, version, expected_helpers) in test_cases.iter() {
             assert_eq!(
                 StaticHelperResolver::fetch_helper_names_for_extension(extension_name, version)
                     .unwrap()

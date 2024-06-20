@@ -1,8 +1,0 @@
-[Unit]
-Description=FIPS integrity check
-AllowIsolate=false
-RefuseManualStart=true
-RefuseManualStop=true
-
-[Install]
-WantedBy=preconfigured.target

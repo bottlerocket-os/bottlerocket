@@ -1,1 +1,0 @@
-<interface><name>eno1001</name><control><mode>boot</mode><link-detection><require-link></require-link></link-detection></control><ipv4:dhcp><enabled>true</enabled></ipv4:dhcp></interface>

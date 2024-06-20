@@ -2,6 +2,8 @@
 //!
 //! We use `pest` to disambiguate the TOML frontmatter from the body of the template, then serde to
 //! extract the contents of the frontmatter.
+// The Pest Parser macro generates code without comments, which confuses clippy
+#![allow(clippy::empty_docs)]
 use pest::Parser;
 use pest_derive::Parser;
 use serde::Deserialize;

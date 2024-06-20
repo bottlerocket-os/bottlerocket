@@ -1,0 +1,17 @@
+schema-version = 1
+release-version = "1.21.0"
+digest = "3RiFnOqLalBlo5k2Avahn2m0tQRwEWC6cGIzuAvC+yg="
+
+[sdk]
+name = "bottlerocket-sdk"
+version = "0.42.0"
+vendor = "bottlerocket"
+source = "public.ecr.aws/bottlerocket/bottlerocket-sdk:v0.42.0"
+digest = "+Cu8yFgnaFYG5ZQ0eZWRndXxHTLEAR58EhZITbJinLI="
+
+[[kit]]
+name = "bottlerocket-core-kit"
+version = "2.0.0"
+vendor = "bottlerocket"
+source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v2.0.0"
+digest = "dC/FAJ0K43AugHYTsCeMw/+bjgi1X5zXnpHsbfDnF9Y="

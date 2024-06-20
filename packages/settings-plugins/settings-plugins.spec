@@ -1,6 +1,10 @@
 %global _cross_first_party 1
 %undefine _debugsource_packages
 
+# Do not prefer shared linking, since the libstd we use at build time
+# may not match the one installed on the final image.
+%global __global_rustflags_shared %__global_rustflags
+
 %global _cross_pluginsdir %{_cross_libdir}/settings-plugins
 
 Name: %{_cross_os}settings-plugins

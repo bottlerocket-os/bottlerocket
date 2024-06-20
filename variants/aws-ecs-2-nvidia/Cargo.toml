@@ -43,16 +43,6 @@ kernel-parameters = [
 path = "../variants.rs"
 
 [build-dependencies]
-# core
-release = { path = "../../packages/release" }
-kernel-6_1 = { path = "../../packages/kernel-6.1" }
-# docker
-docker-cli = { path = "../../packages/docker-cli" }
-docker-engine = { path = "../../packages/docker-engine" }
-docker-init = { path = "../../packages/docker-init" }
-# ecs
-ecs-agent = { path = "../../packages/ecs-agent" }
-# NVIDIA
-ecs-gpu-init = { path = "../../packages/ecs-gpu-init" }
-nvidia-container-toolkit = { path = "../../packages/nvidia-container-toolkit" }
-kmod-6_1-nvidia = { path = "../../packages/kmod-6.1-nvidia" }
+settings-defaults = { path = "../../packages/settings-defaults" }
+settings-plugins = { path = "../../packages/settings-plugins" }
+settings-migrations = { path = "../../packages/settings-migrations" }

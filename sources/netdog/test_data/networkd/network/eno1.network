@@ -1,9 +1,0 @@
-[Match]
-Name=eno1
-[Link]
-RequiredForOnline=true
-[Network]
-DHCP=ipv4
-KeepConfiguration=dhcp
-[DHCPv4]
-UseMTU=true

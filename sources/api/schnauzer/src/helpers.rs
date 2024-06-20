@@ -176,12 +176,6 @@ mod error {
         },
 
         #[snafu(display(
-            "Expected ecr helper to be called with either 'registry' or 'region', got '{}'",
-            value,
-        ))]
-        EcrParam { value: String },
-
-        #[snafu(display(
             "Incorrect number of params provided to helper '{}' in template '{}' - {} expected, {} received",
             helper,
             template,
@@ -2979,7 +2973,7 @@ mod test_any_enabled {
     #[test]
     fn test_any_enabled_with_enabled_elements() {
         let result =
-            setup_and_render_template(TEMPLATE, &json!([{"foo": [], "enabled": true}])).unwrap();
+            setup_and_render_template(TEMPLATE, json!([{"foo": [], "enabled": true}])).unwrap();
         let expected = "enabled";
         assert_eq!(result, expected);
     }
@@ -2988,7 +2982,7 @@ mod test_any_enabled {
     fn test_any_enabled_with_enabled_elements_from_map() {
         let result = setup_and_render_template(
             TEMPLATE,
-            &json!({"foo": {"enabled": false}, "bar": {"enabled": true}}),
+            json!({"foo": {"enabled": false}, "bar": {"enabled": true}}),
         )
         .unwrap();
         let expected = "enabled";
@@ -2997,7 +2991,7 @@ mod test_any_enabled {
 
     #[test]
     fn test_any_enabled_without_enabled_elements() {
-        let result = setup_and_render_template(TEMPLATE, &json!([{"enabled": false}])).unwrap();
+        let result = setup_and_render_template(TEMPLATE, json!([{"enabled": false}])).unwrap();
         let expected = "disabled";
         assert_eq!(result, expected);
     }
@@ -3006,7 +3000,7 @@ mod test_any_enabled {
     fn test_any_enabled_without_enabled_elements_from_map() {
         let result = setup_and_render_template(
             TEMPLATE,
-            &json!({"foo": {"enabled": false}, "bar": {"enabled": false}}),
+            json!({"foo": {"enabled": false}, "bar": {"enabled": false}}),
         )
         .unwrap();
         let expected = "disabled";
@@ -3015,14 +3009,14 @@ mod test_any_enabled {
 
     #[test]
     fn test_any_enabled_with_empty_elements() {
-        let result = setup_and_render_template(TEMPLATE, &json!([])).unwrap();
+        let result = setup_and_render_template(TEMPLATE, json!([])).unwrap();
         let expected = "disabled";
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_any_enabled_with_empty_map() {
-        let result = setup_and_render_template(TEMPLATE, &json!({})).unwrap();
+        let result = setup_and_render_template(TEMPLATE, json!({})).unwrap();
         let expected = "disabled";
         assert_eq!(result, expected);
     }
@@ -3030,7 +3024,7 @@ mod test_any_enabled {
     #[test]
     fn test_any_enabled_with_bool_flag_as_string() {
         // Helper is only expected to work with boolean values
-        let result = setup_and_render_template(TEMPLATE, &json!([{"enabled": "true"}])).unwrap();
+        let result = setup_and_render_template(TEMPLATE, json!([{"enabled": "true"}])).unwrap();
         let expected = "disabled";
         assert_eq!(result, expected);
     }
@@ -3038,7 +3032,7 @@ mod test_any_enabled {
     #[test]
     fn test_any_enabled_with_different_type_array() {
         // Validates no errors if a different kind of struct is passed in
-        let result = setup_and_render_template(TEMPLATE, &json!([{"name": "fred"}])).unwrap();
+        let result = setup_and_render_template(TEMPLATE, json!([{"name": "fred"}])).unwrap();
         let expected = "disabled";
         assert_eq!(result, expected);
     }
@@ -3047,7 +3041,7 @@ mod test_any_enabled {
     fn test_any_enabled_with_different_type_map() {
         // Validates no errors if a different kind of struct is passed in
         let result =
-            setup_and_render_template(TEMPLATE, &json!({"test": {"name": "fred"}})).unwrap();
+            setup_and_render_template(TEMPLATE, json!({"test": {"name": "fred"}})).unwrap();
         let expected = "disabled";
         assert_eq!(result, expected);
     }
@@ -3055,7 +3049,7 @@ mod test_any_enabled {
     #[test]
     fn test_any_enabled_with_different_type() {
         // Validates no errors when a completely different JSON struct is passed
-        let result = setup_and_render_template(TEMPLATE, &json!({"state": "enabled"})).unwrap();
+        let result = setup_and_render_template(TEMPLATE, json!({"state": "enabled"})).unwrap();
         let expected = "disabled";
         assert_eq!(result, expected);
     }
@@ -3228,7 +3222,7 @@ mod test_negate_or_else {
     fn test_negated_values() {
         let template: &str = r#"{{negate_or_else false settings.value}}"#;
 
-        let test_cases = vec![
+        let test_cases = [
             (json!({"settings": {"value": true}}), "false"),
             (json!({"settings": {"value": false}}), "true"),
             (json!({"settings": {"value": None::<bool>}}), "false"),
@@ -3243,7 +3237,7 @@ mod test_negate_or_else {
 
     #[test]
     fn test_fails_when_not_booleans() {
-        let test_cases = vec![
+        let test_cases = [
             json!({"settings": {"value": []}}),
             json!({"settings": {"value": {}}}),
             json!({"settings": {"value": ""}}),
@@ -3282,7 +3276,7 @@ mod test_ecs_metadata_service_limits {
 
     #[test]
     fn test_valid_ecs_metadata_service_limits() {
-        let test_cases = vec![
+        let test_cases = [
             (json!({"settings": {"rps": 1, "burst": 1}}), r#"1,1"#),
             (json!({"settings": {"rps": 1}}), r#"1,60"#),
             (json!({"settings": {"burst": 1}}), r#"40,1"#),
@@ -3298,7 +3292,7 @@ mod test_ecs_metadata_service_limits {
 
     #[test]
     fn test_invalid_ecs_metadata_service_limits() {
-        let test_cases = vec![
+        let test_cases = [
             json!({"settings": {"rps": [], "burst": 1}}),
             json!({"settings": {"rps": 1, "burst": []}}),
             json!({"settings": {"rps": [], "burst": []}}),
