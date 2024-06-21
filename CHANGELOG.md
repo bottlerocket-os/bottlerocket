@@ -1,3 +1,11 @@
+# v1.20.3 (2024-06-26)
+
+## OS Changes
+* Update kernels: 5.10.218, 5.15.160, and 6.1.92 ([#4064], [#4066])
+
+[#4064]: https://github.com/bottlerocket-os/bottlerocket/pull/4064
+[#4066]: https://github.com/bottlerocket-os/bottlerocket/pull/4066
+
 # v1.20.2 (2024-06-12)
 
 ## OS Changes
