@@ -294,7 +294,7 @@ This doesn't require any external communication, so it's quicker than `apiclient
 
 Here we'll describe the settings you can configure on your Bottlerocket instance, and how to do it.
 
-(API endpoints are defined in our [OpenAPI spec](sources/api/openapi.yaml) if you want more detail.)
+(API endpoints are defined in our [OpenAPI spec](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/api/openapi.yaml) if you want more detail.)
 
 ### Interacting with settings
 
@@ -320,7 +320,7 @@ apiclient set motd="hi there" kubernetes.node-labels.environment=test
 ```
 
 You can also use a JSON input mode to help change many related settings at once, and a "raw" mode if you want more control over how the settings are committed and applied to the system.
-See the [apiclient README](sources/api/apiclient/) for details.
+See the [apiclient README](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/api/apiclient/) for details.
 
 #### Using user data
 
@@ -453,7 +453,7 @@ You can use this feature to configure ephemeral disks attached to your hosts tha
 
 #### Platform-specific settings
 
-Platform-specific settings are automatically set at boot time by [early-boot-config](sources/api/early-boot-config) based on metadata available on the running platform.
+Platform-specific settings are automatically set at boot time by [early-boot-config](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/early-boot-config/early-boot-config) based on metadata available on the running platform.
 They can be overridden for testing purposes in [the same way as other settings](#interacting-with-settings).
 
 ##### AWS-specific settings
@@ -464,7 +464,7 @@ See the [`settings.aws.*` reference](https://bottlerocket.dev/en/os/latest/#/api
 
 You can use `logdog` through the [admin container](#admin-container) to obtain an archive of log files from your Bottlerocket host.
 
-For a list of what is collected, see the logdog [command list](sources/logdog/src/log_request.rs).
+For a list of what is collected, see the logdog [command list](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/sources/logdog/src/log_request.rs).
 
 #### Generating logs
 
@@ -548,18 +548,18 @@ RPM itself is not in the image - it's just a common and convenient package defin
 
 We currently package the following major third-party components:
 
-* Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [5.10 packaging](packages/kernel-5.10/), [5.15 packaging](packages/kernel-5.15/))
-* glibc ([background](https://www.gnu.org/software/libc/), [packaging](packages/glibc/))
+* Linux kernel ([background](https://en.wikipedia.org/wiki/Linux), [5.10 packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/kernel-5.10/), [5.15 packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/kernel-5.15/))
+* glibc ([background](https://www.gnu.org/software/libc/), [packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/glibc/))
 * Buildroot as build toolchain ([background](https://buildroot.org/), via the [SDK](https://github.com/bottlerocket-os/bottlerocket-sdk))
-* GRUB, with patches for partition flip updates ([background](https://www.gnu.org/software/grub/), [packaging](packages/grub/))
-* systemd as init ([background](https://en.wikipedia.org/wiki/Systemd), [packaging](packages/systemd/))
-* wicked for networking ([background](https://github.com/openSUSE/wicked), [packaging](packages/wicked/))
-* containerd ([background](https://containerd.io/), [packaging](packages/containerd/))
-* Kubernetes ([background](https://kubernetes.io/), [packaging](packages/kubernetes-1.24/))
-* aws-iam-authenticator ([background](https://github.com/kubernetes-sigs/aws-iam-authenticator), [packaging](packages/aws-iam-authenticator/))
-* Amazon ECS agent ([background](https://github.com/aws/amazon-ecs-agent), [packaging](packages/ecs-agent/))
+* GRUB, with patches for partition flip updates ([background](https://www.gnu.org/software/grub/), [packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/grub/))
+* systemd as init ([background](https://en.wikipedia.org/wiki/Systemd), [packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/systemd/))
+* wicked for networking ([background](https://github.com/openSUSE/wicked), [packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/wicked/))
+* containerd ([background](https://containerd.io/), [packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/containerd/))
+* Kubernetes ([background](https://kubernetes.io/), [packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/kubernetes-1.30/))
+* aws-iam-authenticator ([background](https://github.com/kubernetes-sigs/aws-iam-authenticator), [packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/aws-iam-authenticator/))
+* Amazon ECS agent ([background](https://github.com/aws/amazon-ecs-agent), [packaging](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/ecs-agent/))
 
-For further documentation or to see the rest of the packages, see the [packaging directory](packages/).
+For further documentation or to see the rest of the packages, see the [packaging directory](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/).
 
 ### Updates
 
@@ -569,7 +569,7 @@ When updating Bottlerocket, the partition table is updated to point from set A t
 We also track successful boots, and if there are failures it will automatically revert back to the prior working partition set.
 
 The update process uses images secured by [TUF](https://theupdateframework.github.io/).
-For more details, see the [update system documentation](sources/updater/).
+For more details, see the [update system documentation](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/updater).
 
 ### API
 
@@ -583,22 +583,22 @@ The second method is through the Bottlerocket API, for example when you want to 
 
 There's an HTTP API server that listens on a local Unix-domain socket.
 Remote access to the API requires an authenticated transport such as SSM's RunCommand or Session Manager, as described above.
-For more details, see the [apiserver documentation](sources/api/apiserver/).
+For more details, see the [apiserver documentation](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/api/apiserver/).
 
-The [apiclient](sources/api/apiclient/) can be used to make requests.
+The [apiclient](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/api/apiclient/) can be used to make requests.
 They're just HTTP requests, but the API client simplifies making requests with the Unix-domain socket.
 
-To make configuration easier, we have [early-boot-config](sources/api/early-boot-config/), which can send an API request for you based on instance user data.
+To make configuration easier, we have [early-boot-config](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/early-boot-config/early-boot-config), which can send an API request for you based on instance user data.
 If you start a virtual machine, like an EC2 instance, it will read TOML-formatted Bottlerocket configuration from user data and send it to the API server.
 This way, you can configure your Bottlerocket instance without having to make API calls after launch.
 
 See [Settings](#settings) above for examples and to understand what you can configure.
 
-You can also access host containers through the API using [apiclient exec](sources/api/apiclient/README.md#exec-mode).
+You can also access host containers through the API using [apiclient exec](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/api/apiclient#exec-mode).
 
 The server and client are the user-facing components of the API system, but there are a number of other components that work together to make sure your settings are applied, and that they survive upgrades of Bottlerocket.
 
-For more details, see the [API system documentation](sources/api/).
+For more details, see the [API system documentation](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/api).
 
 ### Default Volumes
 
