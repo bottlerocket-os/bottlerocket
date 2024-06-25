@@ -4,9 +4,6 @@ release-version = "1.21.0"
 [vendor.bottlerocket]
 registry = "public.ecr.aws/bottlerocket"
 
-[vendor.agarrcia]
-registry = "public.ecr.aws/bottlerocket-agarrcia"
-
 [sdk]
 name = "bottlerocket-sdk"
 version = "0.42.0"
