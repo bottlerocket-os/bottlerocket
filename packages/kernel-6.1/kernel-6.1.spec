@@ -653,9 +653,12 @@ install -p -m 0644 %{S:302} %{buildroot}%{_cross_bootconfigdir}/05-metal.conf
 %{_cross_kmoddir}/kernel/drivers/net/ethernet/intel/e1000/e1000.ko.*
 %{_cross_kmoddir}/kernel/drivers/net/ethernet/intel/e1000e/e1000e.ko.*
 %{_cross_kmoddir}/kernel/drivers/net/ethernet/intel/igb/igb.ko.*
+%{_cross_kmoddir}/kernel/drivers/net/ethernet/intel/igc/igc.ko.*
 %{_cross_kmoddir}/kernel/drivers/net/ethernet/intel/ixgbevf/ixgbevf.ko.*
 %{_cross_kmoddir}/kernel/drivers/net/ethernet/mellanox/mlx5/core/mlx5_core.ko.*
 %{_cross_kmoddir}/kernel/drivers/net/ethernet/mellanox/mlxfw/mlxfw.ko.*
+%{_cross_kmoddir}/kernel/drivers/net/ethernet/realtek/r8169.ko.gz
+%{_cross_kmoddir}/kernel/drivers/net/phy/realtek.ko.gz
 %{_cross_kmoddir}/kernel/drivers/net/geneve.ko.*
 %if "%{_cross_arch}" == "x86_64"
 %{_cross_kmoddir}/kernel/drivers/net/hyperv/hv_netvsc.ko.*
