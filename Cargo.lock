@@ -201,15 +201,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "metal-k8s-1_27"
-version = "0.1.0"
-dependencies = [
- "settings-defaults",
- "settings-migrations",
- "settings-plugins",
-]
-
-[[package]]
 name = "metal-k8s-1_28"
 version = "0.1.0"
 dependencies = [
@@ -241,15 +232,6 @@ version = "0.1.0"
 
 [[package]]
 name = "vmware-dev"
-version = "0.1.0"
-dependencies = [
- "settings-defaults",
- "settings-migrations",
- "settings-plugins",
-]
-
-[[package]]
-name = "vmware-k8s-1_27"
 version = "0.1.0"
 dependencies = [
  "settings-defaults",
