@@ -32,7 +32,7 @@ Summary: Container cluster management
 # base Apache-2.0, third_party Apache-2.0 AND BSD-3-Clause
 License: Apache-2.0 AND BSD-3-Clause
 URL: https://%{goimport}
-Source0: https://distro.eks.amazonaws.com/kubernetes-1-24/releases/36/artifacts/kubernetes/v%{gover}/kubernetes-src.tar.gz
+Source0: https://github.com/kubernetes/kubernetes/archive/v%{gover}/kubernetes-%{gover}.tar.gz
 Source1: kubelet.service
 Source2: kubelet-env
 Source3: kubelet-config
@@ -55,6 +55,36 @@ Source21: dockershim-symlink.conf
 Source22: make-kubelet-dirs.conf
 
 Source1000: clarify.toml
+
+Patch0001: 0001-EKS-PATCH-Pass-region-to-sts-client.patch
+Patch0002: 0002-EKS-PATCH-admission-webhook-exclusion-from-file.patch
+Patch0003: 0003-EKS-PATCH-Use-GNU-date.patch
+Patch0004: 0004-EKS-PATCH-aws_credentials-update-ecr-url-validation-.patch
+Patch0005: 0005-EKS-PATCH-AWS-Include-IPv6-addresses-in-NodeAddresse.patch
+Patch0007: 0007-EKS-PATCH-Make-kubelet-set-alpha.kubernetes.io-provi.patch
+Patch0008: 0008-EKS-PATCH-Update-aws-sdk-go-for-new-regions.patch
+Patch0013: 0013-EKS-PATCH-Patch-kubelet-Keep-trying-fast-status-upda.patch
+Patch0014: 0014-EKS-PATCH-add-Authentication-tracking-request-error-.patch
+Patch0015: 0015-EKS-PATCH-Added-serialization-from-etcd-error-metric.patch
+Patch0016: 0016-EKS-PATCH-Handle-eventually-consistent-EC2-PrivateDn.patch
+Patch0017: 0017-EKS-PATCH-Incorporating-feedback-on-119341.patch
+Patch0018: 0018-EKS-PATCH-Update-managedFields-time-when-value-is-mo.patch
+Patch0019: 0019-EKS-PATCH-Cherry-pick-119832-Fix-the-problem-Pod-ter.patch
+Patch0020: 0020-EKS-PATCH-Prevent-rapid-reset-http2-DOS-on-API-serve.patch
+Patch0021: 0021-EKS-PATCH-bump-golang.org-x-net-to-v0.17.patch
+Patch0022: 0022-EKS-PATCH-go-Bump-images-dependencies-and-versions-t.patch
+Patch0023: 0023-EKS-PATCH-Fix-CVE-2023-5528.patch
+Patch0024: 0024-EKS-PATCH-bump-google.golang.org-grpc-to-v1.56.3.patch
+Patch0025: 0025-EKS-PATCH-Fix-CVE-for-kube-proxy-v1.24.15.patch
+Patch0026: 0026-EKS-PATCH-Support-tracking-executing-requests.patch
+Patch0027: 0027-EKS-PATCH-Fix-CVE-for-kube-proxy-v1.24.17.patch
+Patch0028: 0028-EKS-PATCH-Update-log-verbosity-for-node-health-and-t.patch
+Patch0029: 0029-EKS-PATCH-CVE-2024-24786-Bump-github.com-golang-prot.patch
+Patch0030: 0030-EKS-PATCH-GO-UPDATE-prep-for-go1.21-use-e-in-go-list.patch
+Patch0031: 0031-EKS-PATCH-GO-UPDATE-update-to-golangci-lint-v1.54.1-.patch
+Patch0032: 0032-EKS-PATCH-GO-UPDATE-Merge-pull-request-122077-from-B.patch
+Patch0033: 0033-EKS-PATCH-GO-UPDATE-go-Bump-images-dependencies-and-.patch
+Patch0034: 0034-EKS-PATCH-CVE-2023-45288-Bumps-1.24-dependency-for-C.patch
 
 BuildRequires: git
 BuildRequires: rsync
@@ -95,7 +125,7 @@ Conflicts: (%{_cross_os}image-feature(no-fips) or %{_cross_os}kubelet-1.24-bin)
 %{summary}.
 
 %prep
-%autosetup -Sgit -c -n %{gorepo}-%{gover} -p1
+%autosetup -Sgit -n %{gorepo}-%{gover} -p1
 
 # third_party licenses
 # multiarch/qemu-user-static ignored, we're not using it
