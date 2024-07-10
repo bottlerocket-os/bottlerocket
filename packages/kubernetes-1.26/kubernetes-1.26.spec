@@ -10,7 +10,7 @@
 %global gorepo kubernetes
 %global goimport %{goproject}/%{gorepo}
 
-%global gover 1.26.14
+%global gover 1.26.15
 %global rpmver %{gover}
 
 %global _dwz_low_mem_die_limit 0
@@ -32,7 +32,7 @@ Summary: Container cluster management
 # base Apache-2.0, third_party Apache-2.0 AND BSD-3-Clause
 License: Apache-2.0 AND BSD-3-Clause
 URL: https://%{goimport}
-Source0: https://distro.eks.amazonaws.com/kubernetes-1-26/releases/31/artifacts/kubernetes/v%{gover}/kubernetes-src.tar.gz
+Source0: https://github.com/kubernetes/kubernetes/archive/v%{gover}/kubernetes-%{gover}.tar.gz
 Source1: kubelet.service
 Source2: kubelet-env
 Source3: kubelet-config
@@ -55,6 +55,18 @@ Source21: dockershim-symlink.conf
 Source22: make-kubelet-dirs.conf
 
 Source1000: clarify.toml
+
+Patch0001: 0001-EKS-PATCH-admission-webhook-exclusion-from-file.patch
+Patch0002: 0002-EKS-PATCH-AWS-Include-IPv6-addresses-in-NodeAddresse.patch
+Patch0004: 0004-EKS-PATCH-Add-ConcurrentNodeSyncs-option-to-node-con.patch
+Patch0005: 0005-EKS-PATCH-Added-serialization-from-etcd-error-metric.patch
+Patch0006: 0006-EKS-PATCH-add-Authentication-tracking-request-error-.patch
+Patch0008: 0008-EKS-PATCH-Fix-CVE-for-kube-proxy-v1.26.6.patch
+Patch0009: 0009-EKS-PATCH-Support-tracking-executing-requests.patch
+Patch0010: 0010-EKS-PATCH-Update-log-verbosity-for-node-health-and-t.patch
+Patch0011: 0011-EKS-PATCH-aws_credentials-update-ecr-url-validation-.patch
+Patch0012: 0012-EKS-PATCH-Bumps-dependency-for-CVE-2023-45288.patch
+Patch0013: 0013-EKS-PATCH-Update-aws-sdk-go-for-new-regions.patch
 
 BuildRequires: git
 BuildRequires: rsync
@@ -95,7 +107,7 @@ Conflicts: (%{_cross_os}image-feature(no-fips) or %{_cross_os}kubelet-1.26-bin)
 %{summary}.
 
 %prep
-%autosetup -Sgit -c -n %{gorepo}-%{gover} -p1
+%autosetup -Sgit -n %{gorepo}-%{gover} -p1
 
 # third_party licenses
 # multiarch/qemu-user-static ignored, we're not using it
