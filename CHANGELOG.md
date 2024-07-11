@@ -1,3 +1,16 @@
+# v1.20.4 (2024-07-15)
+
+## OS Changes
+* Update kernels: 5.10.219 and 6.1.94 ([#4080])
+
+## Orchestrator Changes
+
+### Kubernetes
+* Update patches for kubernetes 1.23, 1.24, 1.25, and 1.26 ([#4084])
+
+[#4080]: https://github.com/bottlerocket-os/bottlerocket/pull/4080
+[#4084]: https://github.com/bottlerocket-os/bottlerocket/pull/4084
+
 # v1.20.3 (2024-06-26)
 
 ## OS Changes
