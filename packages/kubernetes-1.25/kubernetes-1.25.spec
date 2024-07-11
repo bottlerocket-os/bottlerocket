@@ -32,7 +32,7 @@ Summary: Container cluster management
 # base Apache-2.0, third_party Apache-2.0 AND BSD-3-Clause
 License: Apache-2.0 AND BSD-3-Clause
 URL: https://%{goimport}
-Source0: https://distro.eks.amazonaws.com/kubernetes-1-25/releases/35/artifacts/kubernetes/v%{gover}/kubernetes-src.tar.gz
+Source0: https://github.com/kubernetes/kubernetes/archive/v%{gover}/kubernetes-%{gover}.tar.gz
 Source1: kubelet.service
 Source2: kubelet-env
 Source3: kubelet-config
@@ -55,6 +55,28 @@ Source21: dockershim-symlink.conf
 Source22: make-kubelet-dirs.conf
 
 Source1000: clarify.toml
+
+Patch0001: 0001-EKS-PATCH-Pass-region-to-sts-client.patch
+Patch0002: 0002-EKS-PATCH-admission-webhook-exclusion-from-file.patch
+Patch0003: 0003-EKS-PATCH-Use-GNU-date.patch
+Patch0004: 0004-EKS-PATCH-aws_credentials-update-ecr-url-validation-.patch
+Patch0005: 0005-EKS-PATCH-AWS-Include-IPv6-addresses-in-NodeAddresse.patch
+Patch0007: 0007-EKS-PATCH-kubelet-Keep-trying-fast-status-update-at-.patch
+Patch0008: 0008-EKS-PATCH-add-Authentication-tracking-request-error-.patch
+Patch0009: 0009-EKS-PATCH-Added-serialization-from-etcd-error-metric.patch
+Patch0010: 0010-EKS-PATCH-Handle-eventually-consistent-EC2-PrivateDn.patch
+Patch0011: 0011-EKS-PATCH-Fix-controllers-scheduling-and-logging-bug.patch
+Patch0012: 0012-EKS-PATCH-Fix-CVE-for-kube-proxy-v1.25.11.patch
+Patch0013: 0013-EKS-PATCH-Support-tracking-executing-requests.patch
+Patch0014: 0014-EKS-PATCH-Fix-CVE-for-kube-proxy-v1.25.14.patch
+Patch0015: 0015-EKS-PATCH-bump-google.golang.org-grpc-to-v1.56.3.patch
+Patch0016: 0016-EKS-PATCH-kms-fix-go-routine-leak-in-gRPC-connection.patch
+Patch0017: 0017-EKS-PATCH-Update-log-verbosity-for-node-health-and-t.patch
+Patch0018: 0018-EKS-PATCH-CVE-2024-24786-Bump-github.com-golang-prot.patch
+Patch0019: 0019-EKS-PATCH-GO-UPDATE-handle-GOTOOLCHAIN-in-kube-golan.patch
+Patch0020: 0020-EKS-PATCH-GO-UPDATE-Bump-images-dependencies-and-ver.patch
+Patch0021: 0021-EKS-PATCH-Bumps-dependencies-for-fixing-CVE-2023-452.patch
+Patch0022: 0022-EKS-PATCH-Update-aws-sdk-go-to-include-new-regions.patch
 
 BuildRequires: git
 BuildRequires: rsync
@@ -95,7 +117,7 @@ Conflicts: (%{_cross_os}image-feature(no-fips) or %{_cross_os}kubelet-1.25-bin)
 %{summary}.
 
 %prep
-%autosetup -Sgit -c -n %{gorepo}-%{gover} -p1
+%autosetup -Sgit -n %{gorepo}-%{gover} -p1
 
 # third_party licenses
 # multiarch/qemu-user-static ignored, we're not using it

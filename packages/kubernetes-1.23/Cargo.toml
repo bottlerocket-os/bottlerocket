@@ -14,28 +14,232 @@ path = "../packages.rs"
 package-name = "kubernetes-1.23"
 
 [[package.metadata.build-package.external-files]]
-url = "https://distro.eks.amazonaws.com/kubernetes-1-23/releases/33/artifacts/kubernetes/v1.23.17/kubernetes-src.tar.gz"
-sha512 = "a11b1869c4f201e515b62fd83cf8a984ff83a5238f4447ef62426b933ade0132cdebeb9cd501ddae4b2b6dc6fad4fcea10a94673c36c0b77200602e2789640d5"
+url = "https://github.com/kubernetes/kubernetes/archive/v1.23.17/kubernetes-1.23.17.tar.gz"
+sha512 = "8cbe20601966faf2830dbe66548b95654651e3501c474be5351dbf64dabd1763f75e0afaa99ee31dabd8ea02ba1b16df6ba2a789aaddcad776ca0690637d05ff"
 
 [[package.metadata.build-package.external-files]]
-url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0026-EKS-PATCH-Cherry-pick-119832-Fix-the-problem-Pod-ter.patch"
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0001-EKS-PATCH-Pass-region-to-sts-client.patch"
+sha512 = "4e4317b6914feb97f9607f14e93e9c3bc355a686425985397fd89ac65e171093f5fc5f1d3096e3651a6fced1e3e6409f5a88620bf1abdfa6a8baad35a4e1cd97"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0002-EKS-PATCH-admission-webhook-exclusion-from-file.patch"
+sha512 = "c22bfec0cf4efd5367485774941b6acaeda1e1d9c8199a50a29fe7d5695a7ba4a253316fd259560f37931085d55d248bdb2751a929653501e7e0c3be6b8d8e67"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0003-EKS-PATCH-Use-GNU-date.patch"
+sha512 = "eef333846dc9d10b15657552f6fed384db4c646995ad4dbbbcce362bb07eded220734f3f33c71b4a8778fb34000cbfa187cf0890c5f8799ea25c201cbc242c24"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0004-EKS-PATCH-aws_credentials-update-ecr-url-validation-.patch"
+sha512 = "12c6a8ab29d4f0942c05547669e2f90338ee74b5b7db75c8c79d059dcff6a9829dd69cdb277585e15d4fb37557e1264425cb6462ab46de9b56fba7d9c7ab7970"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0005-EKS-PATCH-extend-sa-token-if-audience-is-apiserver-1.patch"
+sha512 = "6bde6972103805d7f07c925a84aa58ca856ca648354cb8c49efdd94b7827944219f220be0cc60aebac551141cbfde6c99a6113fe930335f43a509f3204ab710b"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0006-EKS-PATCH-Parse-ipv6-address-before-comparison-10773.patch"
+sha512 = "71271b20acc47a7bef5cab975eeee29a9be5a054565b7907cf4a64cbc4c95db1e1aff604ea429178cb0684d8612763f2c8750b68dfcadc5ec03d3fe3093d3e3f"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0007-EKS-PATCH-AWS-Include-IPv6-addresses-in-NodeAddresse.patch"
+sha512 = "cacab0ac2ced0646b64ba2fd0444cc62d9f337be58fd1389a6d61dc90a1a2e9ec151b5d40d4842074dbc0f815b669dab1c8ba1a1f98509f11022ae84b45e2316"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0009-EKS-PATCH-Make-kubelet-set-alpha.kubernetes.io-provi.patch"
+sha512 = "14475ad38383962c00b428d0d8f56205c88a8e28c5880d599bde49705fbfa8fd66cbb8a20097d7c684d8b55f33bf6ca8044d4d785c149f75bc2e2f86319c07bb"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0010-EKS-PATCH-Skip-mount-point-checks-when-possible-duri.patch"
+sha512 = "e9a724bc8a89ba4ca35b957552190b224492a74db534d027c73c1fd7b433a794a0cee47511cf642b298d0deec7b41b9b691c97c43d70582fb29c7b12ce814fdd"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0017-EKS-PATCH-Update-aws-sdk-go-to-include-new-regions.patch"
+sha512 = "2ba3eca3eb6cdbf8a95a77f64b9bd51628ecf6358f47865a215d397deb07c170dec265018eddfca8ed6329aa51853094128069c106e0dc4b1c5e3f7f7b676888"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0018-EKS-PATCH-Prevent-watch-requests-on-resources-with-a.patch"
+sha512 = "fb7c266f533e720890e24ffcd7b53b9c8933f8e1f44276a459a6c08578d810c10e91dbf4b3583794eeaf11d80f68248ff5e9453605ced1270e18ca176c5e98e7"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0019-EKS-PATCH-add-Authentication-tracking-request-error-.patch"
+sha512 = "72c8a758dac09be941613e983f439efb3c08a5e797fca6d34e347e6f825d1f5ca1fc6207cbab518e3b0c43350ca631c031397e8f08e3f40e6b59ed5caeb53a2e"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0020-EKS-PATCH-Added-serialization-from-etcd-error-metric.patch"
+sha512 = "66c36a269b0ab95cc8407f010d758faf71694cc7cc78eaf04f2e697da300df60d1d8d52738be99cf01bafb5779df1585972eeaa029315ddfbfdd1a7e2a521583"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0021-EKS-PATCH-Bump-1.23-runc-version-to-1.1.6.patch"
+sha512 = "45365e7365e9242a02ac777ae0eb8cce39545826de71394534c871eb1ddc0ab6c8b712e161b004125aefbb63ccc4e5d8c8e7c810b178178503d46bb1e86cb69b"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0022-EKS-PATCH-Handle-eventually-consistent-EC2-PrivateDn.patch"
+sha512 = "83a66b0fbc78f4546cdc69e29fc770330cb7ab2528ff0a7343e3e10e69276a341f6d86a14221d674b4cde28c49f42302d0bad3c6aac3f799ec92bcac29b9d736"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0023-EKS-PATCH-Remove-check-for-CSI-driver-running-on-nod.patch"
+sha512 = "2cf21d20fbc5c3ab205b6616e59737d486d5f2cfd92e919d20272ba836779be3e7aa04b6d4871d560ff71783b583670c24d47e398016e6567a70d6563f66eccd"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0024-EKS-PATCH-Update-managedFields-time-when-value-is-mo.patch"
+sha512 = "59883c37789b6912f04a4d72406093178e71ad303c3e56dc764b3c3c6fadf45ab8499f21822ee1f99910ca9fff1a7150734b45737f5a53207795d96c53b9e901"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0025-EKS-PATCH-Return-error-for-localhost-seccomp-type-wi.patch"
+sha512 = "3f292964195d6483c2d9f62f978b83f3edae25cd73bedd74e579f7fb192390ae34d0b9e9a44b32f8788d5f45680624171a1c10bb3ccf5335089ad40248ab9f89"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0026-EKS-PATCH-Cherry-pick-119832-Fix-the-problem-Pod-ter.patch"
 sha512 = "0406fad037a41750310bcc7e75dceaa65cb6d9ffd8e324541068d25074386ff5fbfdb3e6b4d429704e692a39624377483ecd8ed7fcc16d54ba68d81c97d5d270"
 
 [[package.metadata.build-package.external-files]]
-url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0027-EKS-PATCH-Prevent-rapid-reset-http2-DOS-on-API-serve.patch"
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0027-EKS-PATCH-Prevent-rapid-reset-http2-DOS-on-API-serve.patch"
 sha512 = "d36a581ec2b4622da52d25e942fc063c7fcccbba08ee3c9d0dd52366ca6cd80300ced9c807ef786544b83e7d1dddcf88e24b478a4a4f32e864e9e8edaea8940d"
 
 [[package.metadata.build-package.external-files]]
-url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0028-EKS-PATCH-bump-golang.org-x-net-to-v0.17.patch"
-sha512 = "b9a87cc4d8d37af308ef0d65cf270b120da6b75aeeed4011f14a2a62e194b0ef509df687d1f7c75e4656606b7e9d7fff4162d3277d1150e3df27d8fca14c83fe"
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0028-EKS-PATCH-bump-golang.org-x-net-to-v0.17.patch"
+sha512 = "11a7d705a9cfbc06cd18262222c635567aa702311b7db2bdc1ce2697f67e1d07216559f8d7c5f17ad6026ea22eb433fe480048a22e32680469ded93b8bfd2baa"
 
 [[package.metadata.build-package.external-files]]
-url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0029-EKS-PATCH-Add-ephemeralcontainer-to-imagepolicy-secu.patch"
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0029-EKS-PATCH-Add-ephemeralcontainer-to-imagepolicy-secu.patch"
 sha512 = "3b68bc637648a1fff3f2acdbe370689f09c74b465ac1124d62bb99deefb691eb15f88fae4cf4da66c67fca6888513134b5012e5f48cd58f6632360465d8e38cb"
 
 [[package.metadata.build-package.external-files]]
-url = "https://raw.githubusercontent.com/aws/eks-distro/168d252ab1f465d3621a6e9b2251fb72b250c49f/projects/kubernetes/kubernetes/1-23/patches/0030-EKS-PATCH-go-Bump-images-dependencies-and-versions-t.patch"
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0030-EKS-PATCH-go-Bump-images-dependencies-and-versions-t.patch"
 sha512 = "66bcd6602e974e237c083fafc24e68b88a0010db1e2fe30c1ea41ef3c112d94c639ae87c3f7cc9a0142d823ea44cce2aa71476ca01bf2efc1ad3f00454df627f"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0031-EKS-PATCH-Fix-CVE-2023-5528.patch"
+sha512 = "40f2db8b26be9ba4e946e7695ca886b4f57340cc7455ec2996ac5e4e9c3aed84b4df0aa0b42ee97b2041937c70a725a15cabf85cc46c027247f347a190574e84"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0032-EKS-PATCH-bump-google.golang.org-grpc-to-v1.56.3.patch"
+sha512 = "9ecd474bb02076249c917dbfd70f350a260f765a4268aeace4ef94af1031f7b1580816d794f411922dca6c6f13c0dd6ca38a6254ed06750060e3f912d221a47b"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0033-EKS-PATCH-Fix-multiple-CVEs-in-windows-Kubelet.patch"
+sha512 = "e3af8eee63d6041d2f5272617f0f4ee667d60532170a2d570c5f5a991b814033f8a23d7de205ea7bf0b1b757ffabaf9fdc5df2a0914cfbbba6f11e18ebaedbef"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0034-EKS-PATCH-Support-tracking-executing-requests.patch"
+sha512 = "00d2d6f102f41e5499bc57722cc64b41a0b24d135dd9414a26113f06138c36c044bc06f978efc4209515e7266fe26cc65c5d5ac1a6499152fb4936e5ed68c979"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0035-EKS-PATCH-Fix-CVE-for-kube-proxy-v1.23.17.patch"
+sha512 = "56536ac2e8e69b549ae3b32a47a5a012a911a0a86bee8f20cb495684d3d22073923b9d5884b2f440eb897f164d5044a6262c103f6a08745da65bba8cfa6eb335"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0036-EKS-PATCH-kubelet-expose-OOM-metrics.patch"
+sha512 = "acb930741b427e5ed310aae6e7e8ac34bbc86e83a9b8604fdfb7921abe2b4cdb48778d3df0a99ce96155c975aef58342c837e864b300bc6b119beea03b292c13"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0037-EKS-PATCH-GO-UPDATE-Explicitly-call-rand.Seed-method.patch"
+sha512 = "38308652a1d54c0d9e21b1d2a5f544a38fc0e51f11aba280852ea0a500f5c655e24926937d0ce919177a8316110adfc0255fc984160602630d86c1dd26889316"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0038-EKS-PATCH-GO-UPDATE-Fixes-the-issue-114145.patch"
+sha512 = "0b8f9cb2877f7bff1cf974e063b7696cd84ca999f5fa473387dd531a27a3d870f80cf19c2afcd74ff582455c15d788ed91eedc2caeeff768c80298b3d00649e4"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0039-EKS-PATCH-GO-UPDATE-bump-honnef.co-go-tools-to-suppo.patch"
+sha512 = "894b378b2548481f4e1666602bee135aeaabbd1bef9cbc57ebefd83c3e55def63e6f7fac7191873a4c3fb04412c50166e7567a2260bc20116b69fa48e7ba2d32"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0040-EKS-PATCH-GO-UPDATE-Avoid-typechecking-stdlib.patch"
+sha512 = "d1cee2a851afc505bac085818ed99c5be908f9ba282826c70751cf6fded930147be7fb58feb8cf5a674e44e06086529abc0ec33123d236f247aed908355e9431"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0041-EKS-PATCH-GO-UPDATE-hack-tools-Bump-golangci-lint-ve.patch"
+sha512 = "ee2aa319406b5c1991a98f8d5660cb3f89e9b1277e1e76027967b9efdf6f8d7d15013767793826d8897d413cb9b93787cc4155838450757aa6c03480d19626ac"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0042-EKS-PATCH-GO-UPDATE-Fix-linter-warnings.patch"
+sha512 = "703c28a232133c8c318d34d74bd0eeb363f738ca0b177a8c04d017e3e75d9da804e06c6f4f5090f1e13e341371f35c148f7fce5d6eca7914ce40619e8195e82c"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0043-EKS-PATCH-GO-UPDATE-Bump-version-of-vmware-govmomi.patch"
+sha512 = "b586b46fad20104bb5a77d2f9f8a18bbcdd2ebbca1b944c114726120b57d1eaa024bd978d36bd0e6e2f72e4a2810505362203a148a3db67dac2036b1813c69e0"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0044-EKS-PATCH-GO-UPDATE-vsphere-Adapt-to-govmomi-version.patch"
+sha512 = "d260917508a7ba6107de18a3d4a8240c02215d18abc96d29d31059e598b4b81b04d5c152281efb348d006b829dd8614d6c0118d3156fe9c1ca0d8b576c919586"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0045-EKS-PATCH-GO-UPDATE-vclib-Modify-x509.UnknownAuthori.patch"
+sha512 = "23f67db085ed5949349c3ba3470cbefa70ee572a951357be4b606ce777472a95608e320aa8ddc3d18cb3e4b0c652c0aacf30d47bff462bde0ea7e0cfac82ae1e"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0046-EKS-PATCH-GO-UPDATE-Switch-to-assert.ErrorEquals-fro.patch"
+sha512 = "b85a3b0354030cb5af83588700dd21972a545fc8cad918f397a9dd0e5c4d4a9ff2d743e7aa20a7dffe524a330edf73f7db097a68c06255c0511aaf772569a046"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0047-EKS-PATCH-GO-UPDATE-.-bump-govmomi-to-v0.30.6.patch"
+sha512 = "432567987497e293c02bc44f14f61f1b1966c37132c73db65d19b39dd159a6e406b2eedb76b69a295e9a43f344072e249b8799e707d1238d7522e112d5cc970f"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0048-EKS-PATCH-GO-UPDATE-vsphere-adapt-to-govmomi-bump.patch"
+sha512 = "be3248779f21ce43b908a34989c830a0dd87ab7eaad244f7b13e8ab80535065630d2cd5e9fc9231e44ea9c1f195287773684cd56301e3cafcffc4345c391a188"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0049-EKS-PATCH-GO-UPDATE-release-1.23-releng-go-Update-im.patch"
+sha512 = "ee9870c6654dde40662214a150f24ab7ef9f9675bf09f6c76b03a13d32d6a8c4e47a9f3856e73d41bc9c2ce434b276e18694521a41f867027c2880d97fa18d8c"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0050-EKS-PATCH-GO-UPDATE-Defer-builds-to-test-cmd-and-tes.patch"
+sha512 = "dc7a4133eb5886af1637176ab746a753c9b107f8657c89332430a7e742331141cfb39faec30dc42959502866d52854c5a5fbb3328fc8b8547ad79252e9f94567"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0051-EKS-PATCH-GO-UPDATE-Add-gimme.patch"
+sha512 = "c4c2291ce3ece8646745ca06ae7be6f4c773f8ccf2f3e8492f1e4d080c9c8eccc0d02c74f170595c12a53fd3ce0806184be9e0747a08980d01cbfaf3e1be8e47"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0052-EKS-PATCH-GO-UPDATE-Invoke-gimme-from-kube-golang-ve.patch"
+sha512 = "be3f0c6a51cb1eca9694cdb5bc4d2dbb96fb15357355c2bd457e86e36e9db2b3d631385a24bf11dcc2ec237bdbdd61fa4cc7d694fe53c5f4eedadbff58ad5adc"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0053-EKS-PATCH-CVE-2024-24786-Bump-github.com-golang-prot.patch"
+sha512 = "aff218fe4b16672de701c7a0a76889f6fdac065cab7ca1cf2904a79be118214145efd5500ff5ba215de05b79978aa82d6b283cc47602e7a2ea0b46a3ebda5b97"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0054-EKS-PATCH-GO-UPDATE-kubeadm-remove-function-pointer-.patch"
+sha512 = "5bea80b8a06326c9e9476c77c6876562eef4821a2aaa771b0b70550ea1a0b6333875ebf84e578eb8400f9c5771531cfad63cd4615101d34f0e5eecd6888b5b6f"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0055-EKS-PATCH-GO-UPDATE-update-webhook-test-to-go-1.21.patch"
+sha512 = "7ba247d9d514f3428d3e0f92e7f97d33da4e40040f88b01650fbc1bbc33176e34e160eb2b7cd2eb0d127b4051006e687fe14d085cdaf1798b7a515b5141123ff"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0056-EKS-PATCH-GO-UPDATE-Fix-the-git-repo-test-error-caus.patch"
+sha512 = "ce3f479068d05f2af0ca55439ffb1b6e335b188d05cbe5882193d8cdd186d1899212e102314d7a5cf9e7d3953d9004247a7e0259bbb897fce8cba6c77363228b"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0057-EKS-PATCH-GO-UPDATE-prep-for-go1.21-use-e-in-go-list.patch"
+sha512 = "3d72c59900a2c7478398568ead6f075c215ff07bb779137267cf1a513bf77b032cb0d2132438fbf6e2ddc560d3db1e9836f404d7d403e4cc32565f2d30bb4321"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0058-EKS-PATCH-GO-UPDATE-Merge-pull-request-122077-from-B.patch"
+sha512 = "c66d654f92b9a2a083412aab3d7630911d27956fda4c2c160f32591247831289949194248de85e4cfb2de2a1094747bcdb9f28541b17e059aa69169836a7466f"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0059-EKS-PATCH-GO-UPDATE-update-to-golangci-lint-v1.54.1-.patch"
+sha512 = "bcbad85b841eddf765752e9eb6d4e63d356a6c2c43691313d0f62ffc5ff1025841c0b757ca81b18b3c991e233c5547de14bf26c4ddeb4f68ec884cd603cd8b28"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0060-EKS-PATCH-GO-UPDATE-feat-use-clock-instead.patch"
+sha512 = "f9a878742c51614a955fd5ee661d6d640f5590396b8117ccef5e8c6dfc54b5c0904dcade8326a01846c346b4c4c3024f007821dc51395687fec60328a9f193c0"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0061-EKS-PATCH-GO-UPDATE-go-Bump-images-dependencies-and-.patch"
+sha512 = "816d4a17f375eafed4a4a9f5b7ad711ee56eb613991e37546832bcb02212e8974876023862004fe53be7fb42dfe883d03cd9c0153950cfa24ddc9349ab4387d6"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0062-EKS-PATCH-CVE-2023-45288-Bump-dependecy-for-1.23.patch"
+sha512 = "775b7861f460e670fa44b71db257e7b895010d5f6380e34e471e4235719551fb9d85260c949807d8e9c4ea2aa68b83a04d0479a02579f892ce70a19d93ebc2bc"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-23/patches/0063-EKS-PATCH-Update-aws-sdk-go-to-include-NCL-region.patch"
+sha512 = "aff32046ed5644ef9c50a491534bbc1be19d5d255adb147a9bf90a142267be631caac23de3b3eb6a899a05e7ee43359dfccbecc3db4c84675e8627fbb5a5b63a"
 
 # RPM BuildRequires
 [build-dependencies]

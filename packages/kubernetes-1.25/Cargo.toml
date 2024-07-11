@@ -14,8 +14,94 @@ path = "../packages.rs"
 package-name = "kubernetes-1.25"
 
 [[package.metadata.build-package.external-files]]
-url = "https://distro.eks.amazonaws.com/kubernetes-1-25/releases/35/artifacts/kubernetes/v1.25.16/kubernetes-src.tar.gz"
-sha512 = "e3672cc93d74f1ffbdbf446b84693fa8e03d989f6c9174adc60b4ea8f53ac0e5bc660d06377f99bc7cc11f40c2c611e8641f6b9c1d6d2c658b1b0ece79909b1b"
+url = "https://github.com/kubernetes/kubernetes/archive/v1.25.16/kubernetes-1.25.16.tar.gz"
+sha512 = "58bafc4ff4c6152e90f68b78255d625716e4b075488dfd48d938cf6b38a5d806defeee9e46f5c0c692b4e36da6309d572e0af498983bad659b6b0c27e63a9885"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0001-EKS-PATCH-Pass-region-to-sts-client.patch"
+sha512 = "4e4317b6914feb97f9607f14e93e9c3bc355a686425985397fd89ac65e171093f5fc5f1d3096e3651a6fced1e3e6409f5a88620bf1abdfa6a8baad35a4e1cd97"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0002-EKS-PATCH-admission-webhook-exclusion-from-file.patch"
+sha512 = "2699953c6fcd80ddab10013dfe22d0d7956bd9e62399a3d7ed11ed5e0a70f3e622366d26c89a922d9d6f7f401c00f8342f376b5555e09c0d769d57ddead9c046"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0003-EKS-PATCH-Use-GNU-date.patch"
+sha512 = "dbf7e716f45aeb3c7e5c642f55101d668dd68f8b5fbd648b4a53c94e38b284eb09259cbcee9daae2d9456cdae234dc9830837f532604a491acaa21e8446878e1"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0004-EKS-PATCH-aws_credentials-update-ecr-url-validation-.patch"
+sha512 = "89ca5563f36b55c4c6637949a5771b1431ce00bab86facb72ba051a4e9625cdc06e7a01f50b37a8facd085062af4c690c35eaaad994e4cea38b59a1849417253"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0005-EKS-PATCH-AWS-Include-IPv6-addresses-in-NodeAddresse.patch"
+sha512 = "2fbea2f2c7e37b90886a6dd43a89dc309a91b5a64681483f3783aa72774f7beb2ca37c2f450ee2635ce70e8fd1ec9a8fb927bdd57d0777c6e10b0a1b1cab5cc8"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0007-EKS-PATCH-kubelet-Keep-trying-fast-status-update-at-.patch"
+sha512 = "2b1936d4d960772b4b8ce7b676a4e435fcdc0062f9bd0414580ad4d1193da2d2ab9db50dcf6246502a978709dd915bd997237ad26abdfd3842522907a705216e"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0008-EKS-PATCH-add-Authentication-tracking-request-error-.patch"
+sha512 = "f98974e3a8ac955136f72901cae0ce43bc5215e8b26e37697db3342738eb13732825300888cce84e65de00e61b63fe874474ee1b75f89e0ea2802c0ff049fea4"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0009-EKS-PATCH-Added-serialization-from-etcd-error-metric.patch"
+sha512 = "d7a9e69605bab7d10cfbe1821dd85e186eaaaed728954fc450dc0d070c0a2d3596ffcec51f3b055dcc915013d005b38ff03fe65fe6bfd119478096651419fc34"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0010-EKS-PATCH-Handle-eventually-consistent-EC2-PrivateDn.patch"
+sha512 = "94e70c49ba971bcf9f3ab5955e57e388277714813e791b38954e4225a5d7b704ef3550ba5ff6d2774e5a72de4855bd5e2e671e85a898ed02386a4886f63987a1"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0011-EKS-PATCH-Fix-controllers-scheduling-and-logging-bug.patch"
+sha512 = "194e3b926994bbd924867978eccdc1e17d92ec73610042f909523f29e71c12ead860373cf9a8a8a223527b3137034cf64f3101d22b979c70587b2ecbc5b6ff13"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0012-EKS-PATCH-Fix-CVE-for-kube-proxy-v1.25.11.patch"
+sha512 = "e3eb50a95032001b14ec7c5ce2eecddfa8a3ee1dcc334e9ddde66c0c415e9ae8bc2df76c564b50fe581b0bb218b5b042393d76c5e86f5f906e36273b08c4db71"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0013-EKS-PATCH-Support-tracking-executing-requests.patch"
+sha512 = "391fb3e18d58f2a7051fd2a7cae3037b736188f25e99a2b5f60512d6509d3d05905f605d565055cbb194d24c270b97882df48365e6fe5ddd1c5ff33bd15dffbd"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0014-EKS-PATCH-Fix-CVE-for-kube-proxy-v1.25.14.patch"
+sha512 = "892b8adc55676ca931507e9c3236daaa1c7e09cfbba542f490b1edab09db9ce6ce94455421a99b34bf93fa5d73f9c3293de6dd0779b296bf1f1bdb5fe172c34b"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0015-EKS-PATCH-bump-google.golang.org-grpc-to-v1.56.3.patch"
+sha512 = "b3805e8b25484483d7c2cc776c46c8388b26733548a9637433c770769f44a7a258ac23616088ecafca8e2e11cf44c7c760ea07d2c57b9ff1e473c0c1d3af5095"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0016-EKS-PATCH-kms-fix-go-routine-leak-in-gRPC-connection.patch"
+sha512 = "8e876c263dfaacaf3f5e293bf4a709c4a329391282505e2e2d2db34fcd04431420054b9a5b5531edcd897d1ed453318e97de07d50f3ae207e29916455146b656"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0017-EKS-PATCH-Update-log-verbosity-for-node-health-and-t.patch"
+sha512 = "2ee87971165a0de30e0ec30febbd0c293095bfa93b6d0e39d0ccdf7ecb51a0e386be4ee776ab4352843f95b86068aaa489a29ba0a0e480f134d2ab26d0ddf75b"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0018-EKS-PATCH-CVE-2024-24786-Bump-github.com-golang-prot.patch"
+sha512 = "b3a00a8339a0115188ac056d12f45f8c5fb93e659d7a4276c06dc60e4a347aa9d64146908280a25e4de6b0bbb7dd1e7afb9adbabb5e19a95095695f356da8286"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0019-EKS-PATCH-GO-UPDATE-handle-GOTOOLCHAIN-in-kube-golan.patch"
+sha512 = "8fd6c7d28b2a2c95f7e388f35c20ea22fa4d225e8c7f247e669fb6ca2e776001dc237ea20e5609a63af707f1cb3e3b6d0e88ff14503d49e49cbfa88c7f7e059b"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0020-EKS-PATCH-GO-UPDATE-Bump-images-dependencies-and-ver.patch"
+sha512 = "fe816af80574b5858bf85885870a0ac5a206cd3aff16cf47ed8145063e593b49a33c5c1acf1f5f0ff65a139f469cb2465be2e5d43767f44923509217acb15c7a"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0021-EKS-PATCH-Bumps-dependencies-for-fixing-CVE-2023-452.patch"
+sha512 = "ceb1a7844e4e2ed5fa3a838949086ebf86114bba8007a3125ea4ebd6aba7e790eb19b1e8cdd9f767aad1ffa4333ceee7156aa1cddf8ceaa4114a3e90e3d052dc"
+
+[[package.metadata.build-package.external-files]]
+url = "https://raw.githubusercontent.com/aws/eks-distro/71aed3084474ab65027b067d45e70081144384ea/projects/kubernetes/kubernetes/1-25/patches/0022-EKS-PATCH-Update-aws-sdk-go-to-include-new-regions.patch"
+sha512 = "e226f5a70aeafa25ff010c607b1e7913b562f37674062a0aadbe77fd62532dd5bab10c3bfc38af455a00232da0548f82cd77a86d124b17149d5f9e4bcc96fa30"
+
+
 # RPM BuildRequires
 [build-dependencies]
 glibc = { path = "../glibc" }
