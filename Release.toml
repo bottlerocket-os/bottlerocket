@@ -315,10 +315,12 @@ version = "1.21.0"
 "(1.20.0, 1.20.1)" = []
 "(1.20.1, 1.20.2)" = []
 "(1.20.2, 1.20.3)" = []
-"(1.20.3, 1.21.0)" = [
+"(1.20.3, 1.20.4)" = []
+"(1.20.4, 1.21.0)" = [
     "migrate_v1.21.0_pluto-remove-generators-v0-1-0.lz4",
     "migrate_v1.21.0_pod-infra-container-image-remove-settings-generator.lz4",
     "migrate_v1.21.0_pod-infra-container-image-affected-services.lz4",
     "migrate_v1.21.0_pod-infra-container-image-services.lz4",
     "migrate_v1.21.0_k8s-reserved-cpus-v0-1-0.lz4",
 ]
+
