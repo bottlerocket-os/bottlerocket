@@ -8,7 +8,7 @@ BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 # For binary installation, this should be a released version (prefixed with a v,
 # for example v0.1.0). For the git sourcecode installation method, this can be
 # any git rev, e.g. a tag, sha, or branch name.
-TWOLITER_VERSION = "v0.4.1"
+TWOLITER_VERSION = "v0.4.2"
 
 # For binary installation, this is the GitHub repository that has binary release artifacts attached
 # to it, for example https://github.com/bottlerocket-os/twoliter. For git sourcecode installation,
@@ -70,7 +70,7 @@ BUILDSYS_PRETTY_NAME = "Bottlerocket OS"
 # starting now.  (This can be an RFC3339 date, or an offset like "in X
 # hours/days/weeks".)
 PUBLISH_EXPIRATION_POLICY_PATH = "${BUILDSYS_ROOT_DIR}/tools/pubsys/policies/repo-expiration/2w-2w-1w.toml"
-PUBLISH_WAVE_POLICY_PATH = "${BUILDSYS_ROOT_DIR}/sources/updater/waves/default-waves.toml"
+PUBLISH_WAVE_POLICY_PATH = "${BUILDSYS_BUILD_DIR}/tools/waves/default-waves.toml"
 PUBLISH_INFRA_CONFIG_PATH = "${BUILDSYS_ROOT_DIR}/Infra.toml"
 # Default repo to read from PUBLISH_INFRA_CONFIG_PATH
 PUBLISH_REPO = "default"
