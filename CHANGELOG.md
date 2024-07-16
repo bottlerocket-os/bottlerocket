@@ -2,6 +2,7 @@
 
 ## OS Changes
 * Update kernels: 5.10.219 and 6.1.94 ([#4080])
+* Update docker-engine and docker-cli to v25.0.5 ([#4091])
 
 ## Orchestrator Changes
 
@@ -12,6 +13,7 @@
 [#4080]: https://github.com/bottlerocket-os/bottlerocket/pull/4080
 [#4084]: https://github.com/bottlerocket-os/bottlerocket/pull/4084
 [#4089]: https://github.com/bottlerocket-os/bottlerocket/pull/4089
+[#4091]: https://github.com/bottlerocket-os/bottlerocket/pull/4091
 
 # v1.20.3 (2024-06-26)
 
