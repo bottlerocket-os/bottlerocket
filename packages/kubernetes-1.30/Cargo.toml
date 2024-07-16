@@ -15,8 +15,8 @@ package-name = "kubernetes-1.30"
 
 [[package.metadata.build-package.external-files]]
 # TODO: update this URL to 1.30 release once available. 
-url = "https://distro.eks.amazonaws.com/kubernetes-1-30/releases/3/artifacts/kubernetes/v1.30.0/kubernetes-src.tar.gz"
-sha512 = "2becf971b5ebbc6752509bc04659b036c4fe99e1638a336436555d6403247094b69ab3bde2187391606de59e3a5b23acfce01a2d3c7f4e4b7516025e2812333c"
+url = "https://distro.eks.amazonaws.com/kubernetes-1-30/releases/9/artifacts/kubernetes/v1.30.1/kubernetes-src.tar.gz"
+sha512 = "314c4cdc3705fa6ded932bb2780e63b78040e75fe7e284aa2cbff93eac177d40eae5dfbe90b7482b682ed97b9d4723b55e4a1d598ec6424df77543e00e7fd6a2"
 
 # RPM BuildRequires
 [build-dependencies]
