@@ -7,9 +7,11 @@
 
 ### Kubernetes
 * Update patches for kubernetes 1.23, 1.24, 1.25, and 1.26 ([#4084])
+* Update sources for kubernetes 1.27, 1.28, 1.29, and 1.30 ([#4089])
 
 [#4080]: https://github.com/bottlerocket-os/bottlerocket/pull/4080
 [#4084]: https://github.com/bottlerocket-os/bottlerocket/pull/4084
+[#4089]: https://github.com/bottlerocket-os/bottlerocket/pull/4089
 
 # v1.20.3 (2024-06-26)
 
