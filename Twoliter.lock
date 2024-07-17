@@ -7,11 +7,11 @@ name = "bottlerocket-sdk"
 version = "0.42.0"
 vendor = "bottlerocket"
 source = "public.ecr.aws/bottlerocket/bottlerocket-sdk:v0.42.0"
-digest = "+Cu8yFgnaFYG5ZQ0eZWRndXxHTLEAR58EhZITbJinLI="
+digest = "myHHKE41h9qfeyR6V6HB0BfiLPwj3QEFLUFy4TXcR10="
 
 [[kit]]
 name = "bottlerocket-core-kit"
 version = "2.0.0"
 vendor = "bottlerocket"
 source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v2.0.0"
-digest = "dC/FAJ0K43AugHYTsCeMw/+bjgi1X5zXnpHsbfDnF9Y="
+digest = "vlTsAAbSCzXFZofVmw8pLLkRjnG/y8mtb2QsQBSz1zk="
