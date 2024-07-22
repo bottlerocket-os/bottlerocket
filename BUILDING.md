@@ -60,6 +60,19 @@ The default seccomp policy of older versions of Docker do not support the `clone
 You'll need to have Docker installed and running, with your user account added to the `docker` group.
 Docker's [post-installation steps for Linux](https://docs.docker.com/install/linux/linux-postinstall/) will walk you through that.
 
+You'll also need to enable the containerd-snapshotter and buildkit features for your docker daemon. This is required for the tooling to operate
+with OCI images properly during bottlerocket build. You can do so by adding the below to your
+docker daemon configuration at `/etc/docker/daemon.json`.
+
+```json
+{
+    "features": {
+        "buildkit": true,
+        "containerd-snapshotter": true
+    }
+}
+```
+
 > Note: If you're on a newer Linux distribution using the unified cgroup hierarchy with cgroups v2, you may need to disable it to work with current versions of runc.
 > You'll know this is the case if you see an error like `docker: Error response from daemon: OCI runtime create failed: this version of runc doesn't work on cgroups v2: unknown.`
 > Set the kernel parameter `systemd.unified_cgroup_hierarchy=0` in your boot configuration (e.g. GRUB) and reboot.
