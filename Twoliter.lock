@@ -1,6 +1,6 @@
 schema-version = 1
 release-version = "1.21.0"
-digest = "lMRATwxexxX5BpTiTdquj57hPGq1PMsYspMsmPgNLTc="
+digest = "y1FRkXnpl5De27FxP96g8yuAZojLSff31XG6PKFUuZY="
 
 [sdk]
 name = "bottlerocket-sdk"
@@ -11,7 +11,7 @@ digest = "myHHKE41h9qfeyR6V6HB0BfiLPwj3QEFLUFy4TXcR10="
 
 [[kit]]
 name = "bottlerocket-core-kit"
-version = "2.0.0"
+version = "2.3.0"
 vendor = "bottlerocket"
-source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v2.0.0"
-digest = "vlTsAAbSCzXFZofVmw8pLLkRjnG/y8mtb2QsQBSz1zk="
+source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v2.3.0"
+digest = "rSz1BCxdV0ClnXa6LBeVNJyAK6fds0va7aw8p8PGZ98="
