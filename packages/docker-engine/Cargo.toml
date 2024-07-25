@@ -12,8 +12,8 @@ path = "../packages.rs"
 releases-url = "https://github.com/moby/moby/releases"
 
 [[package.metadata.build-package.external-files]]
-url = "https://github.com/moby/moby/archive/v25.0.5/moby-25.0.5.tar.gz"
-sha512 = "42ac2cf271b0a8fe67816844b26216896e4f5ccb0e4b85516b1bcc5a76e5dd5e1dc560b50a6e1d1df4eed2f8b57585e189048edf0a3266e93098004c09dca8cc"
+url = "https://github.com/moby/moby/archive/v25.0.6/moby-25.0.6.tar.gz"
+sha512 = "dc3370927654dd2b0d201d112effc8b83416a4df4ed1c5ac6ffaec40a260b0ebdf95107e8f3dcfe91e54f885697273a2b415541f5ea87ec7c491f6325c51a4cc"
 
 # RPM BuildRequires
 [build-dependencies]
