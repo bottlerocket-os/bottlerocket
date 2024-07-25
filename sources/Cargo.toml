@@ -40,6 +40,9 @@ members = [
     "settings-migrations/v1.21.0/pod-infra-container-image-remove-settings-generator",
     "settings-migrations/v1.21.0/pod-infra-container-image-services",
     "settings-migrations/v1.21.0/k8s-reserved-cpus-v0-1-0",
+    "settings-migrations/v1.21.0/aws-control-container-v0-7-13",
+    "settings-migrations/v1.21.0/public-control-container-v0-7-13",
+
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
