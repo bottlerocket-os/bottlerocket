@@ -7,7 +7,7 @@ toolchain go1.21.4
 require (
 	github.com/aws/aws-sdk-go v1.51.2
 	github.com/awslabs/amazon-ecr-containerd-resolver v0.0.0-20240318153621-07ad6deb57bb
-	github.com/containerd/containerd v1.6.30
+	github.com/containerd/containerd v1.6.34
 	github.com/opencontainers/runtime-spec v1.2.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pkg/errors v0.9.1
@@ -43,6 +43,7 @@ require (
 	github.com/cilium/ebpf v0.13.2 // indirect
 	github.com/containerd/cgroups v1.1.0 // indirect
 	github.com/containerd/continuity v0.4.3 // indirect
+	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/go-cni v1.1.9 // indirect
 	github.com/containerd/imgcrypt v1.1.10 // indirect
