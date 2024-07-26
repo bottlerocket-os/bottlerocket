@@ -316,4 +316,9 @@ version = "1.20.5"
 "(1.20.1, 1.20.2)" = []
 "(1.20.2, 1.20.3)" = []
 "(1.20.3, 1.20.4)" = []
-"(1.20.4, 1.20.5)" = []
+"(1.20.4, 1.20.5)" = [
+    "migrate_v1.20.5_aws-admin-container-v0-11-9.lz4",
+    "migrate_v1.20.5_public-admin-container-v0-11-9.lz4",
+    "migrate_v1.20.5_aws-control-container-v0-7-13.lz4",
+    "migrate_v1.20.5_public-control-container-v0-7-13.lz4",
+]
