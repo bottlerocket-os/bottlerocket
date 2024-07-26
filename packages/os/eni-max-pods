@@ -20,7 +20,6 @@
 # - ap-southeast-2
 # - ca-central-1
 # - eu-central-1
-# - eu-central-2
 # - eu-north-1
 # - eu-west-1
 # - eu-west-2
@@ -207,6 +206,11 @@ c7gn.large 29
 c7gn.medium 8
 c7gn.metal 737
 c7gn.xlarge 58
+c7i-flex.2xlarge 58
+c7i-flex.4xlarge 234
+c7i-flex.8xlarge 234
+c7i-flex.large 29
+c7i-flex.xlarge 58
 c7i.12xlarge 234
 c7i.16xlarge 737
 c7i.24xlarge 737
@@ -539,6 +543,7 @@ m7i.metal-24xl 737
 m7i.metal-48xl 737
 m7i.xlarge 58
 mac1.metal 234
+mac2-m1ultra.metal 234
 mac2-m2.metal 234
 mac2-m2pro.metal 234
 mac2.metal 234
@@ -744,6 +749,18 @@ r7iz.large 29
 r7iz.metal-16xl 737
 r7iz.metal-32xl 737
 r7iz.xlarge 58
+r8g.12xlarge 234
+r8g.16xlarge 737
+r8g.24xlarge 737
+r8g.2xlarge 58
+r8g.48xlarge 737
+r8g.4xlarge 234
+r8g.8xlarge 234
+r8g.large 29
+r8g.medium 8
+r8g.metal-24xl 737
+r8g.metal-48xl 737
+r8g.xlarge 58
 t1.micro 4
 t2.2xlarge 44
 t2.large 35
@@ -788,6 +805,10 @@ u-6tb1.56xlarge 737
 u-6tb1.metal 147
 u-9tb1.112xlarge 737
 u-9tb1.metal 147
+u7i-12tb.224xlarge 737
+u7in-16tb.224xlarge 394
+u7in-24tb.224xlarge 394
+u7in-32tb.224xlarge 394
 vt1.24xlarge 737
 vt1.3xlarge 58
 vt1.6xlarge 234
