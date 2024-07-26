@@ -1,13 +1,13 @@
 %global debug_package %{nil}
 
 Name: %{_cross_os}kernel-6.1
-Version: 6.1.94
+Version: 6.1.97
 Release: 1%{?dist}
 Summary: The Linux kernel
 License: GPL-2.0 WITH Linux-syscall-note
 URL: https://www.kernel.org/
 # Use latest-srpm-url.sh to get this.
-Source0: https://cdn.amazonlinux.com/al2023/blobstore/b36ee10673c56c67b1f1a12e9afe3794a81ab7ff630c09abd2295c1d46a36e40/kernel-6.1.94-99.176.amzn2023.src.rpm
+Source0: https://cdn.amazonlinux.com/al2023/blobstore/d99ee343f454259e069b83f9c5b6c672d3e166a424243a4ae9fc2634a8d7d4d4/kernel-6.1.97-104.177.amzn2023.src.rpm
 Source100: config-bottlerocket
 
 # This list of FIPS modules is extracted from /etc/fipsmodules in the initramfs
@@ -709,8 +709,6 @@ install -p -m 0644 %{S:302} %{buildroot}%{_cross_bootconfigdir}/05-metal.conf
 %endif
 %{_cross_kmoddir}/kernel/drivers/pps/clients/pps-gpio.ko.*
 %{_cross_kmoddir}/kernel/drivers/pps/clients/pps-ldisc.ko.*
-%{_cross_kmoddir}/kernel/drivers/pps/pps_core.ko.*
-%{_cross_kmoddir}/kernel/drivers/ptp/ptp.ko.*
 %{_cross_kmoddir}/kernel/drivers/ptp/ptp_kvm.ko.*
 %{_cross_kmoddir}/kernel/drivers/scsi/ch.ko.*
 %if "%{_cross_arch}" == "x86_64"
