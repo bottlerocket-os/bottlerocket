@@ -1,3 +1,24 @@
+# v1.20.5 (2024-07-30)
+
+## OS Changes
+
+* Update docker-engine to v25.0.6 ([#4111])
+* Update containerd to 1.6.34 ([#4113])
+* Update kernels: 5.10.220, 5.15.162, and 6.1.97 ([#4104])
+* Update host containers ([#4110])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Add latest instance types to eni-max-pods mapping ([#4108])
+    
+[#4104]: https://github.com/bottlerocket-os/bottlerocket/pull/4104
+[#4108]: https://github.com/bottlerocket-os/bottlerocket/pull/4108
+[#4110]: https://github.com/bottlerocket-os/bottlerocket/pull/4110
+[#4111]: https://github.com/bottlerocket-os/bottlerocket/pull/4111
+[#4113]: https://github.com/bottlerocket-os/bottlerocket/pull/4113
+
 # v1.20.4 (2024-07-15)
 
 ## OS Changes
