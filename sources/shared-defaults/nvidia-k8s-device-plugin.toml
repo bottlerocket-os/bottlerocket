@@ -1,0 +1,23 @@
+# nvidia device plugin service
+[services.nvidia-k8s-device-plugin]
+restart-commands = ["/bin/systemctl try-reload-or-restart nvidia-k8s-device-plugin.service"]
+configuration-files = [
+    "nvidia-k8s-device-plugin-conf",
+    "nvidia-k8s-device-plugin-exec-start-conf",
+]
+
+[configuration-files.nvidia-k8s-device-plugin-conf]
+path = "/etc/nvidia-k8s-device-plugin/settings.yaml"
+template-path = "/usr/share/templates/nvidia-k8s-device-plugin-conf"
+
+[configuration-files.nvidia-k8s-device-plugin-exec-start-conf]
+path = "/etc/systemd/system/nvidia-k8s-device-plugin.service.d/exec-start.conf"
+template-path = "/usr/share/templates/nvidia-k8s-device-plugin-exec-start-conf"
+
+[metadata.settings.kubernetes.device-plugins.nvidia]
+affected-services = ["nvidia-k8s-device-plugin"]
+
+[settings.kubernetes.device-plugins.nvidia]
+pass-device-specs = true
+device-id-strategy="index"
+device-list-strategy="volume-mounts"

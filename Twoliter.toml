@@ -13,3 +13,4 @@ vendor = "bottlerocket"
 name = "bottlerocket-core-kit"
 version = "2.3.1"
 vendor = "bottlerocket"
+

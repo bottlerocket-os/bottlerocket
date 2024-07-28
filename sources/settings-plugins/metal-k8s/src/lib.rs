@@ -1,5 +1,9 @@
 use bottlerocket_settings_models::model_derive::model;
 use bottlerocket_settings_plugin::SettingsPlugin;
+use bottlerocket_settings_models::kubernetes::NVIDIA_DEVICE_PLUGIN_FEATURE_ENABLED;
+
+// check nvidia-device-plugin feature flag is disabled for this pacakge
+const _: () = assert!(!NVIDIA_DEVICE_PLUGIN_FEATURE_ENABLED, "nvidia-device-plugin feature flag should be disabled for this package.");
 
 #[derive(SettingsPlugin)]
 #[model(rename = "settings", impl_default = true)]

@@ -41,11 +41,16 @@ members = [
     "settings-migrations/v1.21.0/pod-infra-container-image-services",
     "settings-migrations/v1.21.0/k8s-reserved-cpus-v0-1-0",
     "settings-migrations/v1.21.0/add-hostname-override-source",
+    "settings-migrations/v1.21.1/nvidia-container-runtime-metadata",
+    "settings-migrations/v1.21.1/nvidia-container-runtime-settings",
+    "settings-migrations/v1.21.1/nvidia-k8s-device-plugin-metadata",
+    "settings-migrations/v1.21.1/nvidia-k8s-device-plugin-settings",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
     "settings-plugins/aws-ecs-2",
     "settings-plugins/aws-k8s",
+    "settings-plugins/aws-k8s-nvidia",
     "settings-plugins/metal-dev",
     "settings-plugins/metal-k8s",
     "settings-plugins/vmware-dev",
@@ -54,29 +59,34 @@ members = [
     "constants",
 ]
 
+# ======= REMOVE BEFORE FINAL PR =================
 [workspace.dependencies.bottlerocket-defaults-helper]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-defaults-helper-v0.1.0"
+rev = "603cc2d93443b63bdfa3fadbbd14e4738f00b502"
 version = "0.1.0"
 
+# ======= REVERT BEFORE FINAL PR =================
 [workspace.dependencies.bottlerocket-modeled-types]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.2.0"
+rev = "603cc2d93443b63bdfa3fadbbd14e4738f00b502"
 version = "0.2.0"
 
+# ======= REVERT BEFORE FINAL PR =================
 [workspace.dependencies.bottlerocket-settings-models]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.2.0"
+rev = "603cc2d93443b63bdfa3fadbbd14e4738f00b502"
 version = "0.2.0"
 
+# ======= REVERT BEFORE FINAL PR =================
 [workspace.dependencies.bottlerocket-settings-plugin]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-plugin-v0.1.0"
+rev = "603cc2d93443b63bdfa3fadbbd14e4738f00b502"
 version = "0.1.0"
 
+# ======= REVERT BEFORE FINAL PR =================
 [workspace.dependencies.settings-extension-oci-defaults]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.2.0"
+rev = "603cc2d93443b63bdfa3fadbbd14e4738f00b502"
 version = "0.1.0"
 
 [profile.release]
