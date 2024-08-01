@@ -71,53 +71,6 @@ const ECR_FALLBACK_REGION: &str = "us-east-1";
 const ECR_FALLBACK_REGISTRY: &str = "328549459982";
 
 lazy_static! {
-    /// A map to tell us which registry to pull pause container images from for a given region.
-    static ref PAUSE_CONTAINER_MAP: HashMap<&'static str, &'static str> = {
-        let mut m = HashMap::new();
-        m.insert("af-south-1", "877085696533");
-        m.insert("ap-east-1", "800184023465");
-        m.insert("ap-northeast-1", "602401143452");
-        m.insert("ap-northeast-2", "602401143452");
-        m.insert("ap-northeast-3", "602401143452");
-        m.insert("ap-south-1", "602401143452");
-        m.insert("ap-south-2", "900889452093");
-        m.insert("ap-southeast-1", "602401143452");
-        m.insert("ap-southeast-2", "602401143452");
-        m.insert("ap-southeast-3", "296578399912");
-        m.insert("ap-southeast-4", "491585149902");
-        m.insert("ap-southeast-5", "151610086707");
-        m.insert("ca-central-1", "602401143452");
-        m.insert("ca-west-1", "761377655185");
-        m.insert("cn-north-1", "918309763551");
-        m.insert("cn-northwest-1", "961992271922");
-        m.insert("eu-central-1", "602401143452");
-        m.insert("eu-central-2", "900612956339");
-        m.insert("eu-north-1", "602401143452");
-        m.insert("eu-south-1", "590381155156");
-        m.insert("eu-south-2", "455263428931");
-        m.insert("eu-west-1", "602401143452");
-        m.insert("eu-west-2", "602401143452");
-        m.insert("eu-west-3", "602401143452");
-        m.insert("il-central-1", "066635153087");
-        m.insert("me-central-1", "759879836304");
-        m.insert("me-south-1", "558608220178");
-        m.insert("sa-east-1", "602401143452");
-        m.insert("us-east-1", "602401143452");
-        m.insert("us-east-2", "602401143452");
-        m.insert("us-gov-east-1", "151742754352");
-        m.insert("us-gov-west-1", "013241004608");
-        m.insert("us-west-1", "602401143452");
-        m.insert("us-west-2", "602401143452");
-        m
-    };
-}
-
-/// But if there is a region that does not exist in our map (for example a new
-/// region is created or being tested), then we will fall back to this.
-const PAUSE_FALLBACK_REGISTRY: &str = "602401143452";
-const PAUSE_FALLBACK_REGION: &str = "us-east-1";
-
-lazy_static! {
     /// A map to tell us which endpoint to pull updates from for a given region.
     static ref TUF_ENDPOINT_MAP: HashMap<&'static str, &'static str> = {
         let mut m = HashMap::new();
@@ -771,59 +724,6 @@ pub fn ecr_prefix(
 
     // write it to the template
     out.write(&ecr_registry)
-        .with_context(|_| error::TemplateWriteSnafu {
-            template: template_name.to_owned(),
-        })?;
-
-    Ok(())
-}
-
-/// The `pause-prefix` helper is used to map an AWS region to the correct pause
-/// container registry.
-///
-/// Because the repo URL includes the the registry number, we created this helper
-/// to lookup the correct registry number for a given region.
-///
-/// This helper takes the AWS region as its only parameter, and returns the
-/// fully qualified domain name to the correct registry.
-///
-/// # Fallback
-///
-/// If we do not have the region in our map, a fallback region and registry number
-/// are returned.  This would allow a version of Bottlerocket to run in a new region
-/// before this map has been updated.
-///
-/// # Example
-///
-/// In this example the registry number for the region will be returned.
-/// `{{ pause-prefix settings.aws.region }}`
-///
-/// This would result in something like:
-/// `602401143452.dkr.ecr.eu-central-1.amazonaws.com`
-pub fn pause_prefix(
-    helper: &Helper<'_, '_>,
-    _: &Handlebars,
-    _: &Context,
-    renderctx: &mut RenderContext<'_, '_>,
-    out: &mut dyn Output,
-) -> Result<(), RenderError> {
-    trace!("Starting pause prefix helper");
-    let template_name = template_name(renderctx);
-    check_param_count(helper, template_name, 1)?;
-
-    // get the region parameter, which is probably given by the template value
-    // settings.aws.region. regardless, we expect it to be a string.
-    let aws_region = get_param(helper, 0)?;
-    let aws_region = aws_region.as_str().with_context(|| error::AwsRegionSnafu {
-        value: aws_region.to_owned(),
-        template: template_name,
-    })?;
-
-    // construct the registry fqdn
-    let pause_registry = pause_registry(aws_region);
-
-    // write it to the template
-    out.write(&pause_registry)
         .with_context(|_| error::TemplateWriteSnafu {
             template: template_name.to_owned(),
         })?;
@@ -1859,24 +1759,6 @@ fn ecr_registry<S: AsRef<str>>(region: S) -> String {
     }
 }
 
-/// Constructs the fully qualified domain name for the pause container (pod infra
-/// container) for the given region. Returns a default if the region is not mapped.
-fn pause_registry<S: AsRef<str>>(region: S) -> String {
-    // lookup the registry ID or fallback to the default region and id
-    let (region, registry_id) = match PAUSE_CONTAINER_MAP.borrow().get(region.as_ref()) {
-        None => (PAUSE_FALLBACK_REGION, PAUSE_FALLBACK_REGISTRY),
-        Some(registry_id) => (region.as_ref(), *registry_id),
-    };
-    let partition = match ALT_PARTITION_MAP.borrow().get(region) {
-        None => STANDARD_PARTITION,
-        Some(partition) => *partition,
-    };
-    match partition {
-        "aws-cn" => format!("{}.dkr.ecr.{}.amazonaws.com.cn", registry_id, region),
-        _ => format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region),
-    }
-}
-
 /// Constructs the fully qualified domain name for the TUF repository for the
 /// given region. Returns a default if the region is not mapped.
 fn tuf_repository<S: AsRef<str>>(region: S) -> String {
@@ -2405,63 +2287,6 @@ mod test_ecr_registry {
             )
             .unwrap();
             assert_eq!(result, *expected_url);
-        }
-    }
-}
-
-#[cfg(test)]
-mod test_pause_registry {
-    use super::*;
-    use handlebars::RenderError;
-    use serde::Serialize;
-    use serde_json::json;
-
-    // A thin wrapper around the handlebars render_template method that includes
-    // setup and registration of helpers
-    fn setup_and_render_template<T>(tmpl: &str, data: &T) -> Result<String, RenderError>
-    where
-        T: Serialize,
-    {
-        let mut registry = Handlebars::new();
-        registry.register_helper("pause-prefix", Box::new(pause_prefix));
-
-        registry.render_template(tmpl, data)
-    }
-
-    const CONTAINER_TEMPLATE: &str = "{{ pause-prefix settings.aws.region }}/container:tag";
-
-    const PAUSE_REGISTRY_TESTS: &[(&str, &str)] = &[
-        (
-            "eu-central-1",
-            "602401143452.dkr.ecr.eu-central-1.amazonaws.com/container:tag",
-        ),
-        (
-            "af-south-1",
-            "877085696533.dkr.ecr.af-south-1.amazonaws.com/container:tag",
-        ),
-        (
-            "xy-ztown-1",
-            "602401143452.dkr.ecr.us-east-1.amazonaws.com/container:tag",
-        ),
-        (
-            "cn-north-1",
-            "918309763551.dkr.ecr.cn-north-1.amazonaws.com.cn/container:tag",
-        ),
-        (
-            "ap-southeast-4",
-            "491585149902.dkr.ecr.ap-southeast-4.amazonaws.com/container:tag",
-        ),
-    ];
-
-    #[test]
-    fn pause_container_registry() {
-        for (region, expected) in PAUSE_REGISTRY_TESTS {
-            let result = setup_and_render_template(
-                CONTAINER_TEMPLATE,
-                &json!({"settings": {"aws": {"region": *region}}}),
-            )
-            .unwrap();
-            assert_eq!(result, *expected);
         }
     }
 }
