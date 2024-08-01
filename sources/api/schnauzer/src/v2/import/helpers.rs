@@ -45,7 +45,6 @@ fn all_helpers() -> HashMap<ExtensionName, HashMap<HelperName, Box<dyn HelperDef
             "join_node_taints" => helper!(handlebars_helpers::join_node_taints),
             "kube_reserve_cpu" => helper!(handlebars_helpers::kube_reserve_cpu),
             "kube_reserve_memory" => helper!(handlebars_helpers::kube_reserve_memory),
-            "pause-prefix" => helper!(handlebars_helpers::pause_prefix),
         },
 
         "network" => hashmap! {
@@ -280,7 +279,7 @@ mod test {
         let success_cases = &[
             ("network", "v1", vec!["host"]),
             ("empty-helpers-succeeds", "v1", vec![]),
-            ("kubernetes", "v1", vec!["pause-prefix"]),
+            ("kubernetes", "v1", vec!["join_node_taints"]),
         ];
 
         for (setting_name, version, helpers) in fail_cases.iter() {
@@ -332,7 +331,6 @@ mod test {
                     "join_node_taints",
                     "kube_reserve_cpu",
                     "kube_reserve_memory",
-                    "pause-prefix",
                 ],
             ),
         ];
