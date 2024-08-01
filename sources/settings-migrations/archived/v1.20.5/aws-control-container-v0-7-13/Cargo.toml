@@ -1,0 +1,15 @@
+[package]
+name = "aws-control-container-v0-7-13"
+version = "0.1.0"
+authors = ["Yutong Sun <yutongsu@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+migration-helpers = { path = "../../../migration-helpers", version = "0.1.0"}
