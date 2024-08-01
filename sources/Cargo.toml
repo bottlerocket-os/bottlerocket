@@ -40,6 +40,7 @@ members = [
     "settings-migrations/v1.21.0/pod-infra-container-image-remove-settings-generator",
     "settings-migrations/v1.21.0/pod-infra-container-image-services",
     "settings-migrations/v1.21.0/k8s-reserved-cpus-v0-1-0",
+    "settings-migrations/v1.21.0/add-hostname-override-source",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
@@ -60,13 +61,13 @@ version = "0.1.0"
 
 [workspace.dependencies.bottlerocket-modeled-types]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.1.0"
-version = "0.1.0"
+tag = "bottlerocket-settings-models-v0.2.0"
+version = "0.2.0"
 
 [workspace.dependencies.bottlerocket-settings-models]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.1.0"
-version = "0.1.0"
+tag = "bottlerocket-settings-models-v0.2.0"
+version = "0.2.0"
 
 [workspace.dependencies.bottlerocket-settings-plugin]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
@@ -75,7 +76,7 @@ version = "0.1.0"
 
 [workspace.dependencies.settings-extension-oci-defaults]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.1.0"
+tag = "bottlerocket-settings-models-v0.2.0"
 version = "0.1.0"
 
 [profile.release]

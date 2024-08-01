@@ -1,2 +1,3 @@
 [settings.kubernetes]
 cloud-provider = "external"
+hostname-override-source = "private-dns-name"
