@@ -20,6 +20,7 @@ We provide these recommendations, along with [details](#details) and [examples](
 | [Limit access to host namespaces](#limit-access-to-host-namespaces)                                 | Important |
 | [Limit access to block devices](#limit-access-to-block-devices)                                     | Important |
 | [Do not run containers as UID 0](#do-not-run-containers-as-uid-0)                                   | Moderate  |
+| [NVIDIA GPU Time-Slicing: Activation Guidelines](#nvidia-gpu-time-slicing-activation-guidelines)    | Important  |
 
 ## Details
 
@@ -364,3 +365,10 @@ spec:
     - 'downwardAPI'
     - 'persistentVolumeClaim'
 ```
+### NVIDIA GPU Time-Slicing: Activation Guidelines
+
+Bottlerocket supports NVIDIA GPU time-slicing, enabling system administrators to allocate a set of replicas for a GPU, which can be assigned to individual pods for running various workloads. Internally, GPU time-slicing is used to multiplex workloads from multiple replicas of the same underlying GPU, providing each process with an equal share of time across all pods.
+
+It's worth noting that while time-slicing allows sharing of GPUs among multiple workloads, it does not provide memory or fault isolation between replicas. Without memory isolation, all workloads share the same memory space, which can lead to contention and possible interference between processes. This can affect the predictability and performance of each workload, as one process may consume more resources than anticipated, leaving less available for others and can lead to memory starvation. Moreover, without fault tolerant, if one process fails or behaves maliciously, it has the potential to affect all other processes running on the GPU, posing a security risk.
+
+We recommend to keep NVIDIA GPU time-slicing feature in a disabled state and only enable it when necessary, ensuring that all the workloads sharing the GPU are secure and reliable. For more detailed information, please refer to the [NVIDIA time-slice](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/gpu-sharing.html) documentation.
