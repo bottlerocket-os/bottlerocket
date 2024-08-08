@@ -7,5 +7,5 @@ edition = "2021"
 publish = false
 
 [dependencies]
-cargo-readme = "3"
-snafu = "0.8"
+cargo-readme.workspace = true
+snafu.workspace = true

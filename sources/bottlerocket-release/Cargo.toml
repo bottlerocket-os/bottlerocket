@@ -9,11 +9,11 @@ publish = false
 exclude = ["README.md"]
 
 [dependencies]
-envy = "0.4"
-log = "0.4"
-semver = { version = "1", features = ["serde"] }
-serde = { version = "1", features = ["derive"] }
-snafu = "0.8"
+envy.workspace = true
+log.workspace = true
+semver = { workspace = true, features = ["serde"] }
+serde = { workspace = true, features = ["derive"] }
+snafu.workspace = true
 
 [build-dependencies]
-generate-readme = { version = "0.1", path = "../generate-readme" }
+generate-readme.workspace = true
