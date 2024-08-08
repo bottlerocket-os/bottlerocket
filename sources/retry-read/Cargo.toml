@@ -9,4 +9,4 @@ publish = false
 exclude = ["README.md"]
 
 [build-dependencies]
-generate-readme = { version = "0.1", path = "../generate-readme" }
+generate-readme.workspace = true
