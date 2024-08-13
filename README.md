@@ -168,7 +168,7 @@ If you prefer a command-line tool, you can start a session with a recent [AWS CL
 Then you'd be able to start a session using only your instance ID, like this:
 
 ```shell
-aws ssm start-session --target INSTANCE_ID
+aws ssm start-session --target INSTANCE_ID --region REGION_CODE
 ```
 
 With the [default control container](https://github.com/bottlerocket-os/bottlerocket-control-container), you can make [API calls](#api) to configure and manage your Bottlerocket host.
