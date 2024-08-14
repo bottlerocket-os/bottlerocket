@@ -1,5 +1,5 @@
 [package]
-name = "settings-defaults-vmware-k8s-1_30"
+name = "settings-defaults-aws-k8s-1_31"
 version = "0.1.0"
 edition = "2021"
 license = "Apache-2.0 OR MIT"

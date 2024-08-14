@@ -27,12 +27,12 @@ members = [
     "settings-defaults/aws-k8s-1.25-nvidia",
     "settings-defaults/aws-k8s-1.26",
     "settings-defaults/aws-k8s-1.26-nvidia",
-    "settings-defaults/aws-k8s-1.30",
-    "settings-defaults/aws-k8s-1.30-nvidia",
+    "settings-defaults/aws-k8s-1.31",
+    "settings-defaults/aws-k8s-1.31-nvidia",
     "settings-defaults/metal-dev",
     "settings-defaults/metal-k8s-1.30",
     "settings-defaults/vmware-dev",
-    "settings-defaults/vmware-k8s-1.30",
+    "settings-defaults/vmware-k8s-1.31",
 
     # (all previous migrations archived; add new ones after this line)
     "settings-migrations/v1.21.0/pluto-remove-generators-v0-1-0",

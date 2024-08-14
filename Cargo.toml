@@ -21,10 +21,12 @@ members = [
     "variants/aws-k8s-1.28",
     "variants/aws-k8s-1.29",
     "variants/aws-k8s-1.30",
+    "variants/aws-k8s-1.31",
     "variants/aws-k8s-1.27-nvidia",
     "variants/aws-k8s-1.28-nvidia",
     "variants/aws-k8s-1.29-nvidia",
     "variants/aws-k8s-1.30-nvidia",
+    "variants/aws-k8s-1.31-nvidia",
     "variants/metal-dev",
     "variants/metal-k8s-1.28",
     "variants/metal-k8s-1.29",
@@ -32,6 +34,7 @@ members = [
     "variants/vmware-k8s-1.28",
     "variants/vmware-k8s-1.29",
     "variants/vmware-k8s-1.30",
+    "variants/vmware-k8s-1.31",
 ]
 
 [profile.dev]
