@@ -44,6 +44,7 @@ lazy_static! {
         m.insert("cn-northwest-1", "183901325759");
         m.insert("eu-central-1", "328549459982");
         m.insert("eu-central-2", "861738308508");
+        m.insert("eu-isoe-west-1", "589460436674");
         m.insert("eu-north-1", "328549459982");
         m.insert("eu-south-1", "586180183710");
         m.insert("eu-south-2", "620625777247");
@@ -76,6 +77,7 @@ lazy_static! {
         let mut m = HashMap::new();
         m.insert("cn-north-1", "bottlerocket-updates-cn-north-1.s3.dualstack");
         m.insert("cn-northwest-1", "bottlerocket-updates-cn-northwest-1.s3.dualstack");
+        m.insert("eu-isoe-west-1", "bottlerocket-updates-eu-isoe-west-1.s3");
         m
     };
 }
@@ -88,6 +90,7 @@ lazy_static! {
         let mut m = HashMap::new();
         m.insert("cn-north-1", "aws-cn");
         m.insert("cn-northwest-1", "aws-cn");
+        m.insert("eu-isoe-west-1", "aws-iso-e");
         m.insert("us-gov-east-1", "aws-us-gov");
         m.insert("us-gov-west-1", "aws-us-gov");
         m
@@ -1755,6 +1758,7 @@ fn ecr_registry<S: AsRef<str>>(region: S) -> String {
     };
     match partition {
         "aws-cn" => format!("{}.dkr.ecr.{}.amazonaws.com.cn", registry_id, region),
+        "aws-iso-e" => format!("{}.dkr.ecr.{}.cloud.adc-e.uk", registry_id, region),
         _ => format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region),
     }
 }
@@ -1773,6 +1777,7 @@ fn tuf_repository<S: AsRef<str>>(region: S) -> String {
     };
     match partition {
         "aws-cn" => format!("https://{}.{}.amazonaws.com.cn/latest", endpoint, region),
+        "aws-iso-e" => format!("https://{}.{}.cloud.adc-e.uk/latest", endpoint, region),
         _ => format!("https://{}.{}.amazonaws.com/latest", endpoint, region),
     }
 }
@@ -2273,6 +2278,10 @@ mod test_ecr_registry {
             "eu-south-2",
             "620625777247.dkr.ecr.eu-south-2.amazonaws.com/bottlerocket-admin:v0.5.1",
         ),
+        (
+            "eu-isoe-west-1",
+            "589460436674.dkr.ecr.eu-isoe-west-1.cloud.adc-e.uk/bottlerocket-admin:v0.5.1",
+        ),
     ];
 
     const ADMIN_CONTAINER_TEMPLATE: &str =
@@ -2321,6 +2330,8 @@ mod test_tuf_repository {
     const EXPECTED_URL_CN_NORTH_1: &str =
         "https://bottlerocket-updates-cn-north-1.s3.dualstack.cn-north-1.amazonaws.com.cn/latest/metadata/2020-07-07/";
 
+    const EXPECTED_URL_EU_ISOE_WEST_1: &str = "https://bottlerocket-updates-eu-isoe-west-1.s3.eu-isoe-west-1.cloud.adc-e.uk/latest/metadata/2020-07-07/";
+
     #[test]
     fn url_af_south_1() {
         let result = setup_and_render_template(
@@ -2349,6 +2360,16 @@ mod test_tuf_repository {
         )
         .unwrap();
         assert_eq!(result, EXPECTED_URL_CN_NORTH_1);
+    }
+
+    #[test]
+    fn url_eu_isoe_west_1() {
+        let result = setup_and_render_template(
+            METADATA_TEMPLATE,
+            &json!({"settings": {"aws": {"region": "eu-isoe-west-1"}}}),
+        )
+        .unwrap();
+        assert_eq!(result, EXPECTED_URL_EU_ISOE_WEST_1);
     }
 }
 
