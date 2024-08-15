@@ -1,3 +1,23 @@
+# v1.21.1 (2024-08-15)
+
+## Build Changes
+* Use workspace dependencies for all dependencies ([#4132])
+
+### Twoliter
+* Update bottlerocket-core-kit to v2.3.3 ([#4143], [#4139])
+
+### Settings Extensions
+* Update bottlerocket-settings-models to v0.3.0 ([#4145])
+
+## README changes
+* Update command for SSM Start session on host container ([#4129]) - Thanks @Veronica4036!
+
+[#4129]: https://github.com/bottlerocket-os/bottlerocket/pull/4129
+[#4132]: https://github.com/bottlerocket-os/bottlerocket/pull/4132
+[#4139]: https://github.com/bottlerocket-os/bottlerocket/pull/4139
+[#4143]: https://github.com/bottlerocket-os/bottlerocket/pull/4143
+[#4145]: https://github.com/bottlerocket-os/bottlerocket/pull/4145
+
 # v1.21.0 (2024-08-06)
 
 ## OS Changes
