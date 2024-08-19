@@ -330,4 +330,7 @@ version = "1.21.1"
     "migrate_v1.21.0_k8s-reserved-cpus-v0-1-0.lz4",
     "migrate_v1.21.0_add-hostname-override-source.lz4",
 ]
-"(1.21.0, 1.21.1)" = []
+"(1.21.0, 1.21.1)" = [
+    "migrate_v1.21.1_aws-admin-container-v0-11-10.lz4",
+    "migrate_v1.21.1_public-admin-container-v0-11-10.lz4",
+]

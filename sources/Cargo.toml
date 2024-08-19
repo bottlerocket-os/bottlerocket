@@ -41,6 +41,8 @@ members = [
     "settings-migrations/v1.21.0/pod-infra-container-image-services",
     "settings-migrations/v1.21.0/k8s-reserved-cpus-v0-1-0",
     "settings-migrations/v1.21.0/add-hostname-override-source",
+    "settings-migrations/v1.21.1/aws-admin-container-v0-11-10",
+    "settings-migrations/v1.21.1/public-admin-container-v0-11-10",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
