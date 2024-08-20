@@ -72,6 +72,8 @@ Provides: %{_cross_os}settings-plugin(aws-k8s-1.29)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.29-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.30)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.30-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.31)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.31-nvidia)
 Conflicts: %{_cross_os}settings-plugin(any)
 
 %description aws-k8s
@@ -118,6 +120,7 @@ Provides: %{_cross_os}settings-plugin(vmware-k8s-1.27)
 Provides: %{_cross_os}settings-plugin(vmware-k8s-1.28)
 Provides: %{_cross_os}settings-plugin(vmware-k8s-1.29)
 Provides: %{_cross_os}settings-plugin(vmware-k8s-1.30)
+Provides: %{_cross_os}settings-plugin(vmware-k8s-1.31)
 Conflicts: %{_cross_os}settings-plugin(any)
 
 %description vmware-k8s
