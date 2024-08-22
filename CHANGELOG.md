@@ -9,6 +9,7 @@
 
 ### Twoliter
 * Update bottlerocket-core-kit to v2.3.5 ([#4156], [#4152], [#4143], [#4139])
+* Update Twoliter to v0.4.5 ([#4159])
 
 ### Settings Extensions
 * Update bottlerocket-settings-models to v0.3.0 ([#4145])
@@ -24,6 +25,7 @@
 [#4152]: https://github.com/bottlerocket-os/bottlerocket/pull/4152
 [#4153]: https://github.com/bottlerocket-os/bottlerocket/pull/4153
 [#4156]: https://github.com/bottlerocket-os/bottlerocket/pull/4156
+[#4159]: https://github.com/bottlerocket-os/bottlerocket/pull/4159
 
 # v1.21.0 (2024-08-06)
 
