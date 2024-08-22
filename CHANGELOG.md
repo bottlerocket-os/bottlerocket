@@ -1,4 +1,4 @@
-# v1.21.1 (2024-08-19)
+# v1.21.1 (2024-08-21)
 
 ## OS Changes
 
@@ -8,7 +8,7 @@
 * Use workspace dependencies for all dependencies ([#4132])
 
 ### Twoliter
-* Update bottlerocket-core-kit to v2.3.4 ([#4152], [#4143], [#4139])
+* Update bottlerocket-core-kit to v2.3.5 ([#4156], [#4152], [#4143], [#4139])
 
 ### Settings Extensions
 * Update bottlerocket-settings-models to v0.3.0 ([#4145])
@@ -23,6 +23,7 @@
 [#4145]: https://github.com/bottlerocket-os/bottlerocket/pull/4145
 [#4152]: https://github.com/bottlerocket-os/bottlerocket/pull/4152
 [#4153]: https://github.com/bottlerocket-os/bottlerocket/pull/4153
+[#4156]: https://github.com/bottlerocket-os/bottlerocket/pull/4156
 
 # v1.21.0 (2024-08-06)
 
