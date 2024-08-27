@@ -29,7 +29,7 @@ The following will download and verify the root role itself:
 
 ```shell
 curl -O "https://cache.bottlerocket.aws/root.json"
-sha512sum -c <<<"a3c58bc73999264f6f28f3ed9bfcb325a5be943a782852c7d53e803881968e0a4698bd54c2f125493f4669610a9da83a1787eb58a8303b2ee488fa2a3f7d802f  root.json"
+sha512sum -c <<<"2ff1fbf99b20dd7ff5d2c84243a8e3b51701183b1f524b7d470a6b7a9b0172fbb36a0949b7e586ab7ccb6e348eb77125d6ed9fd1a638f4381e4f3f084ff38596  root.json"
 ```
 
 Next, set your desired version and variant, and use `tuftool` to download the image:
