@@ -350,11 +350,11 @@ For example, to run busybox:
 ### aws-k8s-*-nvidia variants
 
 The `aws-k8s-*-nvidia` variants include the required packages and configurations to leverage NVIDIA GPUs.
-They come with the [NVIDIA Tesla driver](https://docs.nvidia.com/datacenter/tesla/drivers/index.html) along with the libraries required by the [CUDA toolkit](https://developer.nvidia.com/cuda-toolkit) included in your orchestrated containers.
+They come with the [NVIDIA Tesla driver](https://docs.nvidia.com/datacenter/tesla/drivers/index.html) along with the libraries required by the [NVIDIA container runtime](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit) included in your orchestrated containers.
 They also include the [NVIDIA k8s device plugin](https://github.com/NVIDIA/k8s-device-plugin).
 If you already have a daemonset for the device plugin in your cluster, you may need to use taints and tolerations to keep it from running on Bottlerocket nodes.
 
-Additional NVIDIA tools such as [DCGM](https://github.com/NVIDIA/dcgm-exporter) and [GPU Feature Discovery](https://github.com/NVIDIA/gpu-feature-discovery) will work as expected.
+Additional NVIDIA tools such as [DCGM exporter](https://github.com/NVIDIA/dcgm-exporter) and [GPU Feature Discovery](https://github.com/NVIDIA/gpu-feature-discovery) will work as expected.
 You can install them in your cluster by following the `helm install` instructions provided for each project.
 
 The [GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/getting-started.html#install-nvidia-gpu-operator) can also be used to install these tools.
