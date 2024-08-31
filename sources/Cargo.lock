@@ -307,6 +307,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-control-container-v0-7-15"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1657,6 +1664,13 @@ dependencies = [
 
 [[package]]
 name = "public-control-container-v0-7-14"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "public-control-container-v0-7-15"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",

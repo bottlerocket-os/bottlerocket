@@ -47,6 +47,8 @@ members = [
     "settings-migrations/v1.21.1/public-control-container-v0-7-14",
     "settings-migrations/v1.22.0/aws-admin-container-v0-11-11",
     "settings-migrations/v1.22.0/public-admin-container-v0-11-11",
+    "settings-migrations/v1.22.0/aws-control-container-v0-7-15",
+    "settings-migrations/v1.22.0/public-control-container-v0-7-15",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
