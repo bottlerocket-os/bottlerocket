@@ -293,6 +293,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-admin-container-v0-11-11"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "aws-control-container-v0-7-14"
 version = "0.1.0"
 dependencies = [
@@ -1636,6 +1643,13 @@ dependencies = [
 
 [[package]]
 name = "public-admin-container-v0-11-10"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "public-admin-container-v0-11-11"
 version = "0.1.0"
 dependencies = [
  "migration-helpers",
