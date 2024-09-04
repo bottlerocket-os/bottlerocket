@@ -7,6 +7,7 @@ struct AwsEcs2Settings {
     motd: bottlerocket_settings_models::MotdV1,
     updates: bottlerocket_settings_models::UpdatesSettingsV1,
     host_containers: bottlerocket_settings_models::HostContainersSettingsV1,
+    bootstrap_commands: bottlerocket_settings_models::BootstrapCommandsSettingsV1,
     bootstrap_containers: bottlerocket_settings_models::BootstrapContainersSettingsV1,
     ntp: bottlerocket_settings_models::NtpSettingsV1,
     network: bottlerocket_settings_models::NetworkSettingsV1,
