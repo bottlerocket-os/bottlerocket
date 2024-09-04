@@ -236,6 +236,18 @@ mod error {
             source: std::io::Error,
         },
 
+        #[snafu(display(
+            "Unable to encode input '{}' from template '{}' as toml: {}",
+            value,
+            source,
+            template
+        ))]
+        TomlEncode {
+            value: serde_json::Value,
+            source: serde_json::Error,
+            template: String,
+        },
+
         #[snafu(display("Unknown architecture '{}' given to goarch helper", given))]
         UnknownArch { given: String },
 
@@ -958,13 +970,54 @@ pub fn join_array(
                 "\"{}\"",
                 value.as_str().context(error::JoinStringsWrongTypeSnafu {
                     expected_type: "string",
-                    value: array.to_owned(),
+                    value: value.to_owned(),
                     template: template_name,
                 })?
             )
             .as_str(),
         );
     }
+
+    // write it to the template
+    out.write(&result)
+        .with_context(|_| error::TemplateWriteSnafu {
+            template: template_name.to_owned(),
+        })?;
+
+    Ok(())
+}
+
+/// `toml_encode` accepts arbitrary input and encodes it as a toml string
+///
+/// # Example
+///
+/// Consider an array of values: `[ "a", "b", "c" ]` stored in a setting such as
+/// `settings.somewhere.foo-list`. In our template we can write:
+/// `{{ toml_encode settings.somewhere.foo-list }}`
+///
+/// This will render `["a", "b", "c"]`.
+pub fn toml_encode(
+    helper: &Helper<'_, '_>,
+    _: &Handlebars,
+    _: &Context,
+    renderctx: &mut RenderContext<'_, '_>,
+    out: &mut dyn Output,
+) -> Result<(), RenderError> {
+    trace!("Starting toml_encode helper");
+    let template_name = template_name(renderctx);
+    check_param_count(helper, template_name, 1)?;
+
+    // get the string
+    let encode_param = get_param(helper, 0)?;
+    let toml_value: toml::Value =
+        serde_json::from_value(encode_param.to_owned()).with_context(|_| {
+            error::TomlEncodeSnafu {
+                value: encode_param.to_owned(),
+                template: template_name,
+            }
+        })?;
+
+    let result = toml_value.to_string();
 
     // write it to the template
     out.write(&result)

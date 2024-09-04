@@ -125,6 +125,7 @@ pub fn build_template_registry() -> Result<handlebars::Handlebars<'static>> {
     template_registry.register_helper("host", Box::new(helpers::host));
     template_registry.register_helper("goarch", Box::new(helpers::goarch));
     template_registry.register_helper("join_array", Box::new(helpers::join_array));
+    template_registry.register_helper("toml_encode", Box::new(helpers::toml_encode));
     template_registry.register_helper("kube_reserve_cpu", Box::new(helpers::kube_reserve_cpu));
     template_registry.register_helper(
         "kube_reserve_memory",
