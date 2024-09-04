@@ -49,6 +49,8 @@ members = [
     "settings-migrations/v1.22.0/public-admin-container-v0-11-11",
     "settings-migrations/v1.22.0/aws-control-container-v0-7-15",
     "settings-migrations/v1.22.0/public-control-container-v0-7-15",
+    "settings-migrations/v1.22.0/bootstrap-commands-settings",
+    "settings-migrations/v1.22.0/bootstrap-commands-metadata",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
@@ -122,13 +124,13 @@ version = "0.1.0"
 
 [workspace.dependencies.bottlerocket-modeled-types]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.3.0"
-version = "0.3.0"
+tag = "bottlerocket-settings-models-v0.4.0"
+version = "0.4.0"
 
 [workspace.dependencies.bottlerocket-settings-models]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.3.0"
-version = "0.3.0"
+tag = "bottlerocket-settings-models-v0.4.0"
+version = "0.4.0"
 
 [workspace.dependencies.bottlerocket-settings-plugin]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
@@ -137,7 +139,7 @@ version = "0.1.0"
 
 [workspace.dependencies.settings-extension-oci-defaults]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.3.0"
+tag = "bottlerocket-settings-models-v0.4.0"
 version = "0.1.0"
 
 [profile.release]

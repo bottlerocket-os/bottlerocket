@@ -167,6 +167,18 @@ affected-services = ["lockdown"]
 path = "/etc/corndog.toml"
 template-path = "/usr/share/templates/corndog-toml"
 
+# Bootstrap Commands
+[services.bootstrap-commands]
+configuration-files = ["bootstrap-commands-toml"]
+restart-commands = []
+
+[metadata.settings.bootstrap-commands]
+affected-services = ["bootstrap-commands"]
+
+[configuration-files.bootstrap-commands-toml]
+path = "/etc/bootstrap-commands/bootstrap-commands.toml"
+template-path = "/usr/share/templates/bootstrap-commands-toml"
+
 # Bootstrap Containers
 
 [services.bootstrap-containers]
