@@ -1,3 +1,28 @@
+# v1.22.0 (2024-09-10)
+
+## Orchestrator Changes
+
+### Kubernetes
+* Add Kubernetes 1.31 variants ([#4142])
+
+## OS Changes
+* Update host containers ([#4171])
+* Add support for bootstrap commands ([#4131])
+
+## Build Changes
+
+### Twoliter
+* Update bottlerocket-core-kit to v2.4.0 ([#4177], [#4168])
+
+### Settings Extensions
+* Update bottlerocket-settings-models to v0.4.0 ([#4131])
+
+[#4131]: https://github.com/bottlerocket-os/bottlerocket/pull/4131
+[#4142]: https://github.com/bottlerocket-os/bottlerocket/pull/4142
+[#4168]: https://github.com/bottlerocket-os/bottlerocket/pull/4168
+[#4171]: https://github.com/bottlerocket-os/bottlerocket/pull/4171
+[#4177]: https://github.com/bottlerocket-os/bottlerocket/pull/4177
+
 # v1.21.1 (2024-08-21)
 
 ## OS Changes
