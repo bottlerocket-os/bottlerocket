@@ -4,12 +4,15 @@ release-version = "1.22.0"
 [vendor.bottlerocket]
 registry = "public.ecr.aws/bottlerocket"
 
+[vendor.sballal]
+registry = "public.ecr.aws/sballal"
+
 [sdk]
-name = "bottlerocket-sdk"
-version = "0.44.0"
-vendor = "bottlerocket"
+name = "thar-be-a-beta-sdk"
+version = "0.45.0"
+vendor = "sballal"
 
 [[kit]]
 name = "bottlerocket-core-kit"
 version = "2.4.0"
-vendor = "bottlerocket"
+vendor = "sballal"
