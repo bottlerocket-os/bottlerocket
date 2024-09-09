@@ -56,6 +56,7 @@ members = [
     "settings-plugins/aws-ecs-1",
     "settings-plugins/aws-ecs-2",
     "settings-plugins/aws-k8s",
+    "settings-plugins/aws-k8s-nvidia",
     "settings-plugins/metal-dev",
     "settings-plugins/metal-k8s",
     "settings-plugins/vmware-dev",

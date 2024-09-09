@@ -2517,6 +2517,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-plugin-aws-k8s-nvidia"
+version = "0.1.0"
+dependencies = [
+ "abi_stable",
+ "bottlerocket-settings-models",
+ "bottlerocket-settings-plugin",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "settings-plugin-metal-dev"
 version = "0.1.0"
 dependencies = [
