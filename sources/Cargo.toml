@@ -51,6 +51,10 @@ members = [
     "settings-migrations/v1.22.0/public-control-container-v0-7-15",
     "settings-migrations/v1.22.0/bootstrap-commands-settings",
     "settings-migrations/v1.22.0/bootstrap-commands-metadata",
+    "settings-migrations/v1.23.0/nvidia-container-runtime-metadata",
+    "settings-migrations/v1.23.0/nvidia-container-runtime-settings",
+    "settings-migrations/v1.23.0/kubelet-device-plugins-metadata",
+    "settings-migrations/v1.23.0/kubelet-device-plugins-settings",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
