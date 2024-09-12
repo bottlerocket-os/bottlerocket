@@ -51,11 +51,16 @@ members = [
     "settings-migrations/v1.22.0/public-control-container-v0-7-15",
     "settings-migrations/v1.22.0/bootstrap-commands-settings",
     "settings-migrations/v1.22.0/bootstrap-commands-metadata",
+    "settings-migrations/v1.23.0/nvidia-container-runtime-metadata",
+    "settings-migrations/v1.23.0/nvidia-container-runtime-settings",
+    "settings-migrations/v1.23.0/kubelet-device-plugins-metadata",
+    "settings-migrations/v1.23.0/kubelet-device-plugins-settings",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
     "settings-plugins/aws-ecs-2",
     "settings-plugins/aws-k8s",
+    "settings-plugins/aws-k8s-nvidia",
     "settings-plugins/metal-dev",
     "settings-plugins/metal-k8s",
     "settings-plugins/vmware-dev",
@@ -124,13 +129,13 @@ version = "0.1.0"
 
 [workspace.dependencies.bottlerocket-modeled-types]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.4.0"
-version = "0.4.0"
+tag = "bottlerocket-settings-models-v0.5.0"
+version = "0.5.0"
 
 [workspace.dependencies.bottlerocket-settings-models]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.4.0"
-version = "0.4.0"
+tag = "bottlerocket-settings-models-v0.5.0"
+version = "0.5.0"
 
 [workspace.dependencies.bottlerocket-settings-plugin]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
@@ -139,7 +144,7 @@ version = "0.1.0"
 
 [workspace.dependencies.settings-extension-oci-defaults]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.4.0"
+tag = "bottlerocket-settings-models-v0.5.0"
 version = "0.1.0"
 
 [profile.release]

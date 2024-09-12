@@ -57,26 +57,37 @@ Summary: Settings plugin for the aws-k8s variants
 Requires: %{_cross_os}variant-family(aws-k8s)
 Provides: %{_cross_os}settings-plugin(any)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.23)
-Provides: %{_cross_os}settings-plugin(aws-k8s-1.23-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.24)
-Provides: %{_cross_os}settings-plugin(aws-k8s-1.24-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.25)
-Provides: %{_cross_os}settings-plugin(aws-k8s-1.25-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.26)
-Provides: %{_cross_os}settings-plugin(aws-k8s-1.26-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.27)
-Provides: %{_cross_os}settings-plugin(aws-k8s-1.27-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.28)
-Provides: %{_cross_os}settings-plugin(aws-k8s-1.28-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.29)
-Provides: %{_cross_os}settings-plugin(aws-k8s-1.29-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.30)
-Provides: %{_cross_os}settings-plugin(aws-k8s-1.30-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.31)
+Conflicts: %{_cross_os}settings-plugin(any)
+Conflicts: %{_cross_os}variant-flavor(nvidia)
+
+
+%description aws-k8s
+%{summary}.
+
+%package aws-k8s-nvidia
+Summary: Settings plugin for the aws-k8s-nvidia variants
+Requires: (%{_cross_os}variant-family(aws-k8s) and %{_cross_os}variant-flavor(nvidia))
+Provides: %{_cross_os}settings-plugin(any)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.23-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.24-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.25-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.26-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.27-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.28-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.29-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.30-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.31-nvidia)
 Conflicts: %{_cross_os}settings-plugin(any)
 
-%description aws-k8s
+%description aws-k8s-nvidia
 %{summary}.
 
 %package metal-dev
@@ -135,11 +146,22 @@ Conflicts: %{_cross_os}settings-plugin(any)
   -p settings-plugin-aws-dev \
   -p settings-plugin-aws-ecs-1 \
   -p settings-plugin-aws-ecs-2 \
-  -p settings-plugin-aws-k8s \
   -p settings-plugin-metal-dev \
   -p settings-plugin-metal-k8s \
   -p settings-plugin-vmware-dev \
   -p settings-plugin-vmware-k8s \
+  %{nil}
+
+# The settings-plugin-aws-k8s and settings-plugin-aws-k8s-nvidia are compiled independently
+# due to the requirement of distinct feature flags. This separation is necessary to prevent
+# feature unification, as detailed in the Rust Cargo documentation:
+# https://doc.rust-lang.org/cargo/reference/features.html#feature-unification
+%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
+  -p settings-plugin-aws-k8s \
+  %{nil}
+
+%cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
+  -p settings-plugin-aws-k8s-nvidia \
   %{nil}
 
 %install
@@ -151,6 +173,7 @@ for plugin in \
   aws-dev \
   aws-ecs-1 \
   aws-ecs-2 \
+  aws-k8s-nvidia \
   aws-k8s \
   metal-dev \
   metal-k8s \
@@ -193,6 +216,11 @@ done
 %{_cross_pluginsdir}/aws-k8s/libsettings.so
 %{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/aws-k8s.conf
 %{_cross_tmpfilesdir}/settings-plugin-aws-k8s.conf
+
+%files aws-k8s-nvidia
+%{_cross_pluginsdir}/aws-k8s-nvidia/libsettings.so
+%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/aws-k8s-nvidia.conf
+%{_cross_tmpfilesdir}/settings-plugin-aws-k8s-nvidia.conf
 
 %files metal-dev
 %{_cross_pluginsdir}/metal-dev/libsettings.so

@@ -1,0 +1,19 @@
+[package]
+name = "settings-plugin-aws-k8s-nvidia"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+name = "settings_aws_k8s_nvidia"
+
+[dependencies]
+abi_stable.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+# settings plugins
+bottlerocket-settings-plugin = { workspace = true }
+bottlerocket-settings-models = { workspace = true }

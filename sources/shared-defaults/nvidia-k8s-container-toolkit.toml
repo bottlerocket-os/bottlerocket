@@ -1,0 +1,14 @@
+[settings.nvidia-container-runtime]
+visible-devices-as-volume-mounts = true
+visible-devices-envvar-when-unprivileged = false
+
+[metadata.settings.nvidia-container-runtime]
+affected-services = ["nvidia-container-toolkit"]
+
+[services.nvidia-container-toolkit]
+configuration-files = ["nvidia-container-toolkit"]
+restart-commands = []
+
+[configuration-files.nvidia-container-toolkit]
+path = "/etc/nvidia-container-runtime/config.toml"
+template-path = "/usr/share/templates/nvidia-container-runtime/nvidia-container-toolkit-config-k8s"
