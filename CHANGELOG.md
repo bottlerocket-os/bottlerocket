@@ -1,3 +1,32 @@
+# v1.23.0 (2024-09-19)
+
+## Orchestrator Changes
+
+### Kubernetes
+* Support Kubernetes NVIDIA Device Plugin configurations through API ([#4182])
+* Support NVIDIA Container Toolkit configurations through API ([#4182])
+
+## Build Changes
+* Update bottlerocket-sdk to 0.45 ([#4189])
+
+### Twoliter
+* Update bottlerocket-core-kit ([#4189], [#4203])
+* Perform binary checksum validation ([#4192])
+* Update Twoliter to v0.4.6 ([#4200])
+
+### Settings Extensions
+* Update bottlerocket-settings-models to v0.4.0 ([#4182])
+
+### Documentation Changes
+* Add NVIDIA Device Plugin and NVIDIA Container Toolkit notes to SECURITY_GUIDANCE.md ([#4205])
+
+[#4182]: https://github.com/bottlerocket-os/bottlerocket/pull/4182
+[#4189]: https://github.com/bottlerocket-os/bottlerocket/pull/4189
+[#4192]: https://github.com/bottlerocket-os/bottlerocket/pull/4192
+[#4200]: https://github.com/bottlerocket-os/bottlerocket/pull/4200
+[#4203]: https://github.com/bottlerocket-os/bottlerocket/pull/4203
+[#4205]: https://github.com/bottlerocket-os/bottlerocket/pull/4205
+
 # v1.22.0 (2024-09-10)
 
 ## Orchestrator Changes
