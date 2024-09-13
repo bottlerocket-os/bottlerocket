@@ -41,7 +41,8 @@ Usage: $0 -r GIT_REPO -v TWOLITER_VERSION -d INSTALL_DIR [-e REUSE_EXISTING] [-b
     -d, --directory               the directory to install twoliter into
     -e, --reuse-existing-install  we will skip installation if we find the correct version installed
     -b, --allow-binary-install    we will try to install a GitHub release-attached binary if the
-                                  host we are on is Linux.
+                                  host we are on is Linux. Takes an expected sha256 sum for the
+                                  binary as input.
     -s, --allow-from-source       we will install from source using cargo install pointed to a git
                                   repo and rev when binary install is either not allowed or not
                                   possible
@@ -96,7 +97,7 @@ while [[ $# -gt 0 ]]; do
         -e|--reuse-existing-install)
             reuse_existing="true" ;;
         -b|--allow-binary-install)
-            allow_bin="true" ;;
+            allow_bin="true"; shift; bin_checksum=$1 ;;
         -s|--allow-from-source)
             from_source="true" ;;
         -k|--skip-version-check)
@@ -143,6 +144,8 @@ if [ "${allow_bin}" = "true" ] ; then
       twoliter_target="${host_arch}-unknown-${host_kernel}-musl"
       cd "${workdir}"
       curl -sSL "${twoliter_release}/twoliter-${twoliter_target}.tar.xz" -o "twoliter.tar.xz"
+      echo "Checking binary checksum..."
+      sha256sum -c <<< "${bin_checksum} twoliter.tar.xz"
       tar xf twoliter.tar.xz
       mv "./twoliter-${twoliter_target}/twoliter" "${dir}"
       exit 0
