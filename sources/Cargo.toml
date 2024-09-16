@@ -55,6 +55,7 @@ members = [
     "settings-migrations/v1.23.0/nvidia-container-runtime-settings",
     "settings-migrations/v1.23.0/kubelet-device-plugins-metadata",
     "settings-migrations/v1.23.0/kubelet-device-plugins-settings",
+    "settings-migrations/v1.23.0/kubernetes-service-config",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
