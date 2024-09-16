@@ -77,6 +77,14 @@ docker daemon configuration at `/etc/docker/daemon.json`.
 > You'll know this is the case if you see an error like `docker: Error response from daemon: OCI runtime create failed: this version of runc doesn't work on cgroups v2: unknown.`
 > Set the kernel parameter `systemd.unified_cgroup_hierarchy=0` in your boot configuration (e.g. GRUB) and reboot.
 
+#### Crane
+[Crane](https://github.com/google/go-containerregistry/blob/main/cmd/crane/README.md) is a tool for interacting with remote images and registries. 
+It does not require a daemon and thus you don't need the above Docker features to use it. 
+Twoliter supports utilizing `crane` (or `krane`) instead of `docker` if it is installed.
+We recommend using `crane` (and `krane`) over `docker` as it has shown better performance in our testing.
+
+The installation instructions for [crane](https://github.com/google/go-containerregistry/tree/main/cmd/crane) should help you set it up for use with Twoliter.
+
 ### Build process
 
 To build an image, run:
