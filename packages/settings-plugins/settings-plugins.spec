@@ -14,7 +14,7 @@ Summary: Settings plugins
 License: Apache-2.0 OR MIT
 URL: https://github.com/bottlerocket-os/bottlerocket
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc-devel
+Requires: %{_cross_os}glibc
 Requires: %{_cross_os}settings-plugin(any)
 
 %description
