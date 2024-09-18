@@ -6,20 +6,21 @@ Bottlerocket adheres to the [Shared Responsibility Model](https://aws.amazon.com
 
 We provide these recommendations, along with [details](#details) and [examples](#examples), to help you create a configuration that meets your security and compliance requirements.
 
-| Recommendation                                                                                      | Priority  |
-| :-------------------------------------------------------------------------------------------------- | :-------- |
-| [Enable automatic updates](#enable-automatic-updates)                                               | Critical  |
-| [Avoid containers with elevated privileges](#avoid-containers-with-elevated-privileges)             | Critical  |
-| [Restrict access to the host API socket](#restrict-access-to-the-host-api-socket)                   | Critical  |
-| [Restrict access to the container runtime socket](#restrict-access-to-the-container-runtime-socket) | Critical  |
-| [Design for host replacement](#design-for-host-replacement)                                         | Important |
-| [Enable kernel lockdown](#enable-kernel-lockdown)                                                   | Important |
-| [Limit use of host containers](#limit-use-of-host-containers)                                       | Important |
-| [Limit use of privileged SELinux labels](#limit-use-of-privileged-selinux-labels)                   | Important |
-| [Limit access to system mounts](#limit-access-to-system-mounts)                                     | Important |
-| [Limit access to host namespaces](#limit-access-to-host-namespaces)                                 | Important |
-| [Limit access to block devices](#limit-access-to-block-devices)                                     | Important |
-| [Do not run containers as UID 0](#do-not-run-containers-as-uid-0)                                   | Moderate  |
+| Recommendation                                                                                                                        | Priority  |
+| :--------------------------------------------------------------------------------------------------                                   | :-------- |
+| [Enable automatic updates](#enable-automatic-updates)                                                                                 | Critical  |
+| [Avoid containers with elevated privileges](#avoid-containers-with-elevated-privileges)                                               | Critical  |
+| [Restrict access to the host API socket](#restrict-access-to-the-host-api-socket)                                                     | Critical  |
+| [Restrict access to the container runtime socket](#restrict-access-to-the-container-runtime-socket)                                   | Critical  |
+| [Design for host replacement](#design-for-host-replacement)                                                                           | Important |
+| [Enable kernel lockdown](#enable-kernel-lockdown)                                                                                     | Important |
+| [Limit use of host containers](#limit-use-of-host-containers)                                                                         | Important |
+| [Limit use of privileged SELinux labels](#limit-use-of-privileged-selinux-labels)                                                     | Important |
+| [Limit access to system mounts](#limit-access-to-system-mounts)                                                                       | Important |
+| [Limit access to host namespaces](#limit-access-to-host-namespaces)                                                                   | Important |
+| [Limit access to block devices](#limit-access-to-block-devices)                                                                       | Important |
+| [Enforce requested NVIDIA GPU limits for unprivileged containers](#enforce-requested-nvidia-gpu-limits-for-unprivileged-containers)   | Important |
+| [Do not run containers as UID 0](#do-not-run-containers-as-uid-0)                                                                     | Moderate  |
 
 ## Details
 
@@ -227,6 +228,37 @@ If the same partition type or partition name is used for another device, the `/d
 This could compromise the integrity of the host.
 
 We recommend limiting access to block devices.
+
+### Enforce requested NVIDIA GPU limits for unprivileged containers
+
+When launching a container that has requested NVIDIA GPUs, the host software responsible for adding the devices to the container - the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) - will use one of these sources to determine which devices should be added:
+
+* The `NVIDIA_VISIBLE_DEVICES` environment variable
+* Mounts configured by the [NVIDIA Kubernetes Device Plugin](https://github.com/NVIDIA/k8s-device-plugin)
+
+If `NVIDIA_VISIBLE_DEVICES="all"` is set in a container’s environment, it can gain access to all NVIDIA GPUs on the system regardless of the NVIDIA GPU limits requested through Kubernetes directives.
+Because most popular container base images are configured this way, respecting this value by default would grant unprivileged containers access to all NVIDIA GPUs, ignoring the requested limits.
+
+To prevent this, Bottlerocket configures the host software so that `NVIDIA_VISIBLE_DEVICES="all"` is only respected for privileged containers.
+
+If you need to grant unprivileged containers access to all NVIDIA GPUs using this environment variable - bypassing any requested GPU limits - you can apply these settings:
+
+
+```toml
+[settings.kubelet-device-plugin]
+# Configures NVIDIA_VISIBLE_DEVICES with the list of devices
+device-list-strategy = "envvar"
+
+[settings.nvidia-container-runtime]
+# Allows reading the devices from NVIDIA_VISIBLE_DEVICES
+visible-devices-as-volume-mounts = false
+
+# Allows granting access to all unprivileged
+# containers with NVIDIA_VISIBLE_DEVICES=all
+visible-devices-envvar-when-unprivileged = true
+```
+
+We recommend leaving these settings at the default values, which will enforce the requested NVIDIA GPU limits for unprivileged containers.
 
 ### Do not run containers as UID 0
 
