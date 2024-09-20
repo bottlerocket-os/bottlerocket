@@ -8,9 +8,10 @@
 
 ## Build Changes
 * Update bottlerocket-sdk to 0.45 ([#4189])
+* Add `Twoliter.override` to `.gitignore` ([#4202])
 
 ### Twoliter
-* Update bottlerocket-core-kit ([#4189], [#4203])
+* Update bottlerocket-core-kit ([#4189], [#4203], [#4211])
 * Perform binary checksum validation ([#4192])
 * Update Twoliter to v0.4.6 ([#4200])
 
@@ -24,8 +25,10 @@
 [#4189]: https://github.com/bottlerocket-os/bottlerocket/pull/4189
 [#4192]: https://github.com/bottlerocket-os/bottlerocket/pull/4192
 [#4200]: https://github.com/bottlerocket-os/bottlerocket/pull/4200
+[#4202]: https://github.com/bottlerocket-os/bottlerocket/pull/4202
 [#4203]: https://github.com/bottlerocket-os/bottlerocket/pull/4203
 [#4205]: https://github.com/bottlerocket-os/bottlerocket/pull/4205
+[#4211]: https://github.com/bottlerocket-os/bottlerocket/pull/4211
 
 # v1.22.0 (2024-09-10)
 
