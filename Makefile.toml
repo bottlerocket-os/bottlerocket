@@ -41,7 +41,8 @@ TWOLITER_LOG_LEVEL = "info"
 # The project file that configures Twoliter.
 TWOLITER_PROJECT = "${BUILDSYS_ROOT_DIR}/Twoliter.toml"
 
-BUILDSYS_ARCH = { script = ['echo "${BUILDSYS_ARCH:-$(uname -m)}"'] }
+UNAME_ARCH = { script = ['uname -m'] }
+BUILDSYS_ARCH = { script = ['echo "${BUILDSYS_ARCH:-${UNAME_ARCH}}"'] }
 BUILDSYS_BUILD_DIR = "${BUILDSYS_ROOT_DIR}/build"
 BUILDSYS_PACKAGES_DIR = "${BUILDSYS_BUILD_DIR}/rpms"
 BUILDSYS_STATE_DIR = "${BUILDSYS_BUILD_DIR}/state"
@@ -273,7 +274,7 @@ if [ "${TWOLITER_REUSE_EXISTING_INSTALL}" = "true" ]; then
 fi
 
 if [ "${TWOLITER_ALLOW_BINARY_INSTALL}" = "true" ]; then
-   if [ "${BUILDSYS_ARCH}" = "aarch64" ]; then
+   if [ "${UNAME_ARCH}" = "aarch64" ]; then
       flags+=("--allow-binary-install" "${TWOLITER_SHA256_AARCH64}")
    else
       flags+=("--allow-binary-install" "${TWOLITER_SHA256_X86_64}")
