@@ -23,33 +23,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  list-variants:
-    # This needs to be its own job since the build job needs its output before
-    # it can initialize
-    if: github.repository == 'bottlerocket-os/bottlerocket'
-    name: "Determine variants"
-    runs-on: ubuntu-latest
-    outputs:
-      variants: ${{ steps.get-variants.outputs.variants }}
-      aarch-enemies: ${{ steps.get-variants.outputs.aarch-enemies }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/list-variants
-        id: get-variants
-
   build:
-    needs: list-variants
+    if: github.repository == 'bottlerocket-os/bottlerocket'
     runs-on:
       group: bottlerocket
       labels: bottlerocket_ubuntu-latest_32-core
     continue-on-error: true
     strategy:
       matrix:
-        variant: ${{ fromJson(needs.list-variants.outputs.variants) }}
         arch: [x86_64, aarch64]
-        exclude: ${{ fromJson(needs.list-variants.outputs.aarch-enemies) }}
       fail-fast: false
-    name: "Build ${{ matrix.variant }}-${{ matrix.arch }}"
+    name: "Build ${{ matrix.arch }}"
     steps:
       - name: Random delay
         run: |
@@ -60,11 +44,12 @@ jobs:
       - name: Preflight step to set up the runner
         uses: ./.github/actions/setup-node
       - run: rustup component add rustfmt
-      - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} unit-tests
-      - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-fmt
-      - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-clippy
-      - run: cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} check-shell
+      - run: cargo make unit-tests
+      - run: cargo make check-fmt
+      - run: cargo make check-clippy
+      - run: cargo make check-shell
       - run: |
-          cargo make -e BUILDSYS_VARIANT=${{ matrix.variant }} \
+          cargo make \
             -e BUILDSYS_ARCH=${{ matrix.arch }} \
-            -e BUILDSYS_JOBS=12
+            -e BUILDSYS_JOBS=12 \
+            build-all

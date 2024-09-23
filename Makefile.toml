@@ -410,6 +410,10 @@ run_task = "run-twoliter"
 dependencies = ["fetch-external-kits"]
 run_task = "run-twoliter"
 
+[tasks.build-all]
+dependencies = ["fetch-external-kits"]
+run_task = "run-twoliter"
+
 [tasks.repack-variant]
 run_task = "run-twoliter"
 
