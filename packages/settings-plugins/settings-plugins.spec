@@ -3,7 +3,7 @@
 
 # Do not prefer shared linking, since the libstd we use at build time
 # may not match the one installed on the final image.
-%global __global_rustflags_shared %__global_rustflags
+%global __global_rustflags_shared %__global_rustflags -C link-arg=-Wl,-soname=libsettings.so
 
 %global _cross_pluginsdir %{_cross_libdir}/settings-plugins
 
@@ -14,7 +14,7 @@ Summary: Settings plugins
 License: Apache-2.0 OR MIT
 URL: https://github.com/bottlerocket-os/bottlerocket
 BuildRequires: %{_cross_os}glibc-devel
-Requires: %{_cross_os}glibc-devel
+Requires: %{_cross_os}glibc
 Requires: %{_cross_os}settings-plugin(any)
 
 %description
