@@ -1,3 +1,24 @@
+# v1.24.0 (2024-09-27)
+
+## Release Highlights
+* Use open GPU drivers on P4 and P5 instances automatically [bottlerocket-core-kit#114](https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/114)
+* Update to nvidia-container-toolkit 1.16.2 [bottlerocket-core-kit#161](https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/161)
+
+## Build Changes
+
+### OS Changes
+* Update bottlerocket-core-kit to v2.8.1 ([#4222])
+
+### Settings Extensions
+* Drop dependency on glibc-devel ([#4213])
+
+### Documentation Changes
+* Update QUICKSTART-ECS.md and QUICKSTART-EKS.md ([#4169])  Thanks @bryantbiggs!
+
+[#4169]: https://github.com/bottlerocket-os/bottlerocket/pull/4169
+[#4213]: https://github.com/bottlerocket-os/bottlerocket/pull/4213
+[#4222]: https://github.com/bottlerocket-os/bottlerocket/pull/4222
+
 # v1.23.0 (2024-09-19)
 
 ## Orchestrator Changes
