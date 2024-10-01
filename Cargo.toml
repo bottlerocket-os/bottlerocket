@@ -9,8 +9,6 @@ members = [
     "variants/aws-ecs-2",
     "variants/aws-ecs-1-nvidia",
     "variants/aws-ecs-2-nvidia",
-    "variants/aws-k8s-1.23",
-    "variants/aws-k8s-1.23-nvidia",
     "variants/aws-k8s-1.24",
     "variants/aws-k8s-1.24-nvidia",
     "variants/aws-k8s-1.25",

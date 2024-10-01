@@ -35,21 +35,6 @@ For example, in a VMware variant, settings read from the guestinfo interface wil
 
 See [_Update Policy_ in the Security Features document](../SECURITY_FEATURES.md#update-policy) for information on when and how Bottlerocket applies security patches to variants.
 
-### aws-k8s-1.23: Kubernetes 1.23 node
-
-The [aws-k8s-1.23](aws-k8s-1.23/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.23, 1.24, and 1.25 clusters.
-
-### aws-k8s-1.23-nvidia: Kubernetes 1.23 NVIDIA node
-
-The [aws-k8s-1.23-nvidia](aws-k8s-1.23-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It also includes the required packages to configure containers to leverage NVIDIA GPUs.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.23, 1.24, and 1.25 clusters.
-
 ### aws-k8s-1.24: Kubernetes 1.24 node
 
 The [aws-k8s-1.24](aws-k8s-1.24/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -375,6 +360,21 @@ The vmware-k8s-1.22 variant included the packages needed to run a Kubernetes wor
 It supported self-hosted clusters.
 
 This variant was compatible with Kubernetes 1.22, 1.23, and 1.24 clusters.
+
+### aws-k8s-1.23: Kubernetes 1.23 node
+
+The [aws-k8s-1.23](aws-k8s-1.23/Cargo.toml) variant included the packages needed to run a Kubernetes node in AWS.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant was compatible with Kubernetes 1.23, 1.24, and 1.25 clusters.
+
+### aws-k8s-1.23-nvidia: Kubernetes 1.23 NVIDIA node
+
+The [aws-k8s-1.23-nvidia](aws-k8s-1.23-nvidia/Cargo.toml) variant included the packages needed to run a Kubernetes node in AWS.
+It also included the required packages to configure containers to leverage NVIDIA GPUs.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant was compatible with Kubernetes 1.23, 1.24, and 1.25 clusters.
 
 ### metal-k8s-1.23: Metal Kubernetes 1.23 node
 

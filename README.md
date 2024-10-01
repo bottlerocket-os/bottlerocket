@@ -61,7 +61,6 @@ For example, an `x86_64` build of the `aws-k8s-1.24` variant will produce an ima
 
 The following variants support EKS, as described above:
 
-* `aws-k8s-1.23`
 * `aws-k8s-1.24`
 * `aws-k8s-1.25`
 * `aws-k8s-1.26`
@@ -101,7 +100,7 @@ The following variants are designed to be Kubernetes worker nodes on bare metal:
 
 The following variants are no longer supported:
 
-* All Kubernetes variants using Kubernetes 1.22 and earlier
+* All Kubernetes variants using Kubernetes 1.23 and earlier
 * Bare metal and VMware variants using Kubernetes 1.27 and earlier
 
 We recommend users replace nodes running these variants with the [latest variant compatible with their cluster](variants/).
