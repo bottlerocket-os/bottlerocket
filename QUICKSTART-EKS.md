@@ -61,23 +61,20 @@ A walk-through of creating a storage class using the driver is available [here](
 ##### conntrack configuration
 
 By default `kube-proxy` will set the `nf_conntrack_max` kernel parameter to a default value that may differ from what Bottlerocket originally sets at boot.
-If you prefer to keep Bottlerocket's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy configuration details with:
+If you prefer to keep Bottlerocket's [default setting](packages/release/release-sysctl.conf), edit the kube-proxy-config ConfigMap with:
 
 ```shell
-kubectl edit -n kube-system daemonset kube-proxy
+kubectl edit -n kube-system cm/kube-proxy-config
 ```
 
-Add `--conntrack-max-per-core` and `--conntrack-min` to the kube-proxy arguments like so (a setting of 0 implies no change):
+Change the `maxPerCore` and `min` fields for `conntrack` like so (a setting of 0 implies no change):
 
 ```yaml
-      containers:
-      - command:
-        - kube-proxy
-        - --v=2
-        - --config=/var/lib/kube-proxy-config/config
-        - --conntrack-max-per-core=0
-        - --conntrack-min=0
-
+conntrack:
+  maxPerCore: 0
+  min: 0
+  tcpCloseWaitTimeout: 1h0m0s
+  tcpEstablishedTimeout: 24h0m0s
 ```
 
 ### Done!
