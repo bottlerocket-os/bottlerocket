@@ -351,3 +351,7 @@ version = "1.24.0"
     "migrate_v1.23.0_nvidia-container-runtime-settings.lz4",
 ]
 "(1.23.0, 1.24.0)" = []
+"(1.24.0, 1.24.1)" = [
+    "migrate_v1.24.1_aws-admin-container-v0-11-12.lz4",
+    "migrate_v1.24.1_public-admin-container-v0-11-12.lz4",
+]
