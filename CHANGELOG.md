@@ -1,3 +1,21 @@
+# v1.24.1 (2024-10-04)
+
+## Release Highlights
+* Update ecs-agent to 1.86.3 ([bottlerocket-core-kit#168](https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/168)) - Closes issue [#4186](https://github.com/bottlerocket-os/bottlerocket/issues/4186)
+
+## Build Changes
+
+### OS Changes
+* Update bottlerocket-core-kit to 2.8.4 ([#4231])
+* Update host containers ([#4233])
+
+### Documentation Changes
+* Update QUICKSTART-EKS.md ([#4228]) - Thanks @bryanhsu00 for the suggested fix!
+
+[#4228]: https://github.com/bottlerocket-os/bottlerocket/pull/4228
+[#4231]: https://github.com/bottlerocket-os/bottlerocket/pull/4231
+[#4233]: https://github.com/bottlerocket-os/bottlerocket/pull/4233
+
 # v1.24.0 (2024-09-27)
 
 ## Release Highlights
