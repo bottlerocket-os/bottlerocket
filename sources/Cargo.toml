@@ -57,6 +57,8 @@ members = [
     "settings-migrations/v1.23.0/kubelet-device-plugins-settings",
     "settings-migrations/v1.24.1/aws-admin-container-v0-11-12",
     "settings-migrations/v1.24.1/public-admin-container-v0-11-12",
+    "settings-migrations/v1.24.1/aws-control-container-v0-7-16",
+    "settings-migrations/v1.24.1/public-control-container-v0-7-16",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",
