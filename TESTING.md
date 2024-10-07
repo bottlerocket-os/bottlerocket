@@ -301,7 +301,7 @@ First, build the VMware variant you want to test.
 
 ```shell
 cargo make \
-  -e BUILDSYS_VARIANT="vmware-k8s-1.23" \
+  -e BUILDSYS_VARIANT="vmware-k8s-1.31" \
   -e BUILDSYS_ARCH="x86_64" \
   build
 ```
@@ -310,7 +310,7 @@ Build the TUF repo containing the OVA templates.
 
 ```shell
 cargo make \
-  -e BUILDSYS_VARIANT="vmware-k8s-1.23" \
+  -e BUILDSYS_VARIANT="vmware-k8s-1.31" \
   -e BUILDSYS_ARCH="x86_64" \
   repo
 ```
@@ -322,7 +322,7 @@ Now, you can run the test.
 
 ```shell
 cargo make \
-  -e BUILDSYS_VARIANT="vmware-k8s-1.23" \
+  -e BUILDSYS_VARIANT="vmware-k8s-1.31" \
   -e BUILDSYS_ARCH="x86_64" \
   test \
   --mgmt-cluster-kubeconfig ${TESTSYS_MGMT_CLUSTER_KUBECONFIG}
@@ -355,7 +355,7 @@ First, build the Metal variant you want to test.
 
 ```shell
 cargo make \
-  -e BUILDSYS_VARIANT="metal-k8s-1.23" \
+  -e BUILDSYS_VARIANT="metal-k8s-1.29" \
   -e BUILDSYS_ARCH="x86_64" \
   build
 ```
@@ -364,7 +364,7 @@ Build the TUF repo containing the metal images.
 
 ```shell
 cargo make \
-  -e BUILDSYS_VARIANT="metal-k8s-1.23" \
+  -e BUILDSYS_VARIANT="metal-k8s-1.29" \
   -e BUILDSYS_ARCH="x86_64" \
   repo
 ```
@@ -375,7 +375,7 @@ Now, you can run the test.
 
 ```shell
 cargo make \
-  -e BUILDSYS_VARIANT="metal-k8s-1.23" \
+  -e BUILDSYS_VARIANT="metal-k8s-1.29" \
   -e BUILDSYS_ARCH="x86_64" \
   -e TESTSYS_MGMT_CLUSTER_KUBECONFIG=${TESTSYS_MGMT_CLUSTER_KUBECONFIG}
   test
