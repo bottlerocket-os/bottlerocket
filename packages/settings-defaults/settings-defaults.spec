@@ -68,10 +68,9 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %{summary}.
 
 %package aws-k8s-1.24
-Summary: Settings defaults for the aws-k8s 1.23 and 1.24 variants
-Requires: (%{_cross_os}variant(aws-k8s-1.23) or %{_cross_os}variant(aws-k8s-1.24))
+Summary: Settings defaults for the aws-k8s 1.24 variant
+Requires: %{_cross_os}variant(aws-k8s-1.24)
 Provides: %{_cross_os}settings-defaults(any)
-Provides: %{_cross_os}settings-defaults(aws-k8s-1.23)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.24)
 Conflicts: %{_cross_os}settings-defaults(any)
 
@@ -79,10 +78,9 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %{summary}.
 
 %package aws-k8s-1.24-nvidia
-Summary: Settings defaults for the aws-k8s 1.23 and 1.24 nvidia variants
-Requires: (%{_cross_os}variant(aws-k8s-1.23-nvidia) or %{_cross_os}variant(aws-k8s-1.24-nvidia))
+Summary: Settings defaults for the aws-k8s 1.24 nvidia variant
+Requires: %{_cross_os}variant(aws-k8s-1.24-nvidia)
 Provides: %{_cross_os}settings-defaults(any)
-Provides: %{_cross_os}settings-defaults(aws-k8s-1.23-nvidia)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.24-nvidia)
 Conflicts: %{_cross_os}settings-defaults(any)
 
