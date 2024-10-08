@@ -60,6 +60,7 @@ members = [
     "settings-migrations/v1.24.1/aws-control-container-v0-7-16",
     "settings-migrations/v1.24.1/public-control-container-v0-7-16",
     "settings-migrations/v1.25.0/kubernetes-service-config",
+    "settings-migrations/v1.25.0/kubelet-device-plugins-time-slicing-settings",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-1",

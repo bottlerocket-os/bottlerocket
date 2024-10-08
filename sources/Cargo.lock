@@ -1314,6 +1314,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-device-plugins-time-slicing-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubernetes-service-config"
 version = "0.1.0"
 dependencies = [
