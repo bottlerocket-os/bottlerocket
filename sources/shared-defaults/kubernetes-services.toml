@@ -50,7 +50,7 @@ template-path = "/usr/share/templates/kubelet-server-key"
 [configuration-files.kubelet-exec-start-conf]
 path = "/etc/systemd/system/kubelet.service.d/exec-start.conf"
 template-path = "/usr/share/templates/kubelet-exec-start-conf"
-mode = "0600"
+mode = "0644"
 
 [configuration-files.credential-provider-config-yaml]
 path = "/etc/kubernetes/kubelet/credential-provider-config.yaml"

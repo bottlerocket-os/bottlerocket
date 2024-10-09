@@ -1,4 +1,4 @@
-version = "1.24.1"
+version = "1.25.0"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -356,4 +356,7 @@ version = "1.24.1"
     "migrate_v1.24.1_public-admin-container-v0-11-12.lz4",
     "migrate_v1.24.1_aws-control-container-v0-7-16.lz4",
     "migrate_v1.24.1_public-control-container-v0-7-16.lz4",
+]
+"(1.24.1, 1.25.0)" = [
+    "migrate_v1.25.0_kubernetes-service-config.lz4",
 ]

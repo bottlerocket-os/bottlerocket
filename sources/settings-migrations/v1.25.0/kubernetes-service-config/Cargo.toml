@@ -1,0 +1,15 @@
+[package]
+name = "kubernetes-service-config"
+version = "0.1.0"
+authors = ["Sparks Song <shijiao@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+migration-helpers.workspace = true
