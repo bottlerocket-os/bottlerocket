@@ -1,3 +1,35 @@
+# v1.25.0 (2024-10-15)
+
+## Release Highlights
+* Remove aws-k8s-1.23 variants (https://github.com/bottlerocket-os/bottlerocket/issues/4083)
+* Add support for NVIDIA GPU time slicing (closes https://github.com/bottlerocket-os/bottlerocket/issues/2347)
+
+## Build Changes
+
+### OS Changes
+* Update bottlerocket-core-kit to 2.9.0 ([#4242])
+* Update host containers ([#4241])
+* Update twoliter to v0.4.7 ([#4236])
+* Fix permissions for kubelet-exec-start-conf file ([#4199])
+* Add support for NVIDIA GPU time slicing ([#4230])
+
+## Orchestrator Changes
+
+### Kubernetes
+* Drop Kubernetes 1.23 AWS variants ([#4227], [#4237])
+
+### Documentation Changes
+* Add security guidance for NVIDIA GPU time-slicing ([#4240])
+
+[#4199]: https://github.com/bottlerocket-os/bottlerocket/pull/4199
+[#4227]: https://github.com/bottlerocket-os/bottlerocket/pull/4227
+[#4230]: https://github.com/bottlerocket-os/bottlerocket/pull/4230
+[#4236]: https://github.com/bottlerocket-os/bottlerocket/pull/4236
+[#4237]: https://github.com/bottlerocket-os/bottlerocket/pull/4237
+[#4240]: https://github.com/bottlerocket-os/bottlerocket/pull/4240
+[#4241]: https://github.com/bottlerocket-os/bottlerocket/pull/4241
+[#4242]: https://github.com/bottlerocket-os/bottlerocket/pull/4242
+
 # v1.24.1 (2024-10-04)
 
 ## Release Highlights
