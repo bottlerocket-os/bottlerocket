@@ -21,3 +21,4 @@ affected-services = ["nvidia-k8s-device-plugin"]
 pass-device-specs = true
 device-id-strategy="index"
 device-list-strategy="volume-mounts"
+device-sharing-strategy="none"

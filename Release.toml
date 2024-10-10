@@ -359,4 +359,5 @@ version = "1.25.0"
 ]
 "(1.24.1, 1.25.0)" = [
     "migrate_v1.25.0_kubernetes-service-config.lz4",
+    "migrate_v1.25.0_kubelet-device-plugins-time-slicing-settings.lz4",
 ]
