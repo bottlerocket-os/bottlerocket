@@ -9,7 +9,7 @@
 
 Name: %{_cross_os}settings-plugins
 Version: 0.0
-Release: 0%{?dist}
+Release: 1%{?dist}
 Summary: Settings plugins
 License: Apache-2.0 OR MIT
 URL: https://github.com/bottlerocket-os/bottlerocket
