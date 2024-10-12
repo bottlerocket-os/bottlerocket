@@ -3,7 +3,7 @@
 
 Name: %{_cross_os}migrations
 Version: 0.0
-Release: 0%{?dist}
+Release: 1%{?dist}
 Summary: Settings migrations
 License: Apache-2.0 OR MIT
 URL: https://github.com/bottlerocket-os/bottlerocket
