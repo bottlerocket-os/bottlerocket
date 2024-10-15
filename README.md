@@ -440,6 +440,10 @@ See the [`settings.host-containers.*` reference](https://bottlerocket.dev/en/os/
 
 See the [Host Containers documentation](https://bottlerocket.dev/en/os/latest/#/concepts/host-containers/).
 
+#### Bootstrap commands settings
+
+See the [`settings.bootstrap-commands.*` reference](https://bottlerocket.dev/en/os/latest/#/api/settings/bootstrap-commands/) as well as the [Bootstrap Commands documentation](https://bottlerocket.dev/en/os/latest/#/concepts/bootstrap-commands/)
+
 #### Bootstrap containers settings
 
 See the [`settings.bootstrap-containers.*` reference](https://bottlerocket.dev/en/os/latest/#/api/settings/bootstrap-containers/) as well as the [Bootstrap Containers documentation](https://bottlerocket.dev/en/os/latest/#/concepts/bootstrap-containers/)
