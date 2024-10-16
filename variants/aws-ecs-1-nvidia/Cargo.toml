@@ -30,7 +30,7 @@ included-packages = [
 # NVIDIA support
     "ecs-gpu-init",
     "nvidia-container-toolkit-ecs",
-    "kmod-5.10-nvidia-tesla-470",
+    "kmod-5.10-nvidia-tesla-535",
 ]
 
 [lib]
