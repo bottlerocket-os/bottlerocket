@@ -225,10 +225,10 @@ impl ReadFromServer {
     /// * read: The stream of messages from the server.
     ///
     /// * heartbeat_setter: An atomic handle to a timestamp; this will be updated whenever we
-    /// receive a ping or pong from the server so we can make sure the connection isn't stale.
+    ///   receive a ping or pong from the server so we can make sure the connection isn't stale.
     ///
     /// * capacity: When the server sends a capacity update, we update this AtomicCapacity, so we
-    /// can make sure we're not sending (or even reading) data the server can't handle.
+    ///   can make sure we're not sending (or even reading) data the server can't handle.
     fn new(
         read: impl Stream<Item = std::result::Result<Message, WsError>> + 'static,
         heartbeat_setter: Arc<Mutex<Instant>>,
@@ -341,11 +341,11 @@ impl ReadFromUser {
     /// * stdin_tx: The channel to which we should send messages containing user input.
     ///
     /// * capacity_reader: We'll only read input when the server has capacity, according to this
-    /// parameter, so that we don't unnecessarily fill buffers or overwhelm the server.
+    ///   parameter, so that we don't unnecessarily fill buffers or overwhelm the server.
     ///
     /// * is_tty: whether input is coming from a TTY; think of it as whether the command is
-    /// interactive.  If so, we read a byte at a time and send it immediately to the server so that
-    /// things like tab completion work.
+    ///   interactive.  If so, we read a byte at a time and send it immediately to the server so that
+    ///   things like tab completion work.
     fn new(
         stdin_tx: mpsc::UnboundedSender<Message>,
         capacity_reader: Arc<AtomicCapacity>,
