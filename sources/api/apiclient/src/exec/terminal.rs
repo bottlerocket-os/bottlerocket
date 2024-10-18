@@ -26,8 +26,8 @@ pub(crate) struct Terminal {
 impl Terminal {
     /// Parameters:
     /// * tty: Represents the user's desire for a TTY, where `Some(true)` means to use a TTY,
-    /// `Some(false)` means not to use a TTY, and `None` means to detect whether we think we should
-    /// use a TTY.
+    ///   `Some(false)` means not to use a TTY, and `None` means to detect whether we think we should
+    ///   use a TTY.
     ///
     /// For the purposes of terminal settings, "use a TTY" means to set the terminal to
     /// raw mode so that input is read directly, not interpreted; for example, things like ctrl-c
