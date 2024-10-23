@@ -1,3 +1,31 @@
+# v1.26.0 (2024-10-23)
+
+## Release Highlights
+* Update NVIDIA driver to 535.216.01 ([#4254])
+* Move kmod-5.10-nvidia tesla package for aws-ecs-1-nvidia variant from branch R470 to R535 ([#4251])
+
+## Build Changes
+
+### OS Changes
+* Update bottlerocket-core-kit to 3.1.0 ([#4254], [#4251])
+* Update NVIDIA driver to 535.216.01 ([#4254])
+* Update twoliter to 0.5.0 ([#4251])
+* Update bottlerocket-sdk to 0.46 ([#4251])
+* Standardize RPM release fields for RPM packages ([#4244])
+
+## Orchestrator Changes
+
+### ECS
+* Move kmod-5.10-nvidia tesla package for aws-ecs-1-nvidia variant from branch R470 to R535 ([#4251])
+
+### Documentation Changes
+* Add link to bootstrap-commands documentation ([#4247])
+
+[#4244]: https://github.com/bottlerocket-os/bottlerocket/pull/4244
+[#4247]: https://github.com/bottlerocket-os/bottlerocket/pull/4247
+[#4251]: https://github.com/bottlerocket-os/bottlerocket/pull/4251
+[#4254]: https://github.com/bottlerocket-os/bottlerocket/pull/4254
+
 # v1.25.0 (2024-10-15)
 
 ## Release Highlights
