@@ -16,7 +16,7 @@ use serde_plain::derive_fromstr_from_deserialize;
 use settings_extension_oci_defaults::OciDefaultsResourceLimitV1;
 use snafu::{OptionExt, ResultExt};
 use std::borrow::Borrow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::str::FromStr;
@@ -63,6 +63,19 @@ lazy_static! {
         m.insert("us-west-2", "328549459982");
         m
     };
+
+    /// A set to tell us which regions have FIPS ECR endpoints.
+    /// https://docs.aws.amazon.com/general/latest/gr/ecr.html
+    static ref ECR_FIPS_REGIONS: HashSet<&'static str> = {
+        let mut h = HashSet::new();
+        h.insert("us-east-1");
+        h.insert("us-east-2");
+        h.insert("us-gov-east-1");
+        h.insert("us-gov-west-1");
+        h.insert("us-west-1");
+        h.insert("us-west-2");
+        h
+    };
 }
 
 /// But if there is a region that does not exist in our map (for example a new
@@ -70,6 +83,9 @@ lazy_static! {
 /// containers from here.
 const ECR_FALLBACK_REGION: &str = "us-east-1";
 const ECR_FALLBACK_REGISTRY: &str = "328549459982";
+
+/// Path to FIPS sysctl file.
+const FIPS_ENABLED_SYSCTL_PATH: &str = "/proc/sys/crypto/fips_enabled";
 
 lazy_static! {
     /// A map to tell us which endpoint to pull updates from for a given region.
@@ -132,7 +148,6 @@ mod error {
             value: handlebars::JsonValue,
             template: String,
         },
-
         #[snafu(display(
             "Incorrect number of params provided to helper '{}' in template '{}' - {} expected, {} received",
             helper,
@@ -795,6 +810,14 @@ pub fn tuf_prefix(
         })?;
 
     Ok(())
+}
+
+/// Utility function to determine if a variant is in FIPS mode based
+/// on /proc/sys/crypto/fips_enabled.
+fn fips_enabled() -> bool {
+    std::fs::read_to_string(FIPS_ENABLED_SYSCTL_PATH)
+        .map(|s| s.trim() == "1")
+        .unwrap_or(false)
 }
 
 /// The `metadata-prefix` helper is used to map an AWS region to the correct
@@ -1812,7 +1835,16 @@ fn ecr_registry<S: AsRef<str>>(region: S) -> String {
     match partition {
         "aws-cn" => format!("{}.dkr.ecr.{}.amazonaws.com.cn", registry_id, region),
         "aws-iso-e" => format!("{}.dkr.ecr.{}.cloud.adc-e.uk", registry_id, region),
-        _ => format!("{}.dkr.ecr.{}.amazonaws.com", registry_id, region),
+        _ => {
+            // Only inject the FIPS service endpoint if the variant is in FIPS mode and the
+            // region supports FIPS.
+            let suffix = if fips_enabled() && ECR_FIPS_REGIONS.contains(region) {
+                "-fips"
+            } else {
+                ""
+            };
+            format!("{}.dkr.ecr{}.{}.amazonaws.com", registry_id, suffix, region)
+        }
     }
 }
 
