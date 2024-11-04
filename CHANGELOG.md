@@ -1,3 +1,15 @@
+# v1.26.2 (2024-11-04)
+
+## Release Highlights
+* Wait for kubelet device-manager socket before starting nvidia-k8s-device-plugin ([bottlerocket-core-kit#238](https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/238))
+
+## Build Changes
+
+### OS Changes
+* Update bottlerocket-core-kit to 3.1.5 ([#4280])
+
+[#4280]: https://github.com/bottlerocket-os/bottlerocket/pull/4280
+
 # v1.26.1 (2024-10-24)
 
 ## Release Highlights
