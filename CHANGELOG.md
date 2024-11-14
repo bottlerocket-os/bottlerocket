@@ -9,7 +9,7 @@
 * Add support for migrations to modify aws-config setting generators ([#4271])
 
 ## Build Changes
-* Update bottlerocket-core-kit to 3.2.0 ([#4286])
+* Update bottlerocket-core-kit to 3.3.0 ([#4292])
 * Update bottlerocket-sdk to 0.47.0 ([#4286])
 
 [#1667]: https://github.com/bottlerocket-os/bottlerocket/pull/1667
