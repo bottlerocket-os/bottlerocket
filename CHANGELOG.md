@@ -1,3 +1,15 @@
+# v1.27.1 (2024-11-16)
+
+## Release Highlights
+* Add patch for kernel-5.15 to fix issues when using IPv6 ([bottlerocket-core-kit#266](https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/266))
+
+## Build Changes
+
+### OS Changes
+* Update bottlerocket-core-kit to 3.3.2 ([#4301])
+
+[#4301]: https://github.com/bottlerocket-os/bottlerocket/pull/4301
+
 # v1.27.0 (2024-11-12)
 
 ## Release Highlights
@@ -10,7 +22,7 @@
 * Add support for migrations to modify FIPS ecr endpoints ([#4267])
 
 ## Build Changes
-* Update bottlerocket-core-kit to 3.2.0 ([#4286])
+* Update bottlerocket-core-kit to 3.3.0 ([#4292])
 * Update bottlerocket-sdk to 0.47.0 ([#4286])
 
 [#1667]: https://github.com/bottlerocket-os/bottlerocket/pull/1667
@@ -20,6 +32,7 @@
 [#4285]: https://github.com/bottlerocket-os/bottlerocket/pull/4285
 [#4286]: https://github.com/bottlerocket-os/bottlerocket/pull/4286
 [#4287]: https://github.com/bottlerocket-os/bottlerocket/pull/4287
+[#4292]: https://github.com/bottlerocket-os/bottlerocket/pull/4292
 
 # v1.26.2 (2024-11-04)
 
@@ -37,7 +50,7 @@
 
 ## Release Highlights
 * Revert system-wide configuration to block writeable/executable memory in systemd services ([bottlerocket-core-kit#215](https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/215))
- 
+
 ## Build Changes
 
 ### OS Changes
@@ -243,7 +256,7 @@
 
 * Enable k8s reserved cpus ([#3964])
 * Drop k8s 1.27 metal and VMware variants ([#4079])
-* Drop k8s 1.26 metal and VMware variants ([#4018]) 
+* Drop k8s 1.26 metal and VMware variants ([#4018])
 * Build the pause image from upstream ([#3940]) - Thanks @tzneal!
 
 ### ECS
@@ -259,7 +272,7 @@
 
 * Migrate to core kit ([#4060])
 * Remove leftover vendor section ([#4071])
-* Update Twoliter to 0.4.4 ([#4008], [#4086], [#4093], [#4123]) 
+* Update Twoliter to 0.4.4 ([#4008], [#4086], [#4093], [#4123])
 * Update bottlerocket-core-kit to v2.3.1 ([#4122])
 * Update bottlerocket-sdk to 0.43 ([#4122])
 
@@ -332,7 +345,7 @@
 ### Kubernetes
 
 * Add latest instance types to eni-max-pods mapping ([#4108])
-    
+
 [#4104]: https://github.com/bottlerocket-os/bottlerocket/pull/4104
 [#4108]: https://github.com/bottlerocket-os/bottlerocket/pull/4108
 [#4110]: https://github.com/bottlerocket-os/bottlerocket/pull/4110
@@ -499,10 +512,10 @@
 ## Orchestrator Changes
 
 ### Kubernetes
-* Provide runtime cgroup to kubelet ([#3804]) 
- 
+* Provide runtime cgroup to kubelet ([#3804])
+
 ## Build Changes
-* Update twoliter to v0.1.1 ([#3880], [#3900]) 
+* Update twoliter to v0.1.1 ([#3880], [#3900])
 * Update ecs-gpu-init, amazon-ssm-agent, and nvidia-k8s-device-plugin builds for new SDK ([#3920], [#3921], [#3924])
 
 [#3804]: https://github.com/bottlerocket-os/bottlerocket/pull/3804
@@ -604,7 +617,7 @@
 ## Orchestrator Changes
 
 ### Kubernetes
-* Mark pause container image as "pinned" to prevent garbage collection ([#3757]) 
+* Mark pause container image as "pinned" to prevent garbage collection ([#3757])
 
 ### ECS
 * Update Docker engine and Docker CLI to v25.0.2 ([#3759])
@@ -828,7 +841,7 @@
 
 ## Major Features
 
-This release brings support for Secure Boot on platforms using UEFI boot; the Linux 6.1 kernel; systemd-networkd and systemd-resolved for host networking; and XFS as the filesystem for local storage. 
+This release brings support for Secure Boot on platforms using UEFI boot; the Linux 6.1 kernel; systemd-networkd and systemd-resolved for host networking; and XFS as the filesystem for local storage.
 
 These features are enabled by default in the new variants. Existing variants will continue to use earlier kernels, `wicked` for host networking, and EXT4 as the filesystem for local storage.
 
