@@ -1,3 +1,26 @@
+# v1.28.0 (2024-12-08)
+
+## Release Highlights
+* Enable EFA support to Bottlerocket AMIs ([#4290])
+* Fix `io_uring` regression in 6.1 kernel ([bottlerocket-core-kit#284](https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/284))
+* Allow overriding the max-pods file with one from your variant ([bottlerocket-core-kit#279](https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/279)) - thanks @tzneal
+
+## Build Changes
+* Update bottlerocket-core-kit to 4.0.1 ([#4322])
+
+### OS Changes
+* Update host containers ([#4312])
+* Update Twoliter to 0.6.0 ([#4323])
+
+### Documentation Changes
+* Update models README references ([#4138])
+
+[#4138]: https://github.com/bottlerocket-os/bottlerocket/pull/4138
+[#4290]: https://github.com/bottlerocket-os/bottlerocket/pull/4290
+[#4312]: https://github.com/bottlerocket-os/bottlerocket/pull/4312
+[#4322]: https://github.com/bottlerocket-os/bottlerocket/pull/4322
+[#4323]: https://github.com/bottlerocket-os/bottlerocket/pull/4323
+
 # v1.27.1 (2024-11-16)
 
 ## Release Highlights
