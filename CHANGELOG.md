@@ -1,3 +1,22 @@
+# v1.31.0 (2025-01-21)
+
+## OS Changes
+
+* Update host containers ([#4360])
+
+## Build Changes
+* Update bottlerocket-core-kit to 5.4.1 ([#4365])
+* Update bottlerocket-kernel-kit to 1.0.4 ([#4366])
+
+### Twoliter
+
+* Update Twoliter to 0.7.0 ([#4362])
+
+[#4360]: https://github.com/bottlerocket-os/bottlerocket/pull/4360
+[#4362]: https://github.com/bottlerocket-os/bottlerocket/pull/4362
+[#4365]: https://github.com/bottlerocket-os/bottlerocket/pull/4365
+[#4366]: https://github.com/bottlerocket-os/bottlerocket/pull/4366
+
 # v1.30.0 (2025-01-07)
 
 ## OS Changes
@@ -10,8 +29,8 @@
 * Add device-ownership-from-security-context setting (default to true on aws-k8s-1.32) ([#4345])
 
 ## Build Changes
-* Update bottlerocket-core-kit to 5.3.0 (#[4351])
-* Update bottlerocket-kernel-kit to 1.0.2 (#[4344])
+* Update bottlerocket-core-kit to 5.3.0 ([#4351])
+* Update bottlerocket-kernel-kit to 1.0.2 ([#4344])
 
 [#4320]: https://github.com/bottlerocket-os/bottlerocket/pull/4320
 [#4344]: https://github.com/bottlerocket-os/bottlerocket/pull/4344
