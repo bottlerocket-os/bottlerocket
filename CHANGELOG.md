@@ -11,7 +11,7 @@
 * Correct migrations for public control containers. ([#4388])
 
 ## Build Changes
-* Update bottlerocket-kernel-kit to 1.1.0 ([#4383], [#4386])
+* Update bottlerocket-kernel-kit to 1.1.1 ([#4383], [#4386], [#4394])
 * Update bottlerocket-core-kit to 6.0.0 ([#4387])
 
 ### Twoliter
@@ -32,6 +32,7 @@
 [#4386]: https://github.com/bottlerocket-os/bottlerocket/pull/4386
 [#4387]: https://github.com/bottlerocket-os/bottlerocket/pull/4387
 [#4388]: https://github.com/bottlerocket-os/bottlerocket/pull/4388
+[#4394]: https://github.com/bottlerocket-os/bottlerocket/pull/4394
 
 # v1.32.0 (2025-01-24)
 
