@@ -81,7 +81,6 @@ members = [
     "settings-migrations/v1.31.0/public-admin-container-v0-11-16",
     "settings-migrations/v1.31.0/aws-control-container-v0-7-20",
     "settings-migrations/v1.31.0/public-control-container-v0-7-20",
-    "settings-migrations/v1.33.0/kubelet-device-plugins-mig-settings",
     "settings-migrations/v1.33.0/public-control-container-v0-7-19-update",
     "settings-migrations/v1.33.0/public-control-container-v0-7-20-update",
     "settings-migrations/v1.33.0/aws-remove-schnauzer-admin",

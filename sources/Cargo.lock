@@ -1635,13 +1635,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kubelet-device-plugins-mig-settings"
-version = "0.1.0"
-dependencies = [
- "migration-helpers",
-]
-
-[[package]]
 name = "kubelet-device-plugins-settings"
 version = "0.1.0"
 dependencies = [
