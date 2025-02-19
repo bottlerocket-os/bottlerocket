@@ -4,7 +4,6 @@ restart-commands = ["/bin/systemctl try-reload-or-restart nvidia-k8s-device-plug
 configuration-files = [
     "nvidia-k8s-device-plugin-conf",
     "nvidia-k8s-device-plugin-exec-start-conf",
-    "nvidia-k8s-device-plugin-mig-conf"
 ]
 
 [configuration-files.nvidia-k8s-device-plugin-conf]
@@ -15,10 +14,6 @@ template-path = "/usr/share/templates/nvidia-k8s-device-plugin-conf"
 path = "/etc/systemd/system/nvidia-k8s-device-plugin.service.d/exec-start.conf"
 template-path = "/usr/share/templates/nvidia-k8s-device-plugin-exec-start-conf"
 
-[configuration-files.nvidia-k8s-device-plugin-mig-conf]
-path = "/etc/nvidia-migmanager/nvidia-migmanager.toml"
-template-path = "/usr/share/templates/nvidia-k8s-device-plugin-mig-conf"
-
 [metadata.settings.kubelet-device-plugins.nvidia]
 affected-services = ["nvidia-k8s-device-plugin"]
 
@@ -27,4 +22,3 @@ pass-device-specs = true
 device-id-strategy="index"
 device-list-strategy="volume-mounts"
 device-sharing-strategy="none"
-device-partitioning-strategy="none"

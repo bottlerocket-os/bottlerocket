@@ -396,7 +396,6 @@ version = "1.33.0"
 ]
 "(1.31.0, 1.32.0)" = []
 "(1.32.0, 1.33.0)" = [
-    "migrate_v1.33.0_kubelet-device-plugins-mig-settings.lz4",
     "migrate_v1.33.0_public-control-container-v0-7-19-update.lz4",
     "migrate_v1.33.0_public-control-container-v0-7-20-update.lz4",
     "migrate_v1.33.0_aws-remove-schnauzer-admin.lz4",
