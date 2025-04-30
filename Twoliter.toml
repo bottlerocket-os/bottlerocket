@@ -11,7 +11,7 @@ vendor = "bottlerocket"
 
 [[kit]]
 name = "bottlerocket-kernel-kit"
-version = "2.3.0"
+version = "2.3.2"
 vendor = "bottlerocket"
 
 [[kit]]
