@@ -1,3 +1,16 @@
+# v1.39.1 (2025-05-19)
+
+## OS Changes
+* Update `bottlerocket-core-kit` from 8.1.0 to 8.1.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v811-2025-05-14) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v8.1.0...v8.1.1)) ([#4522])
+
+## Build Changes
+
+### Twoliter
+* Update `twoliter` from 0.10.0 to 0.10.1 [CHANGELOG](https://github.com/bottlerocket-os/twoliter/blob/develop/CHANGELOG.md#0101---2025-05-14) ([commits](https://github.com/bottlerocket-os/twoliter/compare/v0.10.0...v0.10.1)) ([#4523])
+
+[#4522]: https://github.com/bottlerocket-os/bottlerocket/pull/4522
+[#4523]: https://github.com/bottlerocket-os/bottlerocket/pull/4523
+
 # v1.39.0 (2025-05-06)
 
 ## Release Highlights
