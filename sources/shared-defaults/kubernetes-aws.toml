@@ -23,7 +23,7 @@ template-path = "/usr/share/templates/pod-infra-container-image"
 service-checks = ["apiserver", "chronyd", "containerd", "host-containerd", "kubelet"]
 
 [metadata.settings.network]
-affected-services = ["containerd", "kubernetes", "host-containerd", "host-containers", "updog"]
+affected-services = ["bootstrap-containers", "containerd", "kubernetes", "host-containerd", "host-containers", "updog"]
 
 [services.autoscaling-warm-pool]
 configuration-files = ["warm-pool-wait-toml"]
