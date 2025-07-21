@@ -1,0 +1,69 @@
+[package]
+name = "platform-bootstrap"
+version = "0.1.0"
+edition = "2021"
+authors = ["Platform Team"]
+description = "Cluster bootstrap components for Platform Control Agent"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.40", features = ["full"] }
+
+# gRPC framework
+tonic = { version = "0.12", features = ["tls"] }
+prost = "0.13"
+prost-types = "0.13"
+
+# Consensus and coordination
+etcd-rs = { version = "1.0", features = ["tls"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_with = { version = "3.12", features = ["chrono"] }
+
+# Crypto and PKI
+openssl = { version = "0.10", features = ["vendored"] }
+x509-parser = "0.16"
+rcgen = { version = "0.13", features = ["pem"] }
+rand = "0.8"
+hex = "0.4"
+
+# Logging and tracing
+tracing = "0.1"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "2.0"
+
+# Utilities
+uuid = { version = "1.11", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
+bytes = "1.8"
+tokio-stream = "0.1"
+
+# State machine
+async-trait = "0.1"
+
+# Networking
+tokio-util = { version = "0.7", features = ["net"] }
+
+# CLI
+clap = { version = "4.5", features = ["derive"] }
+
+[build-dependencies]
+tonic-build = "0.12"
+
+[dev-dependencies]
+tempfile = "3.14"
+mockall = "0.13"
+
+[features]
+default = ["fips"]
+fips = []
+
+[[bin]]
+name = "platform-bootstrap"
+path = "src/main.rs"

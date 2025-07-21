@@ -5,47 +5,64 @@ This document tracks the overall implementation of the Bottlerocket API-Driven P
 
 **Target:** FedRAMP-compliant, API-driven Kubernetes platform on Bottlerocket FIPS variants
 
+## Current Status (2025-01-21)
+
+### ✅ Completed: Platform Control Agent Phase 1
+- **Progress**: Phase 1 COMPLETE! All critical features implemented and tested
+- **Completed**: 
+  - ✅ Unix socket client using hyperlocal
+  - ✅ mTLS implementation with client certificates
+  - ✅ State persistence with atomic operations
+  - ✅ All core gRPC methods (get_status, reset, upgrade, stream_events)
+  - ✅ Comprehensive event system with persistence
+  - ✅ Configuration reconciliation loop with drift detection
+  - ✅ Unit and integration test suites
+  - ✅ Mock Bottlerocket API server
+  - ✅ Health checks and gRPC reflection
+- **Next Phase**: Phase 2 - Cluster Formation (Leader Election, PKI, etcd)
+- **Details**: See [Platform Control Agent](features/platform-control-agent.md) for implementation details
+
 ## Implementation Phases
 
 ### Phase 1: Foundation (Weeks 1-4) ✅ COMPLETE
 **Goal:** Basic Platform Control Agent with API access to Bottlerocket
 
 #### Platform Control Agent
-- [x] [#001](features/platform-control-agent.md#1-core-api-implementation) Core API Implementation
-  - [x] Create gRPC server scaffolding
-  - [x] Implement mTLS authentication
-  - [x] Define protobuf schemas
-  - [x] Add health check endpoints
-  - [x] Generate API documentation
+- [x] [#001](features/platform-control-agent.md#1-core-api-implementation) Core API Implementation ✅
+  - [x] Create gRPC server scaffolding ✅
+  - [x] Implement mTLS authentication ✅
+  - [x] Define protobuf schemas ✅
+  - [x] Add health check endpoints ✅
+  - [x] Generate API documentation ✅
   
-- [x] [#002](features/platform-control-agent.md#2-bottlerocket-integration) Bottlerocket Integration  
-  - [x] Implement Settings API client (Unix socket support)
-  - [x] Build configuration translator
-  - [x] State persistence with transactional updates
-  - [x] Event notification system
-  - [x] Reconciliation loop implementation
+- [x] [#002](features/platform-control-agent.md#2-bottlerocket-integration) Bottlerocket Integration ✅
+  - [x] Implement Settings API client with Unix socket support ✅
+  - [x] Build configuration translator ✅
+  - [x] Create Dockerfile for container ✅ (FIPS compliance pending)
+  - [x] Configure volume mounts ✅
+  - [x] Test with mock Bottlerocket API ✅
 
 #### Development Environment
-- [x] Set up local test environment
-- [x] Create comprehensive test scripts
-- [x] Implement unit and integration tests
-- [x] Documentation and examples
+- [x] Set up local development environment (docker-compose) ✅
+- [x] Create mock Bottlerocket API for testing ✅
+- [x] Basic Makefile and build scripts ✅
+- [x] Implement unit and integration testing ✅
+- [ ] Set up CI/CD infrastructure (future work)
 
 ---
 
-### Phase 2: Cluster Formation (Weeks 5-8) 🏗️ IN PROGRESS
+### Phase 2: Cluster Formation (Weeks 5-8) 🏗️
 **Goal:** Autonomous cluster bootstrapping capability
 
 #### Cluster Bootstrap
-- [x] [#010](features/cluster-bootstrap.md#1-leader-election) Leader Election
-  - [x] Implement Raft consensus with priority-based voting
-  - [x] Add pre-vote phase for split-brain prevention
-  - [x] Create election gRPC service API
-  - [x] Priority scoring (uptime, resources, network, user priority)
+- [ ] [#010](features/cluster-bootstrap.md#1-leader-election) Leader Election
+  - [ ] Implement deterministic election algorithm
+  - [ ] Add split-brain prevention
+  - [ ] Create election status API
+  - [ ] Test with network partitions
   
-- [x] [#011](features/cluster-bootstrap.md#2-pki-generation--distribution) PKI Generation (Partial)
-  - [x] Implement FIPS-compliant CA generation (RSA 4096-bit)
-  - [x] Certificate hierarchy (Root CA → Intermediate CAs)
+- [ ] [#011](features/cluster-bootstrap.md#2-pki-generation--distribution) PKI Generation
+  - [ ] Implement FIPS-compliant CA generation
   - [ ] Build certificate distribution system
   - [ ] Add rotation mechanisms
   - [ ] Create backup procedures
@@ -55,8 +72,6 @@ This document tracks the overall implementation of the Bottlerocket API-Driven P
   - [ ] Implement cluster initialization
   - [ ] Configure FIPS TLS settings
   - [ ] Add health monitoring
-
-**Status:** Core election and PKI generation complete. 2,106 lines of Rust + 575 lines of protobuf. All async Send trait issues resolved.
 
 ---
 
@@ -202,25 +217,20 @@ This document tracks the overall implementation of the Bottlerocket API-Driven P
 
 ```bash
 # Clone repository
-git clone https://github.com/bottlerocket-os/bottlerocket
-cd bottlerocket/platform-control-agent
+git clone https://github.com/org/bottlerocket-platform
+cd bottlerocket-platform
 
 # Build Platform Control Agent
-cargo build --release
-
-# Build Bootstrap module
-cd bootstrap && cargo build --release
+make build-platform-agent
 
 # Run tests
-cargo test --all
+make test
 
-# Run Platform Control Agent (Unix socket mode)
-./target/release/platform-control-agent \
-  --socket-path /tmp/platform-agent.sock \
-  --state-dir /tmp/platform-agent-state
+# Deploy to test environment
+make deploy-test
 
-# Test with demo client
-./demo_unix_socket.sh
+# Run E2E tests
+make test-e2e
 ```
 
 ## Issue Labels

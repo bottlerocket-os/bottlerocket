@@ -32,3 +32,7 @@ certs/
 
 # Generated protobuf files
 src/api/platform.machine.v1alpha1.rs
+
+# Test and demo scripts
+test_unix_socket.sh
+demo_unix_socket.sh

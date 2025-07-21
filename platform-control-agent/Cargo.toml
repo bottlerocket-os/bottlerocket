@@ -1,5 +1,9 @@
 [workspace]
 # This declares this directory as its own workspace, separate from the parent Bottlerocket workspace
+members = [
+    ".",
+    "bootstrap",
+]
 
 [package]
 name = "platform-control-agent"
@@ -14,12 +18,18 @@ license = "MIT OR Apache-2.0"
 tokio = { version = "1.40", features = ["full"] }
 
 # gRPC framework
-tonic = "0.12"
+tonic = { version = "0.12", features = ["tls"] }
+tonic-health = "0.12"
+tonic-reflection = "0.12"
 prost = "0.13"
+prost-types = "0.13"
 
 # HTTP/API clients
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 hyper = { version = "1.5", features = ["full"] }
+hyper-util = { version = "0.1", features = ["client", "client-legacy"] }
+hyperlocal = "0.9"
+http-body-util = "0.1"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -48,8 +58,15 @@ uuid = { version = "1.11", features = ["v4", "serde"] }
 base64 = "0.22"
 bytes = "1.8"
 futures = "0.3"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 tokio-stream = "0.1"
+
+# System information
+hostname = "0.4"
+num_cpus = "1.16"
+sysinfo = "0.32"
+nix = { version = "0.29", features = ["fs"] }
+md5 = "0.7"
 
 # Bottlerocket API client dependencies
 url = "2.5"

@@ -1,56 +1,78 @@
 use anyhow::{Context, Result};
-use reqwest::{Client, Url};
+use http_body_util::{BodyExt, Full};
+use hyper::body::Bytes;
+use hyper::{Method, Request};
+use hyper_util::client::legacy::Client;
+use hyperlocal::{UnixClientExt, UnixConnector, Uri as HyperlocalUri};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::Path;
 use tracing::{debug, info};
 
 /// Client for interacting with the Bottlerocket Settings API
 pub struct BottlerocketClient {
-    client: Client,
-    base_url: Url,
+    /// Unix socket client for production
+    unix_client: Option<Client<UnixConnector, Full<Bytes>>>,
+    /// HTTP client for development/testing
+    http_client: Option<reqwest::Client>,
+    /// Socket path or HTTP URL
+    api_endpoint: String,
+    /// Whether we're using Unix sockets
+    is_unix_socket: bool,
 }
 
 impl BottlerocketClient {
     /// Create a new Bottlerocket API client
-    pub fn new(api_url: &str) -> Result<Self> {
-        let base_url = if api_url.starts_with("unix://") {
-            // For Unix socket, we'll use a placeholder URL
-            // In production, we'd use a Unix socket-aware HTTP client
-            Url::parse("http://localhost/")
-                .context("Failed to parse Unix socket URL")?
+    pub fn new(api_endpoint: &str) -> Result<Self> {
+        let is_unix_socket = api_endpoint.starts_with("unix://");
+        
+        if is_unix_socket {
+            // Extract socket path from unix:// URL
+            let socket_path = api_endpoint
+                .strip_prefix("unix://")
+                .ok_or_else(|| anyhow::anyhow!("Invalid Unix socket URL"))?;
+            
+            // Warn if socket doesn't exist (but don't fail - it might be created later)
+            if !Path::new(socket_path).exists() {
+                tracing::warn!(
+                    "Unix socket does not exist yet: {}. Connection attempts will fail until socket is created.",
+                    socket_path
+                );
+            }
+            
+            Ok(Self {
+                unix_client: Some(Client::unix()),
+                http_client: None,
+                api_endpoint: socket_path.to_string(),
+                is_unix_socket: true,
+            })
         } else {
-            Url::parse(api_url).context("Failed to parse API URL")?
-        };
-
-        let client = Client::builder()
-            .timeout(std::time::Duration::from_secs(30))
-            .build()
-            .context("Failed to build HTTP client")?;
-
-        Ok(Self { client, base_url })
+            // Use regular HTTP client for development
+            let client = reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(30))
+                .build()
+                .context("Failed to build HTTP client")?;
+            
+            Ok(Self {
+                unix_client: None,
+                http_client: Some(client),
+                api_endpoint: api_endpoint.to_string(),
+                is_unix_socket: false,
+            })
+        }
     }
 
     /// Get current settings
     pub async fn get_settings(&self) -> Result<Settings> {
         debug!("Fetching current settings from Bottlerocket API");
         
-        let url = self.base_url.join("settings")?;
-        let response = self.client
-            .get(url)
-            .send()
-            .await
-            .context("Failed to fetch settings")?;
+        let response_body = if self.is_unix_socket {
+            self.unix_request(Method::GET, "/settings", None).await?
+        } else {
+            self.http_get("/settings").await?
+        };
 
-        if !response.status().is_success() {
-            return Err(anyhow::anyhow!(
-                "Failed to get settings: {}",
-                response.status()
-            ));
-        }
-
-        let settings = response
-            .json::<Settings>()
-            .await
+        let settings = serde_json::from_str::<Settings>(&response_body)
             .context("Failed to parse settings response")?;
 
         Ok(settings)
@@ -60,20 +82,18 @@ impl BottlerocketClient {
     pub async fn set_settings(&self, settings: &Settings) -> Result<()> {
         info!("Applying new settings to Bottlerocket");
         
-        let url = self.base_url.join("settings")?;
-        let response = self.client
-            .patch(url)
-            .json(settings)
-            .send()
-            .await
-            .context("Failed to apply settings")?;
-
-        if !response.status().is_success() {
-            let error_text = response.text().await.unwrap_or_default();
-            return Err(anyhow::anyhow!(
-                "Failed to apply settings: {}",
-                error_text
-            ));
+        // In development mode, skip actual API call if unix socket doesn't exist
+        if self.is_unix_socket && std::env::var("SKIP_UNIX_SOCKET").is_ok() {
+            tracing::warn!("SKIP_UNIX_SOCKET is set, simulating successful settings apply");
+            return Ok(());
+        }
+        
+        let body = serde_json::to_string(settings)?;
+        
+        if self.is_unix_socket {
+            self.unix_request(Method::PATCH, "/settings", Some(body)).await?;
+        } else {
+            self.http_patch("/settings", &body).await?;
         }
 
         info!("Settings applied successfully");
@@ -84,18 +104,10 @@ impl BottlerocketClient {
     pub async fn reboot(&self) -> Result<()> {
         info!("Initiating system reboot");
         
-        let url = self.base_url.join("actions/reboot")?;
-        let response = self.client
-            .post(url)
-            .send()
-            .await
-            .context("Failed to initiate reboot")?;
-
-        if !response.status().is_success() {
-            return Err(anyhow::anyhow!(
-                "Failed to reboot: {}",
-                response.status()
-            ));
+        if self.is_unix_socket {
+            self.unix_request(Method::POST, "/actions/reboot", None).await?;
+        } else {
+            self.http_post("/actions/reboot", "").await?;
         }
 
         Ok(())
@@ -105,26 +117,149 @@ impl BottlerocketClient {
     pub async fn get_os_info(&self) -> Result<OsInfo> {
         debug!("Fetching OS information");
         
-        let url = self.base_url.join("os")?;
-        let response = self.client
-            .get(url)
-            .send()
-            .await
-            .context("Failed to fetch OS info")?;
-
-        if !response.status().is_success() {
-            return Err(anyhow::anyhow!(
-                "Failed to get OS info: {}",
-                response.status()
-            ));
+        // In development mode with skip flag, return mock data
+        if self.is_unix_socket && std::env::var("SKIP_UNIX_SOCKET").is_ok() {
+            return Ok(OsInfo {
+                arch: std::env::consts::ARCH.to_string(),
+                build_id: "dev-build-001".to_string(),
+                pretty_name: "Bottlerocket OS (Development)".to_string(),
+                variant_id: "dev-variant".to_string(),
+                version_id: "1.16.0-dev".to_string(),
+            });
         }
+        
+        let response_body = if self.is_unix_socket {
+            self.unix_request(Method::GET, "/os", None).await?
+        } else {
+            self.http_get("/os").await?
+        };
 
-        let os_info = response
-            .json::<OsInfo>()
-            .await
+        let os_info = serde_json::from_str::<OsInfo>(&response_body)
             .context("Failed to parse OS info response")?;
 
         Ok(os_info)
+    }
+
+    /// Make a request over Unix socket
+    async fn unix_request(
+        &self,
+        method: Method,
+        path: &str,
+        body: Option<String>,
+    ) -> Result<String> {
+        let client = self.unix_client
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("Unix client not initialized"))?;
+        
+        let uri: hyper::Uri = HyperlocalUri::new(&self.api_endpoint, path).into();
+        
+        let body_bytes = if let Some(content) = body {
+            Full::new(Bytes::from(content))
+        } else {
+            Full::new(Bytes::new())
+        };
+        
+        let request = Request::builder()
+            .method(method)
+            .uri(uri)
+            .header("Content-Type", "application/json")
+            .body(body_bytes)
+            .context("Failed to build request")?;
+        
+        let mut response = client.request(request).await
+            .context("Failed to send request to Unix socket")?;
+        
+        let status = response.status();
+        
+        // Collect the response body
+        let mut body_data = Vec::new();
+        while let Some(frame_result) = response.frame().await {
+            let frame = frame_result.context("Failed to read response frame")?;
+            if let Some(chunk) = frame.data_ref() {
+                body_data.extend_from_slice(chunk);
+            }
+        }
+        
+        let body_str = String::from_utf8_lossy(&body_data);
+        
+        if !status.is_success() {
+            return Err(anyhow::anyhow!(
+                "Request failed with status {}: {}",
+                status,
+                body_str
+            ));
+        }
+        
+        Ok(body_str.to_string())
+    }
+
+    /// Make HTTP GET request (for development)
+    async fn http_get(&self, path: &str) -> Result<String> {
+        let client = self.http_client
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("HTTP client not initialized"))?;
+        
+        let url = format!("{}{}", self.api_endpoint, path);
+        let response = client.get(&url).send().await
+            .context("Failed to send HTTP request")?;
+        
+        if !response.status().is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Request failed with status: {}",
+                error_text
+            ));
+        }
+        
+        response.text().await.context("Failed to read response body")
+    }
+
+    /// Make HTTP PATCH request (for development)
+    async fn http_patch(&self, path: &str, body: &str) -> Result<String> {
+        let client = self.http_client
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("HTTP client not initialized"))?;
+        
+        let url = format!("{}{}", self.api_endpoint, path);
+        let response = client.patch(&url)
+            .header("Content-Type", "application/json")
+            .body(body.to_string())
+            .send().await
+            .context("Failed to send HTTP request")?;
+        
+        if !response.status().is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Request failed with status: {}",
+                error_text
+            ));
+        }
+        
+        response.text().await.context("Failed to read response body")
+    }
+
+    /// Make HTTP POST request (for development)
+    async fn http_post(&self, path: &str, body: &str) -> Result<String> {
+        let client = self.http_client
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("HTTP client not initialized"))?;
+        
+        let url = format!("{}{}", self.api_endpoint, path);
+        let response = client.post(&url)
+            .header("Content-Type", "application/json")
+            .body(body.to_string())
+            .send().await
+            .context("Failed to send HTTP request")?;
+        
+        if !response.status().is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(anyhow::anyhow!(
+                "Request failed with status: {}",
+                error_text
+            ));
+        }
+        
+        response.text().await.context("Failed to read response body")
     }
 }
 
@@ -301,10 +436,22 @@ mod tests {
     fn test_client_creation() {
         // Test HTTP URL
         let client = BottlerocketClient::new("http://localhost:8080").unwrap();
-        assert_eq!(client.base_url.as_str(), "http://localhost:8080/");
+        assert!(!client.is_unix_socket);
+        assert_eq!(client.api_endpoint, "http://localhost:8080");
         
-        // Test Unix socket URL (placeholder)
-        let client = BottlerocketClient::new("unix:///run/api.sock").unwrap();
-        assert_eq!(client.base_url.as_str(), "http://localhost/");
+        // Test Unix socket URL (now returns Ok even if socket doesn't exist)
+        let result = BottlerocketClient::new("unix:///run/api.sock");
+        assert!(result.is_ok());
+        let client = result.unwrap();
+        assert!(client.is_unix_socket);
+        assert_eq!(client.api_endpoint, "/run/api.sock");
+    }
+
+    #[test]
+    fn test_unix_socket_path_extraction() {
+        // Test extracting path from unix:// URL
+        let url = "unix:///run/api.sock";
+        let path = url.strip_prefix("unix://").unwrap();
+        assert_eq!(path, "/run/api.sock");
     }
 }

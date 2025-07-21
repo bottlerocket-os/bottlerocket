@@ -103,12 +103,24 @@ Platform Control Agent
 │   ├── Status reporting
 │   └── Event streaming
 ├── Bottlerocket Client
+│   ├── Unix socket support (production)
+│   ├── HTTP support (development)
 │   └── Settings API integration
 └── Service Implementation
     ├── Configuration translator
     ├── Validation engine
     └── State management
 ```
+
+### Transport Support
+
+The Platform Control Agent supports both Unix domain sockets and HTTP for connecting to the Bottlerocket API:
+
+- **Production Mode**: Connects via Unix socket at `unix:///run/api.sock`
+- **Development Mode**: Connects via HTTP to mock API or remote endpoints
+- **Auto-detection**: Protocol is determined by URL scheme (`unix://` vs `http://`)
+
+The client uses `hyperlocal` for Unix socket support, providing seamless HTTP-over-Unix-socket communication.
 
 ## Development Stack
 

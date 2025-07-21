@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Mock Bottlerocket API
+  mock-bottlerocket:
+    build:
+      context: ./mock-bottlerocket
+      dockerfile: Dockerfile
+    volumes:
+      - /tmp/mock-api.sock:/run/api.sock
+    networks:
+      - test-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Platform Control Agent
+  platform-control:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - BOTTLEROCKET_API_URL=unix:///run/api.sock
+      - PLATFORM_STATE_DIR=/var/lib/platform
+      - RECONCILER_ENABLED=true
+      - RECONCILER_INTERVAL=30
+      - RUST_LOG=platform_control=debug
+    volumes:
+      - /tmp/mock-api.sock:/run/api.sock
+      - platform-state:/var/lib/platform
+      - ./certs:/etc/platform/certs:ro
+    ports:
+      - "50000:50000"
+    networks:
+      - test-net
+    depends_on:
+      mock-bottlerocket:
+        condition: service_healthy
+    command: ["/platform-control", "serve", "--tls-cert", "/etc/platform/certs/server.crt", "--tls-key", "/etc/platform/certs/server.key", "--tls-ca", "/etc/platform/certs/ca.crt"]
+
+  # Test runner
+  test-runner:
+    build:
+      context: ./test
+      dockerfile: Dockerfile.test
+    environment:
+      - PLATFORM_CONTROL_ADDR=platform-control:50000
+    volumes:
+      - ./test/integration:/tests
+      - ./certs/ca.crt:/etc/platform/ca.crt:ro
+      - ./certs/client.crt:/etc/platform/client.crt:ro
+      - ./certs/client.key:/etc/platform/client.key:ro
+    networks:
+      - test-net
+    depends_on:
+      - platform-control
+    command: ["/tests/run_tests.sh"]
+
+networks:
+  test-net:
+    driver: bridge
+
+volumes:
+  platform-state:

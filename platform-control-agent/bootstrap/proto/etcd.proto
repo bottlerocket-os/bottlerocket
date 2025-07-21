@@ -1,0 +1,242 @@
+syntax = "proto3";
+
+package platform.bootstrap.etcd.v1alpha1;
+
+import "google/protobuf/timestamp.proto";
+
+// etcd service for cluster formation
+service EtcdService {
+  // Initialize etcd cluster (leader only)
+  rpc InitializeCluster(InitializeEtcdRequest) returns (InitializeEtcdResponse);
+  
+  // Join existing cluster
+  rpc JoinCluster(JoinEtcdRequest) returns (JoinEtcdResponse);
+  
+  // Leave cluster
+  rpc LeaveCluster(LeaveEtcdRequest) returns (LeaveEtcdResponse);
+  
+  // Get cluster status
+  rpc GetClusterStatus(GetEtcdStatusRequest) returns (EtcdClusterStatus);
+  
+  // Backup etcd data
+  rpc BackupData(BackupRequest) returns (BackupResponse);
+  
+  // Restore from backup
+  rpc RestoreData(RestoreRequest) returns (RestoreResponse);
+  
+  // Stream etcd events
+  rpc ObserveCluster(ObserveClusterRequest) returns (stream EtcdEvent);
+}
+
+// Initialize cluster
+message InitializeEtcdRequest {
+  EtcdConfig config = 1;
+  repeated string initial_members = 2;  // Node IDs
+}
+
+message InitializeEtcdResponse {
+  bool success = 1;
+  string cluster_id = 2;
+  string member_id = 3;
+  repeated string peer_urls = 4;
+}
+
+// Join cluster
+message JoinEtcdRequest {
+  string node_id = 1;
+  repeated string peer_urls = 2;
+  string join_token = 3;  // From leader
+}
+
+message JoinEtcdResponse {
+  bool success = 1;
+  string member_id = 2;
+  string cluster_id = 3;
+}
+
+// Leave cluster
+message LeaveEtcdRequest {
+  bool graceful = 1;  // Graceful removal with data transfer
+}
+
+message LeaveEtcdResponse {
+  bool success = 1;
+  string reason = 2;
+}
+
+// Get status
+message GetEtcdStatusRequest {}
+
+// Backup data
+message BackupRequest {
+  string backup_id = 1;  // Optional: custom backup ID
+  bool include_wal = 2;  // Include write-ahead log
+}
+
+message BackupResponse {
+  string backup_id = 1;
+  int64 size_bytes = 2;
+  string location = 3;  // Where backup is stored
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// Restore data
+message RestoreRequest {
+  string backup_id = 1;
+  bool force = 2;  // Force restore even if data exists
+}
+
+message RestoreResponse {
+  bool success = 1;
+  string details = 2;
+}
+
+// Observe cluster
+message ObserveClusterRequest {
+  bool include_health_checks = 1;
+}
+
+// Configuration
+message EtcdConfig {
+  string version = 1;  // etcd version
+  string data_dir = 2;
+  
+  repeated string listen_peer_urls = 3;
+  repeated string listen_client_urls = 4;
+  repeated string advertise_peer_urls = 5;
+  repeated string advertise_client_urls = 6;
+  
+  string cluster_token = 7;
+  int64 quota_backend_bytes = 8;
+  
+  string auto_compaction_mode = 9;  // periodic, revision
+  string auto_compaction_retention = 10;
+  
+  int64 snapshot_count = 11;
+  int64 heartbeat_interval_ms = 12;
+  int64 election_timeout_ms = 13;
+  
+  TLSConfig tls = 14;
+  map<string, string> extra_args = 15;
+}
+
+message TLSConfig {
+  string server_cert_file = 1;
+  string server_key_file = 2;
+  string client_cert_file = 3;
+  string client_key_file = 4;
+  string trusted_ca_file = 5;
+  string peer_cert_file = 6;
+  string peer_key_file = 7;
+  string peer_trusted_ca_file = 8;
+  bool client_cert_auth = 9;
+  bool peer_client_cert_auth = 10;
+}
+
+// Cluster status
+message EtcdClusterStatus {
+  string cluster_id = 1;
+  string member_id = 2;
+  string leader_id = 3;
+  int64 raft_term = 4;
+  int64 raft_index = 5;
+  
+  repeated EtcdMember members = 6;
+  HealthStatus health = 7;
+  
+  int64 db_size_bytes = 8;
+  int64 db_size_in_use_bytes = 9;
+  
+  repeated Alarm alarms = 10;
+  google.protobuf.Timestamp last_backup = 11;
+}
+
+message EtcdMember {
+  string id = 1;
+  string name = 2;
+  repeated string peer_urls = 3;
+  repeated string client_urls = 4;
+  bool is_learner = 5;
+  MemberStatus status = 6;
+}
+
+enum MemberStatus {
+  MEMBER_STATUS_UNKNOWN = 0;
+  MEMBER_STATUS_HEALTHY = 1;
+  MEMBER_STATUS_UNHEALTHY = 2;
+  MEMBER_STATUS_UNREACHABLE = 3;
+}
+
+message HealthStatus {
+  bool healthy = 1;
+  string reason = 2;
+  google.protobuf.Timestamp last_check = 3;
+  repeated HealthCheck checks = 4;
+}
+
+message HealthCheck {
+  string name = 1;
+  bool passed = 2;
+  string details = 3;
+  int64 duration_ms = 4;
+}
+
+message Alarm {
+  AlarmType type = 1;
+  string member_id = 2;
+  string details = 3;
+}
+
+enum AlarmType {
+  ALARM_TYPE_UNKNOWN = 0;
+  ALARM_TYPE_CORRUPT = 1;
+  ALARM_TYPE_NOSPACE = 2;
+}
+
+// Events
+message EtcdEvent {
+  google.protobuf.Timestamp timestamp = 1;
+  EtcdEventType type = 2;
+  string details = 3;
+  
+  oneof data {
+    MemberEventData member = 10;
+    LeaderEventData leader = 11;
+    HealthEventData health = 12;
+    BackupEventData backup = 13;
+  }
+}
+
+enum EtcdEventType {
+  ETCD_EVENT_TYPE_UNKNOWN = 0;
+  ETCD_EVENT_TYPE_MEMBER_ADDED = 1;
+  ETCD_EVENT_TYPE_MEMBER_REMOVED = 2;
+  ETCD_EVENT_TYPE_MEMBER_UPDATED = 3;
+  ETCD_EVENT_TYPE_LEADER_CHANGED = 4;
+  ETCD_EVENT_TYPE_HEALTH_CHECK = 5;
+  ETCD_EVENT_TYPE_BACKUP_CREATED = 6;
+  ETCD_EVENT_TYPE_ALARM_RAISED = 7;
+  ETCD_EVENT_TYPE_ALARM_CLEARED = 8;
+}
+
+message MemberEventData {
+  EtcdMember member = 1;
+  string action = 2;  // added, removed, updated
+}
+
+message LeaderEventData {
+  string old_leader = 1;
+  string new_leader = 2;
+  int64 term = 3;
+}
+
+message HealthEventData {
+  HealthStatus status = 1;
+  repeated string affected_members = 2;
+}
+
+message BackupEventData {
+  string backup_id = 1;
+  int64 size_bytes = 2;
+  bool success = 3;
+}
