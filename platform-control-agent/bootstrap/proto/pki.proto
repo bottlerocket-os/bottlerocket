@@ -71,12 +71,19 @@ message CertificateRequest {
   // For client certs
   repeated string organizations = 7;
   repeated string organizational_units = 8;
+  
+  // Node authentication
+  string node_id = 9;
+  bytes csr = 10;  // Certificate Signing Request (PEM encoded)
+  string auth_token = 11;  // Authentication token from election
 }
 
 message CertificateResponse {
   Certificate certificate = 1;
   bytes private_key = 2;  // Encrypted with node key
   string certificate_chain = 3;  // PEM encoded chain
+  string ca_bundle = 4;  // Complete CA bundle for validation
+  int64 next_renewal_time = 5;  // Unix timestamp for renewal
 }
 
 // Renew certificate

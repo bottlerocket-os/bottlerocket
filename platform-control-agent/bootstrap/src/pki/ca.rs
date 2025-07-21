@@ -418,6 +418,26 @@ impl CertificateAuthority {
         })
     }
     
+    /// Get root CA
+    pub fn get_root_ca(&self) -> Option<&Certificate> {
+        self.root_ca.as_ref()
+    }
+    
+    /// Get Kubernetes CA
+    pub fn get_kubernetes_ca(&self) -> Option<&Certificate> {
+        self.kubernetes_ca.as_ref()
+    }
+    
+    /// Get etcd CA
+    pub fn get_etcd_ca(&self) -> Option<&Certificate> {
+        self.etcd_ca.as_ref()
+    }
+    
+    /// Get front proxy CA
+    pub fn get_front_proxy_ca(&self) -> Option<&Certificate> {
+        self.front_proxy_ca.as_ref()
+    }
+    
     /// Get CA bundle (all CA certificates)
     pub fn get_ca_bundle(&self) -> Result<String> {
         let mut bundle = String::new();
