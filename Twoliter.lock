@@ -16,7 +16,7 @@ digest = "Qpui1qLIeqSKNz6Le/tIV3D8kDgXipLmBNfTuODzibo="
 
 [[kit]]
 name = "bottlerocket-core-kit"
-version = "9.2.0"
+version = "9.2.1"
 vendor = "bottlerocket"
-source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v9.2.0"
-digest = "9+trLoVUZsUENfj8TyVPR1xcb/mup6njnw0tubSWtFM="
+source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v9.2.1"
+digest = "Pqv9aWordFrWFXVVE/j4rtjShTfFiVJZV40/bXQeoQ8="
