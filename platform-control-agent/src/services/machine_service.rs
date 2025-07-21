@@ -209,6 +209,15 @@ impl MachineService for MachineServiceImpl {
         let errors = self.validate_config(&req.config.as_ref().unwrap());
         if !errors.is_empty() {
             warn!("Configuration validation failed: {:?}", errors);
+            
+            // Publish validation failed event
+            crate::events::publish_event(
+                crate::events::EventType::ConfigurationValidationFailed,
+                crate::events::EventData::ConfigurationValidationFailed {
+                    errors: errors.iter().map(|e| format!("{}: {}", e.field, e.message)).collect(),
+                }
+            );
+            
             return Ok(Response::new(MachineConfigResponse {
                 success: false,
                 message: "Configuration validation failed".to_string(),
@@ -240,6 +249,20 @@ impl MachineService for MachineServiceImpl {
                 })?;
             
             info!("Configuration applied and persisted successfully");
+            
+            // Publish configuration applied event
+            crate::events::publish_event(
+                crate::events::EventType::ConfigurationApplied,
+                crate::events::EventData::ConfigurationApplied {
+                    version: config.version.clone(),
+                    machine_type: match config.r#type {
+                        1 => "ControlPlane".to_string(),
+                        2 => "Worker".to_string(),
+                        _ => "Unknown".to_string(),
+                    },
+                    cluster_name: config.cluster.as_ref().map(|c| c.name.clone()),
+                }
+            );
         }
 
         Ok(Response::new(MachineConfigResponse {
@@ -331,6 +354,15 @@ impl MachineService for MachineServiceImpl {
     ) -> Result<Response<ResetResponse>, Status> {
         let req = request.into_inner();
         info!("Resetting machine (graceful: {})", req.graceful);
+        
+        // Publish reset initiated event
+        crate::events::publish_event(
+            crate::events::EventType::ResetInitiated,
+            crate::events::EventData::Reset {
+                graceful: req.graceful,
+                cleared_items: vec!["configuration".to_string()],
+            }
+        );
 
         // If graceful, ensure we have time to complete operations
         let timeout = if req.timeout_seconds > 0 {
@@ -378,6 +410,15 @@ impl MachineService for MachineServiceImpl {
         // self.br_client.reset_settings().await
         //     .map_err(|e| Status::internal(format!("Failed to reset settings: {}", e)))?;
 
+        // Publish reset completed event
+        crate::events::publish_event(
+            crate::events::EventType::ResetCompleted,
+            crate::events::EventData::Reset {
+                graceful: req.graceful,
+                cleared_items: vec!["configuration".to_string(), "state".to_string()],
+            }
+        );
+
         Ok(Response::new(ResetResponse {
             success: true,
             message: format!("Machine reset completed (graceful: {})", req.graceful),
@@ -410,6 +451,16 @@ impl MachineService for MachineServiceImpl {
         };
 
         let scheduled_time = chrono::Utc::now().timestamp() + reboot_delay_seconds as i64;
+        
+        // Publish reboot scheduled event
+        crate::events::publish_event(
+            crate::events::EventType::RebootScheduled,
+            crate::events::EventData::Reboot {
+                graceful: req.graceful,
+                scheduled_time: Some(scheduled_time),
+                reason: Some("User requested reboot".to_string()),
+            }
+        );
 
         // Save current configuration before reboot to ensure it persists
         if let Some(config) = &*self.current_config.read().await {
@@ -492,6 +543,18 @@ impl MachineService for MachineServiceImpl {
             current_version, 
             req.target_version
         );
+        
+        // Publish upgrade started event
+        crate::events::publish_event(
+            crate::events::EventType::UpgradeStarted,
+            crate::events::EventData::Upgrade {
+                current_version: current_version.clone(),
+                target_version: req.target_version.clone(),
+                status: "started".to_string(),
+                progress: Some(0),
+                error: None,
+            }
+        );
 
         // Simulate upgrade process
         if std::env::var("SKIP_UNIX_SOCKET").is_ok() {
@@ -523,19 +586,78 @@ impl MachineService for MachineServiceImpl {
         let req = request.into_inner();
         info!("Starting event stream for types: {:?}", req.event_types);
 
+        // Get event system
+        let event_system = crate::events::EventSystem::get()
+            .ok_or_else(|| Status::internal("Event system not initialized"))?;
+
+        // Create stream channel
         let (tx, rx) = tokio::sync::mpsc::channel(128);
 
-        // TODO: Implement actual event streaming
-        // For now, send a test event
+        // Parse requested event types
+        let filter_types: Vec<crate::events::EventType> = if req.event_types.is_empty() {
+            // No filter, stream all events
+            vec![]
+        } else {
+            // Parse requested types
+            req.event_types
+                .iter()
+                .filter_map(|s| crate::events::EventType::from_str(s))
+                .collect()
+        };
+
+        // If specific types were requested but none were valid, return error
+        if !req.event_types.is_empty() && filter_types.is_empty() {
+            return Err(Status::invalid_argument(
+                "No valid event types specified"
+            ));
+        }
+
+        // Subscribe to events
+        let mut event_rx = event_system.subscribe();
+
+        // Start streaming task
         tokio::spawn(async move {
-            let event = MachineEvent {
+            info!("Event stream started, filtering for {:?}", filter_types);
+            
+            // Send initial event to confirm stream is working
+            let welcome_event = MachineEvent {
                 id: uuid::Uuid::new_v4().to_string(),
-                r#type: "ConfigurationApplied".to_string(),
+                r#type: "StreamStarted".to_string(),
                 timestamp: chrono::Utc::now().timestamp(),
-                message: "Configuration applied successfully".to_string(),
+                message: "Event stream started".to_string(),
                 metadata: std::collections::HashMap::new(),
             };
-            let _ = tx.send(Ok(event)).await;
+            if tx.send(Ok(welcome_event)).await.is_err() {
+                warn!("Client disconnected immediately");
+                return;
+            }
+
+            // Stream events
+            loop {
+                match event_rx.recv().await {
+                    Ok(event) => {
+                        // Apply filter
+                        if !filter_types.is_empty() && !filter_types.contains(&event.event_type) {
+                            continue;
+                        }
+
+                        // Convert to proto
+                        let proto_event = event.to_proto();
+                        
+                        // Send to client
+                        if tx.send(Ok(proto_event)).await.is_err() {
+                            info!("Client disconnected from event stream");
+                            break;
+                        }
+                    }
+                    Err(e) => {
+                        warn!("Event receiver error: {}", e);
+                        break;
+                    }
+                }
+            }
+            
+            info!("Event stream ended");
         });
 
         Ok(Response::new(

@@ -8,6 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod api;
 mod bottlerocket;
+mod events;
 mod persistence;
 mod services;
 mod system;
@@ -135,6 +136,19 @@ async fn serve(
     let current_config = Arc::new(tokio::sync::RwLock::new(None));
     let state_manager = persistence::StateManager::new(state_dir.as_deref(), current_config)?;
     
+    // Initialize event system
+    events::EventSystem::init(state_dir.as_deref()).await
+        .context("Failed to initialize event system")?;
+    
+    // Publish system startup event
+    events::publish_event(
+        events::EventType::SystemStartup,
+        events::EventData::SystemLifecycle {
+            action: "startup".to_string(),
+            reason: Some("Platform Control Agent starting".to_string()),
+        }
+    );
+    
     // Load saved configuration
     match state_manager.load_config().await {
         Ok(Some(config)) => {
@@ -174,6 +188,15 @@ async fn serve(
     let service = api::machine_service_server::MachineServiceServer::new(machine_service);
 
     info!("Platform Control Agent ready to serve requests");
+    
+    // Publish system ready event
+    events::publish_event(
+        events::EventType::SystemReady,
+        events::EventData::SystemLifecycle {
+            action: "ready".to_string(),
+            reason: Some("All systems initialized".to_string()),
+        }
+    );
 
     // Start server
     server_builder
