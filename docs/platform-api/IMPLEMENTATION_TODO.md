@@ -12,22 +12,23 @@ This document tracks the overall implementation of the Bottlerocket API-Driven P
 
 #### Platform Control Agent
 - [ ] [#001](features/platform-control-agent.md#1-core-api-implementation) Core API Implementation
-  - [ ] Create gRPC server scaffolding
-  - [ ] Implement mTLS authentication
-  - [ ] Define protobuf schemas
-  - [ ] Add health check endpoints
-  - [ ] Generate API documentation
+  - [x] Create gRPC server scaffolding ✅
+  - [ ] Implement mTLS authentication (🚧 Critical Blocker)
+  - [x] Define protobuf schemas ✅
+  - [ ] Add health check endpoints (stubbed, needs implementation)
+  - [x] Generate API documentation (basic proto docs) ✅
   
 - [ ] [#002](features/platform-control-agent.md#2-bottlerocket-integration) Bottlerocket Integration  
-  - [ ] Implement Settings API client
-  - [ ] Build configuration translator
-  - [ ] Create Dockerfile for FIPS container
-  - [ ] Configure volume mounts
+  - [ ] Implement Settings API client (🚧 Blocked - needs Unix socket support)
+  - [ ] Build configuration translator (partial implementation)
+  - [x] Create Dockerfile for container ✅ (FIPS compliance pending)
+  - [x] Configure volume mounts ✅
   - [ ] Test with actual Bottlerocket node
 
 #### Development Environment
-- [ ] Set up local Bottlerocket test environment
-- [ ] Create development variant with platform agent
+- [x] Set up local development environment (docker-compose) ✅
+- [x] Create mock Bottlerocket API for testing ✅
+- [x] Basic Makefile and build scripts ✅
 - [ ] Implement automated testing pipeline
 - [ ] Set up CI/CD infrastructure
 

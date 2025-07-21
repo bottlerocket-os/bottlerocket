@@ -20,6 +20,9 @@ prost = "0.13"
 # HTTP/API clients
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 hyper = { version = "1.5", features = ["full"] }
+hyper-util = { version = "0.1", features = ["client", "client-legacy"] }
+hyperlocal = "0.9"
+http-body-util = "0.1"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
