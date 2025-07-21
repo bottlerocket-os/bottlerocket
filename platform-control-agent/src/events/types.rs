@@ -52,6 +52,13 @@ pub enum EventType {
     ServiceStopped,
     ServiceFailed,
     ServiceRecovered,
+    
+    // Reconciliation events
+    ReconciliationStarted,
+    ReconciliationCompleted,
+    ReconciliationFailed,
+    ConfigurationDriftDetected,
+    ConfigurationDriftCorrected,
 }
 
 impl fmt::Display for EventType {
@@ -94,6 +101,11 @@ impl EventType {
             EventType::ServiceStopped,
             EventType::ServiceFailed,
             EventType::ServiceRecovered,
+            EventType::ReconciliationStarted,
+            EventType::ReconciliationCompleted,
+            EventType::ReconciliationFailed,
+            EventType::ConfigurationDriftDetected,
+            EventType::ConfigurationDriftCorrected,
         ]
     }
 
@@ -130,6 +142,11 @@ impl EventType {
             "ServiceStopped" => Some(EventType::ServiceStopped),
             "ServiceFailed" => Some(EventType::ServiceFailed),
             "ServiceRecovered" => Some(EventType::ServiceRecovered),
+            "ReconciliationStarted" => Some(EventType::ReconciliationStarted),
+            "ReconciliationCompleted" => Some(EventType::ReconciliationCompleted),
+            "ReconciliationFailed" => Some(EventType::ReconciliationFailed),
+            "ConfigurationDriftDetected" => Some(EventType::ConfigurationDriftDetected),
+            "ConfigurationDriftCorrected" => Some(EventType::ConfigurationDriftCorrected),
             _ => None,
         }
     }

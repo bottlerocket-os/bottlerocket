@@ -187,12 +187,28 @@ impl StateManager {
     pub fn config_path(&self) -> PathBuf {
         self.state_dir.join(CONFIG_FILE)
     }
+
+    /// Health check for state persistence
+    pub async fn health_check(&self) -> Result<()> {
+        // Check if state directory is accessible
+        if !self.state_dir.exists() {
+            return Err(anyhow::anyhow!("State directory does not exist"));
+        }
+
+        // Try to write a test file
+        let test_file = self.state_dir.join(".health_check");
+        std::fs::write(&test_file, "ok")?;
+        std::fs::remove_file(&test_file)?;
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use tempfile::TempDir;
+    use std::collections::HashMap;
     
     #[tokio::test]
     async fn test_save_and_load_config() {
@@ -219,12 +235,10 @@ mod tests {
                 dns_domain: "cluster.local".to_string(),
             }),
             network: None,
-            storage: None,
-            kubelet: None,
-            container_runtime: None,
             security: None,
-            features: vec![],
-            user_data: String::new(),
+            kubernetes: None,
+            host_containers: HashMap::new(),
+            storage: None,
         };
         
         // Save config
@@ -257,12 +271,10 @@ mod tests {
             r#type: 0,
             cluster: None,
             network: None,
-            storage: None,
-            kubelet: None,
-            container_runtime: None,
             security: None,
-            features: vec![],
-            user_data: String::new(),
+            kubernetes: None,
+            host_containers: HashMap::new(),
+            storage: None,
         };
         manager.save_config(&config1).await.unwrap();
         
@@ -272,12 +284,10 @@ mod tests {
             r#type: 0,
             cluster: None,
             network: None,
-            storage: None,
-            kubelet: None,
-            container_runtime: None,
             security: None,
-            features: vec![],
-            user_data: String::new(),
+            kubernetes: None,
+            host_containers: HashMap::new(),
+            storage: None,
         };
         manager.save_config(&config2).await.unwrap();
         

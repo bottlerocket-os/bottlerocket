@@ -439,10 +439,12 @@ mod tests {
         assert!(!client.is_unix_socket);
         assert_eq!(client.api_endpoint, "http://localhost:8080");
         
-        // Test Unix socket URL (will fail if socket doesn't exist)
+        // Test Unix socket URL (now returns Ok even if socket doesn't exist)
         let result = BottlerocketClient::new("unix:///run/api.sock");
-        // In tests, the socket won't exist, so this should fail
-        assert!(result.is_err());
+        assert!(result.is_ok());
+        let client = result.unwrap();
+        assert!(client.is_unix_socket);
+        assert_eq!(client.api_endpoint, "/run/api.sock");
     }
 
     #[test]

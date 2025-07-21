@@ -2,6 +2,7 @@ use crate::api::{
     machine_service_server::MachineService, *
 };
 use crate::bottlerocket::client::{BottlerocketClient, Settings};
+use crate::error::{ErrorResponses, IntoStatus, IntoStatusResult};
 use crate::persistence::StateManager;
 use anyhow::Result;
 use std::sync::Arc;
@@ -16,11 +17,11 @@ pub struct MachineServiceImpl {
 }
 
 impl MachineServiceImpl {
-    pub fn new(br_client: BottlerocketClient, state_manager: StateManager) -> Self {
+    pub fn new(br_client: Arc<BottlerocketClient>, state_manager: Arc<StateManager>) -> Self {
         Self {
-            br_client: Arc::new(br_client),
+            br_client,
             current_config: state_manager.current_config.clone(),
-            state_manager: Arc::new(state_manager),
+            state_manager,
         }
     }
 
@@ -230,14 +231,14 @@ impl MachineService for MachineServiceImpl {
         // Translate to Bottlerocket settings
         let settings = self
             .translate_to_settings(&config)
-            .map_err(|e| Status::internal(format!("Failed to translate config: {}", e)))?;
+            .map_err(|e| ErrorResponses::internal_error(&format!("translate config: {}", e)))?;
 
         // Apply settings if not dry run
         if !req.dry_run {
             self.br_client
                 .set_settings(&settings)
                 .await
-                .map_err(|e| Status::internal(format!("Failed to apply settings: {}", e)))?;
+                .map_err(|e| ErrorResponses::bottlerocket_api_error(&e.to_string()))?;
 
             // Persist configuration to disk
             self.state_manager
@@ -245,7 +246,7 @@ impl MachineService for MachineServiceImpl {
                 .await
                 .map_err(|e| {
                     warn!("Failed to persist configuration: {}", e);
-                    Status::internal(format!("Configuration applied but failed to persist: {}", e))
+                    ErrorResponses::internal_error(&format!("persist config: {}", e))
                 })?;
             
             info!("Configuration applied and persisted successfully");
@@ -286,7 +287,7 @@ impl MachineService for MachineServiceImpl {
         if let Some(config) = stored.as_ref() {
             Ok(Response::new(config.clone()))
         } else {
-            Err(Status::not_found("No configuration has been applied yet"))
+            Err(ErrorResponses::configuration_not_found())
         }
     }
 
@@ -477,7 +478,7 @@ impl MachineService for MachineServiceImpl {
             self.br_client
                 .reboot()
                 .await
-                .map_err(|e| Status::internal(format!("Failed to initiate reboot: {}", e)))?;
+                .map_err(|e| ErrorResponses::bottlerocket_api_error(&format!("reboot failed: {}", e)))?;
         }
 
         Ok(Response::new(RebootResponse {
@@ -505,8 +506,8 @@ impl MachineService for MachineServiceImpl {
 
         // Validate target version format
         if !Self::is_valid_version(&req.target_version) {
-            return Err(Status::invalid_argument(
-                format!("Invalid target version format: {}", req.target_version)
+            return Err(ErrorResponses::invalid_configuration(
+                &format!("Invalid target version format: {}", req.target_version)
             ));
         }
 
@@ -522,8 +523,8 @@ impl MachineService for MachineServiceImpl {
 
         // Validate upgrade path
         if !Self::is_valid_upgrade_path(&current_version, &req.target_version) {
-            return Err(Status::failed_precondition(
-                format!(
+            return Err(ErrorResponses::precondition_failed(
+                &format!(
                     "Invalid upgrade path from {} to {}", 
                     current_version, 
                     req.target_version
@@ -665,3 +666,6 @@ impl MachineService for MachineServiceImpl {
         ))
     }
 }
+
+#[cfg(test)]
+mod machine_service_tests;

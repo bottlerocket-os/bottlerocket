@@ -8,8 +8,11 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod api;
 mod bottlerocket;
+mod error;
 mod events;
+mod health;
 mod persistence;
+mod reconciler;
 mod services;
 mod system;
 mod tls;
@@ -129,12 +132,12 @@ async fn serve(
     let bottlerocket_url = std::env::var("BOTTLEROCKET_API_URL")
         .unwrap_or_else(|_| "unix:///run/api.sock".to_string());
     
-    let br_client = bottlerocket::client::BottlerocketClient::new(&bottlerocket_url)?;
+    let br_client = Arc::new(bottlerocket::client::BottlerocketClient::new(&bottlerocket_url)?);
 
     // Initialize state manager
     let state_dir = std::env::var("PLATFORM_STATE_DIR").ok();
     let current_config = Arc::new(tokio::sync::RwLock::new(None));
-    let state_manager = persistence::StateManager::new(state_dir.as_deref(), current_config)?;
+    let state_manager = Arc::new(persistence::StateManager::new(state_dir.as_deref(), current_config)?);
     
     // Initialize event system
     events::EventSystem::init(state_dir.as_deref()).await
@@ -165,8 +168,51 @@ async fn serve(
         }
     }
 
+    // Initialize and start reconciler
+    let reconciler_config = reconciler::ReconcilerConfig::from_env();
+    if let Err(e) = reconciler_config.validate() {
+        return Err(anyhow::anyhow!("Invalid reconciler configuration: {}", e));
+    }
+    
+    let reconciler = Arc::new(reconciler::ConfigReconciler::new(
+        br_client.clone(),
+        state_manager.clone(),
+        reconciler_config,
+    ));
+    
+    // Start reconciliation loop in background
+    let reconciler_handle = tokio::spawn({
+        let reconciler = reconciler.clone();
+        async move {
+            reconciler.start_reconciliation_loop().await;
+        }
+    });
+
     // Create service implementation
-    let machine_service = MachineServiceImpl::new(br_client, state_manager);
+    let machine_service = MachineServiceImpl::new(br_client.clone(), state_manager.clone());
+
+    // Create health service
+    let (health_server, health_service) = health::create_health_service();
+    
+    // Create reflection service
+    let reflection_service = tonic_reflection::server::Builder::configure()
+        .register_encoded_file_descriptor_set(api::platform::machine::v1alpha1::FILE_DESCRIPTOR_SET)
+        .register_encoded_file_descriptor_set(tonic_health::pb::FILE_DESCRIPTOR_SET)
+        .build()
+        .unwrap();
+    
+    // Start health monitoring
+    let health_checker = Arc::new(health::HealthChecker::new(
+        br_client.clone(),
+        state_manager.clone(),
+    ));
+    tokio::spawn({
+        let health_checker = health_checker.clone();
+        let health_service = health_service.clone();
+        async move {
+            health_checker.start_health_monitoring(health_service, 30).await;
+        }
+    });
 
     // Build gRPC server
     let mut server_builder = Server::builder();
@@ -198,36 +244,78 @@ async fn serve(
         }
     );
 
-    // Start server
-    server_builder
+    // Start server with graceful shutdown
+    let server = server_builder
         .add_service(service)
-        .serve(addr)
-        .await?;
+        .add_service(health_server)
+        .add_service(reflection_service)
+        .serve_with_shutdown(addr, async {
+            tokio::signal::ctrl_c().await.ok();
+            info!("Received shutdown signal");
+            
+            // Stop reconciler
+            reconciler.stop().await;
+            reconciler_handle.abort();
+            
+            // Publish shutdown event
+            events::publish_event(
+                events::EventType::SystemShutdown,
+                events::EventData::SystemLifecycle {
+                    action: "shutdown".to_string(),
+                    reason: Some("Received shutdown signal".to_string()),
+                }
+            );
+        });
 
+    server.await?;
+    
+    info!("Platform Control Agent shutdown complete");
     Ok(())
 }
 
 async fn health_check(server: &str) -> Result<()> {
     info!("Performing health check on {}", server);
     
-    // TODO: Implement actual gRPC health check
-    // For now, just try to connect to the server
-    use tonic::transport::Channel;
-    use crate::api::machine_service_client::MachineServiceClient;
-    
-    let channel = Channel::from_shared(format!("http://{}", server))?
-        .connect()
-        .await
-        .context("Failed to connect to gRPC server")?;
-    
-    let mut client = MachineServiceClient::new(channel);
-    
-    // Try to get status
-    let request = tonic::Request::new(crate::api::GetStatusRequest {});
-    match client.get_status(request).await {
-        Ok(_) => {
-            println!("✅ Health check passed - server is responding");
+    let endpoint = format!("http://{}", server);
+    match health::check_grpc_health(&endpoint).await {
+        Ok(true) => {
+            println!("✅ Health check passed - server is healthy");
+            
+            // Also check specific service status
+            use tonic::transport::Channel;
+            use crate::api::machine_service_client::MachineServiceClient;
+            
+            let channel = Channel::from_shared(endpoint)?
+                .connect()
+                .await
+                .context("Failed to connect to gRPC server")?;
+            
+            let mut client = MachineServiceClient::new(channel);
+            let request = tonic::Request::new(crate::api::GetStatusRequest {});
+            
+            match client.get_status(request).await {
+                Ok(response) => {
+                    let status = response.into_inner();
+                    println!("  Machine ID: {}", status.machine_id);
+                    println!("  State: {}", match status.state {
+                        0 => "Unknown",
+                        1 => "Not Configured", 
+                        2 => "Configured",
+                        3 => "Ready",
+                        _ => "Invalid",
+                    });
+                    println!("  Uptime: {}s", status.uptime_seconds);
+                }
+                Err(e) => {
+                    println!("  ⚠️  Machine service check failed: {}", e);
+                }
+            }
+            
             Ok(())
+        }
+        Ok(false) => {
+            println!("❌ Health check failed - server is not healthy");
+            Err(anyhow::anyhow!("Server is not healthy"))
         }
         Err(e) => {
             println!("❌ Health check failed: {}", e);
