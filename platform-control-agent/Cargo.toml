@@ -1,5 +1,9 @@
 [workspace]
 # This declares this directory as its own workspace, separate from the parent Bottlerocket workspace
+members = [
+    ".",
+    "bootstrap",
+]
 
 [package]
 name = "platform-control-agent"

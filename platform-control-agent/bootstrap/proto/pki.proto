@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+package platform.bootstrap.pki.v1alpha1;
+
+import "google/protobuf/timestamp.proto";
+
+// PKI service for certificate generation and distribution
+service PKIService {
+  // Initialize PKI system (leader only)
+  rpc InitializePKI(InitializePKIRequest) returns (InitializePKIResponse);
+  
+  // Request a certificate
+  rpc RequestCertificate(CertificateRequest) returns (CertificateResponse);
+  
+  // Renew a certificate
+  rpc RenewCertificate(RenewRequest) returns (CertificateResponse);
+  
+  // Get CA bundle
+  rpc GetCABundle(GetCABundleRequest) returns (CABundleResponse);
+  
+  // List certificates
+  rpc ListCertificates(ListCertificatesRequest) returns (ListCertificatesResponse);
+  
+  // Stream certificate events
+  rpc ObserveCertificates(ObserveCertificatesRequest) returns (stream CertificateEvent);
+}
+
+// Initialize PKI
+message InitializePKIRequest {
+  PKIConfig config = 1;
+  bool force = 2;  // Force reinitialize if already exists
+}
+
+message InitializePKIResponse {
+  bool success = 1;
+  string root_ca_fingerprint = 2;
+  repeated string intermediate_ca_fingerprints = 3;
+}
+
+// PKI configuration
+message PKIConfig {
+  string organization = 1;
+  string country = 2;
+  string locality = 3;
+  string key_algorithm = 4;  // RSA-4096, ECDSA-P256
+  string signature_algorithm = 5;  // SHA256WithRSA
+  
+  CertificateValidity validity = 6;
+  repeated string dns_names = 7;  // Additional DNS names for CA
+  repeated string ip_addresses = 8;  // Additional IPs for CA
+}
+
+message CertificateValidity {
+  int32 root_ca_years = 1;
+  int32 intermediate_ca_years = 2;
+  int32 server_cert_years = 3;
+  int32 client_cert_years = 4;
+}
+
+// Request certificate
+message CertificateRequest {
+  string common_name = 1;
+  CertificateType type = 2;
+  repeated string dns_names = 3;
+  repeated string ip_addresses = 4;
+  repeated string email_addresses = 5;
+  
+  // Optional: custom validity period
+  int32 validity_days = 6;
+  
+  // For client certs
+  repeated string organizations = 7;
+  repeated string organizational_units = 8;
+}
+
+message CertificateResponse {
+  Certificate certificate = 1;
+  bytes private_key = 2;  // Encrypted with node key
+  string certificate_chain = 3;  // PEM encoded chain
+}
+
+// Renew certificate
+message RenewRequest {
+  string fingerprint = 1;  // Certificate to renew
+  int32 validity_days = 2;  // Optional: new validity
+}
+
+// Get CA bundle
+message GetCABundleRequest {}
+
+message CABundleResponse {
+  string root_ca = 1;  // PEM encoded
+  repeated string intermediate_cas = 2;  // PEM encoded
+  string bundle = 3;  // Complete CA bundle
+}
+
+// List certificates
+message ListCertificatesRequest {
+  CertificateType type = 1;  // Filter by type
+  bool include_expired = 2;
+  bool include_revoked = 3;
+}
+
+message ListCertificatesResponse {
+  repeated Certificate certificates = 1;
+}
+
+// Observe certificate events
+message ObserveCertificatesRequest {
+  repeated CertificateEventType types = 1;  // Filter by event type
+}
+
+// Certificate types
+enum CertificateType {
+  CERTIFICATE_TYPE_UNKNOWN = 0;
+  CERTIFICATE_TYPE_ROOT_CA = 1;
+  CERTIFICATE_TYPE_INTERMEDIATE_CA = 2;
+  CERTIFICATE_TYPE_SERVER = 3;
+  CERTIFICATE_TYPE_CLIENT = 4;
+  CERTIFICATE_TYPE_PEER = 5;  // For etcd peer auth
+}
+
+// Certificate message
+message Certificate {
+  string fingerprint = 1;  // SHA256 fingerprint
+  string common_name = 2;
+  CertificateType type = 3;
+  
+  google.protobuf.Timestamp not_before = 4;
+  google.protobuf.Timestamp not_after = 5;
+  
+  repeated string dns_names = 6;
+  repeated string ip_addresses = 7;
+  repeated string email_addresses = 8;
+  
+  string issuer = 9;
+  string serial_number = 10;
+  
+  CertificateStatus status = 11;
+  string pem_encoded = 12;  // The actual certificate
+}
+
+enum CertificateStatus {
+  CERTIFICATE_STATUS_UNKNOWN = 0;
+  CERTIFICATE_STATUS_ACTIVE = 1;
+  CERTIFICATE_STATUS_EXPIRED = 2;
+  CERTIFICATE_STATUS_REVOKED = 3;
+  CERTIFICATE_STATUS_PENDING = 4;
+}
+
+// Certificate events
+message CertificateEvent {
+  google.protobuf.Timestamp timestamp = 1;
+  CertificateEventType type = 2;
+  Certificate certificate = 3;
+  string details = 4;
+}
+
+enum CertificateEventType {
+  CERTIFICATE_EVENT_TYPE_UNKNOWN = 0;
+  CERTIFICATE_EVENT_TYPE_ISSUED = 1;
+  CERTIFICATE_EVENT_TYPE_RENEWED = 2;
+  CERTIFICATE_EVENT_TYPE_REVOKED = 3;
+  CERTIFICATE_EVENT_TYPE_EXPIRED = 4;
+  CERTIFICATE_EVENT_TYPE_EXPIRING_SOON = 5;
+}
