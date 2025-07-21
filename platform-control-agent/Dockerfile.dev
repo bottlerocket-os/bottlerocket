@@ -1,0 +1,34 @@
+# Development Dockerfile for Platform Control Agent
+FROM rust:1.83-bookworm
+
+# Install development dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    protobuf-compiler \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install development tools
+RUN cargo install cargo-watch
+
+WORKDIR /usr/src/app
+
+# Copy manifests first for better caching
+COPY Cargo.toml ./
+COPY Cargo.lock ./
+
+# Pre-build dependencies
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --features fips
+RUN rm -rf src
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN cargo build --features fips
+
+# Development command - watch for changes
+CMD ["cargo", "watch", "-x", "run --features fips -- serve --dev-mode"]

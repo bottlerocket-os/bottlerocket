@@ -1,0 +1,81 @@
+[workspace]
+# This declares this directory as its own workspace, separate from the parent Bottlerocket workspace
+
+[package]
+name = "platform-control-agent"
+version = "0.1.0"
+edition = "2021"
+authors = ["Platform Team"]
+description = "API-driven control agent for Bottlerocket nodes"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.40", features = ["full"] }
+
+# gRPC framework
+tonic = "0.12"
+prost = "0.13"
+
+# HTTP/API clients
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+hyper = { version = "1.5", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# TLS/Crypto (FIPS-compliant when using openssl feature)
+openssl = { version = "0.10", features = ["vendored"] }
+rustls = { version = "0.23", optional = true }
+tokio-openssl = "0.6"
+
+# Logging and tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "2.0"
+
+# CLI and config
+clap = { version = "4.5", features = ["derive", "env"] }
+config = "0.14"
+
+# Utilities
+uuid = { version = "1.11", features = ["v4", "serde"] }
+base64 = "0.22"
+bytes = "1.8"
+futures = "0.3"
+chrono = "0.4"
+tokio-stream = "0.1"
+
+# Bottlerocket API client dependencies
+url = "2.5"
+
+[build-dependencies]
+tonic-build = "0.12"
+
+[dev-dependencies]
+mockall = "0.13"
+tempfile = "3.14"
+test-log = "0.2"
+
+[features]
+default = ["openssl-tls"]
+openssl-tls = []
+rustls-tls = ["rustls", "reqwest/rustls-tls"]
+# Note: FIPS support is achieved through the vendored OpenSSL build
+# configured with OPENSSL_FIPS environment variable during build
+fips = []
+
+[[bin]]
+name = "platform-control"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+opt-level = "z"

@@ -1,0 +1,231 @@
+syntax = "proto3";
+
+package platform.machine.v1alpha1;
+
+// Machine management service
+service MachineService {
+  // Apply configuration to the machine
+  rpc ApplyConfiguration(MachineConfigRequest) returns (MachineConfigResponse);
+  
+  // Get current machine configuration
+  rpc GetConfiguration(GetConfigRequest) returns (MachineConfig);
+  
+  // Get machine status
+  rpc GetStatus(GetStatusRequest) returns (MachineStatus);
+  
+  // Reset machine to default state
+  rpc Reset(ResetRequest) returns (ResetResponse);
+  
+  // Reboot the machine
+  rpc Reboot(RebootRequest) returns (RebootResponse);
+  
+  // Upgrade machine OS/components
+  rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
+  
+  // Stream machine events
+  rpc StreamEvents(StreamEventsRequest) returns (stream MachineEvent);
+}
+
+// Machine configuration
+message MachineConfig {
+  string version = 1;
+  MachineType type = 2;
+  
+  // Cluster configuration
+  message Cluster {
+    string name = 1;
+    string endpoint = 2;
+    string ca_certificate = 3;
+    string bootstrap_token = 4;
+    string dns_ip = 5;
+    string dns_domain = 6;
+  }
+  Cluster cluster = 3;
+  
+  // Network configuration
+  message Network {
+    repeated NetworkInterface interfaces = 1;
+    repeated string nameservers = 2;
+    string hostname = 3;
+  }
+  Network network = 4;
+  
+  // Security configuration
+  message Security {
+    bool fips_enabled = 1;
+    string selinux_mode = 2;
+    map<string, string> kernel_parameters = 3;
+    repeated string audit_rules = 4;
+    string lockdown_mode = 5;
+  }
+  Security security = 5;
+  
+  // Kubernetes configuration
+  message Kubernetes {
+    string version = 1;
+    map<string, string> kubelet_args = 2;
+    string cloud_provider = 3;
+    repeated string feature_gates = 4;
+  }
+  Kubernetes kubernetes = 6;
+  
+  // Host containers
+  map<string, HostContainer> host_containers = 7;
+  
+  // Storage configuration
+  message Storage {
+    repeated Filesystem filesystems = 1;
+  }
+  Storage storage = 8;
+}
+
+// Machine type
+enum MachineType {
+  MACHINE_TYPE_UNSPECIFIED = 0;
+  MACHINE_TYPE_CONTROL_PLANE = 1;
+  MACHINE_TYPE_WORKER = 2;
+}
+
+// Network interface
+message NetworkInterface {
+  string name = 1;
+  bool dhcp4 = 2;
+  bool dhcp6 = 3;
+  repeated string addresses = 4;
+  repeated Route routes = 5;
+  int32 mtu = 6;
+}
+
+// Network route
+message Route {
+  string destination = 1;
+  string gateway = 2;
+  int32 metric = 3;
+}
+
+// Host container configuration
+message HostContainer {
+  string source = 1;
+  bool enabled = 2;
+  bool superpowered = 3;
+  map<string, string> environment = 4;
+  repeated Mount mounts = 5;
+  string user_data = 6;
+}
+
+// Container mount
+message Mount {
+  string source = 1;
+  string destination = 2;
+  string type = 3;
+  repeated string options = 4;
+}
+
+// Filesystem configuration
+message Filesystem {
+  string device = 1;
+  string path = 2;
+  string format = 3;
+  repeated string options = 4;
+}
+
+// Request messages
+message MachineConfigRequest {
+  MachineConfig config = 1;
+  bool dry_run = 2;
+}
+
+message GetConfigRequest {}
+
+message GetStatusRequest {}
+
+message ResetRequest {
+  bool graceful = 1;
+  uint32 timeout_seconds = 2;
+}
+
+message RebootRequest {
+  bool graceful = 1;
+  uint32 timeout_seconds = 2;
+}
+
+message UpgradeRequest {
+  string target_version = 1;
+  bool preserve_data = 2;
+}
+
+message StreamEventsRequest {
+  repeated string event_types = 1;
+}
+
+// Response messages
+message MachineConfigResponse {
+  bool success = 1;
+  string message = 2;
+  repeated ConfigValidationError errors = 3;
+}
+
+message ConfigValidationError {
+  string field = 1;
+  string message = 2;
+}
+
+message MachineStatus {
+  string node_id = 1;
+  MachineType type = 2;
+  string os_version = 3;
+  string kubernetes_version = 4;
+  
+  message System {
+    string hostname = 1;
+    int64 uptime_seconds = 2;
+    string boot_id = 3;
+    string machine_id = 4;
+    string kernel_version = 5;
+  }
+  System system = 5;
+  
+  message Resources {
+    uint32 cpu_cores = 1;
+    uint64 memory_bytes = 2;
+    uint64 disk_bytes = 3;
+  }
+  Resources resources = 6;
+  
+  bool ready = 7;
+  repeated Condition conditions = 8;
+}
+
+message Condition {
+  string type = 1;
+  string status = 2;
+  string reason = 3;
+  string message = 4;
+  int64 last_transition_time = 5;
+}
+
+message ResetResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message RebootResponse {
+  bool success = 1;
+  string message = 2;
+  int64 scheduled_time = 3;
+}
+
+message UpgradeResponse {
+  bool success = 1;
+  string message = 2;
+  string current_version = 3;
+  string target_version = 4;
+}
+
+message MachineEvent {
+  string id = 1;
+  string type = 2;
+  int64 timestamp = 3;
+  string message = 4;
+  map<string, string> metadata = 5;
+}

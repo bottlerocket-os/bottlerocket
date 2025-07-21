@@ -1,0 +1,127 @@
+services:
+  # Platform Control Agent
+  platform-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: platform-control-agent
+    environment:
+      - RUST_LOG=debug
+      - PLATFORM_DEVELOPMENT=true
+      - BOTTLEROCKET_API_URL=http://mock-bottlerocket:8080
+      - PLATFORM_BIND_ADDR=0.0.0.0:50000
+      - PLATFORM_METRICS_ADDR=0.0.0.0:9090
+    ports:
+      - "50000:50000"  # gRPC API
+      - "50051:50051"  # Debug port
+      - "9090:9090"    # Metrics
+    volumes:
+      - ./src:/usr/src/app/src:ro
+      - ./Cargo.toml:/usr/src/app/Cargo.toml:ro
+      - ./certs:/etc/platform/certs
+      - platform-data:/var/lib/platform
+    depends_on:
+      - mock-bottlerocket
+      - etcd
+    networks:
+      - platform-net
+
+  # Mock Bottlerocket API
+  mock-bottlerocket:
+    build:
+      context: ./mock-bottlerocket
+      dockerfile: Dockerfile
+    container_name: mock-bottlerocket-api
+    environment:
+      - RUST_LOG=debug
+      - MOCK_DELAY_MS=100
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mock-bottlerocket/responses:/app/responses
+    networks:
+      - platform-net
+
+  # etcd for testing cluster operations
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.16
+    container_name: platform-etcd
+    environment:
+      - ETCD_NAME=etcd0
+      - ETCD_DATA_DIR=/etcd-data
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
+      - ETCD_INITIAL_CLUSTER=etcd0=http://etcd:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_INITIAL_CLUSTER_TOKEN=platform-cluster
+      - ETCD_AUTO_TLS=true
+      - ETCD_PEER_AUTO_TLS=true
+    ports:
+      - "12379:2379"
+      - "12380:2380"
+    volumes:
+      - etcd-data:/etcd-data
+    networks:
+      - platform-net
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: platform-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - platform-net
+
+  # Grafana for visualization (optional)
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: platform-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - platform-net
+
+  # gRPC UI for testing
+  grpcui:
+    image: fullstorydev/grpcui:v1.4.1
+    container_name: platform-grpcui
+    command: 
+      - "-plaintext"
+      - "-port"
+      - "8081"
+      - "platform-agent:50000"
+    ports:
+      - "8081:8081"
+    depends_on:
+      - platform-agent
+    networks:
+      - platform-net
+
+volumes:
+  platform-data:
+  etcd-data:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  platform-net:
+    driver: bridge
