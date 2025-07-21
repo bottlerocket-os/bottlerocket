@@ -1,3 +1,22 @@
+# v1.43.0 (2025-07-24)
+## OS Changes
+* Update `bottlerocket-core-kit` from 9.1.0 to 9.2.1 ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v9.1.0...v9.2.1))([#dee811f6])
+* Update `bottlerocket-kernel-kit` from 3.1.1 to 3.2.1 ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v3.1.1...v3.2.1))([#d6d31d6c])
+* Update admin container from 0.12.0 to 0.12.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0121) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.12.0...v0.12.1)) ([#4590])
+* Update bootstrap container from 0.2.3 to 0.2.4 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#024) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.3...v0.2.4)) ([#4590])
+* Update control container from 0.8.5 to 0.8.6 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#086) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.8.5...v0.8.6)) ([#4590])
+
+## Build Changes
+* Update `bottlerocket-sdk` from 0.62.0 to 0.63.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.62.0...v0.63.0)) ([#4592])
+### Twoliter
+* Update `twoliter` from 0.10.1 to 0.11.0 [CHANGELOG](https://github.com/bottlerocket-os/twoliter/blob/develop/CHANGELOG.md#0110---2024-07-17) ([commits](https://github.com/bottlerocket-os/twoliter/compare/v0.10.1...v0.11.0)) ([#4594])
+
+[#4590]: https://github.com/bottlerocket-os/bottlerocket/pull/4590
+[#4592]: https://github.com/bottlerocket-os/bottlerocket/pull/4592
+[#4594]: https://github.com/bottlerocket-os/bottlerocket/pull/4594
+[#dee811f6]: https://github.com/bottlerocket-os/bottlerocket/commit/dee811f63f7da043fb1caea2f54815bdb05da697
+[#d6d31d6c]: https://github.com/bottlerocket-os/bottlerocket/commit/d6d31d6cc322454f3b5738075af805e3f388f966
+
 # v1.42.0 (2025-06-30)
 
 ## Release Highlights
