@@ -132,6 +132,14 @@ The Platform Control Agent transforms Bottlerocket from a traditional SSH-manage
 - [ ] Verify Bottlerocket API connectivity
 - [ ] Add readiness vs liveness distinction
 
+#### gRPC Reflection API
+**Priority**: 🟢 Low  
+**Effort**: 30 minutes
+- [ ] Add tonic reflection feature
+- [ ] Register reflection service
+- [ ] Enable grpcurl without proto files
+- [ ] Improve developer experience
+
 #### Basic Config Persistence
 **Priority**: 🟢 Low  
 **Effort**: 2-3 hours
@@ -231,6 +239,7 @@ certs = { source = "/etc/platform/certs", destination = "/etc/platform/certs" }
 3. **Missing Error Handling**: Many error paths return generic internal errors
 4. **No Test Coverage**: 0% test coverage for critical business logic
 5. **Incomplete Translation Logic**: Config to Bottlerocket settings mapping is partial
+6. **No gRPC Reflection API**: Tools like grpcurl require proto files to interact with the service
 
 ## Risks & Mitigations
 | Risk | Impact | Mitigation |

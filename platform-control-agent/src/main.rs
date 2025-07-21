@@ -1,13 +1,17 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::net::SocketAddr;
+use std::sync::Arc;
 use tonic::transport::Server;
 use tracing::{info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod api;
 mod bottlerocket;
+mod persistence;
 mod services;
+mod system;
+mod tls;
 
 use services::machine_service::MachineServiceImpl;
 
@@ -126,8 +130,29 @@ async fn serve(
     
     let br_client = bottlerocket::client::BottlerocketClient::new(&bottlerocket_url)?;
 
+    // Initialize state manager
+    let state_dir = std::env::var("PLATFORM_STATE_DIR").ok();
+    let current_config = Arc::new(tokio::sync::RwLock::new(None));
+    let state_manager = persistence::StateManager::new(state_dir.as_deref(), current_config)?;
+    
+    // Load saved configuration
+    match state_manager.load_config().await {
+        Ok(Some(config)) => {
+            info!("Loaded saved configuration version: {}", config.version);
+        }
+        Ok(None) => {
+            info!("No saved configuration found, starting fresh");
+        }
+        Err(e) => {
+            warn!("Failed to load saved configuration: {}", e);
+            if !dev_mode {
+                return Err(anyhow::anyhow!("Failed to load configuration: {}", e));
+            }
+        }
+    }
+
     // Create service implementation
-    let machine_service = MachineServiceImpl::new(br_client);
+    let machine_service = MachineServiceImpl::new(br_client, state_manager);
 
     // Build gRPC server
     let mut server_builder = Server::builder();
@@ -136,9 +161,8 @@ async fn serve(
     if !dev_mode {
         if let (Some(cert), Some(key)) = (tls_cert, tls_key) {
             info!("Configuring TLS...");
-            // TODO: Implement TLS configuration
-            // let tls_config = create_tls_config(&cert, &key, tls_ca.as_deref())?;
-            // server_builder = server_builder.tls_config(tls_config)?;
+            let tls_config = crate::tls::create_tls_config(&cert, &key, tls_ca.as_deref())?;
+            server_builder = server_builder.tls_config(tls_config)?;
         } else {
             return Err(anyhow::anyhow!(
                 "TLS certificate and key required when not in dev mode"
@@ -163,20 +187,78 @@ async fn serve(
 async fn health_check(server: &str) -> Result<()> {
     info!("Performing health check on {}", server);
     
-    // TODO: Implement actual health check
-    println!("Health check passed");
+    // TODO: Implement actual gRPC health check
+    // For now, just try to connect to the server
+    use tonic::transport::Channel;
+    use crate::api::machine_service_client::MachineServiceClient;
     
-    Ok(())
+    let channel = Channel::from_shared(format!("http://{}", server))?
+        .connect()
+        .await
+        .context("Failed to connect to gRPC server")?;
+    
+    let mut client = MachineServiceClient::new(channel);
+    
+    // Try to get status
+    let request = tonic::Request::new(crate::api::GetStatusRequest {});
+    match client.get_status(request).await {
+        Ok(_) => {
+            println!("✅ Health check passed - server is responding");
+            Ok(())
+        }
+        Err(e) => {
+            println!("❌ Health check failed: {}", e);
+            Err(anyhow::anyhow!("Health check failed: {}", e))
+        }
+    }
 }
 
 async fn perf_test(server: &str, requests: u32, clients: u32) -> Result<()> {
+    use std::time::Instant;
+    use futures::future::join_all;
+    use crate::api::machine_service_client::MachineServiceClient;
+    use tonic::transport::Channel;
+    
     info!(
-        "Running performance test: {} requests with {} clients",
-        requests, clients
+        "Running performance test against {}: {} requests with {} clients",
+        server, requests, clients
     );
     
-    // TODO: Implement performance test
-    println!("Performance test completed");
+    let start = Instant::now();
+    let requests_per_client = requests / clients;
+    
+    // Create tasks for concurrent clients
+    let mut tasks = Vec::new();
+    for _client_id in 0..clients {
+        let server = server.to_string();
+        let task = tokio::spawn(async move {
+            let channel = Channel::from_shared(format!("http://{}", server))
+                .unwrap()
+                .connect()
+                .await
+                .unwrap();
+            
+            let mut client = MachineServiceClient::new(channel);
+            
+            for _ in 0..requests_per_client {
+                let request = tonic::Request::new(crate::api::GetStatusRequest {});
+                let _ = client.get_status(request).await;
+            }
+        });
+        tasks.push(task);
+    }
+    
+    // Wait for all clients to complete
+    join_all(tasks).await;
+    
+    let duration = start.elapsed();
+    let total_requests = requests_per_client * clients;
+    let requests_per_second = total_requests as f64 / duration.as_secs_f64();
+    
+    println!("Performance test completed:");
+    println!("  Total requests: {}", total_requests);
+    println!("  Duration: {:?}", duration);
+    println!("  Requests/second: {:.2}", requests_per_second);
     
     Ok(())
 }

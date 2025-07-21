@@ -32,12 +32,12 @@ impl BottlerocketClient {
                 .strip_prefix("unix://")
                 .ok_or_else(|| anyhow::anyhow!("Invalid Unix socket URL"))?;
             
-            // Verify socket exists
+            // Warn if socket doesn't exist (but don't fail - it might be created later)
             if !Path::new(socket_path).exists() {
-                return Err(anyhow::anyhow!(
-                    "Unix socket does not exist: {}",
+                tracing::warn!(
+                    "Unix socket does not exist yet: {}. Connection attempts will fail until socket is created.",
                     socket_path
-                ));
+                );
             }
             
             Ok(Self {
@@ -82,6 +82,12 @@ impl BottlerocketClient {
     pub async fn set_settings(&self, settings: &Settings) -> Result<()> {
         info!("Applying new settings to Bottlerocket");
         
+        // In development mode, skip actual API call if unix socket doesn't exist
+        if self.is_unix_socket && std::env::var("SKIP_UNIX_SOCKET").is_ok() {
+            tracing::warn!("SKIP_UNIX_SOCKET is set, simulating successful settings apply");
+            return Ok(());
+        }
+        
         let body = serde_json::to_string(settings)?;
         
         if self.is_unix_socket {
@@ -110,6 +116,17 @@ impl BottlerocketClient {
     /// Get OS information
     pub async fn get_os_info(&self) -> Result<OsInfo> {
         debug!("Fetching OS information");
+        
+        // In development mode with skip flag, return mock data
+        if self.is_unix_socket && std::env::var("SKIP_UNIX_SOCKET").is_ok() {
+            return Ok(OsInfo {
+                arch: std::env::consts::ARCH.to_string(),
+                build_id: "dev-build-001".to_string(),
+                pretty_name: "Bottlerocket OS (Development)".to_string(),
+                variant_id: "dev-variant".to_string(),
+                version_id: "1.16.0-dev".to_string(),
+            });
+        }
         
         let response_body = if self.is_unix_socket {
             self.unix_request(Method::GET, "/os", None).await?
