@@ -51,7 +51,7 @@ This document tracks the overall implementation of the Bottlerocket API-Driven P
 
 ---
 
-### Phase 2: Cluster Formation (Weeks 5-8) 🏗️ IN PROGRESS
+### Phase 2: Cluster Formation (Weeks 5-8) ✅ COMPLETE
 **Goal:** Autonomous cluster bootstrapping capability
 
 #### Cluster Bootstrap
@@ -68,11 +68,19 @@ This document tracks the overall implementation of the Bottlerocket API-Driven P
   - [x] Rate limiting and validation ✅
   - [x] Certificate chain verification ✅
 
-- [ ] [#012](features/cluster-bootstrap.md#3-etcd-cluster-formation) etcd Formation
-  - [ ] Generate etcd static pod configs
-  - [ ] Implement cluster initialization
-  - [ ] Configure FIPS TLS settings
-  - [ ] Add health monitoring
+- [x] [#012](features/cluster-bootstrap.md#3-etcd-cluster-formation) etcd Formation ✅
+  - [x] Generate etcd static pod configs ✅
+  - [x] Implement cluster initialization ✅
+  - [x] Configure FIPS TLS settings ✅
+  - [x] Add health monitoring ✅
+
+#### etcd Implementation Details
+- **Service Implementation**: Full gRPC service with all methods
+- **Static Pod Generation**: Kubernetes manifests with health checks
+- **Security**: FIPS-compliant TLS configuration (RSA 4096, SHA256)
+- **Join Mechanism**: Secure token-based authentication
+- **Integration**: Seamless PKI certificate usage
+- **Monitoring**: Event streaming for real-time cluster status
 
 #### PKI Production Features (Future Work)
 - [ ] Certificate renewal mechanism
@@ -270,18 +278,30 @@ Use these labels in GitHub/GitLab:
 - State persistence and event system
 - Reconciliation loop with drift detection
 
-### Phase 2 🏗️ IN PROGRESS (70% Complete)
+### Phase 2 ✅ COMPLETE (Core Features)
 - **Election System ✅**: Raft consensus with priority voting implemented
 - **PKI Core ✅**: Certificate generation and distribution implemented
   - FIPS-compliant CA hierarchy
   - Secure distribution with leader verification
   - Node authentication and rate limiting
   - Certificate validation
-- **Remaining**: etcd formation, PKI production features (renewal, revocation)
-- **Bootstrap Module**: ~3,500 lines of Rust code
+- **etcd Formation ✅**: Autonomous cluster formation implemented
+  - Static pod generation with FIPS-compliant TLS
+  - Leader-driven initialization
+  - Token-based join mechanism for followers
+  - Integration with PKI for certificates
+  - Event streaming for cluster monitoring
+- **Bootstrap Coordinator ✅**: Orchestrates all three phases
+- **Bootstrap Module**: ~5,000 lines of Rust code
+
+### Remaining Production Features (Future Work)
+- PKI certificate renewal mechanism
+- Certificate revocation (CRL/OCSP)
+- Automated rotation policies
+- etcd backup/restore automation
+- Production health monitoring dashboards
 
 ### Next Steps
-1. Implement etcd static pod generation
-2. Create etcd cluster initialization
-3. Build bootstrap coordinator
-4. Add PKI production features (as time permits)
+1. Phase 3: Configuration Management (Machine Configuration CRDs)
+2. Phase 4: Update Orchestration and Compliance
+3. Phase 5: Multi-Infrastructure Support
