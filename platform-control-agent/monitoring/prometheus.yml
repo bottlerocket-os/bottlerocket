@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Scrape Platform Control Agent metrics
+  - job_name: 'platform-control-agent'
+    static_configs:
+      - targets: ['platform-agent:9090']
+        labels:
+          service: 'platform-control'
+          environment: 'dev'
+
+  # Scrape Mock Bottlerocket API metrics (if available)
+  - job_name: 'mock-bottlerocket'
+    static_configs:
+      - targets: ['mock-bottlerocket:8080']
+        labels:
+          service: 'mock-api'
+          environment: 'dev'
+
+  # Scrape etcd metrics
+  - job_name: 'etcd'
+    static_configs:
+      - targets: ['etcd:2379']
+        labels:
+          service: 'etcd'
+          environment: 'dev'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
