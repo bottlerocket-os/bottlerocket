@@ -24,6 +24,6 @@ pub mod proto {
     }
 }
 
-pub use election::{ElectionService, ElectionState, ElectionConfig};
+pub use election::{ElectionService, ElectionState, ElectionConfig, NodeInfo};
 pub use pki::{PKIService, Certificate, PKIConfig, CertificateAuthority, CertificateStore, PKIDistributor};
 pub use etcd::{EtcdService, EtcdConfig};

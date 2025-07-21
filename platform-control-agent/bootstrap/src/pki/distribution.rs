@@ -103,7 +103,7 @@ impl PKIDistributor {
         // Calculate renewal time (30 days before expiry)
         let renewal_time = cert.cert.not_after();
         let renewal_timestamp = SystemTime::UNIX_EPOCH + 
-            Duration::from_secs(renewal_time.diff(&openssl::asn1::Asn1Time::from_unix(0)?)?.days as u64 * 86400 - 
+            Duration::from_secs(renewal_time.diff(&openssl::asn1::Asn1Time::from_unix(0)?.as_ref())?.days as u64 * 86400 - 
             self.renewal_threshold_days as u64 * 86400);
         
         // Track distribution
@@ -194,7 +194,7 @@ impl PKIDistributor {
             &request.common_name,
             CertificateType::try_from(request.r#type)?,
             Some(ca),
-            request.validity_days,
+            Some(request.validity_days),
             request.dns_names,
             request.ip_addresses,
         ).await?;
@@ -258,7 +258,7 @@ impl PKIDistributor {
         builder.set_not_after(&not_after)?;
         
         // Set public key from CSR
-        builder.set_pubkey(&csr.public_key()?)?;
+        builder.set_pubkey(&csr.public_key()?.as_ref())?;
         
         // Add extensions based on certificate type
         match CertificateType::try_from(request.r#type)? {
@@ -345,7 +345,8 @@ impl PKIDistributor {
     /// Track certificate distribution
     async fn track_distribution(&self, cert: &Certificate) -> Result<()> {
         let fingerprint = hex::encode(cert.cert.digest(MessageDigest::sha256())?);
-        let node_id = cert.get_common_name()?;
+        let proto_cert = cert.to_proto()?;
+        let node_id = proto_cert.common_name.clone();
         
         let entry = DistributionEntry {
             node_id: node_id.clone(),
@@ -358,7 +359,7 @@ impl PKIDistributor {
         };
         
         let mut distributions = self.distributions.write().await;
-        distributions.insert(node_id, entry);
+        distributions.insert(node_id.clone(), entry);
         
         info!("Certificate distributed to node {}: {}", node_id, fingerprint);
         Ok(())
@@ -401,7 +402,7 @@ impl PKIDistributor {
         let chain = chain.build();
         let mut context = openssl::x509::X509StoreContext::new()?;
         
-        match context.init(&chain, &cert, &openssl::stack::Stack::new()?, |ctx| ctx.verify_cert()) {
+        match context.init(&chain, &cert, &openssl::stack::Stack::new()?.as_ref(), |ctx| ctx.verify_cert()) {
             Ok(true) => Ok(()),
             Ok(false) => Err(anyhow!("Certificate validation failed")),
             Err(e) => Err(anyhow!("Certificate validation error: {}", e)),

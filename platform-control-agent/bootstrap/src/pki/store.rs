@@ -239,7 +239,7 @@ impl CertificateStore {
                         san.ip(ip);
                     }
                     
-                    let ca_cert = signing_ca.as_ref().map(|c| &c.cert);
+                    let ca_cert = signing_ca.as_ref().map(|c| c.cert.as_ref());
                     builder.append_extension(san.build(&builder.x509v3_context(ca_cert, None))?)?;
                 }
             }
@@ -271,7 +271,7 @@ impl CertificateStore {
                         san.ip(ip);
                     }
                     
-                    let ca_cert = signing_ca.as_ref().map(|c| &c.cert);
+                    let ca_cert = signing_ca.as_ref().map(|c| c.cert.as_ref());
                     builder.append_extension(san.build(&builder.x509v3_context(ca_cert, None))?)?;
                 }
             }

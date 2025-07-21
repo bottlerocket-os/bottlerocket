@@ -3,7 +3,7 @@ mod service;
 mod algorithm;
 mod messages;
 
-pub use state::{ElectionState, NodeState, PriorityScore, ElectionConfig};
+pub use state::{ElectionState, NodeState, PriorityScore, ElectionConfig, NodeInfo};
 pub use service::ElectionService;
 pub use messages::{VoteRequest, VoteResponse, HeartbeatRequest};
 

@@ -406,4 +406,19 @@ impl ElectionState {
             }
         }
     }
+    
+    /// Check if this node is currently the leader
+    pub async fn is_leader(&self) -> bool {
+        let state = *self.state.read().await;
+        let current_leader = self.current_leader.read().await;
+        let leader_lease = self.leader_lease.read().await;
+        
+        // A node is the leader if:
+        // 1. Its state is Leader
+        // 2. It believes it is the current leader
+        // 3. It has a valid lease
+        state == NodeState::Leader 
+            && current_leader.as_ref() == Some(&self.node_id)
+            && leader_lease.as_ref().map_or(false, |lease| lease.is_valid())
+    }
 }

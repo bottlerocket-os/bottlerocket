@@ -155,22 +155,22 @@ impl PkiServiceTrait for PKIService {
         
         // Update CA configuration
         let config = Self::proto_to_config(req.config);
-        let ca = CertificateAuthority::new(config);
+        let mut ca = CertificateAuthority::new(config);
         
         // Generate certificate hierarchy
-        match ca.generate_hierarchy().await {
+        match ca.initialize() {
             Ok(_) => {
                 info!("PKI hierarchy generated successfully");
                 
                 // Store certificates
-                if let Err(e) = self.store.store_root_ca(ca.get_root_ca().unwrap()).await {
+                if let Err(e) = self.store.store_root_ca(ca.get_root_ca().unwrap().clone()).await {
                     let msg = format!("Failed to store root CA: {}", e);
                     error!("{}", msg);
                     return Err(Status::internal(msg));
                 }
                 
                 if let Some(k8s_ca) = ca.get_kubernetes_ca() {
-                    if let Err(e) = self.store.store_kubernetes_ca(k8s_ca).await {
+                    if let Err(e) = self.store.store_kubernetes_ca(k8s_ca.clone()).await {
                         let msg = format!("Failed to store Kubernetes CA: {}", e);
                         error!("{}", msg);
                         return Err(Status::internal(msg));
@@ -178,7 +178,7 @@ impl PkiServiceTrait for PKIService {
                 }
                 
                 if let Some(etcd_ca) = ca.get_etcd_ca() {
-                    if let Err(e) = self.store.store_etcd_ca(etcd_ca).await {
+                    if let Err(e) = self.store.store_etcd_ca(etcd_ca.clone()).await {
                         let msg = format!("Failed to store etcd CA: {}", e);
                         error!("{}", msg);
                         return Err(Status::internal(msg));
@@ -190,7 +190,7 @@ impl PkiServiceTrait for PKIService {
                 // Send initialization event
                 self.send_event(
                     CertificateEventType::Issued,
-                    ca.get_root_ca(),
+                    ca.get_root_ca().cloned(),
                     "PKI system initialized".to_string(),
                 ).await;
                 

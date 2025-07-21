@@ -6,7 +6,7 @@ use tonic::transport::Server;
 use tracing::{info, error};
 
 use platform_bootstrap::{
-    election::{ElectionService, ElectionState, NodeInfo, ElectionConfig},
+    election::{ElectionService, ElectionState, ElectionConfig, NodeInfo},
     pki::PKIService,
     etcd::EtcdService,
     coordinator::BootstrapCoordinator,
@@ -99,9 +99,12 @@ async fn main() -> Result<()> {
     }
     
     // Initialize services
-    let election_service = Arc::new(ElectionService::new(election_state));
-    let pki_service = Arc::new(PKIService::new());
-    let etcd_service = Arc::new(EtcdService::new());
+    let election_service = Arc::new(ElectionService::new(election_state.clone()));
+    let pki_service = Arc::new(PKIService::new(election_state.clone()));
+    let etcd_service = Arc::new(EtcdService::new(
+        election_state.clone(),
+        pki_service.clone(),
+    ));
     
     // Start election service background tasks
     if let Err(e) = election_service.start().await {
@@ -112,6 +115,7 @@ async fn main() -> Result<()> {
     // Create bootstrap coordinator
     let coordinator = Arc::new(BootstrapCoordinator::new(
         election_service.clone(),
+        election_state.clone(),
         pki_service.clone(),
         etcd_service.clone(),
     ));
