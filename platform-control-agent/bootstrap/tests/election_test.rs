@@ -1,5 +1,6 @@
 use std::sync::Arc;
-use std::time::Duration;\nuse platform_bootstrap::election::{ElectionState, NodeInfo, ElectionConfig};
+use std::time::Duration;
+use platform_bootstrap::election::{ElectionState, NodeInfo, ElectionConfig};
 
 #[tokio::test]
 async fn test_election_state_transitions() {

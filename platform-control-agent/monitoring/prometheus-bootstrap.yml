@@ -1,0 +1,52 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "bootstrap-nodes"
+    static_configs:
+      - targets:
+          - "bootstrap-node-1:9090"
+          - "bootstrap-node-2:9090"
+          - "bootstrap-node-3:9090"
+        labels:
+          group: "bootstrap"
+
+  - job_name: "election-metrics"
+    static_configs:
+      - targets:
+          - "bootstrap-node-1:9090"
+          - "bootstrap-node-2:9090"
+          - "bootstrap-node-3:9090"
+        labels:
+          subsystem: "election"
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: "election_.*"
+        action: keep
+
+  - job_name: "pki-metrics"
+    static_configs:
+      - targets:
+          - "bootstrap-node-1:9090"
+          - "bootstrap-node-2:9090"
+          - "bootstrap-node-3:9090"
+        labels:
+          subsystem: "pki"
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: "pki_.*"
+        action: keep
+
+  - job_name: "etcd-metrics"
+    static_configs:
+      - targets:
+          - "bootstrap-node-1:9090"
+          - "bootstrap-node-2:9090"
+          - "bootstrap-node-3:9090"
+        labels:
+          subsystem: "etcd"
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: "etcd_.*"
+        action: keep

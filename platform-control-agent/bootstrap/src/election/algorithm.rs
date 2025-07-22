@@ -62,11 +62,36 @@ impl RaftElection {
     
     /// Create gRPC client for a node
     async fn create_client(&self, address: &str) -> Result<ElectionServiceClient<Channel>> {
-        let endpoint = format!("https://{}", address);
-        let channel = Channel::from_shared(endpoint)?
-            .connect()
-            .await?;
-        Ok(ElectionServiceClient::new(channel))
+        // Try to load TLS certificates - if they exist, use HTTPS; otherwise, use HTTP
+        if let (Ok(ca_cert), Ok(client_cert), Ok(client_key)) = (
+            std::fs::read("/etc/platform/certs/ca.crt"),
+            std::fs::read("/etc/platform/certs/tls.crt"),
+            std::fs::read("/etc/platform/certs/tls.key")
+        ) {
+            // Use HTTPS with mTLS
+            let endpoint = format!("https://{}", address);
+            
+            let ca_cert = tonic::transport::Certificate::from_pem(ca_cert);
+            let client_identity = tonic::transport::Identity::from_pem(client_cert, client_key);
+            
+            let tls_config = tonic::transport::ClientTlsConfig::new()
+                .ca_certificate(ca_cert)
+                .identity(client_identity);
+                
+            let channel = Channel::from_shared(endpoint)?
+                .tls_config(tls_config)?
+                .connect()
+                .await?;
+                
+            Ok(ElectionServiceClient::new(channel))
+        } else {
+            // Use HTTP (plaintext) 
+            let endpoint = format!("http://{}", address);
+            let channel = Channel::from_shared(endpoint)?
+                .connect()
+                .await?;
+            Ok(ElectionServiceClient::new(channel))
+        }
     }
     
     /// Start an election campaign

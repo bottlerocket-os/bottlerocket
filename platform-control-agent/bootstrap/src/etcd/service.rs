@@ -63,6 +63,7 @@ pub struct EtcdService {
     pki_service: Arc<PKIService>,
     join_tokens: Arc<RwLock<HashMap<String, JoinToken>>>,
     event_tx: broadcast::Sender<EtcdEvent>,
+    dev_mode: bool,
     // Note: In production, we would use an actual etcd client here
     // For now, we manage state internally
 }
@@ -71,6 +72,14 @@ impl EtcdService {
     pub fn new(
         election_state: Arc<ElectionState>,
         pki_service: Arc<PKIService>,
+    ) -> Self {
+        Self::with_dev_mode(election_state, pki_service, false)
+    }
+    
+    pub fn with_dev_mode(
+        election_state: Arc<ElectionState>,
+        pki_service: Arc<PKIService>,
+        dev_mode: bool,
     ) -> Self {
         let (event_tx, _) = broadcast::channel(1024);
         
@@ -81,6 +90,7 @@ impl EtcdService {
             pki_service,
             join_tokens: Arc::new(RwLock::new(HashMap::new())),
             event_tx,
+            dev_mode,
         }
     }
     
@@ -138,13 +148,22 @@ impl EtcdService {
             .context("Failed to parse node IP")?;
         config.node.client_address = config.node.peer_address.clone();
         
-        // Set certificate paths (will be populated by PKI service)
-        config.security.peer_cert_file = "/etc/kubernetes/pki/etcd/peer.crt".to_string();
-        config.security.peer_key_file = "/etc/kubernetes/pki/etcd/peer.key".to_string();
-        config.security.peer_ca_file = "/etc/kubernetes/pki/etcd/ca.crt".to_string();
-        config.security.client_cert_file = "/etc/kubernetes/pki/etcd/server.crt".to_string();
-        config.security.client_key_file = "/etc/kubernetes/pki/etcd/server.key".to_string();
-        config.security.client_ca_file = "/etc/kubernetes/pki/etcd/ca.crt".to_string();
+        if self.dev_mode {
+            // Disable TLS in dev mode
+            config.security.peer_tls_enabled = false;
+            config.security.client_tls_enabled = false;
+            config.security.peer_client_cert_auth = false;
+            config.security.client_cert_auth = false;
+            info!("Dev mode: etcd TLS disabled");
+        } else {
+            // Set certificate paths (will be populated by PKI service)
+            config.security.peer_cert_file = "/etc/kubernetes/pki/etcd/peer.crt".to_string();
+            config.security.peer_key_file = "/etc/kubernetes/pki/etcd/peer.key".to_string();
+            config.security.peer_ca_file = "/etc/kubernetes/pki/etcd/ca.crt".to_string();
+            config.security.client_cert_file = "/etc/kubernetes/pki/etcd/server.crt".to_string();
+            config.security.client_key_file = "/etc/kubernetes/pki/etcd/server.key".to_string();
+            config.security.client_ca_file = "/etc/kubernetes/pki/etcd/ca.crt".to_string();
+        }
         
         Ok(())
     }
@@ -242,7 +261,9 @@ impl EtcdServiceTrait for EtcdService {
         
         // Add self to initial cluster
         let node_name = config.node.name.clone();
-        let peer_url = format!("https://{}:{}", 
+        let protocol = if self.dev_mode { "http" } else { "https" };
+        let peer_url = format!("{}://{}:{}", 
+            protocol,
             config.node.peer_address, 
             config.node.peer_port
         );
@@ -270,11 +291,13 @@ impl EtcdServiceTrait for EtcdService {
         state.is_healthy = true;
         
         // Add self as first member
+        let protocol = if self.dev_mode { "http" } else { "https" };
         let self_member = EtcdMember {
             id: member_id.clone(),
             name: self.election_state.node_info.node_id.clone(),
             peer_urls: vec![peer_url.clone()],
-            client_urls: vec![format!("https://{}:{}", 
+            client_urls: vec![format!("{}://{}:{}", 
+                protocol,
                 self.config.read().await.node.client_address,
                 self.config.read().await.node.client_port
             )],

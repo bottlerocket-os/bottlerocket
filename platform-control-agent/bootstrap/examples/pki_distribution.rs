@@ -4,9 +4,10 @@ use std::sync::Arc;
 
 use platform_bootstrap::{
     pki::{PKIConfig, CertificateAuthority, CertificateStore, PKIDistributor},
-    election::{ElectionState, ElectionConfig},
+    election::{ElectionState, ElectionConfig, NodeInfo},
     proto::pki::{CertificateRequest, CertificateType},
 };
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -16,8 +17,17 @@ async fn main() -> Result<()> {
     info!("PKI Distribution Example");
     
     // Create election state (mock as leader for demo)
+    let node_info = NodeInfo {
+        node_id: "leader-node".to_string(),
+        address: "127.0.0.1:50100".to_string(),
+        uptime: Duration::from_secs(300),
+        cpu_available_percent: 80.0,
+        memory_available_gb: 8.0,
+        packet_loss_percent: 0.0,
+        election_priority: 100,
+    };
     let election_config = ElectionConfig::default();
-    let election_state = Arc::new(ElectionState::new("leader-node".to_string(), election_config));
+    let election_state = Arc::new(ElectionState::new("leader-node".to_string(), node_info, election_config));
     
     // Create PKI components
     let store = Arc::new(CertificateStore::new());
@@ -26,8 +36,8 @@ async fn main() -> Result<()> {
     // Create CA and generate hierarchy
     info!("Generating PKI hierarchy...");
     let pki_config = PKIConfig::default();
-    let ca = CertificateAuthority::new(pki_config);
-    ca.generate_hierarchy().await?;
+    let mut ca = CertificateAuthority::new(pki_config);
+    ca.initialize()?;
     
     // Store CAs
     info!("Storing CA certificates...");

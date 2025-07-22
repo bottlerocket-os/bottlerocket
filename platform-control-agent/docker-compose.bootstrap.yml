@@ -1,0 +1,156 @@
+services:
+  # Bootstrap Node 1 - Higher priority
+  bootstrap-node-1:
+    build:
+      context: .
+      dockerfile: Dockerfile.bootstrap
+    container_name: bootstrap-node-1
+    hostname: bootstrap-node-1
+    environment:
+      - RUST_LOG=platform_bootstrap=debug
+      - NODE_ID=node-1
+      - NODE_PRIORITY=200
+      - BIND_ADDR=0.0.0.0:50100
+      - CLUSTER_MEMBERS=bootstrap-node-2:50100,bootstrap-node-3:50100
+    ports:
+      - "50100:50100" # gRPC API
+    volumes:
+      - ./certs/node1:/etc/platform/certs
+      - node1-data:/var/lib/platform
+    networks:
+      - platform-net
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50100"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  # Bootstrap Node 2 - Medium priority
+  bootstrap-node-2:
+    build:
+      context: .
+      dockerfile: Dockerfile.bootstrap
+    container_name: bootstrap-node-2
+    hostname: bootstrap-node-2
+    environment:
+      - RUST_LOG=platform_bootstrap=debug
+      - NODE_ID=node-2
+      - NODE_PRIORITY=150
+      - BIND_ADDR=0.0.0.0:50100
+      - CLUSTER_MEMBERS=bootstrap-node-1:50100,bootstrap-node-3:50100
+    ports:
+      - "50101:50100" # gRPC API
+    volumes:
+      - ./certs/node2:/etc/platform/certs
+      - node2-data:/var/lib/platform
+    networks:
+      - platform-net
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50100"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  # Bootstrap Node 3 - Lower priority
+  bootstrap-node-3:
+    build:
+      context: .
+      dockerfile: Dockerfile.bootstrap
+    container_name: bootstrap-node-3
+    hostname: bootstrap-node-3
+    environment:
+      - RUST_LOG=platform_bootstrap=debug
+      - NODE_ID=node-3
+      - NODE_PRIORITY=100
+      - BIND_ADDR=0.0.0.0:50100
+      - CLUSTER_MEMBERS=bootstrap-node-1:50100,bootstrap-node-2:50100
+    ports:
+      - "50102:50100" # gRPC API
+    volumes:
+      - ./certs/node3:/etc/platform/certs
+      - node3-data:/var/lib/platform
+    networks:
+      - platform-net
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50100"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+
+  # Mock Bottlerocket API for each node
+  mock-bottlerocket-1:
+    build:
+      context: ./mock-bottlerocket
+      dockerfile: Dockerfile
+    container_name: mock-bottlerocket-1
+    environment:
+      - RUST_LOG=debug
+      - NODE_NAME=node-1
+    networks:
+      - platform-net
+
+  mock-bottlerocket-2:
+    build:
+      context: ./mock-bottlerocket
+      dockerfile: Dockerfile
+    container_name: mock-bottlerocket-2
+    environment:
+      - RUST_LOG=debug
+      - NODE_NAME=node-2
+    networks:
+      - platform-net
+
+  mock-bottlerocket-3:
+    build:
+      context: ./mock-bottlerocket
+      dockerfile: Dockerfile
+    container_name: mock-bottlerocket-3
+    environment:
+      - RUST_LOG=debug
+      - NODE_NAME=node-3
+    networks:
+      - platform-net
+
+  # gRPC UI for testing bootstrap APIs
+  grpcui-bootstrap:
+    image: fullstorydev/grpcui:v1.4.1
+    container_name: bootstrap-grpcui
+    command:
+      - "-plaintext"
+      - "-port"
+      - "8082"
+      - "bootstrap-node-1:50100"
+    ports:
+      - "8082:8082"
+    depends_on:
+      - bootstrap-node-1
+    networks:
+      - platform-net
+
+  # Prometheus for bootstrap metrics
+  prometheus-bootstrap:
+    image: prom/prometheus:latest
+    container_name: bootstrap-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./monitoring/prometheus-bootstrap.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-bootstrap-data:/prometheus
+    networks:
+      - platform-net
+
+volumes:
+  node1-data:
+  node2-data:
+  node3-data:
+  prometheus-bootstrap-data:
+
+networks:
+  platform-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

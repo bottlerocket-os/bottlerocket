@@ -8,10 +8,9 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::net::UnixListener;
 use tokio::sync::RwLock;
-use tower::ServiceBuilder;
 use tracing::{info, warn};
+use tower::ServiceBuilder;
 
 #[derive(Clone)]
 struct AppState {
@@ -78,7 +77,7 @@ impl Default for Settings {
             }),
             host_containers: Some(HashMap::new()),
             ntp: Some(NtpSettings {
-                time_servers: Some(vec\!["time.aws.com".to_string()]),
+                time_servers: Some(vec!["time.aws.com".to_string()]),
             }),
         }
     }
@@ -89,7 +88,7 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else( < /dev/null | _| "mock_bottlerocket=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "mock_bottlerocket=debug,tower_http=debug".into()),
         )
         .init();
 
@@ -115,9 +114,9 @@ async fn main() {
     // Try Unix socket first
     let socket_path = "/run/api.sock";
     match std::fs::remove_file(socket_path) {
-        Ok(_) => info\!("Removed existing socket"),
+        Ok(_) => info!("Removed existing socket"),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-        Err(e) => warn\!("Failed to remove socket: {}", e),
+        Err(e) => warn!("Failed to remove socket: {}", e),
     }
 
     // Also listen on HTTP for development
@@ -127,27 +126,15 @@ async fn main() {
             let listener = tokio::net::TcpListener::bind("0.0.0.0:8080")
                 .await
                 .unwrap();
-            info\!("Mock Bottlerocket API listening on http://0.0.0.0:8080");
+            info!("Mock Bottlerocket API listening on http://0.0.0.0:8080");
             axum::serve(listener, app).await.unwrap();
         })
     };
 
-    // Unix socket server
-    match UnixListener::bind(socket_path) {
-        Ok(listener) => {
-            info\!("Mock Bottlerocket API listening on unix://{}", socket_path);
-            
-            // Set permissions
-            std::fs::set_permissions(socket_path, std::fs::Permissions::from_mode(0o666))
-                .expect("Failed to set socket permissions");
-            
-            axum::serve(listener, app).await.unwrap();
-        }
-        Err(e) => {
-            warn\!("Failed to bind Unix socket: {}. Running HTTP only.", e);
-            http_server.await.unwrap();
-        }
-    }
+    // For now, just run HTTP server
+    // Unix socket support would require hyper-util UnixListener setup
+    info!("Mock Bottlerocket API listening on http://0.0.0.0:8080 (Unix socket disabled for now)");
+    http_server.await.unwrap();
 }
 
 async fn health() -> &'static str {
@@ -162,7 +149,7 @@ async fn patch_settings(
     State(state): State<AppState>,
     Json(patch): Json<serde_json::Value>,
 ) -> Result<StatusCode, StatusCode> {
-    info\!("Received settings patch: {}", patch);
+    info!("Received settings patch: {}", patch);
     
     // In a real implementation, we would merge the patch with current settings
     // For the mock, we'll update staged settings
@@ -190,7 +177,7 @@ async fn patch_settings(
 }
 
 async fn commit(State(state): State<AppState>) -> Result<StatusCode, StatusCode> {
-    info\!("Committing settings");
+    info!("Committing settings");
     
     let staged = state.staged_settings.read().await.clone();
     if staged.is_none() {
@@ -201,7 +188,7 @@ async fn commit(State(state): State<AppState>) -> Result<StatusCode, StatusCode>
 }
 
 async fn apply(State(state): State<AppState>) -> Result<StatusCode, StatusCode> {
-    info\!("Applying settings");
+    info!("Applying settings");
     
     let mut staged = state.staged_settings.write().await;
     if let Some(new_settings) = staged.take() {
@@ -213,7 +200,7 @@ async fn apply(State(state): State<AppState>) -> Result<StatusCode, StatusCode> 
 }
 
 async fn reboot() -> StatusCode {
-    info\!("Reboot requested (mock - not actually rebooting)");
+    info!("Reboot requested (mock - not actually rebooting)");
     StatusCode::ACCEPTED
 }
 

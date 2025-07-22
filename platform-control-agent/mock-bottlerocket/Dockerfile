@@ -20,4 +20,3 @@ RUN mkdir -p /run
 EXPOSE 8080
 
 CMD ["/usr/local/bin/mock-bottlerocket"]
-EOF < /dev/null

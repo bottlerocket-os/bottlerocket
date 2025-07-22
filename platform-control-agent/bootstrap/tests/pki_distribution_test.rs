@@ -3,15 +3,25 @@ mod tests {
     use platform_bootstrap::pki::{
         PKIConfig, CertificateAuthority, CertificateStore, PKIDistributor,
     };
-    use platform_bootstrap::election::ElectionState;
+    use platform_bootstrap::election::{ElectionState, NodeInfo, ElectionConfig};
     use platform_bootstrap::proto::pki::{CertificateRequest, CertificateType};
     use std::sync::Arc;
+    use std::time::Duration;
     
     #[tokio::test]
     async fn test_pki_distribution_basic() {
         // Create election state (mock as leader)
-        let config = platform_bootstrap::election::ElectionConfig::default();
-        let election_state = Arc::new(ElectionState::new("test-node".to_string(), config));
+        let node_info = NodeInfo {
+            node_id: "test-node".to_string(),
+            address: "127.0.0.1:50100".to_string(),
+            uptime: Duration::from_secs(300),
+            cpu_available_percent: 80.0,
+            memory_available_gb: 8.0,
+            packet_loss_percent: 0.0,
+            election_priority: 100,
+        };
+        let config = ElectionConfig::default();
+        let election_state = Arc::new(ElectionState::new("test-node".to_string(), node_info, config));
         
         // Create PKI components
         let store = Arc::new(CertificateStore::new());
@@ -19,8 +29,8 @@ mod tests {
         
         // Create CA and generate hierarchy
         let pki_config = PKIConfig::default();
-        let ca = CertificateAuthority::new(pki_config);
-        ca.generate_hierarchy().await.unwrap();
+        let mut ca = CertificateAuthority::new(pki_config);
+        ca.initialize().unwrap();
         
         // Store CAs
         store.store_root_ca(ca.get_root_ca().unwrap().clone()).await.unwrap();
@@ -53,14 +63,23 @@ mod tests {
     #[tokio::test]
     async fn test_certificate_validation() {
         let store = Arc::new(CertificateStore::new());
-        let config = platform_bootstrap::election::ElectionConfig::default();
-        let election_state = Arc::new(ElectionState::new("test-node".to_string(), config));
+        let node_info = NodeInfo {
+            node_id: "test-node".to_string(),
+            address: "127.0.0.1:50100".to_string(),
+            uptime: Duration::from_secs(300),
+            cpu_available_percent: 80.0,
+            memory_available_gb: 8.0,
+            packet_loss_percent: 0.0,
+            election_priority: 100,
+        };
+        let config = ElectionConfig::default();
+        let election_state = Arc::new(ElectionState::new("test-node".to_string(), node_info, config));
         let distributor = Arc::new(PKIDistributor::new(store.clone(), election_state));
         
         // Create and store a test CA
         let pki_config = PKIConfig::default();
-        let ca = CertificateAuthority::new(pki_config);
-        ca.generate_hierarchy().await.unwrap();
+        let mut ca = CertificateAuthority::new(pki_config);
+        ca.initialize().unwrap();
         store.store_root_ca(ca.get_root_ca().unwrap().clone()).await.unwrap();
         
         // Get the CA certificate PEM

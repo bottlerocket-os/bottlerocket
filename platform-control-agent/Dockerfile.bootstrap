@@ -1,0 +1,62 @@
+# Build stage
+FROM rust:1.82-bullseye AS builder
+
+WORKDIR /usr/src/app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    protobuf-compiler \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy workspace files
+COPY Cargo.toml Cargo.lock ./
+COPY bootstrap/Cargo.toml ./bootstrap/
+COPY build.rs ./
+COPY bootstrap/build.rs ./bootstrap/
+
+# Copy source files
+COPY src ./src
+COPY bootstrap/src ./bootstrap/src
+COPY bootstrap/proto ./bootstrap/proto
+
+# Build the bootstrap binary
+WORKDIR /usr/src/app/bootstrap
+RUN cargo build --release --bin platform-bootstrap
+
+# Runtime stage
+FROM debian:bullseye-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl1.1 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install grpc_health_probe for healthchecks
+RUN GRPC_HEALTH_PROBE_VERSION=v0.4.19 && \
+    curl -L https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 \
+    -o /usr/local/bin/grpc_health_probe && \
+    chmod +x /usr/local/bin/grpc_health_probe
+
+# Copy the binary from builder (it's in the workspace root target)
+COPY --from=builder /usr/src/app/target/release/platform-bootstrap /usr/local/bin/
+
+# Create necessary directories
+RUN mkdir -p /etc/platform/certs /var/lib/platform
+
+# Create a non-root user
+RUN useradd -r -u 1000 -s /bin/false platform
+
+# Set ownership
+RUN chown -R platform:platform /etc/platform /var/lib/platform
+
+USER platform
+
+EXPOSE 50100
+
+# Use environment variables for configuration
+ENTRYPOINT ["/usr/local/bin/platform-bootstrap"]
+CMD ["--bind", "0.0.0.0:50100"]

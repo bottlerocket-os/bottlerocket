@@ -17,23 +17,23 @@ use platform_bootstrap::{
 #[command(about = "Bootstrap service for Platform Control Agent")]
 struct Cli {
     /// Node ID (defaults to generated UUID)
-    #[arg(long)]
+    #[arg(long, env = "NODE_ID")]
     node_id: Option<String>,
     
     /// Bind address for gRPC server
-    #[arg(long, default_value = "0.0.0.0:50100")]
+    #[arg(long, env = "BIND_ADDR", default_value = "0.0.0.0:50100")]
     bind: String,
     
     /// Cluster members (comma-separated addresses)
-    #[arg(long)]
+    #[arg(long, env = "CLUSTER_MEMBERS")]
     members: Option<String>,
     
     /// Election priority (0-1000)
-    #[arg(long, default_value = "100")]
+    #[arg(long, env = "NODE_PRIORITY", default_value = "100")]
     priority: u64,
     
     /// Development mode (no TLS)
-    #[arg(long)]
+    #[arg(long, env = "DEV_MODE")]
     dev_mode: bool,
 }
 
@@ -65,10 +65,19 @@ async fn main() -> Result<()> {
         cluster_members = members_str.split(',').map(|s| s.trim().to_string()).collect();
     }
     
+    // Extract IP address from bind address for node info
+    let bind_ip = if cli.dev_mode {
+        // In dev mode, use 127.0.0.1 for local testing
+        "127.0.0.1".to_string()
+    } else {
+        // Extract IP from bind address (remove port)
+        cli.bind.split(':').next().unwrap_or("0.0.0.0").to_string()
+    };
+    
     // Create node info
     let node_info = NodeInfo {
         node_id: node_id.clone(),
-        address: cli.bind.clone(),
+        address: bind_ip,
         uptime: Duration::from_secs(0),
         cpu_available_percent: 80.0, // TODO: Get real metrics
         memory_available_gb: 8.0,
@@ -86,8 +95,10 @@ async fn main() -> Result<()> {
     
     // Add cluster members
     for member_addr in cluster_members {
+        // Extract just the hostname part for node_id (before the colon)
+        let node_id = member_addr.split(':').next().unwrap_or(&member_addr).to_string();
         let member_info = NodeInfo {
-            node_id: format!("node-{}", member_addr),
+            node_id,
             address: member_addr,
             uptime: Duration::from_secs(0),
             cpu_available_percent: 50.0,
@@ -101,9 +112,10 @@ async fn main() -> Result<()> {
     // Initialize services
     let election_service = Arc::new(ElectionService::new(election_state.clone()));
     let pki_service = Arc::new(PKIService::new(election_state.clone()));
-    let etcd_service = Arc::new(EtcdService::new(
+    let etcd_service = Arc::new(EtcdService::with_dev_mode(
         election_state.clone(),
         pki_service.clone(),
+        cli.dev_mode,
     ));
     
     // Start election service background tasks
@@ -129,12 +141,31 @@ async fn main() -> Result<()> {
         }
     });
     
-    // Build gRPC server
+    // Build gRPC server with optional TLS
     let addr = cli.bind.parse()?;
     
-    info!("Platform Bootstrap Service ready on {}", addr);
+    let mut server_builder = Server::builder();
     
-    Server::builder()
+    // Try to load TLS certificates - if they exist, use TLS; otherwise, use plaintext
+    if let (Ok(cert), Ok(key), Ok(ca_cert)) = (
+        std::fs::read("/etc/platform/certs/tls.crt"),
+        std::fs::read("/etc/platform/certs/tls.key"),
+        std::fs::read("/etc/platform/certs/ca.crt")
+    ) {
+        let server_identity = tonic::transport::Identity::from_pem(cert, key);
+        let ca_cert = tonic::transport::Certificate::from_pem(ca_cert);
+        
+        let tls_config = tonic::transport::ServerTlsConfig::new()
+            .identity(server_identity)
+            .client_ca_root(ca_cert);
+        
+        server_builder = server_builder.tls_config(tls_config)?;
+        info!("Platform Bootstrap Service ready on {} (TLS enabled)", addr);
+    } else {
+        info!("Platform Bootstrap Service ready on {} (plaintext - no TLS certificates found)", addr);
+    }
+    
+    server_builder
         .add_service(
             platform_bootstrap::proto::election::election_service_server::ElectionServiceServer::from_arc(
                 election_service

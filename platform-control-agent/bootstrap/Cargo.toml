@@ -56,7 +56,7 @@ async-stream = "0.3"
 tokio-util = { version = "0.7", features = ["net"] }
 
 # CLI
-clap = { version = "4.5", features = ["derive"] }
+clap = { version = "4.5", features = ["derive", "env"] }
 
 [build-dependencies]
 tonic-build = "0.12"
