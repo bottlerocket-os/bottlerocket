@@ -84,6 +84,7 @@ Requires: (%{shrink:
            %{_cross_os}variant(aws-k8s-1.29-nvidia)      or
            %{_cross_os}variant(aws-k8s-1.29-nvidia-fips) or
            %{_cross_os}variant(aws-k8s-1.30-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.30-nvidia-fips) or
            %{_cross_os}variant(aws-k8s-1.31-nvidia)
            %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
@@ -91,6 +92,7 @@ Provides: %{_cross_os}settings-defaults(aws-k8s-1.28-nvidia)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.29-nvidia)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.29-nvidia-fips)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.30-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.30-nvidia-fips)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.31-nvidia)
 Conflicts: %{_cross_os}settings-defaults(any)
 
