@@ -174,10 +174,12 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %package aws-k8s-1.34-nvidia
 Summary: Settings defaults for the aws-k8s 1.34 nvidia variants
 Requires: (%{shrink:
-           %{_cross_os}variant(aws-k8s-1.34-nvidia)
+           %{_cross_os}variant(aws-k8s-1.34-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.34-nvidia-fips)
            %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.34-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.34-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-k8s-1.34-nvidia

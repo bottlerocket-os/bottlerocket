@@ -273,6 +273,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-k8s-1_34-nvidia-fips"
+version = "0.1.0"
+dependencies = [
+ "settings-defaults",
+ "settings-migrations",
+ "settings-plugins",
+]
+
+[[package]]
 name = "metal-dev"
 version = "0.1.0"
 dependencies = [
