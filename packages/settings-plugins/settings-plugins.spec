@@ -77,6 +77,7 @@ Requires: (%{_cross_os}variant-family(aws-k8s) and %{_cross_os}variant-flavor(nv
 Provides: %{_cross_os}settings-plugin(any)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.28-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.29-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.29-nvidia-fips)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.30-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.31-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.32-nvidia)
