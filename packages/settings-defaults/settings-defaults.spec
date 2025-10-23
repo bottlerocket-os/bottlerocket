@@ -85,7 +85,8 @@ Requires: (%{shrink:
            %{_cross_os}variant(aws-k8s-1.29-nvidia-fips) or
            %{_cross_os}variant(aws-k8s-1.30-nvidia)      or
            %{_cross_os}variant(aws-k8s-1.30-nvidia-fips) or
-           %{_cross_os}variant(aws-k8s-1.31-nvidia)
+           %{_cross_os}variant(aws-k8s-1.31-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.31-nvidia-fips)
            %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.28-nvidia)
@@ -94,6 +95,7 @@ Provides: %{_cross_os}settings-defaults(aws-k8s-1.29-nvidia-fips)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.30-nvidia)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.30-nvidia-fips)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.31-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.31-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-k8s-1.31-nvidia
