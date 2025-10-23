@@ -164,6 +164,14 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.33, 1.34, 1.35 and 1.36 clusters.
 
+### aws-k8s-1.33-nvidia-fips: Kubernetes 1.33 NVIDIA FIPS node
+
+The [aws-k8s-1.33-nvidia-fips](aws-k8s-1.33-nvidia-fips/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It also includes the required packages to configure containers to leverage NVIDIA GPUs and is FIPS-enabled.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.33, 1.34, 1.35 and 1.36 clusters.
+
 ### aws-k8s-1.34-nvidia: Kubernetes 1.34 NVIDIA node
 
 The [aws-k8s-1.34-nvidia](aws-k8s-1.34-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
