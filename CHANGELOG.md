@@ -1,24 +1,35 @@
-# v1.50.0 (2025-10-20)
+# v1.50.0 (2025-11-05)
 
 ## Release Highlights
 * Add support for new kubernetes setting `kube-reserved.pid` and `system-reserved.pid` ([#4661], [bottlerocket-core-kit#646])
 * Allow multiple sequential calls of `apiclient ephemeral-storage bind` ([bottlerocket-core-kit#679])
+* Patch `containerd-2.1` to fix image pull when range-get is ignored by the registry ([bottlerocket-core-kit#702])
+
+## Security Fixes
+* Patch `runc` to mitigate CVE-2025-31133, CVE-2025-52565, and CVE-2025-52881 ([bottlerocket-core-kit#6e3d3e2e])
 
 ## OS Changes
 
-* Update `bottlerocket-sdk` from 0.64.0 to 0.65.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.64.0...v0.65.0))([#4664])
-* Update `bottlerocket-kernel-kit` from 4.3.3 to 4.4.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v440-2025-10-16) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.3.3...v4.4.0)) ([#4664])
-* Update `bottlerocket-core-kit` from 10.6.0 to 10.8.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1080-2025-10-16) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v10.6.0...v10.8.0)) ([#4664])
-* Update `bootstrap-container` from 0.2.6 to 0.2.7 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#027) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.6...v0.2.7)) ([#4664])
-* Update `control-container` from 0.8.8 to 0.8.9 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#089) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.8.8...v0.8.9)) ([#4664])
+* Update `bottlerocket-sdk` from 0.64.0 to 0.65.1 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.64.0...v0.65.1))([#4664], [#4667])
+* Update `bottlerocket-kernel-kit` from 4.3.3 to 4.4.2 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v442-2025-10-27) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.3.3...v4.4.2)) ([#4664], [#4667], [#4672])
+* Update `bottlerocket-core-kit` from 10.6.0 to 10.9.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1082-2025-11-05) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v10.6.0...v10.9.0)) ([#4661], [#4664], [#4667], [#07b40823])
+* Update `admin-container` from 0.12.3 to 0.12.4 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0124) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.12.3...v0.12.4)) ([#4669])
+* Update `bootstrap-container` from 0.2.6 to 0.2.8 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#028) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.6...v0.2.8)) ([#4664], [#4669])
+* Update `control-container` from 0.8.8 to 0.8.10 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0810) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.8.8...v0.8.10)) ([#4664], [#4669])
 
 ### Settings Extensions
 * Update bottlerocket-settings-models to v0.16.0 ([#4661])
 
 [#4661]: https://github.com/bottlerocket-os/bottlerocket/pull/4661
 [#4664]: https://github.com/bottlerocket-os/bottlerocket/pull/4664
+[#4667]: https://github.com/bottlerocket-os/bottlerocket/pull/4667
+[#4669]: https://github.com/bottlerocket-os/bottlerocket/pull/4669
+[#4672]: https://github.com/bottlerocket-os/bottlerocket/pull/4672
 [bottlerocket-core-kit#646]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/646
 [bottlerocket-core-kit#679]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/679
+[bottlerocket-core-kit#702]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/702
+[#07b40823]: https://github.com/bottlerocket-os/bottlerocket/commit/07b408232df3a5c47b93b7ba086ddebca5677703
+[bottlerocket-core-kit#6e3d3e2e]: https://github.com/bottlerocket-os/bottlerocket-core-kit/commit/6e3d3e2e563ec556b9fc51eb495a180b69bcf43b
 
 # v1.49.0 (2025-10-09)
 
