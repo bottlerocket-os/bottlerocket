@@ -1,0 +1,25 @@
+# Container runtime - image verification
+
+[services.image-verification]
+configuration-files = [
+  "containerd-image-verifiers-toml",
+  "notation-trust-policy-json",
+]
+
+# Reload if we disable image verification / update the trustpolicy
+restart-commands = []
+
+[metadata.settings.image-verifier-plugins]
+affected-services = ["image-verification"]
+
+# Reload the containerd configuration drop-in
+[metadata.settings.image-verifier-plugins.enabled]
+affected-services = ["containerd", "image-verification"]
+
+[configuration-files.containerd-image-verifiers-toml]
+path = "/etc/containerd/config.d/002-image-verification-plugins.toml"
+template-path = "/usr/share/templates/containerd-image-verifiers-toml"
+
+[configuration-files.notation-trust-policy-json]
+path = "/etc/notation/trustpolicy.json"
+template-path = "/usr/share/templates/notation-trust-policy-json"

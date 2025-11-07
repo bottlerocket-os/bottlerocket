@@ -80,6 +80,9 @@ The following variants support ECS:
 
 * `aws-ecs-2`
 * `aws-ecs-2-nvidia`
+* `aws-ecs-3`
+* `aws-ecs-3-fips`
+* `aws-ecs-3-nvidia`
 
 We also have variants that are designed to be Kubernetes worker nodes in VMware:
 
