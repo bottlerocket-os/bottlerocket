@@ -199,6 +199,12 @@ The [aws-ecs-2-nvidia](aws-ecs-2-nvidia/Cargo.toml) variant includes the package
 container instance in AWS.
 It also includes the required packages to configure containers to leverage NVIDIA GPUs.
 
+### aws-ecs-2-nvidia-fips: Amazon ECS container instance
+
+The [aws-ecs-2-nvidia-fips](aws-ecs-2-nvidia-fips/Cargo.toml) variant includes the packages needed to run an [Amazon ECS](https://ecs.aws)
+container instance in AWS.
+It also includes the required packages to configure containers to leverage NVIDIA GPUs and is FIPS-enabled.
+
 ### aws-dev: AWS development build
 
 The [aws-dev](aws-dev/Cargo.toml) variant has useful packages for local development of the OS.

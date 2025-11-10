@@ -43,9 +43,13 @@ Conflicts: %{_cross_os}settings-defaults(any)
 
 %package aws-ecs-2-nvidia
 Summary: Settings defaults for the aws-ecs-2-nvidia variant
-Requires: %{_cross_os}variant(aws-ecs-2-nvidia)
+Requires: (%{shrink:
+           %{_cross_os}variant(aws-ecs-2-nvidia) or
+           %{_cross_os}variant(aws-ecs-2-nvidia-fips)
+           %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-ecs-2-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-ecs-2-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-ecs-2-nvidia

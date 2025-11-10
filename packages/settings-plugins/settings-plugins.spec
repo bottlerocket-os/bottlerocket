@@ -35,11 +35,13 @@ Summary: Settings plugin for the aws-ecs-2 variant
 Requires: (%{shrink:
            %{_cross_os}variant(aws-ecs-2) or
            %{_cross_os}variant(aws-ecs-2-fips) or
-           %{_cross_os}variant(aws-ecs-2-nvidia)
+           %{_cross_os}variant(aws-ecs-2-nvidia) or
+           %{_cross_os}variant(aws-ecs-2-nvidia-fips)
            %{nil}})
 Provides: %{_cross_os}settings-plugin(any)
 Provides: %{_cross_os}settings-plugin(aws-ecs-2)
 Provides: %{_cross_os}settings-plugin(aws-ecs-2-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-ecs-2-nvidia-fips)
 Provides: %{_cross_os}settings-plugin(aws-ecs-2-fips)
 Conflicts: %{_cross_os}settings-plugin(any)
 
