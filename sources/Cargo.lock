@@ -1138,6 +1138,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubernetes-ecr-credential-provider-patterns"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubernetes-ecr-credential-providers-correction"
 version = "0.1.0"
 dependencies = [
