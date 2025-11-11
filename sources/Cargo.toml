@@ -46,6 +46,7 @@ members = [
     "settings-migrations/v1.47.0/host-bootstrap-containers-command-setting",
     "settings-migrations/v1.50.0/kubernetes-reserved-pid-settings",
     "settings-migrations/v1.51.0/kubernetes-ecr-credential-provider-patterns",
+    "settings-migrations/v1.51.0/kubernetes-additional-settings",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
