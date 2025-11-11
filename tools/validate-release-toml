@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ! -f "Release.toml" ]]; then
+    echo "Error: Release.toml not found" >&2
+    exit 1
+fi
+
+# Extract version pairs and sort them by version number
+mapfile -t transitions < <(grep -oP '\(\K[0-9]+\.[0-9]+\.[0-9]+,\s*[0-9]+\.[0-9]+\.[0-9]+(?=\))' Release.toml | sort -V)
+
+if [[ ${#transitions[@]} -eq 0 ]]; then
+    echo "Error: No migrations found in Release.toml" >&2
+    exit 1
+fi
+
+errors=()
+prev_to=""
+
+for transition in "${transitions[@]}"; do
+    from=$(echo "${transition}" | cut -d',' -f1 | tr -d ' ')
+    to=$(echo "${transition}" | cut -d',' -f2 | tr -d ' ')
+    
+    if [[ -n "${prev_to}" && "${prev_to}" != "${from}" ]]; then
+        errors+=("Missing transition: (${prev_to}, ${from})")
+    fi
+    
+    prev_to="${to}"
+done
+
+if [[ ${#errors[@]} -gt 0 ]]; then
+    echo "Validation failed! Found the following issues:" >&2
+    echo "" >&2
+    for error in "${errors[@]}"; do
+        echo "  - ${error}" >&2
+    done
+    exit 1
+fi
+
+echo "✓ Release.toml validation passed - all version transitions are present"
+exit 0
