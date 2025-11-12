@@ -441,6 +441,7 @@ version = "1.50.0"
     "migrate_v1.47.0_container-runtime-concurrent-download-chunk-size.lz4",
     "migrate_v1.47.0_host-bootstrap-containers-command-setting.lz4"
 ]
+"(1.47.0, 1.48.0)" = []
 "(1.48.0, 1.49.0)" = []
 "(1.49.0, 1.50.0)" = [
     "migrate_v1.50.0_kubernetes-reserved-pid-settings.lz4",
