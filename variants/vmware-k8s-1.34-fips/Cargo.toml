@@ -39,6 +39,7 @@ included-packages = [
     "containerd-2.1",
     "systemd-257",
     "nftables",
+    "whippet",
     # k8s
     "cni",
     "cni-plugins",
