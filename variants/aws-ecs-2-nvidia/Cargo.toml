@@ -19,6 +19,7 @@ included-packages = [
 # core
     "release",
     "kernel-6.1",
+    "whippet",
 # docker
     "docker-cli",
     "docker-engine",
