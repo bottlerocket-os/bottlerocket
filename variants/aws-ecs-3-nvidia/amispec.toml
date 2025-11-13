@@ -1,0 +1,11 @@
+description = "This variant is in preview. It contains the newly released Docker v29.0.0 along with features related to image verification and encrypted storage."
+
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
+imds-support = "v2.0"
+
+# Override the pubsys "gp2" default
+[block-device-mappings."/dev/xvda".ebs]
+volume-type = "gp3"
+
+[block-device-mappings."/dev/xvdb".ebs]
+volume-type = "gp3"

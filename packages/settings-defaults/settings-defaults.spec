@@ -55,6 +55,34 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %description aws-ecs-2-nvidia
 %{summary}.
 
+%package aws-ecs-3
+Summary: Settings defaults for the aws-ecs-3 FIPS and non-FIPS variants
+Requires: (%{shrink:
+           %{_cross_os}variant(aws-ecs-3) or
+           %{_cross_os}variant(aws-ecs-3-fips)
+          %{nil}})
+Provides: %{_cross_os}settings-defaults(any)
+Provides: %{_cross_os}settings-defaults(aws-ecs-3)
+Provides: %{_cross_os}settings-defaults(aws-ecs-3-fips)
+Conflicts: %{_cross_os}settings-defaults(any)
+
+%description aws-ecs-3
+%{summary}.
+
+%package aws-ecs-3-nvidia
+Summary: Settings defaults for the aws-ecs-3-nvidia variant
+Requires: (%{shrink:
+           %{_cross_os}variant(aws-ecs-3-nvidia) or
+           %{_cross_os}variant(aws-ecs-3-nvidia-fips)
+           %{nil}})
+Provides: %{_cross_os}settings-defaults(any)
+Provides: %{_cross_os}settings-defaults(aws-ecs-3-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-ecs-3-nvidia-fips)
+Conflicts: %{_cross_os}settings-defaults(any)
+
+%description aws-ecs-3-nvidia
+%{summary}.
+
 %package aws-k8s-1.31
 Summary: Settings defaults for the aws-k8s 1.28 through 1.31 variants
 Requires: (%{shrink:
@@ -277,6 +305,8 @@ for defaults in \
   aws-dev \
   aws-ecs-2 \
   aws-ecs-2-nvidia \
+  aws-ecs-3 \
+  aws-ecs-3-nvidia \
   aws-k8s-1.31 \
   aws-k8s-1.31-nvidia \
   aws-k8s-1.32 \
@@ -313,6 +343,8 @@ for defaults in \
   aws-dev \
   aws-ecs-2 \
   aws-ecs-2-nvidia \
+  aws-ecs-3 \
+  aws-ecs-3-nvidia \
   aws-k8s-1.31 \
   aws-k8s-1.31-nvidia \
   aws-k8s-1.32 \
@@ -351,6 +383,14 @@ done
 %files aws-ecs-2-nvidia
 %{_cross_defaultsdir}/aws-ecs-2-nvidia.toml
 %{_cross_tmpfilesdir}/storewolf-defaults-aws-ecs-2-nvidia.conf
+
+%files aws-ecs-3
+%{_cross_defaultsdir}/aws-ecs-3.toml
+%{_cross_tmpfilesdir}/storewolf-defaults-aws-ecs-3.conf
+
+%files aws-ecs-3-nvidia
+%{_cross_defaultsdir}/aws-ecs-3-nvidia.toml
+%{_cross_tmpfilesdir}/storewolf-defaults-aws-ecs-3-nvidia.conf
 
 %files aws-k8s-1.31
 %{_cross_defaultsdir}/aws-k8s-1.31.toml

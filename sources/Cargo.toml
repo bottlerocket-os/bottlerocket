@@ -16,6 +16,8 @@ members = [
     "settings-defaults/aws-dev",
     "settings-defaults/aws-ecs-2",
     "settings-defaults/aws-ecs-2-nvidia",
+    "settings-defaults/aws-ecs-3",
+    "settings-defaults/aws-ecs-3-nvidia",
     "settings-defaults/aws-k8s-1.31",
     "settings-defaults/aws-k8s-1.31-nvidia",
     "settings-defaults/aws-k8s-1.32",
@@ -51,6 +53,7 @@ members = [
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
+    "settings-plugins/aws-ecs-3",
     "settings-plugins/aws-k8s",
     "settings-plugins/aws-k8s-nvidia",
     "settings-plugins/metal-dev",

@@ -48,6 +48,24 @@ Conflicts: %{_cross_os}settings-plugin(any)
 %description aws-ecs-2
 %{summary}.
 
+%package aws-ecs-3
+Summary: Settings plugin for the aws-ecs-3 variant
+Requires: (%{shrink:
+           %{_cross_os}variant(aws-ecs-3) or
+           %{_cross_os}variant(aws-ecs-3-fips) or
+           %{_cross_os}variant(aws-ecs-3-nvidia) or
+           %{_cross_os}variant(aws-ecs-3-nvidia-fips)
+           %{nil}})
+Provides: %{_cross_os}settings-plugin(any)
+Provides: %{_cross_os}settings-plugin(aws-ecs-3)
+Provides: %{_cross_os}settings-plugin(aws-ecs-3-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-ecs-3-nvidia-fips)
+Provides: %{_cross_os}settings-plugin(aws-ecs-3-fips)
+Conflicts: %{_cross_os}settings-plugin(any)
+
+%description aws-ecs-3
+%{summary}.
+
 %package aws-k8s
 Summary: Settings plugin for the aws-k8s variants
 Requires: %{_cross_os}variant-family(aws-k8s)
@@ -146,6 +164,7 @@ Conflicts: %{_cross_os}settings-plugin(any)
 %cargo_build --manifest-path %{_builddir}/sources/Cargo.toml \
   -p settings-plugin-aws-dev \
   -p settings-plugin-aws-ecs-2 \
+  -p settings-plugin-aws-ecs-3 \
   -p settings-plugin-aws-k8s \
   -p settings-plugin-aws-k8s-nvidia \
   -p settings-plugin-metal-dev \
@@ -161,6 +180,7 @@ install -d %{buildroot}%{_cross_tmpfilesdir}
 for plugin in \
   aws-dev \
   aws-ecs-2 \
+  aws-ecs-3 \
   aws-k8s-nvidia \
   aws-k8s \
   metal-dev \
@@ -193,6 +213,11 @@ done
 %{_cross_pluginsdir}/aws-ecs-2/libsettings.so
 %{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/aws-ecs-2.conf
 %{_cross_tmpfilesdir}/settings-plugin-aws-ecs-2.conf
+
+%files aws-ecs-3
+%{_cross_pluginsdir}/aws-ecs-3/libsettings.so
+%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/aws-ecs-3.conf
+%{_cross_tmpfilesdir}/settings-plugin-aws-ecs-3.conf
 
 %files aws-k8s
 %{_cross_pluginsdir}/aws-k8s/libsettings.so
