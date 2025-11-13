@@ -738,6 +738,203 @@ impl Migration for NoOpMigration {
 
 // =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
 
+/// We use this migration when we add new values to a list setting that older versions don't
+/// understand. On downgrade, we filter the list to only include values the old version accepts.
+pub struct ListRestriction {
+    pub setting: &'static str,
+    pub allowed_vals: &'static [&'static str],
+}
+
+pub struct RestrictListsMigration(pub Vec<ListRestriction>);
+
+impl Migration for RestrictListsMigration {
+    /// New versions can handle all values; no work needed on upgrade.
+    fn forward(&mut self, input: MigrationData) -> Result<MigrationData> {
+        println!(
+            "RestrictListsMigration({:?}) has no work to do on upgrade.",
+            self.0.iter().map(|r| r.setting).collect::<Vec<_>>()
+        );
+        Ok(input)
+    }
+
+    /// Older versions only understand certain values; remove any values not in the allowed list.
+    fn backward(&mut self, mut input: MigrationData) -> Result<MigrationData> {
+        for restriction in &self.0 {
+            if let Some(data) = input.data.get_mut(restriction.setting) {
+                match data {
+                    serde_json::Value::Array(data) => {
+                        let list: Vec<&str> = data
+                            .iter()
+                            .map(|v| v.as_str())
+                            .collect::<Option<Vec<&str>>>()
+                            .with_context(|| error::ReplaceListContentsSnafu {
+                                setting: restriction.setting,
+                                data: data.clone(),
+                            })?;
+
+                        let filtered: Vec<&str> = list
+                            .into_iter()
+                            .filter(|val| restriction.allowed_vals.contains(val))
+                            .collect();
+
+                        if filtered.len() != data.len() {
+                            let new_data: Vec<serde_json::Value> =
+                                filtered.iter().map(|s| (*s).into()).collect();
+                            println!(
+                                "Filtered '{}' to allowed values {:?} on downgrade",
+                                restriction.setting, filtered
+                            );
+                            *data = new_data;
+                        } else {
+                            println!(
+                                "'{}' already contains only allowed values, leaving alone",
+                                restriction.setting
+                            );
+                        }
+                    }
+                    _ => {
+                        println!(
+                            "'{}' is set to non-list value '{}'; RestrictListsMigration only handles lists",
+                            restriction.setting, data
+                        );
+                    }
+                }
+            } else {
+                println!("Found no '{}' to filter on downgrade", restriction.setting);
+            }
+        }
+        Ok(input)
+    }
+}
+
+#[cfg(test)]
+mod test_restrict_lists {
+    use super::{ListRestriction, RestrictListsMigration};
+    use crate::{Migration, MigrationData};
+    use maplit::hashmap;
+    use std::collections::HashMap;
+
+    #[test]
+    fn filter_values() {
+        let data = MigrationData {
+            data: hashmap! {
+                "setting".into() => vec!["old1", "old2", "new1", "new2"].into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = RestrictListsMigration(vec![ListRestriction {
+            setting: "setting",
+            allowed_vals: &["old1", "old2"],
+        }])
+        .backward(data)
+        .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "setting".into() => vec!["old1", "old2"].into(),
+            }
+        );
+    }
+
+    #[test]
+    fn no_filtering_needed() {
+        let data = MigrationData {
+            data: hashmap! {
+                "setting".into() => vec!["old1", "old2"].into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = RestrictListsMigration(vec![ListRestriction {
+            setting: "setting",
+            allowed_vals: &["old1", "old2", "new1"],
+        }])
+        .backward(data)
+        .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "setting".into() => vec!["old1", "old2"].into(),
+            }
+        );
+    }
+
+    #[test]
+    fn forward_no_change() {
+        let data = MigrationData {
+            data: hashmap! {
+                "setting".into() => vec!["old1", "new1", "new2"].into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = RestrictListsMigration(vec![ListRestriction {
+            setting: "setting",
+            allowed_vals: &["old1"],
+        }])
+        .forward(data)
+        .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "setting".into() => vec!["old1", "new1", "new2"].into(),
+            }
+        );
+    }
+
+    #[test]
+    fn multiple_restrictions() {
+        let data = MigrationData {
+            data: hashmap! {
+                "setting1".into() => vec!["a", "b", "c"].into(),
+                "setting2".into() => vec!["x", "y", "z"].into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = RestrictListsMigration(vec![
+            ListRestriction {
+                setting: "setting1",
+                allowed_vals: &["a", "b"],
+            },
+            ListRestriction {
+                setting: "setting2",
+                allowed_vals: &["x"],
+            },
+        ])
+        .backward(data)
+        .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "setting1".into() => vec!["a", "b"].into(),
+                "setting2".into() => vec!["x"].into(),
+            }
+        );
+    }
+
+    #[test]
+    fn not_list() {
+        let data = MigrationData {
+            data: hashmap! {
+                "setting".into() => "not a list".into(),
+            },
+            metadata: HashMap::new(),
+        };
+        let result = RestrictListsMigration(vec![ListRestriction {
+            setting: "setting",
+            allowed_vals: &["old1"],
+        }])
+        .backward(data)
+        .unwrap();
+        assert_eq!(
+            result.data,
+            hashmap! {
+                "setting".into() => "not a list".into(),
+            }
+        );
+    }
+}
+
+// =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=   =^..^=
+
 /// We use this migration to remove a setting string if it matches the old value.
 /// We will need this migration once to adapt the concept of Strength on settings.
 pub struct RemoveMatchingString {
