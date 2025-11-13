@@ -1,0 +1,11 @@
+[package]
+name = "kubernetes-beta-cpu-manager-policy-options"
+version = "0.1.0"
+authors = ["Kush Upadhyay <kushupad@amazon.com>"]
+license = "Apache-2.0 OR MIT"
+edition = "2021"
+publish = false
+exclude = ["README.md"]
+
+[dependencies]
+migration-helpers.workspace = true

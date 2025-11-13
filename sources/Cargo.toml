@@ -47,6 +47,7 @@ members = [
     "settings-migrations/v1.50.0/kubernetes-reserved-pid-settings",
     "settings-migrations/v1.51.0/kubernetes-ecr-credential-provider-patterns",
     "settings-migrations/v1.51.0/kubernetes-additional-settings",
+    "settings-migrations/v1.51.0/kubernetes-beta-cpu-manager-policy-options",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
