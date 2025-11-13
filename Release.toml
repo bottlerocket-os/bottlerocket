@@ -1,4 +1,4 @@
-version = "1.50.0"
+version = "1.51.0"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -445,4 +445,7 @@ version = "1.50.0"
 "(1.48.0, 1.49.0)" = []
 "(1.49.0, 1.50.0)" = [
     "migrate_v1.50.0_kubernetes-reserved-pid-settings.lz4",
+]
+"(1.50.0, 1.51.0)" = [
+    "migrate_v1.51.0_kubernetes-ecr-credential-provider-patterns.lz4",
 ]
