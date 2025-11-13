@@ -43,9 +43,13 @@ Conflicts: %{_cross_os}settings-defaults(any)
 
 %package aws-ecs-2-nvidia
 Summary: Settings defaults for the aws-ecs-2-nvidia variant
-Requires: %{_cross_os}variant(aws-ecs-2-nvidia)
+Requires: (%{shrink:
+           %{_cross_os}variant(aws-ecs-2-nvidia) or
+           %{_cross_os}variant(aws-ecs-2-nvidia-fips)
+           %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-ecs-2-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-ecs-2-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-ecs-2-nvidia
@@ -80,16 +84,22 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %package aws-k8s-1.31-nvidia
 Summary: Settings defaults for the aws-k8s 1.28 through 1.31 nvidia variants
 Requires: (%{shrink:
-           %{_cross_os}variant(aws-k8s-1.28-nvidia) or
-           %{_cross_os}variant(aws-k8s-1.29-nvidia) or
-           %{_cross_os}variant(aws-k8s-1.30-nvidia) or
-           %{_cross_os}variant(aws-k8s-1.31-nvidia)
+           %{_cross_os}variant(aws-k8s-1.28-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.29-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.29-nvidia-fips) or
+           %{_cross_os}variant(aws-k8s-1.30-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.30-nvidia-fips) or
+           %{_cross_os}variant(aws-k8s-1.31-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.31-nvidia-fips)
            %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.28-nvidia)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.29-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.29-nvidia-fips)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.30-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.30-nvidia-fips)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.31-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.31-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-k8s-1.31-nvidia
@@ -112,10 +122,12 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %package aws-k8s-1.32-nvidia
 Summary: Settings defaults for the aws-k8s 1.32 nvidia variants
 Requires: (%{shrink:
-           %{_cross_os}variant(aws-k8s-1.32-nvidia)
+           %{_cross_os}variant(aws-k8s-1.32-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.32-nvidia-fips)
            %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.32-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.32-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-k8s-1.32-nvidia
@@ -138,10 +150,12 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %package aws-k8s-1.33-nvidia
 Summary: Settings defaults for the aws-k8s 1.33 nvidia variants
 Requires: (%{shrink:
-           %{_cross_os}variant(aws-k8s-1.33-nvidia)
+           %{_cross_os}variant(aws-k8s-1.33-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.33-nvidia-fips)
            %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.33-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.33-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-k8s-1.33-nvidia
@@ -164,10 +178,12 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %package aws-k8s-1.34-nvidia
 Summary: Settings defaults for the aws-k8s 1.34 nvidia variants
 Requires: (%{shrink:
-           %{_cross_os}variant(aws-k8s-1.34-nvidia)
+           %{_cross_os}variant(aws-k8s-1.34-nvidia)      or
+           %{_cross_os}variant(aws-k8s-1.34-nvidia-fips)
            %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.34-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.34-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-k8s-1.34-nvidia

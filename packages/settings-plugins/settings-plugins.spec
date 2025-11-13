@@ -35,11 +35,13 @@ Summary: Settings plugin for the aws-ecs-2 variant
 Requires: (%{shrink:
            %{_cross_os}variant(aws-ecs-2) or
            %{_cross_os}variant(aws-ecs-2-fips) or
-           %{_cross_os}variant(aws-ecs-2-nvidia)
+           %{_cross_os}variant(aws-ecs-2-nvidia) or
+           %{_cross_os}variant(aws-ecs-2-nvidia-fips)
            %{nil}})
 Provides: %{_cross_os}settings-plugin(any)
 Provides: %{_cross_os}settings-plugin(aws-ecs-2)
 Provides: %{_cross_os}settings-plugin(aws-ecs-2-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-ecs-2-nvidia-fips)
 Provides: %{_cross_os}settings-plugin(aws-ecs-2-fips)
 Conflicts: %{_cross_os}settings-plugin(any)
 
@@ -77,11 +79,17 @@ Requires: (%{_cross_os}variant-family(aws-k8s) and %{_cross_os}variant-flavor(nv
 Provides: %{_cross_os}settings-plugin(any)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.28-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.29-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.29-nvidia-fips)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.30-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.30-nvidia-fips)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.31-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.31-nvidia-fips)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.32-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.32-nvidia-fips)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.33-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.33-nvidia-fips)
 Provides: %{_cross_os}settings-plugin(aws-k8s-1.34-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-k8s-1.34-nvidia-fips)
 Conflicts: %{_cross_os}settings-plugin(any)
 
 %description aws-k8s-nvidia
