@@ -46,6 +46,8 @@ members = [
     "settings-migrations/v1.47.0/host-bootstrap-containers-command-setting",
     "settings-migrations/v1.50.0/kubernetes-reserved-pid-settings",
     "settings-migrations/v1.51.0/kubernetes-ecr-credential-provider-patterns",
+    "settings-migrations/v1.51.0/kubernetes-additional-settings",
+    "settings-migrations/v1.51.0/kubernetes-beta-cpu-manager-policy-options",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
@@ -114,27 +116,27 @@ walkdir = "2"
 
 [workspace.dependencies.bottlerocket-defaults-helper]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.16.0"
+tag = "bottlerocket-settings-models-v0.17.0"
 version = "0.1.1"
 
 [workspace.dependencies.bottlerocket-modeled-types]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.16.0"
-version = "0.12.0"
+tag = "bottlerocket-settings-models-v0.17.0"
+version = "0.13.0"
 
 [workspace.dependencies.bottlerocket-settings-models]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.16.0"
-version = "0.16.0"
+tag = "bottlerocket-settings-models-v0.17.0"
+version = "0.17.0"
 
 [workspace.dependencies.bottlerocket-settings-plugin]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.16.0"
+tag = "bottlerocket-settings-models-v0.17.0"
 version = "0.1.0"
 
 [workspace.dependencies.settings-extension-oci-defaults]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.16.0"
+tag = "bottlerocket-settings-models-v0.17.0"
 version = "0.1.0"
 
 [profile.release]
