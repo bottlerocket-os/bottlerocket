@@ -1,3 +1,53 @@
+# v1.51.0 (2025-11-17)
+## Release Highlights
+* New ecs-3 variants are now available as a preview ([#4685])
+  * Add `aws-ecs-3`, `aws-ecs-3-nvidia`, `aws-ecs-3-fips`, and `aws-ecs-3-nvidia-fips` variants
+  * All ecs-3 variants use the following:
+    * `kernel-6.12`
+    * `containerd-2.1`
+    * `systemd-257`
+    * `nftables`
+    * `whippet` ([bottlerocket-core-kit#720])
+    * `docker-engine-29` ([bottlerocket-core-kit#711])
+    * `docker-cli-29` ([bottlerocket-core-kit#711])
+  * Use EROFS for root filesystem
+  * Use EBS volume gp3 for all variants
+  * Require IMDSv2 by default
+  * `aws-ecs-3-nvidia` and `aws-ecs-nvidia-fips` variants use NVIDIA R580 drivers
+  * Enable support for image verification
+  * Enable support for encrypted storage
+* Add NVIDIA FIPS variants for Kubernetes 1.29-1.34 and ECS-2 ([#4671])
+* Add support for new Kubernetes settings, `image-minimum-gc-age`, `image-maximum-gc-age`, `max-parallel-image-pulls`, `ids-per-pod`, and Beta options for `cpu-manager-policy-options` ([#4690], [bottlerocket-core-kit#689])
+
+## OS Changes
+* Update `bottlerocket-kernel-kit` from 4.4.2 to 4.5.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v451-2025-11-12) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.4.2...v4.5.1)) ([#4693], [#4698])
+* Update `bottlerocket-core-kit` from 10.9.0 to 11.0.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1100-2025-11-12) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v10.9.0...v11.0.0)) ([#4699])
+* Bump `containerd` from 2.0 to 2.1 on all `aws-k8s-1.33` variants ([#4687])
+* Drop `socat` from `aws-dev` variant ([#4699])
+* Update ECR credential provider image patterns to include EUSC image formats ([#4689])
+* Use `whippet` in `aws-ecs-2`, `aws-k8s-1.34`, and `vmware-k8s-1.34` variants ([#4701])
+
+### Twoliter
+* Update `twoliter` from v0.12.0 to v0.13.0 [CHANGELOG](https://github.com/bottlerocket-os/twoliter/blob/develop/CHANGELOG.md#0130---2025-11-10) ([commits](https://github.com/bottlerocket-os/twoliter/compare/v0.12.0...v0.13.0)) ([#4691])
+
+### Settings Extensions
+* Update `bottlerocket-settings-models` to v0.17.0 ([#4690])
+
+[#4671]: https://github.com/bottlerocket-os/bottlerocket/pull/4671
+[#4685]: https://github.com/bottlerocket-os/bottlerocket/pull/4685
+[#4687]: https://github.com/bottlerocket-os/bottlerocket/pull/4687
+[#4689]: https://github.com/bottlerocket-os/bottlerocket/pull/4689
+[#4690]: https://github.com/bottlerocket-os/bottlerocket/pull/4690
+[#4691]: https://github.com/bottlerocket-os/bottlerocket/pull/4691
+[#4693]: https://github.com/bottlerocket-os/bottlerocket/pull/4693
+[#4697]: https://github.com/bottlerocket-os/bottlerocket/pull/4697
+[#4698]: https://github.com/bottlerocket-os/bottlerocket/pull/4698
+[#4699]: https://github.com/bottlerocket-os/bottlerocket/pull/4699
+[#4701]: https://github.com/bottlerocket-os/bottlerocket/pull/4701
+[bottlerocket-core-kit#689]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/689
+[bottlerocket-core-kit#711]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/711
+[bottlerocket-core-kit#720]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/720
+
 # v1.50.0 (2025-11-05)
 
 ## Release Highlights
