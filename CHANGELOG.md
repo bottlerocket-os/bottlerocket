@@ -21,7 +21,7 @@
 
 ## OS Changes
 * Update `bottlerocket-kernel-kit` from 4.4.2 to 4.5.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v451-2025-11-12) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.4.2...v4.5.1)) ([#4693], [#4698])
-* Update `bottlerocket-core-kit` from 10.9.0 to 11.0.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1100-2025-11-12) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v10.9.0...v11.0.0)) ([#4699])
+* Update `bottlerocket-core-kit` from 10.9.0 to 11.0.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1101-2025-11-12) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v10.9.0...v11.0.1)) ([#4699])
 * Bump `containerd` from 2.0 to 2.1 on all `aws-k8s-1.33` variants ([#4687])
 * Drop `socat` from `aws-dev` variant ([#4699])
 * Update ECR credential provider image patterns to include EUSC image formats ([#4689])
