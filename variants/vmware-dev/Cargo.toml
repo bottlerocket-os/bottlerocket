@@ -15,6 +15,9 @@ grub-set-private-var = true
 xfs-data-partition = true
 uefi-secure-boot = true
 systemd-networkd = true
+erofs-root-partition = true
+external-kmod-development = false
+encrypted-storage = true
 
 [package.metadata.build-variant]
 image-format = "vmdk"
@@ -30,11 +33,15 @@ kernel-parameters = [
 included-packages = [
 # core
     "release",
-    "kernel-6.1",
+    "kernel-6.12",
+    "containerd-2.1",
+    "systemd-257",
+    "nftables",
+    "whippet",
     "open-vm-tools",
 # docker
-    "docker-cli",
-    "docker-engine",
+    "docker-cli-29",
+    "docker-engine-29",
     "docker-init",
 # tools
     "login",
