@@ -46,10 +46,7 @@ jobs:
       - name: Preflight step to set up the runner
         uses: ./.github/actions/setup-node
       - run: rustup component add rustfmt
-      - run: cargo make unit-tests
-      - run: cargo make check-fmt
-      - run: cargo make check-clippy
-      - run: cargo make check-shell
+      - run: cargo make check
       - run: |
           cargo make \
             -e BUILDSYS_ARCH=${{ matrix.arch }} \
