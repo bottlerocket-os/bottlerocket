@@ -27,3 +27,9 @@ affected-services = ["containerd", "docker", "ecs", "host-containerd", "host-con
 # Image registry credentials
 [metadata.settings.container-registry.credentials]
 affected-services = ["ecs", "host-containers", "bootstrap-containers"]
+
+# Set use_fips_endpoint=false on all ECS variants as expected by the ECS agent.
+# [default]
+# use_fips_endpoint=false
+[settings.aws]
+config="W2RlZmF1bHRdCnVzZV9maXBzX2VuZHBvaW50PWZhbHNl"
