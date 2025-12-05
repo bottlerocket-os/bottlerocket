@@ -84,10 +84,8 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %{summary}.
 
 %package aws-k8s-1.31
-Summary: Settings defaults for the aws-k8s 1.28 through 1.31 variants
+Summary: Settings defaults for the aws-k8s 1.29 through 1.31 variants
 Requires: (%{shrink:
-           %{_cross_os}variant(aws-k8s-1.28)      or
-           %{_cross_os}variant(aws-k8s-1.28-fips) or
            %{_cross_os}variant(aws-k8s-1.29)      or
            %{_cross_os}variant(aws-k8s-1.29-fips) or
            %{_cross_os}variant(aws-k8s-1.30)      or
@@ -96,8 +94,6 @@ Requires: (%{shrink:
            %{_cross_os}variant(aws-k8s-1.31-fips)
            %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
-Provides: %{_cross_os}settings-defaults(aws-k8s-1.28)
-Provides: %{_cross_os}settings-defaults(aws-k8s-1.28-fips)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.29)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.29-fips)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.30)
@@ -110,9 +106,8 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %{summary}.
 
 %package aws-k8s-1.31-nvidia
-Summary: Settings defaults for the aws-k8s 1.28 through 1.31 nvidia variants
+Summary: Settings defaults for the aws-k8s 1.29 through 1.31 nvidia variants
 Requires: (%{shrink:
-           %{_cross_os}variant(aws-k8s-1.28-nvidia)      or
            %{_cross_os}variant(aws-k8s-1.29-nvidia)      or
            %{_cross_os}variant(aws-k8s-1.29-nvidia-fips) or
            %{_cross_os}variant(aws-k8s-1.30-nvidia)      or
@@ -121,7 +116,6 @@ Requires: (%{shrink:
            %{_cross_os}variant(aws-k8s-1.31-nvidia-fips)
            %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
-Provides: %{_cross_os}settings-defaults(aws-k8s-1.28-nvidia)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.29-nvidia)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.29-nvidia-fips)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.30-nvidia)
@@ -238,10 +232,8 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %{summary}.
 
 %package vmware-k8s-1.32
-Summary: Settings defaults for the vmware-k8s 1.28 through 1.32 variants
+Summary: Settings defaults for the vmware-k8s 1.29 through 1.32 variants
 Requires: (%{shrink:
-           %{_cross_os}variant(vmware-k8s-1.28)      or
-           %{_cross_os}variant(vmware-k8s-1.28-fips) or
            %{_cross_os}variant(vmware-k8s-1.29)      or
            %{_cross_os}variant(vmware-k8s-1.29-fips) or
            %{_cross_os}variant(vmware-k8s-1.30)      or
@@ -252,8 +244,6 @@ Requires: (%{shrink:
            %{_cross_os}variant(vmware-k8s-1.32-fips)
           %{nil}})
 Provides: %{_cross_os}settings-defaults(any)
-Provides: %{_cross_os}settings-defaults(vmware-k8s-1.28)
-Provides: %{_cross_os}settings-defaults(vmware-k8s-1.28-fips)
 Provides: %{_cross_os}settings-defaults(vmware-k8s-1.29)
 Provides: %{_cross_os}settings-defaults(vmware-k8s-1.29-fips)
 Provides: %{_cross_os}settings-defaults(vmware-k8s-1.30)
