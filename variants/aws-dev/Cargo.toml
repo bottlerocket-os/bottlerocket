@@ -15,6 +15,7 @@ systemd-networkd = true
 erofs-root-partition = true
 external-kmod-development = false
 encrypted-storage = true
+in-place-updates = false
 
 [package.metadata.build-variant]
 kernel-parameters = [

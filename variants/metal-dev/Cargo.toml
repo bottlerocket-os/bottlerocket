@@ -16,6 +16,7 @@ xfs-data-partition = true
 erofs-root-partition = true
 uefi-secure-boot = true
 systemd-networkd = true
+in-place-updates = false
 
 [package.metadata.build-variant]
 image-format = "raw"
