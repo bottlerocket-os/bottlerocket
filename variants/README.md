@@ -35,21 +35,6 @@ For example, in a VMware variant, settings read from the guestinfo interface wil
 
 See [_Update Policy_ in the Security Features document](../SECURITY_FEATURES.md#update-policy) for information on when and how Bottlerocket applies security patches to variants.
 
-### aws-k8s-1.28: Kubernetes 1.28 node
-
-The [aws-k8s-1.28](aws-k8s-1.28/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.28, 1.29, 1.30, and 1.31 clusters.
-
-### aws-k8s-1.28-nvidia: Kubernetes 1.28 NVIDIA node
-
-The [aws-k8s-1.28-nvidia](aws-k8s-1.28-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It also includes the required packages to configure containers to leverage NVIDIA GPUs.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.28, 1.29, 1.30, and 1.31 clusters.
-
 ### aws-k8s-1.29: Kubernetes 1.29 node
 
 The [aws-k8s-1.29](aws-k8s-1.29/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -238,13 +223,6 @@ User data will be read from IMDS.
 
 The [vmware-dev](vmware-dev/Cargo.toml) variant has useful packages for local development of the OS, and is intended to run as a VMware guest.
 It includes tools for troubleshooting as well as Docker for running containers.
-
-## vmware-k8s-1.28: VMware Kubernetes 1.28 node
-
-The [vmware-k8s-1.28](vmware-k8s-1.28/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
-It supports self-hosted clusters.
-
-This variant is compatible with Kubernetes 1.28, 1.29, 1.30 and 1.31 clusters.
 
 ## vmware-k8s-1.29: VMware Kubernetes 1.29 node
 
@@ -589,6 +567,28 @@ container instance in AWS.
 The [aws-ecs-1-nvidia](aws-ecs-1-nvidia/Cargo.toml) variant included the packages needed to run an [Amazon ECS](https://ecs.aws)
 container instance in AWS.
 It also included the required packages to configure containers to leverage NVIDIA GPUs.
+
+### aws-k8s-1.28: Kubernetes 1.28 node
+
+The aws-k8s-1.28 variant included the packages needed to run a Kubernetes node in AWS.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant was compatible with Kubernetes 1.28, 1.29, 1.30, and 1.31 clusters.
+
+### aws-k8s-1.28-nvidia: Kubernetes 1.28 NVIDIA node
+
+The aws-k8s-1.28-nvidia variant included the packages needed to run a Kubernetes node in AWS.
+It also included the required packages to configure containers to leverage NVIDIA GPUs.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant was compatible with Kubernetes 1.28, 1.29, 1.30, and 1.31 clusters.
+
+## vmware-k8s-1.28: VMware Kubernetes 1.28 node
+
+The vmware-k8s-1.28 variant included the packages needed to run a Kubernetes worker node as a VMware guest.
+It supported self-hosted clusters.
+
+This variant was compatible with Kubernetes 1.28, 1.29, 1.30, and 1.31 clusters.
 
 ## Development
 
