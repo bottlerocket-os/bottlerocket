@@ -12,6 +12,9 @@ grub-set-private-var = true
 xfs-data-partition = true
 uefi-secure-boot = true
 systemd-networkd = true
+erofs-root-partition = true
+external-kmod-development = false
+encrypted-storage = true
 
 [package.metadata.build-variant]
 kernel-parameters = [
@@ -26,24 +29,26 @@ kernel-parameters = [
 included-packages = [
 # core
     "release",
-    "kernel-6.1",
+    "kernel-6.12",
+    "containerd-2.1",
+    "systemd-257",
+    "nftables",
+    "whippet",
 # docker
-    "docker-cli",
-    "docker-engine",
+    "docker-cli-29",
+    "docker-engine-29",
     "docker-init",
 # tools
     "login",
     "iputils",
     "strace",
     "chrony-tools",
-    "soci-snapshotter",
 ]
 
 [lib]
 path = "../variants.rs"
 
 [build-dependencies]
-# core
 settings-defaults = { path = "../../packages/settings-defaults" }
 settings-plugins = { path = "../../packages/settings-plugins" }
 settings-migrations = { path = "../../packages/settings-migrations" }
