@@ -1,3 +1,32 @@
+# v1.52.0 (2025-12-16)
+
+## Release Highlights
+* Remove `aws-k8s-1.28` variants ([#4717])
+* Disable concurrent layer fetch by default in `containerd-2.1` ([bottlerocket-core-kit#764])
+
+## OS Changes
+* Update `bottlerocket-kernel-kit` from 4.5.1 to 4.7.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v470-2025-12-10) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.5.1...v4.7.0)) ([#4719])
+* Update `bottlerocket-core-kit` from 11.0.1 to 12.0.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1200-2025-12-10) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v11.0.1...v12.0.0)) ([#4719])
+* Update `admin-container` from 0.12.4 to 0.12.5 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0125) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.12.4...v0.12.5)) ([#4712])
+* Update `bootstrap-container` from 0.2.8 to 0.2.9 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#029) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.8...v0.2.9)) ([#4712])
+* Update `control-container` from 0.8.10 to 0.8.11 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0811) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.8.10...v0.8.11)) ([#4712])
+* Update `aws-dev` and `vmware-dev` variants with the latest Bottlerocket features([#4705])
+
+## Build Changes
+* Update `bottlerocket-sdk` from 0.65.1 to 0.66.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.65.1...v0.66.0)) ([#4719])
+
+### Twoliter
+* Update `twoliter` from v0.13.0 to v0.15.0 [CHANGELOG](https://github.com/bottlerocket-os/twoliter/blob/develop/CHANGELOG.md#0150---2025-12-11) ([commits](https://github.com/bottlerocket-os/twoliter/compare/v0.13.0...v0.15.0))([#4718], [#4722])
+
+[#4705]: https://github.com/bottlerocket-os/bottlerocket/pull/4705
+[#4711]: https://github.com/bottlerocket-os/bottlerocket/pull/4711
+[#4712]: https://github.com/bottlerocket-os/bottlerocket/pull/4712
+[#4717]: https://github.com/bottlerocket-os/bottlerocket/pull/4717
+[#4718]: https://github.com/bottlerocket-os/bottlerocket/pull/4718
+[#4719]: https://github.com/bottlerocket-os/bottlerocket/pull/4719
+[#4722]: https://github.com/bottlerocket-os/bottlerocket/pull/4722
+[bottlerocket-core-kit#764]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/764
+
 # v1.51.0 (2025-11-17)
 ## Release Highlights
 * New ecs-3 variants are now available as a preview ([#4685])
