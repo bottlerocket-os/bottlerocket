@@ -16,6 +16,7 @@ partition-plan = "unified"
 grub-set-private-var = true
 uefi-secure-boot = true
 xfs-data-partition = true
+erofs-root-partition = true
 systemd-networkd = true
 fips = true
 
