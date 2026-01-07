@@ -35,6 +35,7 @@ included-packages = [
     # core
     "release",
     "kernel-6.1",
+    "whippet",
     # k8s
     "cni",
     "cni-plugins",
