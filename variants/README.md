@@ -134,13 +134,6 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.33, 1.34, 1.35 and 1.36 clusters.
 
-### aws-k8s-1.34: Kubernetes 1.34 node
-
-The [aws-k8s-1.34](aws-k8s-1.34/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.34, 1.35, 1.36 and 1.37 clusters.
-
 ### aws-k8s-1.33-nvidia: Kubernetes 1.33 NVIDIA node
 
 The [aws-k8s-1.33-nvidia](aws-k8s-1.33-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -157,6 +150,13 @@ It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazo
 
 This variant is compatible with Kubernetes 1.33, 1.34, 1.35 and 1.36 clusters.
 
+### aws-k8s-1.34: Kubernetes 1.34 node
+
+The [aws-k8s-1.34](aws-k8s-1.34/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.34, 1.35, 1.36 and 1.37 clusters.
+
 ### aws-k8s-1.34-nvidia: Kubernetes 1.34 NVIDIA node
 
 The [aws-k8s-1.34-nvidia](aws-k8s-1.34-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -172,6 +172,29 @@ It also includes the required packages to configure containers to leverage NVIDI
 It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
 
 This variant is compatible with Kubernetes 1.34, 1.35, 1.36 and 1.37 clusters.
+
+### aws-k8s-1.35: Kubernetes 1.35 node
+
+The [aws-k8s-1.35](aws-k8s-1.35/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.35, 1.36, 1.37 and 1.38 clusters.
+
+### aws-k8s-1.35-nvidia: Kubernetes 1.35 NVIDIA node
+
+The [aws-k8s-1.35-nvidia](aws-k8s-1.35-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It also includes the required packages to configure containers to leverage NVIDIA GPUs.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.35, 1.36, 1.37 and 1.38 clusters.
+
+### aws-k8s-1.35-nvidia-fips: Kubernetes 1.35 NVIDIA FIPS node
+
+The [aws-k8s-1.35-nvidia-fips](aws-k8s-1.35-nvidia-fips/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
+It also includes the required packages to configure containers to leverage NVIDIA GPUs and is FIPS-enabled.
+It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant is compatible with Kubernetes 1.35, 1.36, 1.37 and 1.38 clusters.
 
 ### aws-ecs-2: Amazon ECS container instance
 
@@ -265,6 +288,13 @@ The [vmware-k8s-1.34](vmware-k8s-1.34/Cargo.toml) variant includes the packages 
 It supports self-hosted clusters.
 
 This variant is compatible with Kubernetes 1.34, 1.35, 1.36, and 1.37 clusters.
+
+## vmware-k8s-1.35: VMware Kubernetes 1.35 node
+
+The [vmware-k8s-1.35](vmware-k8s-1.35/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
+It supports self-hosted clusters.
+
+This variant is compatible with Kubernetes 1.35, 1.36, 1.37, and 1.38 clusters.
 
 ### metal-dev: Metal development build
 
