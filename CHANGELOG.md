@@ -1,3 +1,44 @@
+# v1.53.0 (2026-01-13)
+
+## Release Highlights
+* Add new kubernetes 1.35 variants ([#4735]):
+  * Add `aws-k8s-1.35`, `aws-k8s-1.35-nvidia`, `aws-k8s-1.35-fips`, `aws-k8s-1.35-nvidia-fips`, `vmware-k8s-1.35`, and `vmware-k8s-1.35-fips` variants
+  * All k8s-1.35 variants use the following:
+    * `kernel-6.12`
+    * `systemd-257`
+    * `nftables`
+    * `containerd-2.1`
+    * `whippet`
+    * `release-swap` - Enable **zram-backed** swap device to improve system stability in low-memory situations  ([bottlerocket-core-kit#590])
+* Migrate all nvidia variants to use nvidia R580 drivers ([#4733])
+* Migrate `admin-container` and `control-container` to AL2023 ([#4740])
+
+## OS Changes
+* Update `bottlerocket-kernel-kit` from 4.7.0 to 4.7.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v471-2026-01-07) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.7.0...v4.7.1)) ([#4736])
+* Update `bottlerocket-core-kit` from 12.0.1 to 12.2.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1220-2026-01-08) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v12.0.1...v12.2.0)) ([#4735])
+* Enable `erofs` root partition in all variants ([#4728])
+* Use `whippet` in all variants ([#4738])
+* Update `admin-container` from 0.12.5 to 0.20.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0200) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.12.5...v0.20.0)) ([#4740])
+* Update `bootstrap-container` from 0.2.9 to 0.2.10 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#0210) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.9...v0.2.10)) ([#4740])
+* Update `control-container` from 0.8.11 to 0.20.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0200) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.8.11...v0.20.0)) ([#4740])
+
+### Twoliter
+* Update `twoliter` from v0.15.0 to v0.16.0 [CHANGELOG](https://github.com/bottlerocket-os/twoliter/blob/develop/CHANGELOG.md#0160---2026-01-06) ([commits](https://github.com/bottlerocket-os/twoliter/compare/v0.15.0...v0.16.0)) ([#4726], [#4734])
+
+## Documentation Changes
+* Remove stale settings extension design documents ([#4716])
+
+[#4716]: https://github.com/bottlerocket-os/bottlerocket/pull/4716
+[#4726]: https://github.com/bottlerocket-os/bottlerocket/pull/4726
+[#4728]: https://github.com/bottlerocket-os/bottlerocket/pull/4728
+[#4733]: https://github.com/bottlerocket-os/bottlerocket/pull/4733
+[#4734]: https://github.com/bottlerocket-os/bottlerocket/pull/4734
+[#4735]: https://github.com/bottlerocket-os/bottlerocket/pull/4735
+[#4736]: https://github.com/bottlerocket-os/bottlerocket/pull/4736
+[#4738]: https://github.com/bottlerocket-os/bottlerocket/pull/4738
+[#4740]: https://github.com/bottlerocket-os/bottlerocket/pull/4740
+[bottlerocket-core-kit#590]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/590
+
 # v1.52.0 (2025-12-16)
 
 ## Release Highlights
