@@ -28,6 +28,7 @@ included-packages = [
     "release",
     "kernel-6.1",
     "linux-firmware",
+    "whippet",
 # docker
     "docker-cli",
     "docker-engine",
