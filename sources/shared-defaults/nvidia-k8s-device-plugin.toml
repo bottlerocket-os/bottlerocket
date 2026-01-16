@@ -1,10 +1,22 @@
 # nvidia device plugin service
 [services.nvidia-k8s-device-plugin]
-restart-commands = ["/bin/systemctl try-reload-or-restart nvidia-k8s-device-plugin.service"]
+restart-commands = [
+    "/bin/systemctl try-reload-or-restart nvidia-k8s-device-plugin.service",
+]
 configuration-files = [
     "nvidia-k8s-device-plugin-conf",
     "nvidia-k8s-device-plugin-exec-start-conf",
-    "nvidia-k8s-device-plugin-mig-conf"
+    "nvidia-k8s-device-plugin-mig-conf",
+]
+
+[services.nvidia-mps-control-daemon]
+restart-commands = [
+    "/bin/systemctl try-reload-or-restart nvidia-mps-control-daemon.service",
+]
+configuration-files = [
+    "nvidia-k8s-device-plugin-conf",
+    "nvidia-mps-control-daemon-exec-start-conf",
+    "nvidia-k8s-device-plugin-mig-conf",
 ]
 
 [configuration-files.nvidia-k8s-device-plugin-conf]
@@ -19,11 +31,19 @@ template-path = "/usr/share/templates/nvidia-k8s-device-plugin-exec-start-conf"
 path = "/etc/nvidia-migmanager/nvidia-migmanager.toml"
 template-path = "/usr/share/templates/nvidia-k8s-device-plugin-mig-conf"
 
+[configuration-files.nvidia-mps-control-daemon-exec-start-conf]
+path = "/etc/systemd/system/nvidia-mps-control-daemon.service.d/exec-start.conf"
+template-path = "/usr/share/templates/nvidia-mps-control-daemon-exec-start-conf"
+
 [metadata.settings.kubelet-device-plugins.nvidia]
-affected-services = ["nvidia-k8s-device-plugin", "nvidia-container-toolkit"]
+affected-services = [
+    "nvidia-k8s-device-plugin",
+    "nvidia-container-toolkit",
+    "nvidia-mps-control-daemon",
+]
 
 [settings.kubelet-device-plugins.nvidia]
 pass-device-specs = true
-device-id-strategy="index"
-device-sharing-strategy="none"
-device-partitioning-strategy="none"
+device-id-strategy = "index"
+device-sharing-strategy = "none"
+device-partitioning-strategy = "none"
