@@ -1130,6 +1130,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-device-plugins-mps-prefix-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
+name = "kubelet-device-plugins-mps-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+ "serde_json",
+]
+
+[[package]]
 name = "kubelet-setting-container-log-single-process-oom-kill"
 version = "0.1.0"
 dependencies = [
