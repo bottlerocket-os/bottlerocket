@@ -1,5 +1,5 @@
 schema-version = 2
-release-version = "1.53.0"
+release-version = "1.54.0"
 project-vendor = "Bottlerocket"
 
 [vendor.bottlerocket]
@@ -7,15 +7,15 @@ registry = "public.ecr.aws/bottlerocket"
 
 [sdk]
 name = "bottlerocket-sdk"
-version = "0.66.0"
+version = "0.70.0"
 vendor = "bottlerocket"
 
 [[kit]]
 name = "bottlerocket-kernel-kit"
-version = "4.7.1"
+version = "4.8.0"
 vendor = "bottlerocket"
 
 [[kit]]
 name = "bottlerocket-core-kit"
-version = "12.2.0"
+version = "12.3.0"
 vendor = "bottlerocket"
