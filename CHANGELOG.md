@@ -1,3 +1,27 @@
+# v1.54.0 (2026-01-22)
+
+## Release Highlights
+* Migrate to Go's native FIPS 140-3 runtime support for all FIPS variants ([bottlerocket-core-kit#783])
+* Add NVIDIA Multi-Process Service (MPS) support ([#4744], [bottlerocket-core-kit#789])
+* Add `trn3` device IDs to `pciclient` ([bottlerocket-core-kit#800])
+
+## OS Changes
+* Update `bottlerocket-kernel-kit` from 4.7.1 to 4.8.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v480-2026-01-21) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.7.1...v4.8.0)) ([#4744])
+* Update `bottlerocket-core-kit` from 12.2.0 to 12.3.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1230-2026-01-21) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v12.2.0...v12.3.0)) ([#4744])
+* Update `admin-container` from 0.20.0 to 0.20.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0201) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.20.0...v0.20.1)) ([#4749])
+* Update `control-container` from 0.20.0 to 0.20.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0201) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.20.0...v0.20.1)) ([#4749])
+* Update `bootstrap-container` from 0.2.10 to 0.2.11 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#0211) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.10...v0.2.11)) ([#4749])
+
+## Build Changes
+* Update `bottlerocket-sdk` from 0.66.0 to 0.70.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.66.0...v0.70.0)) ([#4744])
+* Update `bottlerocket-settings-models` to v0.20.0 ([#4744])
+
+[#4744]: https://github.com/bottlerocket-os/bottlerocket/pull/4744
+[#4749]: https://github.com/bottlerocket-os/bottlerocket/pull/4749
+[bottlerocket-core-kit#783]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/783
+[bottlerocket-core-kit#789]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/789
+[bottlerocket-core-kit#800]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/800
+
 # v1.53.0 (2026-01-13)
 
 ## Release Highlights
