@@ -9,12 +9,12 @@ template-path = "/usr/share/templates/docker-daemon-json"
 # Image registries. Retained for backwards compatibility, but superseded by the
 # more specific metadata for mirrors and credentials.
 [metadata.settings.container-registry]
-affected-services = ["docker", "host-containers", "bootstrap-containers"]
+affected-services = ["docker", "host-containers", "bootstrap-containers", "thar-be-registries"]
 
 # Image registry mirrors
 [metadata.settings.container-registry.mirrors]
-affected-services = ["docker", "host-containers", "bootstrap-containers"]
+affected-services = ["docker", "host-containers", "bootstrap-containers", "thar-be-registries"]
 
 # Image registry credentials
 [metadata.settings.container-registry.credentials]
-affected-services = ["host-containers", "bootstrap-containers"]
+affected-services = ["host-containers", "bootstrap-containers", "thar-be-registries"]

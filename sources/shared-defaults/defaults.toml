@@ -213,3 +213,12 @@ template-path = "/usr/share/templates/netdog-toml"
 [configuration-files.certdog-toml]
 path = "/etc/certdog.toml"
 template-path = "/usr/share/templates/certdog-toml"
+
+# thar-be-registries - renders hosts.toml files for containerd registry config
+[services.thar-be-registries]
+configuration-files = ["thar-be-registries-toml"]
+restart-commands = ["/usr/bin/thar-be-registries"]
+
+[configuration-files.thar-be-registries-toml]
+path = "/etc/containerd/thar-be-registries.toml"
+template-path = "/usr/share/templates/thar-be-registries-toml"

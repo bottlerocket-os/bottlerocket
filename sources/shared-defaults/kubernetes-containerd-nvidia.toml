@@ -4,7 +4,7 @@ template-path = "/usr/share/templates/containerd-config-toml_k8s_nvidia_containe
 
 # Image registries
 [metadata.settings.container-registry]
-affected-services = ["containerd", "host-containers", "bootstrap-containers", "soci-snapshotter"]
+affected-services = ["containerd", "host-containers", "bootstrap-containers", "soci-snapshotter", "thar-be-registries"]
 
 [configuration-files.snapshotter-toml]
 path = "/etc/containerd/config.d/001-snapshotter.toml"
