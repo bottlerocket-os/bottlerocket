@@ -9,7 +9,7 @@ allow = [
     "Apache-2.0",
     # "BSD-2-Clause",
     "BSD-3-Clause",
-    "BSL-1.0",
+    # "BSL-1.0",
     # "CC0-1.0",
     "ISC",
     "MIT",
@@ -57,12 +57,6 @@ skip = [
     # bottlerocket-settings-sdk requires syn 1.x and 2.x for proc-macros
     # within itself and its dependencies.
     { name = "syn", version = "=1.0" },
-    # thiserror v1.x is required by X.509 certificate parsing chain:
-    # asn1-rs -> der-parser -> x509-parser -> bottlerocket-modeled-types
-    # Also required by handlebars templating used in migration-helpers.
-    # thiserror v2.x is required by pest parser used in handlebars.
-    { name = "thiserror", version = "=1.0" },
-    { name = "thiserror-impl", version = "=1.0" },
 ]
 
 skip-tree = [
