@@ -1,3 +1,32 @@
+# v1.55.0 (2026-02-11)
+
+## Release Highlights
+* Add URI resolver support to `apiclient apply` and `apiclient network configure` ([bottlerocket-core-kit#554])
+  * `s3://` - S3 bucket objects
+  * `secretsmanager://` - AWS Secrets Manager secrets
+  * `ssm://` - AWS SSM Parameter Store parameters
+  * `arn:aws:secretsmanager:` and `arn:aws:ssm:` - cross-region access via full ARN
+  * `base64:` - inline encoded content
+* Remove separate FIPS binaries from Go packages in favor of Go built-in FIPS support ([bottlerocket-core-kit#813])
+* Remove hugepages from `reservedMemory` in kubelet config ([bottlerocket-core-kit#821])
+* Update SELinux policy to allow container communication with MPS daemon ([bottlerocket-core-kit#831])
+
+## OS Changes
+* Update `bottlerocket-kernel-kit` from 4.8.0 to 4.8.2 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v482-2026-02-07) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.8.0...v4.8.2)) ([#4757])
+* Update `bottlerocket-core-kit` from 12.3.0 to 13.0.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1300-2026-02-11) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v12.3.0...v13.0.0)) ([#4761])
+* Update `admin-container` from 0.20.1 to 0.20.3 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0203) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.20.1...v0.20.3)) ([#4759])
+* Update `control-container` from 0.20.1 to 0.20.3 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0203) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.20.1...v0.20.3)) ([#4759])
+* Update `bootstrap-container` from 0.2.11 to 0.2.13 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#0213) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.11...v0.2.13)) ([#4759])
+
+[#4757]: https://github.com/bottlerocket-os/bottlerocket/pull/4757
+[#4759]: https://github.com/bottlerocket-os/bottlerocket/pull/4759
+[#4761]: https://github.com/bottlerocket-os/bottlerocket/pull/4761
+[bottlerocket-core-kit#554]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/554
+[bottlerocket-core-kit#813]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/813
+[bottlerocket-core-kit#821]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/821
+[bottlerocket-core-kit#823]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/823
+[bottlerocket-core-kit#831]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/831
+
 # v1.54.0 (2026-01-22)
 
 ## Release Highlights
