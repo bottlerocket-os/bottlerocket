@@ -26,4 +26,4 @@ affected-services = ["containerd", "docker", "ecs", "host-containerd", "host-con
 
 # Image registry credentials
 [metadata.settings.container-registry.credentials]
-affected-services = ["ecs", "host-containers", "bootstrap-containers"]
+affected-services = ["ecs", "host-containers", "bootstrap-containers", "thar-be-registries"]
