@@ -458,4 +458,6 @@ version = "1.56.0"
     "migrate_v1.54.0_kubelet-device-plugins-mps-prefix-settings.lz4"
 ]
 "(1.54.0, 1.55.0)" = []
-"(1.55.0, 1.56.0)" = []
+"(1.55.0, 1.56.0)" = [
+    "migrate_v1.56.0_image-verifier-plugins-extensible.lz4"
+]
