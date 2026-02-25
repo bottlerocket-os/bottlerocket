@@ -1,8 +1,8 @@
 # v1.56.0 (2026-02-24)
 
 ## Release Highlights
-* Add support to render `settings.container-registry` into containerd supported `hosts.toml` ([bottlerocket-core-kit#819])
-* Expand image verifier support with a new helper to render trust policies for all image verifier plugins ([bottlerocket-core-kit#820])
+* Add support to render `settings.container-registry` into containerd supported `hosts.toml` ([bottlerocket-core-kit#819], [#4767])
+* Expand image verifier support with a new helper to render trust policies for all image verifier plugins ([bottlerocket-core-kit#820], [#4766])
 * Suppress IPv6 on interfaces with no IPv6 intent in `net.toml` ([bottlerocket-core-kit#826])
 
 ## OS Changes
@@ -11,10 +11,14 @@
 
 ## Build Changes
 * Update Rust dependencies ([#4763])
+* Update `bottlerocket-settings-models` to v0.21.0 ([#4773])
 
 [#4763]: https://github.com/bottlerocket-os/bottlerocket/pull/4763
 [#4764]: https://github.com/bottlerocket-os/bottlerocket/pull/4764
+[#4766]: https://github.com/bottlerocket-os/bottlerocket/pull/4766
+[#4767]: https://github.com/bottlerocket-os/bottlerocket/pull/4767
 [#4770]: https://github.com/bottlerocket-os/bottlerocket/pull/4770
+[#4773]: https://github.com/bottlerocket-os/bottlerocket/pull/4773
 [bottlerocket-core-kit#819]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/819
 [bottlerocket-core-kit#820]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/820
 [bottlerocket-core-kit#826]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/826
