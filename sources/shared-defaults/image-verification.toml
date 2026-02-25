@@ -1,13 +1,10 @@
 # Container runtime - image verification
-
 [services.image-verification]
 configuration-files = [
   "containerd-image-verifiers-toml",
-  "notation-trust-policy-json",
+  "thar-be-image-verifiers-toml",
 ]
-
-# Reload if we disable image verification / update the trustpolicy
-restart-commands = []
+restart-commands = ["/usr/bin/thar-be-image-verifiers"]
 
 [metadata.settings.image-verifier-plugins]
 affected-services = ["image-verification"]
@@ -20,6 +17,6 @@ affected-services = ["containerd", "image-verification"]
 path = "/etc/containerd/config.d/002-image-verification-plugins.toml"
 template-path = "/usr/share/templates/containerd-image-verifiers-toml"
 
-[configuration-files.notation-trust-policy-json]
-path = "/etc/notation/trustpolicy.json"
-template-path = "/usr/share/templates/notation-trust-policy-json"
+[configuration-files.thar-be-image-verifiers-toml]
+path = "/etc/thar-be-image-verifiers.toml"
+template-path = "/usr/share/templates/thar-be-image-verifiers-toml"
