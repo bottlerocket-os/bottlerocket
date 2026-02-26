@@ -6,7 +6,7 @@
 * Suppress IPv6 on interfaces with no IPv6 intent in `net.toml` ([bottlerocket-core-kit#826])
 
 ## OS Changes
-* Update `bottlerocket-kernel-kit` from 4.8.2 to 5.0.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v500-2026-02-19) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.8.2...v5.0.0)) ([#4764])
+* Update `bottlerocket-kernel-kit` from 4.8.2 to 5.0.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v501-2026-02-26) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v4.8.2...v5.0.1)) ([#4764], [#4775])
 * Update `bottlerocket-core-kit` from 13.0.0 to 13.1.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1310-2026-02-25) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v13.0.0...v13.1.0)) ([#4770])
 
 ## Build Changes
@@ -19,6 +19,7 @@
 [#4767]: https://github.com/bottlerocket-os/bottlerocket/pull/4767
 [#4770]: https://github.com/bottlerocket-os/bottlerocket/pull/4770
 [#4773]: https://github.com/bottlerocket-os/bottlerocket/pull/4773
+[#4775]: https://github.com/bottlerocket-os/bottlerocket/pull/4775
 [bottlerocket-core-kit#819]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/819
 [bottlerocket-core-kit#820]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/820
 [bottlerocket-core-kit#826]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/826
