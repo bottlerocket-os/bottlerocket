@@ -1,0 +1,18 @@
+# Reserve ports used by EKS add-ons running with hostNetwork=true.
+# This prevents containerd's CRI streaming server (stream_server_port=0) from
+# grabbing these ports via ephemeral/dynamic assignment, which would cause
+# add-on pods to fail to bind and enter CrashLoopBackOff.
+#
+# Note: ip_local_reserved_ports only blocks ephemeral port assignment.
+# Processes that explicitly bind to these ports are unaffected.
+#
+#   2703  - EKS Pod Identity Agent (health/liveness probe server)
+#   9808  - Amazon EBS CSI Driver node plugin (health check)
+#   9809  - Amazon EFS CSI Driver node plugin (health check)
+#  10249  - kube-proxy (metrics)
+#  10250  - kubelet (API server)
+#  10256  - kube-proxy (health check)
+#  61678  - Amazon VPC CNI / aws-node (Prometheus metrics)
+#  61679  - Amazon VPC CNI / aws-node (introspection endpoint)
+[settings.kernel.sysctl]
+"net/ipv4/ip_local_reserved_ports" = "2703,9808,9809,10249,10250,10256,61678,61679"
