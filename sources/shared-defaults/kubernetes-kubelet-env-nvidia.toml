@@ -1,0 +1,2 @@
+[configuration-files.kubelet-env]
+template-path = "/usr/share/templates/kubelet-env-nvidia"
