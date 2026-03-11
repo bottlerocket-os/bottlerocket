@@ -15,4 +15,4 @@
 #  61678  - Amazon VPC CNI / aws-node (Prometheus metrics)
 #  61679  - Amazon VPC CNI / aws-node (introspection endpoint)
 [settings.kernel.sysctl]
-"net/ipv4/ip_local_reserved_ports" = "2703,9808,9809,10249,10250,10256,61678,61679"
+"net.ipv4.ip_local_reserved_ports" = "2703,9808,9809,10249,10250,10256,61678,61679"
