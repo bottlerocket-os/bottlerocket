@@ -1,3 +1,28 @@
+# v1.57.0 (2026-03-17)
+
+## Release Highlights
+* Update `glibc` to 2.43 and `runc` to 1.3.4 ([bottlerocket-core-kit#865], [bottlerocket-core-kit#854])
+* Add `kubelet-env-nvidia` template for `kubernetes-1.35` ([#4784], [bottlerocket-core-kit#860])
+
+## OS Changes
+* Update `bottlerocket-core-kit` from 13.1.0 to 13.2.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1320-2026-03-17) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v13.1.0...v13.2.0)) ([#4789])
+* Update `bottlerocket-kernel-kit` from 5.0.1 to 5.1.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v510-2026-03-17) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v5.0.1...v5.1.0)) ([#4789])
+* Update `admin-container` from 0.20.3 to 0.20.4 ([#4780])
+* Update `control-container` from 0.20.3 to 0.20.4 ([#4780])
+* Update `bootstrap-container` from 0.2.13 to 0.2.14 ([#4780])
+
+## Build Changes
+* Update `twoliter` from 0.16.0 to 0.17.0 ([#4776])
+* Update `bottlerocket-sdk` from 0.70.0 to 0.71.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.70.0...v0.71.0)) ([#4789])
+
+[#4776]: https://github.com/bottlerocket-os/bottlerocket/pull/4776
+[#4780]: https://github.com/bottlerocket-os/bottlerocket/pull/4780
+[#4784]: https://github.com/bottlerocket-os/bottlerocket/pull/4784
+[#4789]: https://github.com/bottlerocket-os/bottlerocket/pull/4789
+[bottlerocket-core-kit#854]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/854
+[bottlerocket-core-kit#860]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/860
+[bottlerocket-core-kit#865]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/865
+
 # v1.56.0 (2026-02-24)
 
 ## Release Highlights
