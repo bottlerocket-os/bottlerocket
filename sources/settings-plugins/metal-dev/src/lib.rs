@@ -5,7 +5,6 @@ use bottlerocket_settings_plugin::SettingsPlugin;
 #[model(rename = "settings", impl_default = true)]
 struct MetalDevSettings {
     motd: bottlerocket_settings_models::MotdV1,
-    updates: bottlerocket_settings_models::UpdatesSettingsV1,
     host_containers: bottlerocket_settings_models::HostContainersSettingsV1,
     bootstrap_commands: bottlerocket_settings_models::BootstrapCommandsSettingsV1,
     bootstrap_containers: bottlerocket_settings_models::BootstrapContainersSettingsV1,

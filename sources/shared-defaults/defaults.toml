@@ -40,32 +40,6 @@ affected-services = ["containerd"]
 configuration-files = ["proxy-env"]
 restart-commands = ["/bin/systemctl try-restart host-containerd.service"]
 
-# Updates.
-
-[settings.updates]
-version-lock = "latest"
-ignore-waves = false
-
-[services.thar-be-updates]
-configuration-files = ["thar-be-updates-toml"]
-restart-commands = []
-
-[services.updog]
-configuration-files = ["updog-toml"]
-restart-commands = []
-
-[configuration-files.thar-be-updates-toml]
-path = "/etc/thar-be-updates.toml"
-template-path = "/usr/share/templates/thar-be-updates-toml"
-
-[configuration-files.updog-toml]
-path = "/etc/updog.toml"
-template-path = "/usr/share/templates/updog-toml"
-
-[metadata.settings.updates]
-affected-services = ["updog", "thar-be-updates"]
-seed.setting-generator = "bork seed"
-
 # HostContainers
 
 [services.host-containers]
@@ -90,7 +64,7 @@ path = "/etc/network/proxy.env"
 template-path = "/usr/share/templates/proxy-env"
 
 [metadata.settings.network]
-affected-services = ["containerd", "host-containerd", "host-containers", "updog"]
+affected-services = ["containerd", "host-containerd", "host-containers"]
 
 [metadata.settings.network.hostname]
 affected-services = ["hostname", "hosts"]
