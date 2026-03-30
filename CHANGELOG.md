@@ -1,3 +1,17 @@
+# v1.58.0 (2026-04-06)
+
+## Release Highlights
+* Remove `aws-k8s-1.29` variants ([#4794])
+* Add CDI support to host-ctr enabling NVIDIA GPU tools access in superpowered containers ([bottlerocket-core-kit#879])
+
+## OS Changes
+* Update `bottlerocket-core-kit` from 13.3.0 to 14.0.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1400-2026-03-27) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v13.3.0...v14.0.0)) ([#4796])
+* Update `bottlerocket-kernel-kit` from 5.2.0 to 5.3.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v531-2026-03-26) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v5.2.0...v5.3.1)) ([#4796])
+
+[#4794]: https://github.com/bottlerocket-os/bottlerocket/pull/4794
+[#4796]: https://github.com/bottlerocket-os/bottlerocket/pull/4796
+[bottlerocket-core-kit#879]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/879
+
 # v1.57.0 (2026-03-18)
 
 ## Release Highlights
