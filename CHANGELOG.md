@@ -1,3 +1,14 @@
+# v1.58.1 (2026-04-09)
+
+## Release Highlights
+* Allow runtime processes to write fifos to content stores ([bottlerocket-core-kit#895])
+
+## OS Changes
+* Update `bottlerocket-core-kit` from 14.0.0 to 14.0.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1401-2026-04-09) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.0.0...v14.0.1)) ([#4805])
+
+[#4805]: https://github.com/bottlerocket-os/bottlerocket/pull/4805
+[bottlerocket-core-kit#895]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/895
+
 # v1.58.0 (2026-04-06)
 
 ## Release Highlights
