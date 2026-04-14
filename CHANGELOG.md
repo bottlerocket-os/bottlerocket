@@ -1,3 +1,22 @@
+# v1.59.0 (2026-04-14)
+
+## Release Highlights
+* Patch `glibc` to revert lazy THP initialization in malloc ([bottlerocket-core-kit#905])
+* Allow runtime processes to write fifos to content stores ([bottlerocket-core-kit#895])
+* Remove orphaned datastores during migration to reclaim disk space ([bottlerocket-core-kit#812])
+
+## OS Changes
+* Update `bottlerocket-kernel-kit` from 5.3.2 to 5.3.3 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v533-2026-04-13) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v5.3.2...v5.3.3)) ([#4807])
+* Update `bottlerocket-core-kit` from 14.0.0 to 14.1.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1410-2026-04-13) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.0.0...v14.1.0)) ([#4807])
+* Update `admin-container` from 0.20.4 to 0.20.5 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0205) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.20.4...v0.20.5)) ([#4807])
+* Update `control-container` from 0.20.4 to 0.20.5 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0205) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.20.4...v0.20.5)) ([#4807])
+* Update `bootstrap-container` from 0.2.14 to 0.2.15 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#0215) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.14...v0.2.15)) ([#4807])
+
+[#4807]: https://github.com/bottlerocket-os/bottlerocket/pull/4807
+[bottlerocket-core-kit#812]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/812
+[bottlerocket-core-kit#895]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/895
+[bottlerocket-core-kit#905]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/905
+
 # v1.58.0 (2026-04-06)
 
 ## Release Highlights
