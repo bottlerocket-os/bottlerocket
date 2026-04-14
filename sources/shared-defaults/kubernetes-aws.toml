@@ -35,3 +35,13 @@ template-path = "/usr/share/templates/warm-pool-wait-toml"
 
 [metadata.settings.autoscaling]
 affected-services = ["autoscaling-warm-pool"]
+
+# Reduce nf_conntrack_tcp_timeout_syn_sent from the kernel default of 120s to 20s.
+# On AWS with VPC CNI, pod IPs can be reassigned within the default 30s cooldown after
+# a pod crash or force-kill. Stale SYN_SENT conntrack entries from in-flight connections
+# at crash time persist for 120s by default — beyond the cooldown window. If a client
+# retries with the same src IP:port after the IP is reused by a different pod/service,
+# the stale entry misdirects traffic even after kube-proxy has updated routing rules.
+# Setting this to 20s ensures entries expire before the minimum IP reuse window.
+[settings.kernel.sysctl]
+"net/netfilter/nf_conntrack_tcp_timeout_syn_sent" = "20"
