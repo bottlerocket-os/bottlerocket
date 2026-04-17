@@ -626,6 +626,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "container-runtime-max-concurrent-unpacks"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "container-runtime-plugins-settings"
 version = "0.1.0"
 dependencies = [
