@@ -1,4 +1,4 @@
-version = "1.59.0"
+version = "1.60.0"
 
 [migrations]
 "(0.3.1, 0.3.2)" = ["migrate_v0.3.2_admin-container-v0-5-0.lz4"]
@@ -464,3 +464,6 @@ version = "1.59.0"
 "(1.56.0, 1.57.0)" = []
 "(1.57.0, 1.58.0)" = []
 "(1.58.0, 1.59.0)" = []
+"(1.59.0, 1.60.0)" = [
+    "migrate_v1.60.0_kubernetes-feature-gates.lz4",
+]
