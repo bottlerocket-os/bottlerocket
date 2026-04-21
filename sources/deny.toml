@@ -57,6 +57,10 @@ skip = [
     # bottlerocket-settings-sdk requires syn 1.x and 2.x for proc-macros
     # within itself and its dependencies.
     { name = "syn", version = "=1.0" },
+    # bottlerocket-settings-sdk requires thiserror 2.x and handlebars 4.5
+    # requires thiserror 1.x
+    { name = "thiserror", version = "=1.0" },
+    { name = "thiserror-impl", version = "=1.0" },
 ]
 
 skip-tree = [
