@@ -57,6 +57,7 @@ members = [
     "settings-migrations/v1.54.0/kubelet-device-plugins-mps-prefix-settings",
     "settings-migrations/v1.56.0/image-verifier-plugins-extensible",
     "settings-migrations/v1.60.0/kubernetes-topology-manager-policy-options",
+    "settings-migrations/v1.60.0/container-runtime-max-concurrent-unpacks",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
