@@ -1,3 +1,41 @@
+# v1.60.0 (2026-04-28)
+
+## Release Highlights
+* Update `containerd` 2.1 to 2.2 on  the following variants ([#4801]):
+  * `aws-k8s-1.30-nvidia-fips`
+  * `aws-k8s-1.31-nvidia-fips`
+  * `aws-k8s-1.33+`
+  * `aws-ecs-3-*`
+  * `vmware-k8s-1.33+`
+  * `aws-dev` and `vmware-dev`
+* Add `topology-manager-policy-options` settings (`prefer-closest-numa-nodes`, `max-allowable-numa-nodes`) ([#4778], [bottlerocket-core-kit#901])
+* Add `max-concurrent-unpacks` setting support for `containerd-2.2` ([#4801], [bottlerocket-core-kit#886])
+
+## OS Changes
+* Update `bottlerocket-core-kit` from 14.1.0 to 14.2.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1420) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.1.0...v14.2.0)) ([#4818])
+* Update `bottlerocket-kernel-kit` from 5.3.3 to 5.4.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v540) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v5.3.3...v5.4.0)) ([#4818])
+* Use the 6.18 kernel for `aws-dev` variant ([#4802])
+
+## Build Changes
+* Update `bottlerocket-sdk` from 0.72.0 to 0.73.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.72.0...v0.73.0)) ([#4818])
+* Disable in-place updates for dev variants ([#4765])
+* Update `bottlerocket-settings-models` to v0.23.0 ([#4778])
+
+## Orchestrator Changes
+
+### Kubernetes
+* Support authenticated dualstack ECR public pulls for `aws-k8s-*` variants ([#4792])
+
+[#4765]: https://github.com/bottlerocket-os/bottlerocket/pull/4765
+[#4778]: https://github.com/bottlerocket-os/bottlerocket/pull/4778
+[#4792]: https://github.com/bottlerocket-os/bottlerocket/pull/4792
+[#4801]: https://github.com/bottlerocket-os/bottlerocket/pull/4801
+[#4802]: https://github.com/bottlerocket-os/bottlerocket/pull/4802
+[#4818]: https://github.com/bottlerocket-os/bottlerocket/pull/4818
+[bottlerocket-core-kit#886]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/886
+[bottlerocket-core-kit#896]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/896
+[bottlerocket-core-kit#901]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/901
+
 # v1.59.0 (2026-04-14)
 
 ## Release Highlights
