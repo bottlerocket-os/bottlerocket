@@ -3,7 +3,7 @@ enabled = false
 superpowered = true
 
 [metadata.settings.host-containers.admin.source.setting-generator]
-command = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.20.5'"
+command = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.20.6'"
 strength = "weak"
 
 [metadata.settings.host-containers.admin.user-data]
