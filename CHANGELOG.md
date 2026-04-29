@@ -15,6 +15,9 @@
 * Update `bottlerocket-core-kit` from 14.1.0 to 14.2.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1420) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.1.0...v14.2.0)) ([#4818])
 * Update `bottlerocket-kernel-kit` from 5.3.3 to 5.4.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v540) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v5.3.3...v5.4.0)) ([#4818])
 * Use the 6.18 kernel for `aws-dev` variant ([#4802])
+* Update `admin-container` from 0.20.5 to 0.20.6 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0206) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.20.5...v0.20.6)) ([#4820])
+* Update `control-container` from 0.20.5 to 0.20.6 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0206) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.20.5...v0.20.6)) ([#4820])
+* Update `bootstrap-container` from 0.2.15 to 0.2.16 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#0216) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.15...v0.2.16)) ([#4820])
 
 ## Build Changes
 * Update `bottlerocket-sdk` from 0.72.0 to 0.73.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.72.0...v0.73.0)) ([#4818])
@@ -32,6 +35,7 @@
 [#4801]: https://github.com/bottlerocket-os/bottlerocket/pull/4801
 [#4802]: https://github.com/bottlerocket-os/bottlerocket/pull/4802
 [#4818]: https://github.com/bottlerocket-os/bottlerocket/pull/4818
+[#4820]: https://github.com/bottlerocket-os/bottlerocket/pull/4820
 [bottlerocket-core-kit#886]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/886
 [bottlerocket-core-kit#896]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/896
 [bottlerocket-core-kit#901]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/901

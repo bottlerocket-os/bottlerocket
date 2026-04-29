@@ -1,4 +1,4 @@
 [metadata.settings.bootstrap-containers.source.setting-generator]
-command = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-bootstrap:v0.2.15'"
+command = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-bootstrap:v0.2.16'"
 strength = "weak"
 depth = 1
