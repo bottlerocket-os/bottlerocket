@@ -1,13 +1,6 @@
 # v1.60.0 (2026-04-28)
 
 ## Release Highlights
-* Update `containerd` 2.1 to 2.2 on  the following variants ([#4801]):
-  * `aws-k8s-1.30-nvidia-fips`
-  * `aws-k8s-1.31-nvidia-fips`
-  * `aws-k8s-1.33+`
-  * `aws-ecs-3-*`
-  * `vmware-k8s-1.33+`
-  * `aws-dev` and `vmware-dev`
 * Add `topology-manager-policy-options` settings (`prefer-closest-numa-nodes`, `max-allowable-numa-nodes`) ([#4778], [bottlerocket-core-kit#901])
 * Add `max-concurrent-unpacks` setting support for `containerd-2.2` ([#4801], [bottlerocket-core-kit#886])
 
