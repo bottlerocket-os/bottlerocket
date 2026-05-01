@@ -1,19 +1,14 @@
-# v1.60.0 (2026-04-28)
+# v1.60.0 (2026-05-04)
 
 ## Release Highlights
-* Update `containerd` 2.1 to 2.2 on  the following variants ([#4801]):
-  * `aws-k8s-1.30-nvidia-fips`
-  * `aws-k8s-1.31-nvidia-fips`
-  * `aws-k8s-1.33+`
-  * `aws-ecs-3-*`
-  * `vmware-k8s-1.33+`
-  * `aws-dev` and `vmware-dev`
 * Add `topology-manager-policy-options` settings (`prefer-closest-numa-nodes`, `max-allowable-numa-nodes`) ([#4778], [bottlerocket-core-kit#901])
-* Add `max-concurrent-unpacks` setting support for `containerd-2.2` ([#4801], [bottlerocket-core-kit#886])
+
+## Security Fixes
+* Patch `kernel-6.1`, `kernel-6.12` and `kernel-6.18` to mitigate CVE-2026-31431 ([bottlerocket-kernel-kit#416])
 
 ## OS Changes
 * Update `bottlerocket-core-kit` from 14.1.0 to 14.2.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1420) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.1.0...v14.2.0)) ([#4818])
-* Update `bottlerocket-kernel-kit` from 5.3.3 to 5.4.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v540) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v5.3.3...v5.4.0)) ([#4818])
+* Update `bottlerocket-kernel-kit` from 5.3.3 to 5.4.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v541) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v5.3.3...v5.4.1)) ([#4818] [#4824])
 * Use the 6.18 kernel for `aws-dev` variant ([#4802])
 * Update `admin-container` from 0.20.5 to 0.20.6 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0206) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.20.5...v0.20.6)) ([#4820])
 * Update `control-container` from 0.20.5 to 0.20.6 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0206) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.20.5...v0.20.6)) ([#4820])
@@ -32,11 +27,11 @@
 [#4765]: https://github.com/bottlerocket-os/bottlerocket/pull/4765
 [#4778]: https://github.com/bottlerocket-os/bottlerocket/pull/4778
 [#4792]: https://github.com/bottlerocket-os/bottlerocket/pull/4792
-[#4801]: https://github.com/bottlerocket-os/bottlerocket/pull/4801
 [#4802]: https://github.com/bottlerocket-os/bottlerocket/pull/4802
 [#4818]: https://github.com/bottlerocket-os/bottlerocket/pull/4818
 [#4820]: https://github.com/bottlerocket-os/bottlerocket/pull/4820
-[bottlerocket-core-kit#886]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/886
+[#4824]: https://github.com/bottlerocket-os/bottlerocket/pull/4824
+[bottlerocket-kernel-kit#416]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/416
 [bottlerocket-core-kit#896]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/896
 [bottlerocket-core-kit#901]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/901
 
