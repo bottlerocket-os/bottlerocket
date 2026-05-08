@@ -33,7 +33,9 @@ included-packages = [
 # ecs
     "ecs-agent-nvidia-config",
     "aws-signer-notation-plugin",
+    "digestion-image-verifier",
     "notation-image-verifier",
+    "thar-be-image-verifiers",
 # NVIDIA support
     "ecs-gpu-init",
     "nvidia-container-toolkit-ecs",

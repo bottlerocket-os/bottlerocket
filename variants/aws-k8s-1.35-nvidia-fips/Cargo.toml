@@ -36,6 +36,10 @@ included-packages = [
     "kubelet-1.35",
     "aws-iam-authenticator",
     "soci-snapshotter",
+    "aws-signer-notation-plugin",
+    "digestion-image-verifier",
+    "notation-image-verifier",
+    "thar-be-image-verifiers",
     # nvidia
     "nvidia-container-toolkit-k8s",
     "nvidia-k8s-device-plugin",

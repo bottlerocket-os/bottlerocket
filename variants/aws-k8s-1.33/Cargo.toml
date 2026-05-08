@@ -30,6 +30,10 @@ included-packages = [
     "kubelet-1.33",
     "aws-iam-authenticator",
     "soci-snapshotter",
+    "aws-signer-notation-plugin",
+    "digestion-image-verifier",
+    "notation-image-verifier",
+    "thar-be-image-verifiers",
 ]
 kernel-parameters = [
     "console=tty0",

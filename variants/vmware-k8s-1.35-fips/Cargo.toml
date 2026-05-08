@@ -45,6 +45,10 @@ included-packages = [
     "cni-plugins",
     "kubelet-1.35",
     "soci-snapshotter",
+    "aws-signer-notation-plugin",
+    "digestion-image-verifier",
+    "notation-image-verifier",
+    "thar-be-image-verifiers",
     # vmware
     "open-vm-tools",
 ]
