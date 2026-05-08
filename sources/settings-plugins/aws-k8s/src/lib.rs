@@ -24,5 +24,6 @@ struct AwsK8sSettings {
     dns: bottlerocket_settings_models::DnsSettingsV1,
     container_runtime: bottlerocket_settings_models::ContainerRuntimeSettingsV1,
     container_runtime_plugins: bottlerocket_settings_models::ContainerRuntimePluginsSettingsV1,
+    image_verifier_plugins: bottlerocket_settings_models::ImageVerifierPluginsSettingsV1,
     autoscaling: bottlerocket_settings_models::AutoScalingSettingsV1,
 }
