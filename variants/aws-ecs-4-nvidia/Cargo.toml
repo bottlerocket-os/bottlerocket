@@ -1,0 +1,58 @@
+[package]
+name = "aws-ecs-4-nvidia"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[package.metadata.build-variant.image-features]
+grub-set-private-var = true
+uefi-secure-boot = true
+xfs-data-partition = true
+systemd-networkd = true
+erofs-root-partition = true
+external-kmod-development = false
+encrypted-storage = true
+
+[package.metadata.build-variant.image-layout]
+os-image-size-gib = 4
+
+[package.metadata.build-variant]
+included-packages = [
+# core
+    "release",
+    "kernel-6.18",
+    "containerd-2.1",
+    "systemd-257",
+    "nftables",
+    "whippet",
+# docker
+    "docker-cli-29",
+    "docker-engine-29",
+    "docker-init",
+# ecs
+    "ecs-agent-nvidia-config",
+    "aws-signer-notation-plugin",
+    "notation-image-verifier",
+# NVIDIA support
+    "ecs-gpu-init",
+    "nvidia-container-toolkit-ecs",
+    "kmod-6.18-nvidia-r580-tesla",
+    "kmod-6.18-nvidia-r580-imex-config",
+]
+
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0,115200n8",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
+    "quiet",
+]
+
+[lib]
+path = "../variants.rs"
+
+[build-dependencies]
+settings-defaults = { path = "../../packages/settings-defaults" }
+settings-plugins = { path = "../../packages/settings-plugins" }
+settings-migrations = { path = "../../packages/settings-migrations" }
