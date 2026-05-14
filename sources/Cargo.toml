@@ -28,6 +28,8 @@ members = [
     "settings-defaults/aws-k8s-1.34-nvidia",
     "settings-defaults/aws-k8s-1.35",
     "settings-defaults/aws-k8s-1.35-nvidia",
+    "settings-defaults/aws-k8s-1.36",
+    "settings-defaults/aws-k8s-1.36-nvidia",
     "settings-defaults/metal-dev",
     "settings-defaults/metal-k8s-1.30",
     "settings-defaults/vmware-dev",
@@ -35,6 +37,7 @@ members = [
     "settings-defaults/vmware-k8s-1.33",
     "settings-defaults/vmware-k8s-1.34",
     "settings-defaults/vmware-k8s-1.35",
+    "settings-defaults/vmware-k8s-1.36",
 
     # (all previous migrations archived; add new ones after this line)
     "settings-migrations/v1.34.0/kubelet-device-plugins-mig-settings",
