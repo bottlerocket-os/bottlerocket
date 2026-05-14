@@ -1,3 +1,37 @@
+# v1.61.0 (2026-05-18)
+
+## Release Highlights
+* Add new Kubernetes 1.36 variants ([#4827])
+  * Add `aws-k8s-1.36`, `aws-k8s-1.36-nvidia`, `aws-k8s-1.36-fips`, `aws-k8s-1.36-nvidia-fips`, `vmware-k8s-1.36`, and `vmware-k8s-1.36-fips` variants
+  * All k8s-1.36 variants will use `containerd-2.2`
+  * All non-FIPS k8s-1.36 variants will use `kernel-6.18` while FIPS variants will use `kernel-6.12`
+* New ecs-4 variants are now available as a preview ([#4840])
+  * Add `aws-ecs-4`, `aws-ecs-4-nvidia` variants
+  * All ecs-4 variants use `kernel-6.18`
+
+## Security Fixes
+* Patch `kernel-6.1`, `kernel-6.12` and `kernel-6.18` to mitigate CVE-2026-43284 ([bottlerocket-kernel-kit#431], [bottlerocket-kernel-kit#432], [bottlerocket-kernel-kit#433])
+
+## OS Changes
+* Update `bottlerocket-core-kit` from 14.2.0 to 14.3.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1430-2026-05-13) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.2.0...v14.3.0)) ([#4827])
+* Update `bottlerocket-kernel-kit` from 5.4.1 to 5.5.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v550-2026-05-11) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v5.4.1...v5.5.0)) ([#4837])
+* Update `admin-container` from 0.20.6 to 0.21.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0210) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.20.6...v0.21.0)) ([#4842])
+* Update `control-container` from 0.20.6 to 0.21.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0210) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.20.6...v0.21.0)) ([#4842])
+* Update `bootstrap-container` from 0.2.16 to 0.3.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#030) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.2.16...v0.3.0)) ([#4842])
+
+## Build Changes
+* Update `twoliter` from 0.17.0 to 0.19.0 [CHANGELOG](https://github.com/bottlerocket-os/twoliter/blob/develop/CHANGELOG.md#0190---2026-05-12) ([commits](https://github.com/bottlerocket-os/twoliter/compare/v0.17.0...v0.19.0)) ([#4803], [#4839])
+
+[#4803]: https://github.com/bottlerocket-os/bottlerocket/pull/4803
+[#4827]: https://github.com/bottlerocket-os/bottlerocket/pull/4827
+[#4837]: https://github.com/bottlerocket-os/bottlerocket/pull/4837
+[#4839]: https://github.com/bottlerocket-os/bottlerocket/pull/4839
+[#4840]: https://github.com/bottlerocket-os/bottlerocket/pull/4840
+[#4842]: https://github.com/bottlerocket-os/bottlerocket/pull/4842
+[bottlerocket-kernel-kit#431]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/431
+[bottlerocket-kernel-kit#432]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/432
+[bottlerocket-kernel-kit#433]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/433
+
 # v1.60.0 (2026-05-04)
 
 ## Release Highlights
