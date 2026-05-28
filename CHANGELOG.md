@@ -1,3 +1,21 @@
+# v1.62.0 (2026-06-01)
+
+## Release Highlights
+* Enable squashfs support for kernel-6.12 and kernel-6.18 ([bottlerocket-kernel-kit#442])
+
+## OS Changes
+
+* Update `bottlerocket-core-kit` from 14.3.0 to 14.4.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1440-2026-05-26) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.3.0...v14.4.0)) ([#4848])
+* Update `bottlerocket-kernel-kit` from 5.5.0 to 6.0.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v600-2026-05-28) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v5.5.0...v6.0.0)) ([#4850])
+
+## Build Changes
+
+* Update `bottlerocket-sdk` from 0.73.0 to 0.74.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.73.0...v0.74.0)) ([#4848])
+
+[#4848]: https://github.com/bottlerocket-os/bottlerocket/pull/4848
+[#4850]: https://github.com/bottlerocket-os/bottlerocket/pull/4850
+[bottlerocket-kernel-kit#442]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/442
+
 # v1.61.0 (2026-05-18)
 
 ## Release Highlights
