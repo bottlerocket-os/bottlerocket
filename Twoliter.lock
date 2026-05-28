@@ -3,21 +3,21 @@ project-vendor = "Bottlerocket"
 
 [sdk]
 name = "bottlerocket-sdk"
-version = "0.73.0"
+version = "0.74.0"
 vendor = "bottlerocket"
-source = "public.ecr.aws/bottlerocket/bottlerocket-sdk:v0.73.0"
-digest = "0eWj4taxRMckHeUNLcPSAS8dYNessdJrDR1+poSjqM4="
+source = "public.ecr.aws/bottlerocket/bottlerocket-sdk:v0.74.0"
+digest = "JkyAeKTcFAbrjNJKA9yuKbZcAP8kgv9phwX5jkFbFhk="
 
 [[kit]]
 name = "bottlerocket-kernel-kit"
-version = "5.5.0"
+version = "5.6.0"
 vendor = "bottlerocket"
-source = "public.ecr.aws/bottlerocket/bottlerocket-kernel-kit:v5.5.0"
-digest = "P53kyrWy7GdGpasy3WpIAiUNvH0YI/K3IPo4Fnk3Lws="
+source = "public.ecr.aws/bottlerocket/bottlerocket-kernel-kit:v5.6.0"
+digest = "3oPpVqrGvpoIeF83nq2xtvWjlOL+Uik5/LhOPs5/q2Q="
 
 [[kit]]
 name = "bottlerocket-core-kit"
-version = "14.3.0"
+version = "14.4.0"
 vendor = "bottlerocket"
-source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v14.3.0"
-digest = "LVzsIAIk1ReTF1ftGAnyjL2Y6dfx6L9WulRuEqJrrZw="
+source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v14.4.0"
+digest = "OhybxmL3jCRO59l2qK/yUh2XKuVA4G6ugi6Nlm1D2gM="
