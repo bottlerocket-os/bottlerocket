@@ -1074,6 +1074,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "image-verifier-plugins-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "indexmap"
 version = "2.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

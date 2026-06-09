@@ -33,7 +33,9 @@ included-packages = [
 # ecs
     "ecs-agent-config",
     "aws-signer-notation-plugin",
+    "digestion-image-verifier",
     "notation-image-verifier",
+    "thar-be-image-verifiers",
 ]
 kernel-parameters = [
     "console=tty0",
