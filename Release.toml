@@ -472,4 +472,5 @@ version = "1.63.0"
 "(1.61.0, 1.62.0)" = []
 "(1.62.0, 1.63.0)" = [
     "migrate_v1.63.0_image-verifier-plugins-settings.lz4",
+    "migrate_v1.63.0_nvidia-k8s-device-plugin-enabled.lz4",
 ]
