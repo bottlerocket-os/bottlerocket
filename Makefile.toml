@@ -8,9 +8,9 @@ BUILDSYS_ROOT_DIR = "${CARGO_MAKE_WORKING_DIRECTORY}"
 # For binary installation, this should be a released version (prefixed with a v,
 # for example v0.1.0). For the git sourcecode installation method, this can be
 # any git rev, e.g. a tag, sha, or branch name.
-TWOLITER_VERSION = "v0.20.0"
-TWOLITER_SHA256_AARCH64 = "25e97fc63003e1c67b262d8ea3d7ca0ae934223805289edb130d80e1f0ef54a8"
-TWOLITER_SHA256_X86_64 = "6a102249ba567f681ce25ed02fb588a51397d66a27cde4dce2e56b92d45c2dff"
+TWOLITER_VERSION = "v0.21.0-rc1"
+TWOLITER_SHA256_AARCH64 = "5ee340f14feb72a0f3df4be6b65cfc7f1f11d64b6a6546de6b758de2493de444"
+TWOLITER_SHA256_X86_64 = "a54fa7748e0b75d7bb4e9ec3bfabdf64d620f65908804c5145958994c111222e"
 
 # For binary installation, this is the GitHub repository that has binary release artifacts attached
 # to it, for example https://github.com/bottlerocket-os/twoliter. For git sourcecode installation,
