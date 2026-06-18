@@ -1,3 +1,18 @@
+# v1.62.1 (2026-06-22)
+
+## Security Fixes
+* Patch `containerd-1.7`, `containerd-2.1`, `containerd-2.2` to mitigate CVE-2026-50195, CVE-2026-53488, CVE-2026-53492, CVE-2026-53489, and CVE-2026-47262 ([bottlerocket-core-kit#93b33327])
+
+## OS Changes
+* Update `bottlerocket-core-kit` from 14.4.0 to 14.5.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/5f13b929c3412e9338ba6455a03ba0542283e596/CHANGELOG.md#v1451-2026-06-18) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.4.0...v14.5.1)) ([bottlerocket-core-kit#5f13b929])
+* Update `admin-container` from 0.21.0 to 0.21.2 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0212) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.21.0...v0.21.2)) ([#4857])
+* Update `control-container` from 0.21.0 to 0.21.2 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0212) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.21.0...v0.21.2)) ([#4857])
+* Update `bootstrap-container` from 0.3.0 to 0.3.2 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#032) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.3.0...v0.3.2)) ([#4857])
+
+[#4857]: https://github.com/bottlerocket-os/bottlerocket/pull/4857
+[bottlerocket-core-kit#93b33327]: https://github.com/bottlerocket-os/bottlerocket-core-kit/commit/93b3332789c194117087e5fb3d4b39502608eb84
+[bottlerocket-core-kit#5f13b929]: https://github.com/bottlerocket-os/bottlerocket-core-kit/commit/5f13b929c3412e9338ba6455a03ba0542283e596
+
 # v1.62.0 (2026-06-01)
 
 ## Release Highlights
