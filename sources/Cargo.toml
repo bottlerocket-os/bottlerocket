@@ -64,6 +64,7 @@ members = [
     "settings-migrations/v1.60.0/kubernetes-topology-manager-policy-options",
     "settings-migrations/v1.60.0/container-runtime-max-concurrent-unpacks",
     "settings-migrations/v1.63.0/image-verifier-plugins-settings",
+    "settings-migrations/v1.63.0/nvidia-k8s-device-plugin-enabled",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
@@ -137,22 +138,22 @@ version = "0.1.1"
 
 [workspace.dependencies.bottlerocket-modeled-types]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.23.0"
-version = "0.15.0"
+tag = "bottlerocket-settings-models-v0.24.0"
+version = "0.16.0"
 
 [workspace.dependencies.bottlerocket-settings-models]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.23.0"
-version = "0.23.0"
+tag = "bottlerocket-settings-models-v0.24.0"
+version = "0.24.0"
 
 [workspace.dependencies.bottlerocket-settings-plugin]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.23.0"
+tag = "bottlerocket-settings-models-v0.24.0"
 version = "0.1.0"
 
 [workspace.dependencies.settings-extension-oci-defaults]
 git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.23.0"
+tag = "bottlerocket-settings-models-v0.24.0"
 version = "0.1.0"
 
 [profile.release]
