@@ -25,7 +25,7 @@ included-packages = [
     # core
     "release",
     "kernel-6.12",
-    "containerd-2.1",
+    "containerd-2.2",
     "whippet",
     # k8s
     "cni",
