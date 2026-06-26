@@ -31,7 +31,7 @@ included-packages = [
 # core
     "release",
     "kernel-6.18",
-    "containerd-2.1",
+    "containerd-2.2",
     "systemd-257",
     "nftables",
     "whippet",
