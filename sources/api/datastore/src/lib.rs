@@ -184,6 +184,27 @@ pub trait DataStore {
         }
         Ok(())
     }
+    /// Set multiple metadata entries at once.
+    ///
+    /// The outer key is a data key and the inner map is metadata keys to values.
+    /// Implementers can replace the default implementation if there's a faster way than
+    /// setting each metadata entry individually.
+    fn set_metadata_batch<S>(
+        &mut self,
+        metadata: &HashMap<Key, HashMap<Key, S>>,
+        committed: &Committed,
+    ) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
+        for (data_key, meta_map) in metadata {
+            for (meta_key, value) in meta_map {
+                self.set_metadata(meta_key, data_key, value, committed)?;
+            }
+        }
+        Ok(())
+    }
+
     /// Removes multiple data keys at once in the data store.
     ///
     /// Implementers can replace the default implementation if there's a faster way than
