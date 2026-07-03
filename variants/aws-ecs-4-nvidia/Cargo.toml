@@ -40,6 +40,7 @@ included-packages = [
     "ecs-gpu-init",
     "nvidia-container-toolkit-ecs",
     "kmod-6.18-nvidia-r580-tesla",
+    "kmod-6.18-nvidia-r580-gdrcopy",
     "kmod-6.18-nvidia-r580-imex-config",
 ]
 
