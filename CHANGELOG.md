@@ -1,3 +1,41 @@
+# v1.63.0 (2026-07-13)
+
+## Release Highlights
+* Add `gdrcopy` driver to `aws-ecs-4-nvidia` variant ([#4874])
+* Add image verification settings and packages to k8s-1.33-k8s-1.36 variants and expand ecs-3 and ecs-4 image verification ([#4832])
+* Add setting to enable/disable `nvidia-device-plugin` ([#4856], [bottlerocket-core-kit#914])
+* Normalize NVIDIA library paths to `/usr/lib/` ([bottlerocket-core-kit#919], [bottlerocket-kernel-kit#425], [bottlerocket-kernel-kit#473])
+
+## OS Changes
+* Update `bottlerocket-core-kit` from 14.5.1 to 14.7.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1470-2026-07-02) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.5.1...v14.7.0)) ([#4865], [#4873])
+* Update `bottlerocket-kernel-kit` from 6.0.0 to 6.3.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v631-2026-07-06) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v6.0.0...v6.3.1)) ([#4865], [#4875], [#4876])
+* Update `admin-container` from 0.21.2 to 0.21.3 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0213) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.21.2...v0.21.3)) ([#4876])
+* Update `control-container` from 0.21.2 to 0.21.3 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0213) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.21.2...v0.21.3)) ([#4876])
+* Update `bootstrap-container` from 0.3.2 to 0.3.3 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#033) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.3.2...v0.3.3)) ([#4876])
+
+## Build Changes
+* Update `bottlerocket-sdk` from 0.74.0 to 0.76.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.74.0...v0.76.0)) ([#4865])
+* Update `twoliter` from 0.19.0 to 0.20.0 [CHANGELOG](https://github.com/bottlerocket-os/twoliter/blob/develop/CHANGELOG.md#0200---2026-05-27) ([commits](https://github.com/bottlerocket-os/twoliter/compare/v0.19.0...v0.20.0)) ([#4847])
+
+## Security Fixes
+* Patch `kernel-6.1`, `kernel-6.12` and `kernel-6.18` to mitigate CVE-2026-31694, CVE-2026-46242 and CVE-2026-53362 ([bottlerocket-kernel-kit#481], [bottlerocket-kernel-kit#482])
+
+[#4832]: https://github.com/bottlerocket-os/bottlerocket/pull/4832
+[#4847]: https://github.com/bottlerocket-os/bottlerocket/pull/4847
+[#4856]: https://github.com/bottlerocket-os/bottlerocket/pull/4856
+[#4865]: https://github.com/bottlerocket-os/bottlerocket/pull/4865
+[#4869]: https://github.com/bottlerocket-os/bottlerocket/pull/4869
+[#4873]: https://github.com/bottlerocket-os/bottlerocket/pull/4873
+[#4874]: https://github.com/bottlerocket-os/bottlerocket/pull/4874
+[#4875]: https://github.com/bottlerocket-os/bottlerocket/pull/4875
+[#4876]: https://github.com/bottlerocket-os/bottlerocket/pull/4876
+[bottlerocket-core-kit#914]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/914
+[bottlerocket-core-kit#919]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/919
+[bottlerocket-kernel-kit#425]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/425
+[bottlerocket-kernel-kit#473]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/473
+[bottlerocket-kernel-kit#481]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/481
+[bottlerocket-kernel-kit#482]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/482
+
 # v1.62.1 (2026-06-22)
 
 ## Security Fixes
