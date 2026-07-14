@@ -8,7 +8,7 @@
 
 ## OS Changes
 * Update `bottlerocket-core-kit` from 14.5.1 to 14.8.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1470-2026-07-09) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.5.1...v14.8.0)) ([#4865], [#4873], [#4883])
-* Update `bottlerocket-kernel-kit` from 6.0.0 to 7.0.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v631-2026-07-10) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v6.0.0...v7.0.0)) ([#4865], [#4875], [#4876], [#4883])
+* Update `bottlerocket-kernel-kit` from 6.0.0 to 7.0.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v701-2026-07-14) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v6.0.0...v7.0.1)) ([#4865], [#4875], [#4876], [#4883], [#4886])
 * Update `admin-container` from 0.21.2 to 0.21.3 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0213) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.21.2...v0.21.3)) ([#4876])
 * Update `control-container` from 0.21.2 to 0.21.3 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0213) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.21.2...v0.21.3)) ([#4876])
 * Update `bootstrap-container` from 0.3.2 to 0.3.3 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#033) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.3.2...v0.3.3)) ([#4876])
@@ -30,6 +30,7 @@
 [#4875]: https://github.com/bottlerocket-os/bottlerocket/pull/4875
 [#4876]: https://github.com/bottlerocket-os/bottlerocket/pull/4876
 [#4883]: https://github.com/bottlerocket-os/bottlerocket/pull/4883
+[#4886]: https://github.com/bottlerocket-os/bottlerocket/pull/4886
 [bottlerocket-core-kit#914]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/914
 [bottlerocket-core-kit#919]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/919
 [bottlerocket-kernel-kit#425]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/425
