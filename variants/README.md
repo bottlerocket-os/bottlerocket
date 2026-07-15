@@ -35,29 +35,6 @@ For example, in a VMware variant, settings read from the guestinfo interface wil
 
 See [_Update Policy_ in the Security Features document](../SECURITY_FEATURES.md#update-policy) for information on when and how Bottlerocket applies security patches to variants.
 
-### aws-k8s-1.30: Kubernetes 1.30 node
-
-The [aws-k8s-1.30](aws-k8s-1.30/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.30, 1.31, 1.32, and 1.33 clusters.
-
-### aws-k8s-1.30-nvidia: Kubernetes 1.30 NVIDIA node
-
-The [aws-k8s-1.30-nvidia](aws-k8s-1.30-nvidia/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It also includes the required packages to configure containers to leverage NVIDIA GPUs.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.30, 1.31, 1.32, and 1.33 clusters.
-
-### aws-k8s-1.30-nvidia-fips: Kubernetes 1.30 NVIDIA FIPS node
-
-The [aws-k8s-1.30-nvidia-fips](aws-k8s-1.30-nvidia-fips/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
-It also includes the required packages to configure containers to leverage NVIDIA GPUs and is FIPS-enabled.
-It supports self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
-
-This variant is compatible with Kubernetes 1.30, 1.31, 1.32, and 1.33 clusters.
-
 ### aws-k8s-1.31: Kubernetes 1.31 node
 
 The [aws-k8s-1.31](aws-k8s-1.31/Cargo.toml) variant includes the packages needed to run a Kubernetes node in AWS.
@@ -223,13 +200,6 @@ User data will be read from IMDS.
 
 The [vmware-dev](vmware-dev/Cargo.toml) variant has useful packages for local development of the OS, and is intended to run as a VMware guest.
 It includes tools for troubleshooting as well as Docker for running containers.
-
-## vmware-k8s-1.30: VMware Kubernetes 1.30 node
-
-The [vmware-k8s-1.30](vmware-k8s-1.30/Cargo.toml) variant includes the packages needed to run a Kubernetes worker node as a VMware guest.
-It supports self-hosted clusters.
-
-This variant is compatible with Kubernetes 1.30, 1.31, 1.32, and 1.33 clusters.
 
 ## vmware-k8s-1.31: VMware Kubernetes 1.31 node
 
@@ -586,6 +556,36 @@ The vmware-k8s-1.29 variant included the packages needed to run a Kubernetes wor
 It supported self-hosted clusters.
 
 This variant was compatible with Kubernetes 1.29, 1.30, 1.31, and 1.32 clusters.
+
+### aws-k8s-1.30: Kubernetes 1.30 node
+
+The aws-k8s-1.30 variant included the packages needed to run a Kubernetes node in AWS.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant was compatible with Kubernetes 1.30, 1.31, 1.32, and 1.33 clusters.
+
+### aws-k8s-1.30-nvidia: Kubernetes 1.30 NVIDIA node
+
+The aws-k8s-1.30-nvidia variant included the packages needed to run a Kubernetes node in AWS.
+It also included the required packages to configure containers to leverage NVIDIA GPUs.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant was compatible with Kubernetes 1.30, 1.31, 1.32, and 1.33 clusters.
+
+### aws-k8s-1.30-nvidia-fips: Kubernetes 1.30 NVIDIA FIPS node
+
+The aws-k8s-1.30-nvidia-fips variant included the packages needed to run a Kubernetes node in AWS.
+It also included the required packages to configure containers to leverage NVIDIA GPUs and is FIPS-enabled.
+It supported self-hosted clusters and clusters managed by [EKS](https://aws.amazon.com/eks/).
+
+This variant was compatible with Kubernetes 1.30, 1.31, 1.32, and 1.33 clusters.
+
+## vmware-k8s-1.30: VMware Kubernetes 1.30 node
+
+The vmware-k8s-1.30 variant included the packages needed to run a Kubernetes worker node as a VMware guest.
+It supported self-hosted clusters.
+
+This variant was compatible with Kubernetes 1.30, 1.31, 1.32, and 1.33 clusters.
 
 ### aws-ecs-1: Amazon ECS container instance
 
