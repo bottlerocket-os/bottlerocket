@@ -480,3 +480,6 @@ version = "1.65.0"
     "migrate_v1.64.0_hugepages-settings.lz4"
 ]
 "(1.64.0, 1.65.0)" = []
+"(1.65.0, 1.66.0)" = [
+    "migrate_v1.66.0_measurement-excluded-settings.lz4",
+]
