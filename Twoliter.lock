@@ -10,10 +10,10 @@ digest = "9cSjjYDqIrlIjnOjLYbHGG5khRYA+wCek8I0BqP3sII="
 
 [[kit]]
 name = "bottlerocket-kernel-kit"
-version = "7.0.1"
+version = "7.1.0"
 vendor = "bottlerocket"
-source = "public.ecr.aws/bottlerocket/bottlerocket-kernel-kit:v7.0.1"
-digest = "VYz4zUQ1rQ3EFx/uJPJs7EHG72AOhgQEDH7Fo2SO06g="
+source = "public.ecr.aws/bottlerocket/bottlerocket-kernel-kit:v7.1.0"
+digest = "aCekwwtcRBWW766NZzL4qrM6JO1h6lAfNzeImpvG3DI="
 
 [[kit]]
 name = "bottlerocket-core-kit"
