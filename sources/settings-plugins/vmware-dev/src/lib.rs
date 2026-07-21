@@ -17,4 +17,5 @@ struct VmwareDevSettings {
     container_registry: bottlerocket_settings_models::RegistrySettingsV1,
     oci_hooks: bottlerocket_settings_models::OciHooksSettingsV1,
     dns: bottlerocket_settings_models::DnsSettingsV1,
+    measurement: bottlerocket_settings_models::MeasurementSettingsV1,
 }

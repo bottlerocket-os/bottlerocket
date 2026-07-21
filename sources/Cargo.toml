@@ -65,6 +65,7 @@ members = [
     "settings-migrations/v1.60.0/container-runtime-max-concurrent-unpacks",
     "settings-migrations/v1.63.0/image-verifier-plugins-settings",
     "settings-migrations/v1.63.0/nvidia-k8s-device-plugin-enabled",
+    "settings-migrations/v1.64.0/measurement-excluded-settings",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
