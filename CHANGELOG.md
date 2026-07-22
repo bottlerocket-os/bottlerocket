@@ -1,3 +1,29 @@
+# v1.64.0 (2026-07-22)
+
+## Release Highlights
+* Add support for static and transparent hugepages ([#4864], [bottlerocket-core-kit#952])
+* Remove aws-k8s-1.30 variants ([#4880])
+
+## OS Changes
+* Update bottlerocket-core-kit from 14.8.0 to 14.9.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1490-2026-07-20) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v14.8.0...v14.9.0)) ([#4892])
+* Update bottlerocket-kernel-kit from 7.0.1 to 7.1.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v710-2026-07-20) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v7.0.1...v7.1.0))([#4892])
+* Update admin-container from 0.21.3 to 0.21.4 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0214) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.21.3...v0.21.4)) ([#4893])
+* Update control-container from 0.21.3 to 0.21.4 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0214) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.21.3...v0.21.4)) ([#4893])
+* Update bootstrap-container from 0.3.3 to 0.3.4 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#034) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.3.3...v0.3.4)) ([#4893])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Add settings.kubernetes.container-runtime-endpoint ([#4890], https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/968) - Thanks @shvbsle!
+
+[#4864]: https://github.com/bottlerocket-os/bottlerocket/pull/4864
+[#4880]: https://github.com/bottlerocket-os/bottlerocket/pull/4880
+[#4890]: https://github.com/bottlerocket-os/bottlerocket/pull/4890
+[#4892]: https://github.com/bottlerocket-os/bottlerocket/pull/4892
+[#4893]: https://github.com/bottlerocket-os/bottlerocket/pull/4893
+[bottlerocket-core-kit#952]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/952
+
 # v1.63.0 (2026-07-13)
 
 ## Release Highlights
