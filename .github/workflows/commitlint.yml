@@ -1,0 +1,33 @@
+name: Lint Commit Messages
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+jobs:
+  commitlint:
+    if: github.repository == 'bottlerocket-os/bottlerocket'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+      - name: Install commitlint
+        run: npm install @commitlint/cli @commitlint/types
+      - name: Lint commits in PR
+        env:
+          WORKSPACE: ${{ github.workspace }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          npx commitlint \
+            -g "${WORKSPACE}/.commitlint.config.mjs" \
+            --from "${BASE_SHA}" \
+            --to "${HEAD_SHA}" \
+            --verbose
