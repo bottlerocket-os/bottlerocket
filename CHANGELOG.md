@@ -2,9 +2,10 @@
 
 ## Build Changes
 
-* Update Twoliter to `0.22.0` ([#4900])
+* Update Twoliter to `0.22.1` ([#4900], [#4905])
 
 [#4900]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/4900
+[#4905]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/4905
 
 # v1.64.0 (2026-07-27)
 
