@@ -8,7 +8,7 @@ enabled = false
 superpowered = true
 
 [metadata.settings.host-containers.admin.source.setting-generator]
-command = "schnauzer-v2 render --template 'public.ecr.aws/bottlerocket/bottlerocket-admin:v0.21.4'"
+command = "schnauzer-v2 render --template 'public.ecr.aws/bottlerocket/bottlerocket-admin:v0.21.5'"
 strength = "weak"
 
 [settings.host-containers.control]
@@ -16,5 +16,5 @@ enabled = false
 superpowered = false
 
 [metadata.settings.host-containers.control.source.setting-generator]
-command = "schnauzer-v2 render --template 'public.ecr.aws/bottlerocket/bottlerocket-control:v0.21.4'"
+command = "schnauzer-v2 render --template 'public.ecr.aws/bottlerocket/bottlerocket-control:v0.21.5'"
 strength = "weak"
