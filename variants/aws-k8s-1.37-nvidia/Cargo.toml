@@ -43,6 +43,7 @@ included-packages = [
     # nvidia
     "nvidia-container-toolkit-k8s",
     "nvidia-k8s-device-plugin",
+    "nvidia-dra-driver-gpu",
 ]
 kernel-parameters = [
     "console=tty0",
