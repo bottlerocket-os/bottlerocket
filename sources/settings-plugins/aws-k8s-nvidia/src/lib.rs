@@ -27,4 +27,5 @@ struct AwsK8sSettings {
     autoscaling: bottlerocket_settings_models::AutoScalingSettingsV1,
     nvidia_container_runtime: bottlerocket_settings_models::NvidiaContainerRuntimeSettingsV1,
     kubelet_device_plugins: bottlerocket_settings_models::KubeletDevicePluginsV1,
+    kubelet_dra_drivers: bottlerocket_settings_models::KubeletDraDriversV1,
 }
