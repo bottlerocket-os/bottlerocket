@@ -92,7 +92,17 @@ template-path = "/usr/share/templates/hosts"
 # NTP
 
 [settings.ntp]
-time-servers = ["169.254.169.123", "2.amazon.pool.ntp.org"]
+# chrony log categories, rendered as the `log` line.
+logging = ["measurements", "statistics", "tracking"]
+
+[settings.ntp.time-servers.link-local]
+address = "169.254.169.123"
+directive = "server"
+options = ["prefer", "iburst", "minpoll 4", "maxpoll 4"]
+
+[settings.ntp.time-servers.amazon-pool]
+address = "time.aws.com"
+directive = "pool"
 options = ["iburst"]
 
 [services.ntp]

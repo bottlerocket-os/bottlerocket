@@ -1372,6 +1372,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ntp-time-servers"
+version = "0.1.0"
+dependencies = [
+ "maplit",
+ "migration-helpers",
+ "serde_json",
+]
+
+[[package]]
 name = "num-bigint"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"

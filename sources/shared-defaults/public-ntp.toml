@@ -1,3 +1,9 @@
 # Use a public endpoint, don't assume any local ones.
 [settings.ntp]
-time-servers = ["2.amazon.pool.ntp.org"]
+# chrony log categories, rendered as the `log` line.
+logging = ["measurements", "statistics", "tracking"]
+
+[settings.ntp.time-servers.amazon-pool]
+address = "time.aws.com"
+directive = "pool"
+options = ["iburst"]
