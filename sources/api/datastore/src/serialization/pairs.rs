@@ -347,7 +347,7 @@ impl ser::SerializeMap for Serializer<'_> {
         // meaning it's in quoted form.
         let key = Key::new(KeyType::Data, &key_str).map_err(|e| {
             error::InvalidKeySnafu {
-                msg: format!("serialized map key '{}' not valid as Key: {}", &key_str, e),
+                msg: format!("serialized map key '{}' not valid as Key: {}", key_str, e),
             }
             .into_error(NoSource)
         })?;
@@ -406,7 +406,7 @@ impl ser::SerializeStruct for Serializer<'_> {
             "Recursively serializing struct with new root '{}' from prefix '{:?}' and key '{}'",
             new_root,
             self.prefix,
-            &key
+            key
         );
         value.serialize(Serializer::new(self.output, Some(new_root)))
     }

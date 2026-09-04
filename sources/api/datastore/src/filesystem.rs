@@ -563,7 +563,7 @@ impl DataStore for FilesystemDataStore {
 
         // Pull out just the keys so we can log them and return them
         let pending_keys = pending_data.into_keys().collect();
-        debug!("Found pending keys: {:?}", &pending_keys);
+        debug!("Found pending keys: {:?}", pending_keys);
 
         // Delete pending from the filesystem, same as a commit
         let path = self.base_path(&pending);

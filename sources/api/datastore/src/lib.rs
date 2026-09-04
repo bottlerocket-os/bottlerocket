@@ -258,7 +258,7 @@ pub trait DataStore {
                 trace!(
                     "Pulling metadata '{}' from datastore for key: {}",
                     meta_key,
-                    &data_key
+                    data_key
                 );
                 let value = self
                     .get_metadata(&meta_key, &data_key, committed)?
