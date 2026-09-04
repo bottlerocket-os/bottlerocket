@@ -1179,6 +1179,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-dra-drivers-nvidia-enabled"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubelet-setting-container-log-single-process-oom-kill"
 version = "0.1.0"
 dependencies = [

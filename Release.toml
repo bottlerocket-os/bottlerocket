@@ -477,5 +477,6 @@ version = "1.64.0"
 ]
 "(1.63.0, 1.64.0)" = [
     "migrate_v1.64.0_kubernetes-container-runtime-endpoint.lz4",
-    "migrate_v1.64.0_hugepages-settings.lz4"
+    "migrate_v1.64.0_hugepages-settings.lz4",
+    "migrate_v1.64.0_kubelet-dra-drivers-nvidia-enabled.lz4"
 ]

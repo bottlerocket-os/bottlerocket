@@ -1,0 +1,27 @@
+# NVIDIA DRA driver (GPU kubelet plugin) service.
+#
+# The plugin runs as a host systemd service (not a Helm-installed DaemonSet).
+# Its ExecStart is rendered from settings because it needs the node name from
+# settings.kubernetes.hostname-override; enablement is the dedicated
+# settings.kubelet-dra-drivers.nvidia.enabled toggle (independent of the classic
+# device plugin's settings.kubelet-device-plugins.nvidia.enabled).
+[services.nvidia-dra-driver-gpu]
+restart-commands = [
+    "/bin/systemctl try-reload-or-restart nvidia-dra-driver-gpu.service",
+]
+configuration-files = [
+    "nvidia-dra-driver-gpu-exec-start-conf",
+]
+
+[configuration-files.nvidia-dra-driver-gpu-exec-start-conf]
+path = "/etc/systemd/system/nvidia-dra-driver-gpu.service.d/exec-start.conf"
+template-path = "/usr/share/templates/nvidia-dra-driver-gpu-exec-start-conf"
+
+# Opt-in by default: the DRA driver is off unless explicitly enabled, so it does
+# not conflict with the classic device plugin out of the box.
+[settings.kubelet-dra-drivers.nvidia]
+enabled = false
+
+# Re-render + restart the service when the toggle (or node name) changes.
+[metadata.settings.kubelet-dra-drivers.nvidia.enabled]
+affected-services = ["nvidia-dra-driver-gpu"]
