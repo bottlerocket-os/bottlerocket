@@ -107,6 +107,34 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %description aws-ecs-4-nvidia
 %{summary}.
 
+%package aws-mantle-1
+Summary: Settings defaults for the aws-mantle-1 FIPS and non-FIPS variants
+Requires: (%{shrink:
+           %{_cross_os}variant(aws-mantle-1) or
+           %{_cross_os}variant(aws-mantle-1-fips)
+          %{nil}})
+Provides: %{_cross_os}settings-defaults(any)
+Provides: %{_cross_os}settings-defaults(aws-mantle-1)
+Provides: %{_cross_os}settings-defaults(aws-mantle-1-fips)
+Conflicts: %{_cross_os}settings-defaults(any)
+
+%description aws-mantle-1
+%{summary}.
+
+%package aws-mantle-1-nvidia
+Summary: Settings defaults for the aws-mantle-1-nvidia variant
+Requires: (%{shrink:
+           %{_cross_os}variant(aws-mantle-1-nvidia) or
+           %{_cross_os}variant(aws-mantle-1-nvidia-fips)
+           %{nil}})
+Provides: %{_cross_os}settings-defaults(any)
+Provides: %{_cross_os}settings-defaults(aws-mantle-1-nvidia)
+Provides: %{_cross_os}settings-defaults(aws-mantle-1-nvidia-fips)
+Conflicts: %{_cross_os}settings-defaults(any)
+
+%description aws-mantle-1-nvidia
+%{summary}.
+
 %package aws-k8s-1.31
 Summary: Settings defaults for the aws-k8s 1.31 variants
 Requires: (%{shrink:
@@ -383,6 +411,8 @@ for defaults in \
   aws-ecs-3-nvidia \
   aws-ecs-4 \
   aws-ecs-4-nvidia \
+  aws-mantle-1 \
+  aws-mantle-1-nvidia \
   aws-k8s-1.31 \
   aws-k8s-1.31-nvidia \
   aws-k8s-1.32 \
@@ -429,6 +459,8 @@ for defaults in \
   aws-ecs-3-nvidia \
   aws-ecs-4 \
   aws-ecs-4-nvidia \
+  aws-mantle-1 \
+  aws-mantle-1-nvidia \
   aws-k8s-1.31 \
   aws-k8s-1.31-nvidia \
   aws-k8s-1.32 \
@@ -489,6 +521,14 @@ done
 %files aws-ecs-4-nvidia
 %{_cross_defaultsdir}/aws-ecs-4-nvidia.toml
 %{_cross_tmpfilesdir}/storewolf-defaults-aws-ecs-4-nvidia.conf
+
+%files aws-mantle-1
+%{_cross_defaultsdir}/aws-mantle-1.toml
+%{_cross_tmpfilesdir}/storewolf-defaults-aws-mantle-1.conf
+
+%files aws-mantle-1-nvidia
+%{_cross_defaultsdir}/aws-mantle-1-nvidia.toml
+%{_cross_tmpfilesdir}/storewolf-defaults-aws-mantle-1-nvidia.conf
 
 %files aws-k8s-1.31
 %{_cross_defaultsdir}/aws-k8s-1.31.toml

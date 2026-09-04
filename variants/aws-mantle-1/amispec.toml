@@ -1,0 +1,11 @@
+description = "The aws-mantle-1 variant is a minimal Bottlerocket build for AWS Bedrock's Mantle API. It carries several experimental features like ephemeral-encryption-keys, runs no container orchestrator agent and may make breaking changes without warning."
+
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
+imds-support = "v2.0"
+
+# Override the pubsys "gp2" default
+[block-device-mappings."/dev/xvda".ebs]
+volume-type = "gp3"
+
+[block-device-mappings."/dev/xvdb".ebs]
+volume-type = "gp3"

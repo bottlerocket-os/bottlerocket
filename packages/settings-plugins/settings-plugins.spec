@@ -80,6 +80,24 @@ Conflicts: %{_cross_os}settings-plugin(any)
 %description aws-ecs-4
 %{summary}.
 
+%package aws-mantle-1
+Summary: Settings plugin for the aws-mantle-1 variant
+Requires: (%{shrink:
+           %{_cross_os}variant(aws-mantle-1) or
+           %{_cross_os}variant(aws-mantle-1-fips) or
+           %{_cross_os}variant(aws-mantle-1-nvidia) or
+           %{_cross_os}variant(aws-mantle-1-nvidia-fips)
+           %{nil}})
+Provides: %{_cross_os}settings-plugin(any)
+Provides: %{_cross_os}settings-plugin(aws-mantle-1)
+Provides: %{_cross_os}settings-plugin(aws-mantle-1-nvidia)
+Provides: %{_cross_os}settings-plugin(aws-mantle-1-fips)
+Provides: %{_cross_os}settings-plugin(aws-mantle-1-nvidia-fips)
+Conflicts: %{_cross_os}settings-plugin(any)
+
+%description aws-mantle-1
+%{summary}.
+
 %package aws-k8s
 Summary: Settings plugin for the aws-k8s variants
 Requires: %{_cross_os}variant-family(aws-k8s)
@@ -175,6 +193,7 @@ Conflicts: %{_cross_os}settings-plugin(any)
   -p settings-plugin-aws-ecs-2 \
   -p settings-plugin-aws-ecs-3 \
   -p settings-plugin-aws-ecs-4 \
+  -p settings-plugin-aws-mantle-1 \
   -p settings-plugin-aws-k8s \
   -p settings-plugin-aws-k8s-nvidia \
   -p settings-plugin-metal-dev \
@@ -192,6 +211,7 @@ for plugin in \
   aws-ecs-2 \
   aws-ecs-3 \
   aws-ecs-4 \
+  aws-mantle-1 \
   aws-k8s-nvidia \
   aws-k8s \
   metal-dev \
@@ -234,6 +254,11 @@ done
 %{_cross_pluginsdir}/aws-ecs-4/libsettings.so
 %{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/aws-ecs-4.conf
 %{_cross_tmpfilesdir}/settings-plugin-aws-ecs-4.conf
+
+%files aws-mantle-1
+%{_cross_pluginsdir}/aws-mantle-1/libsettings.so
+%{_cross_factorydir}%{_cross_sysconfdir}/ld.so.conf.d/aws-mantle-1.conf
+%{_cross_tmpfilesdir}/settings-plugin-aws-mantle-1.conf
 
 %files aws-k8s
 %{_cross_pluginsdir}/aws-k8s/libsettings.so

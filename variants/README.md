@@ -190,6 +190,34 @@ The [aws-ecs-3-nvidia-fips](aws-ecs-3-nvidia-fips/Cargo.toml) variant includes t
 container instance in AWS.
 It also includes the required packages to configure containers to leverage NVIDIA GPUs and is FIPS-enabled.
 
+### aws-mantle-1: limited support
+
+The [aws-mantle-1](aws-mantle-1/Cargo.toml) variant is a minimal Bottlerocket build. Unlike other AWS variants, it does not run a container orchestrator agent.
+
+This variant is intended for use by AWS Bedrock's Mantle API and may make breaking changes without warning. If you need a fully supported variant, use one of the Kubernetes or Amazon ECS variants instead.
+
+### aws-mantle-1-fips: limited support
+
+The [aws-mantle-1-fips](aws-mantle-1-fips/Cargo.toml) variant is a minimal Bottlerocket build. Unlike other AWS variants, it does not run a container orchestrator agent. It is FIPS enabled.
+
+This variant is intended for use by AWS Bedrock's Mantle API and may make breaking changes without warning. If you need a fully supported variant, use one of the Kubernetes or Amazon ECS variants instead.
+
+### aws-mantle-1-nvidia: limited support
+
+The [aws-mantle-1-nvidia](aws-mantle-1-nvidia/Cargo.toml) variant is a minimal Bottlerocket build. Unlike other AWS variants, it does not run a container orchestrator agent.
+
+This variant is intended for use by AWS Bedrock's Mantle API and may make breaking changes without warning. If you need a fully supported variant, use one of the Kubernetes or Amazon ECS variants instead.
+
+It also includes the required packages to configure containers to leverage NVIDIA GPUs.
+
+### aws-mantle-1-nvidia-fips: limited support
+
+The [aws-mantle-1-nvidia-fips](aws-mantle-1-nvidia-fips/Cargo.toml) variant is a minimal Bottlerocket build. Unlike other AWS variants, it does not run a container orchestrator agent.
+
+This variant is intended for use by AWS Bedrock's Mantle API and may make breaking changes without warning. If you need a fully supported variant, use one of the Kubernetes or Amazon ECS variants instead.
+
+It also includes the required packages to configure containers to leverage NVIDIA GPUs and is FIPS-enabled.
+
 ### aws-dev: AWS development build
 
 The [aws-dev](aws-dev/Cargo.toml) variant has useful packages for local development of the OS.
