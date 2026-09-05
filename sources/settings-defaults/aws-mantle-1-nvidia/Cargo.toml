@@ -1,0 +1,13 @@
+[package]
+name = "settings-defaults-aws-mantle-1-nvidia"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+publish = false
+build = "../build-defaults.rs"
+
+[lib]
+path = "../defaults-toml.rs"
+
+[build-dependencies]
+bottlerocket-defaults-helper.workspace = true

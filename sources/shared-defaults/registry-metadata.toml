@@ -1,0 +1,14 @@
+# Network
+[metadata.settings.network]
+affected-services = ["containerd", "host-containerd", "host-containers"]
+
+[metadata.settings.container-registry]
+affected-services = ["containerd", "host-containers", "bootstrap-containers", "thar-be-registries"]
+
+# Image registry mirrors
+[metadata.settings.container-registry.mirrors]
+affected-services = ["containerd", "host-containers", "bootstrap-containers", "thar-be-registries"]
+
+# Image registry credentials
+[metadata.settings.container-registry.credentials]
+affected-services = ["containerd", "host-containers", "bootstrap-containers", "thar-be-registries"]

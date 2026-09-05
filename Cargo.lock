@@ -318,6 +318,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-mantle-1"
+version = "0.1.0"
+dependencies = [
+ "settings-defaults",
+ "settings-migrations",
+ "settings-plugins",
+]
+
+[[package]]
+name = "aws-mantle-1-fips"
+version = "0.1.0"
+dependencies = [
+ "settings-defaults",
+ "settings-migrations",
+ "settings-plugins",
+]
+
+[[package]]
+name = "aws-mantle-1-nvidia"
+version = "0.1.0"
+dependencies = [
+ "settings-defaults",
+ "settings-migrations",
+ "settings-plugins",
+]
+
+[[package]]
+name = "aws-mantle-1-nvidia-fips"
+version = "0.1.0"
+dependencies = [
+ "settings-defaults",
+ "settings-migrations",
+ "settings-plugins",
+]
+
+[[package]]
 name = "metal-dev"
 version = "0.1.0"
 dependencies = [
