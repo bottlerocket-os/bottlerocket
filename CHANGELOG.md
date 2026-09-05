@@ -1,11 +1,42 @@
-# Unreleased
+# v1.65.0 (2026-09-04)
+
+## Release Highlights
+* logdog now captures systemd-pstore kernel dumps ([#4927], [bottlerocket-core-kit#1028])
+* Superpowered containers now receive all kernel-known capabilities ([#4911], [bottlerocket-core-kit#987]) - Thanks @anirbag
+
+## OS Changes
+
+* Update `bottlerocket-core-kit` from 15.0.0 to 16.3.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v15.0.0...v16.3.0)) ([#4911], [#4927], [#4931], [#4908])
+* Update `bottlerocket-kernel-kit` from 7.2.1 to 9.1.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v7.2.1...v9.1.0)) ([#4911], [#4912], [#4919], [#4921], [#4931])
+* Update `admin-container` from 0.21.4 to 0.21.5 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0215) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.21.4...v0.21.5)) ([#4917])
+* Update `control-container` from 0.21.4 to 0.21.5 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0215) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.21.4...v0.21.5)) ([#4917])
+* Update `bootstrap-container` from 0.3.4 to 0.3.5 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#035) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.3.4...v0.3.5)) ([#4917])
+* Drop metrics API from aws-dev variant ([#4932])
 
 ## Build Changes
 
-* Update Twoliter to `0.22.1` ([#4900], [#4905])
+* Update `bottlerocket-sdk` from 0.77.0 to 0.79.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.77.0...v0.79.0)) ([#4911], [#4931])
+* Update Twoliter from `0.20.0` to `0.24.0` ([#4900], [#4905], [#4914], [#4918])
+* Add commitlint workflow for PR commit messages ([#4902])
+* Update `root.json` hash in docs ([#4904])
 
-[#4900]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/4900
-[#4905]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/4905
+[#4900]: https://github.com/bottlerocket-os/bottlerocket/pull/4900
+[#4902]: https://github.com/bottlerocket-os/bottlerocket/pull/4902
+[#4904]: https://github.com/bottlerocket-os/bottlerocket/pull/4904
+[#4905]: https://github.com/bottlerocket-os/bottlerocket/pull/4905
+[#4908]: https://github.com/bottlerocket-os/bottlerocket/pull/4908
+[#4911]: https://github.com/bottlerocket-os/bottlerocket/pull/4911
+[#4912]: https://github.com/bottlerocket-os/bottlerocket/pull/4912
+[#4914]: https://github.com/bottlerocket-os/bottlerocket/pull/4914
+[#4917]: https://github.com/bottlerocket-os/bottlerocket/pull/4917
+[#4918]: https://github.com/bottlerocket-os/bottlerocket/pull/4918
+[#4919]: https://github.com/bottlerocket-os/bottlerocket/pull/4919
+[#4921]: https://github.com/bottlerocket-os/bottlerocket/pull/4921
+[#4927]: https://github.com/bottlerocket-os/bottlerocket/pull/4927
+[#4931]: https://github.com/bottlerocket-os/bottlerocket/pull/4931
+[#4932]: https://github.com/bottlerocket-os/bottlerocket/pull/4932
+[bottlerocket-core-kit#987]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/987
+[bottlerocket-core-kit#1028]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/1028
 
 # v1.64.0 (2026-07-27)
 
