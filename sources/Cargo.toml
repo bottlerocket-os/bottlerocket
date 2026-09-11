@@ -73,6 +73,7 @@ members = [
     "settings-migrations/v1.64.0/kubernetes-container-runtime-endpoint",
     "settings-migrations/v1.64.0/hugepages-settings",
     "settings-migrations/v1.66.0/kubernetes-memory-qos-settings",
+    "settings-migrations/v1.66.0/nvidia-driver-branch-setting",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",

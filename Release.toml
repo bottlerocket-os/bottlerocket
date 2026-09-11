@@ -481,5 +481,6 @@ version = "1.66.0"
 ]
 "(1.64.0, 1.65.0)" = []
 "(1.65.0, 1.66.0)" = [
-    "migrate_v1.66.0_kubernetes-memory-qos-settings.lz4"
+    "migrate_v1.66.0_kubernetes-memory-qos-settings.lz4",
+    "migrate_v1.66.0_nvidia-driver-branch-setting.lz4",
 ]
