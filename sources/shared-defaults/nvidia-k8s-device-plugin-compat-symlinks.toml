@@ -1,0 +1,13 @@
+# Backwards-compatibility for the legacy /usr/lib/nvidia/tesla library path
+# (NVIDIA k8s device plugin path).
+#
+# Renders the "-compat" exec-start template for the device plugin, which keeps
+# `--cdi-enabled-hooks create-lib-symlinks` so the legacy symlinks are created
+# inside containers for device-plugin-allocated GPUs. This is the path used by
+# ordinary GPU pods.
+#
+# Included only by EKS k8s 1.36 and below nvidia variants; 1.37+ omit it and use
+# the default template.
+[configuration-files.nvidia-k8s-device-plugin-exec-start-conf]
+# No override to path
+template-path = "/usr/share/templates/nvidia-k8s-device-plugin-exec-start-conf-compat"
