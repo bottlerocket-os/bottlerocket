@@ -1,0 +1,19 @@
+[settings.host-containers.admin]
+enabled = false
+superpowered = true
+
+[metadata.settings.host-containers.admin.source.setting-generator]
+command = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-admin:v0.21.5'"
+strength = "weak"
+
+[metadata.settings.host-containers.admin.user-data]
+setting-generator = "shibaken generate-admin-userdata"
+
+[settings.host-containers.control]
+enabled = false
+user-data = "eyJpbnNwZWN0b3IiOiB7InVwbG9hZC1zYm9tIjogZmFsc2V9fQ=="
+superpowered = false
+
+[metadata.settings.host-containers.control.source.setting-generator]
+command = "schnauzer-v2 render --requires 'aws@v1(helpers=[ecr-prefix])' --template '{{ ecr-prefix settings.aws.region }}/bottlerocket-control:v0.21.5'"
+strength = "weak"
