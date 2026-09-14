@@ -24,4 +24,5 @@ struct AwsEcs4Settings {
     autoscaling: bottlerocket_settings_models::AutoScalingSettingsV1,
     dns: bottlerocket_settings_models::DnsSettingsV1,
     image_verifier_plugins: bottlerocket_settings_models::ImageVerifierPluginsSettingsV1,
+    measurement: bottlerocket_settings_models::MeasurementSettingsV1,
 }

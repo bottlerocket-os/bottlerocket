@@ -19,4 +19,5 @@ struct AwsDevSettings {
     oci_hooks: bottlerocket_settings_models::OciHooksSettingsV1,
     cloudformation: bottlerocket_settings_models::CloudFormationSettingsV1,
     dns: bottlerocket_settings_models::DnsSettingsV1,
+    measurement: bottlerocket_settings_models::MeasurementSettingsV1,
 }
