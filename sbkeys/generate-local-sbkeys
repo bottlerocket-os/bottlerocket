@@ -127,6 +127,8 @@ genca vendor "Bottlerocket Secure Boot Vendor CA"
 genkey db shim-sign "Bottlerocket Shim Signing Key"
 genkey vendor code-sign "Bottlerocket Code Signing Key"
 
+genkey db uki-sign "Bottlerocket UKI Signing Key"
+
 # Generate GPG key for signing grub.cfg.
 export GNUPGHOME="${WORKDIR}"
 gpg --gen-key --batch <<EOF
@@ -161,5 +163,6 @@ cp -t "${OUTPUT_DIR}" \
   vendor.{key,crt} \
   shim-sign.{key,crt} \
   code-sign.{key,crt} \
+  uki-sign.{key,crt} \
   config-sign.key \
   efi-vars.{aws,json}
