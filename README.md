@@ -416,6 +416,16 @@ See the [`settings.metrics.*` reference](https://bottlerocket.dev/en/os/latest/#
 
 See the [`settings.ntp.*` reference](https://bottlerocket.dev/en/os/latest/#/api/settings/ntp/).
 
+In addition to NTP time servers, you can point chrony at reference clocks such as the [Amazon Time Sync Service PTP Hardware Clock (PHC)](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-ec2-ntp.html#connect-to-the-ptp-hardware-clock).
+For example, to use the ENA PHC device (see the [PTP hardware clock example](QUICKSTART-EKS.md#amazon-time-sync-service-ptp-hardware-clock)):
+
+```toml
+[[settings.ntp.refclocks]]
+driver = "PHC"
+parameter = "/dev/ptp_ena"
+options = ["poll", "0", "delay", "0.000010", "prefer"]
+```
+
 #### Kernel settings
 
 See the [`settings.kernel.*` reference](https://bottlerocket.dev/en/os/latest/#/api/settings/kernel/).

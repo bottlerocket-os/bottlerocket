@@ -409,3 +409,21 @@ spec:
 ```
 
 Along with the `device-ownership-from-secuirity-context` setting, you will need to deploy the [neuron-device-plugin](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/containers/kubernetes-getting-started.html#neuron-device-plugin), and optionally, the [neuron-scheduler](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/containers/kubernetes-getting-started.html#neuron-scheduler-extension).
+
+### Amazon Time Sync Service PTP Hardware Clock
+
+On [supported instance types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-ec2-ntp.html#connect-to-the-ptp-hardware-clock), the [Amazon Time Sync Service](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-ec2-ntp.html) exposes a PTP Hardware Clock (PHC) through the ENA driver for higher-accuracy timekeeping. To let chrony synchronize from it, enable the PHC in the ENA driver and add it as a reference clock:
+
+```toml
+[settings.boot.kernel-parameters]
+# Enable the PHC device in the ENA driver.
+"ena.phc_enable" = ["1"]
+
+[[settings.ntp.refclocks]]
+# chrony's `refclock PHC /dev/ptp_ena poll 0 delay 0.000010 prefer` directive.
+driver = "PHC"
+parameter = "/dev/ptp_ena"
+options = ["poll", "0", "delay", "0.000010", "prefer"]
+```
+
+Bottlerocket ships a udev rule that creates the stable `/dev/ptp_ena` symlink for the ENA PHC device. For the best accuracy, launch your instances in a [placement group with the `precision-time` strategy](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configure-ec2-ntp.html). Once the node is up, you can confirm chrony is using the clock with `chronyc sources` (look for a selected `PHC0` reference) from the admin container.

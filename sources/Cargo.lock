@@ -51,6 +51,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "add-ntp-refclocks-and-access-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

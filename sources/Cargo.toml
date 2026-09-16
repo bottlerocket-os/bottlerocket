@@ -69,6 +69,7 @@ members = [
     "settings-migrations/v1.63.0/nvidia-k8s-device-plugin-enabled",
     "settings-migrations/v1.64.0/kubernetes-container-runtime-endpoint",
     "settings-migrations/v1.64.0/hugepages-settings",
+    "settings-migrations/v1.64.0/add-ntp-refclocks-and-access-settings",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
