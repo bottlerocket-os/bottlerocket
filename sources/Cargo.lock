@@ -1230,6 +1230,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubernetes-memory-qos-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubernetes-memory-swap-behavior-setting"
 version = "0.1.0"
 dependencies = [
