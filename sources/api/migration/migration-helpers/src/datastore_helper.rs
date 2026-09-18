@@ -100,12 +100,14 @@ pub(crate) fn set_output_data<D: DataStore>(
         .set_keys(&data, committed)
         .context(error::DataStoreWriteSnafu)?;
 
-    // Set metadata in a loop (currently no batch API)
+    // Build batch metadata map and write in a single call
+    let mut metadata_batch: HashMap<Key, HashMap<Key, String>> = HashMap::new();
     for (data_key_name, meta_map) in &input.metadata {
         let data_key = Key::new(KeyType::Data, data_key_name).context(error::InvalidKeySnafu {
             key_type: KeyType::Data,
             key: data_key_name,
         })?;
+        let mut meta_entries = HashMap::new();
         for (metadata_key_name, raw_value) in meta_map.iter() {
             let metadata_key =
                 Key::new(KeyType::Meta, metadata_key_name).context(error::InvalidKeySnafu {
@@ -113,11 +115,13 @@ pub(crate) fn set_output_data<D: DataStore>(
                     key: metadata_key_name,
                 })?;
             let value = serialize_scalar(&raw_value).context(error::SerializeSnafu)?;
-            datastore
-                .set_metadata(&metadata_key, &data_key, value, committed)
-                .context(error::DataStoreWriteSnafu)?;
+            meta_entries.insert(metadata_key, value);
         }
+        metadata_batch.insert(data_key, meta_entries);
     }
+    datastore
+        .set_metadata_batch(&metadata_batch, committed)
+        .context(error::DataStoreWriteSnafu)?;
 
     Ok(())
 }
