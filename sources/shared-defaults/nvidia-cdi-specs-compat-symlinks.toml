@@ -1,0 +1,18 @@
+# Backwards-compatibility for the legacy /usr/lib/nvidia/tesla library path
+# (static CDI spec path).
+#
+# Renders a systemd drop-in that overrides generate-cdi-specs.service's ExecStart
+# to add `--additional-symlinks /usr/lib/nvidia/tesla`, so the static CDI spec at
+# /etc/cdi/nvidia.json recreates the legacy library path. This spec is used by
+# ECS and by the k8s NVIDIA_VISIBLE_DEVICES=all path.
+#
+# Included by all nvidia variants that predate the EKS k8s 1.37 symlink removal
+# (all current k8s, ECS, and mantle nvidia variants). 1.37+ k8s variants omit it
+# and keep the clean default ExecStart.
+[services.generate-cdi-specs]
+configuration-files = ["generate-cdi-specs-exec-start-conf"]
+restart-commands = ["/bin/systemctl daemon-reload"]
+
+[configuration-files.generate-cdi-specs-exec-start-conf]
+path = "/etc/systemd/system/generate-cdi-specs.service.d/exec-start.conf"
+template-path = "/usr/share/templates/generate-cdi-specs-exec-start-conf-compat"
