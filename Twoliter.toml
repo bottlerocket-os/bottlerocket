@@ -12,11 +12,11 @@ vendor = "bottlerocket"
 
 [[kit]]
 name = "bottlerocket-kernel-kit"
-version = "9.1.0"
+version = "9.2.0"
 vendor = "bottlerocket"
 
 [[kit]]
 name = "bottlerocket-core-kit"
-version = "16.3.0"
+version = "17.0.0"
 
 vendor = "bottlerocket"

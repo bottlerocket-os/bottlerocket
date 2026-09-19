@@ -10,15 +10,14 @@ digest = "B/dAUOA5VWlAWwbti5D/Q577BaupO87OqlcmQXiHvew="
 
 [[kit]]
 name = "bottlerocket-kernel-kit"
-version = "9.1.0"
+version = "9.2.0"
 vendor = "bottlerocket"
-source = "public.ecr.aws/bottlerocket/bottlerocket-kernel-kit:v9.1.0"
-digest = "hNrjl3b0anJiUNnwiKw/gPZoCpq7pduMI8thTZloJdo="
+source = "public.ecr.aws/bottlerocket/bottlerocket-kernel-kit:v9.2.0"
+digest = "M0Q1dRP8cbnxPG0cp8LRjC8G3Zh9CGdZCFY4jphCyIA="
 
 [[kit]]
 name = "bottlerocket-core-kit"
-version = "16.3.0"
+version = "17.0.0"
 vendor = "bottlerocket"
-source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v16.3.0"
-digest = "TF+7JlJru7wzNybBtDBXpCQv32LOMm6C+2kQ3JBV0uU="
-
+source = "public.ecr.aws/bottlerocket/bottlerocket-core-kit:v17.0.0"
+digest = "Ieo0q3dYRurX63Vj1QUTcdtm9EOyGnmKU+cu5ziRops="
