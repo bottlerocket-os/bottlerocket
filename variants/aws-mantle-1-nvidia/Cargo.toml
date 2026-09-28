@@ -47,6 +47,10 @@ kernel-parameters = [
     "netdog.default-interface=eth0:dhcp4,dhcp6?",
     "quiet",
     "module_blacklist=i8042",
+    # Keep GPU HBM under NVIDIA driver management instead of onlining it to the
+    # OS as a NUMA node, so Linux does not allocate general system memory into
+    # the GPU's coherent memory on Grace-class platforms. Default is "numa".
+    "nvidia.NVreg_CoherentGPUMemoryMode=driver",
 ]
 
 [lib]
