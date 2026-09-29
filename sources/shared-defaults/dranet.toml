@@ -1,0 +1,36 @@
+# DRANET DRA driver (network devices) service.
+#
+# The driver runs as a host systemd service (not a Helm-installed DaemonSet). Its
+# ExecStart is rendered from settings because it needs the node name from
+# settings.kubernetes.hostname-override, the bind address, and the device filter.
+[services.dranet]
+restart-commands = [
+    "/bin/systemctl try-reload-or-restart dranet.service",
+]
+configuration-files = [
+    "dranet-exec-start-conf",
+    "dranet-disabled-marker",
+]
+
+[configuration-files.dranet-exec-start-conf]
+path = "/etc/systemd/system/dranet.service.d/exec-start.conf"
+template-path = "/usr/share/templates/dranet-exec-start-conf"
+
+# Marker file gating the unit's negated ConditionFileNotEmpty. Rendered non-empty
+# ("stop") only when enabled is false, so the service runs unless a node turns it
+# off, including where no marker is rendered at all.
+[configuration-files.dranet-disabled-marker]
+path = "/etc/dranet/disabled"
+template-path = "/usr/share/templates/dranet-disabled-marker"
+
+# On by default. bind-address keeps the metrics and healthz server on localhost.
+# advertised-devices maps to the device filter in the template, where "efa" is the
+# expression the AWS-supported aws-dranet Helm chart passes.
+[settings.kubelet-dra-drivers.net]
+enabled = true
+bind-address = "127.0.0.1:9177"
+advertised-devices = "efa"
+
+# Re-render the drop-in and the marker, then restart the service, on any change.
+[metadata.settings.kubelet-dra-drivers.net]
+affected-services = ["dranet"]
