@@ -44,6 +44,7 @@ included-packages = [
     "nvidia-container-toolkit-k8s",
     "nvidia-k8s-device-plugin",
     "nvidia-dra-driver-gpu",
+    "dranet",
     "kmod-6.12-nvidia-r580-tesla",
 ]
 kernel-parameters = [
