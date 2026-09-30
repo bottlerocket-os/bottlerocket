@@ -13,6 +13,7 @@ mod args;
 pub mod common_migrations;
 mod datastore_helper;
 pub mod error;
+pub mod named_map;
 
 use snafu::ResultExt;
 use std::collections::HashMap;
