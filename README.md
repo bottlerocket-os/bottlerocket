@@ -571,6 +571,12 @@ We currently package the following major third-party components:
 
 For further documentation or to see the rest of the packages, see the [packaging directory](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/packages/).
 
+### SBOM
+
+Every Bottlerocket image ships a Software Bill of Materials (SBOM) that inventories the packages built into the running OS.
+Starting with Bottlerocket v1.53.0, the SBOM is written to the root filesystem in two industry-standard formats: `/usr/share/bottlerocket/spdx-sbom.json` ([SPDX](https://spdx.dev/) 2.3) and `/usr/share/bottlerocket/cyclonedx-sbom.json` ([CycloneDX](https://cyclonedx.org/) 1.6).
+It is generated at build time by merging per-package SBOMs, so it can be read directly with tools like `jq` or handed to vulnerability scanners such as [Grype](https://github.com/anchore/grype).
+
 ### Updates
 
 The Bottlerocket image has two identical sets of partitions, A and B.
