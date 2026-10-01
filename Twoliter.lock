@@ -3,10 +3,10 @@ project-vendor = "Bottlerocket"
 
 [sdk]
 name = "bottlerocket-sdk"
-version = "0.79.0"
+version = "0.80.0"
 vendor = "bottlerocket"
-source = "public.ecr.aws/bottlerocket/bottlerocket-sdk:v0.79.0"
-digest = "B/dAUOA5VWlAWwbti5D/Q577BaupO87OqlcmQXiHvew="
+source = "public.ecr.aws/bottlerocket/bottlerocket-sdk:v0.80.0"
+digest = "OxNt9m3cqaGsHjg14dDAa8tY5WapQtEbtuvpLi29n9g="
 
 [[kit]]
 name = "bottlerocket-kernel-kit"
