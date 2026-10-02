@@ -1,3 +1,32 @@
+# v1.67.0 (2026-10-02)
+
+## OS Changes
+* Update `bottlerocket-core-kit` from 17.0.0 to 17.2.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1720-2026-10-02) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v17.0.0...v17.2.0)) ([#4959], [#4961])
+* Update `bottlerocket-kernel-kit` from 9.2.0 to 9.4.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v940-2026-10-01) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v9.2.0...v9.4.0)) ([#4959], [#4960])
+* Default to `nvidia.NVreg_CoherentGPUMemoryMode=driver` on `aws-mantle-1-nvidia` and `aws-mantle-1-nvidia-fips` variants ([#4952])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Fix mapping for `ids-per-pod` in `kubelet-config` ([bottlerocket-core-kit#1060]) - Thanks @rosem!
+
+## Build Changes
+* Update `bottlerocket-sdk` from 0.79.0 to 0.80.0 ([commits](https://github.com/bottlerocket-os/bottlerocket-sdk/compare/v0.79.0...v0.80.0)) ([#4959])
+* Update Twoliter from `0.25.0` to `0.25.1` ([#4957])
+
+## Documentation Changes
+* Describe the SBOM shipped in each image ([#4958])
+
+[#4952]: https://github.com/bottlerocket-os/bottlerocket/pull/4952
+[#4957]: https://github.com/bottlerocket-os/bottlerocket/pull/4957
+[#4958]: https://github.com/bottlerocket-os/bottlerocket/pull/4958
+[#4959]: https://github.com/bottlerocket-os/bottlerocket/pull/4959
+[#4960]: https://github.com/bottlerocket-os/bottlerocket/pull/4960
+[#4961]: https://github.com/bottlerocket-os/bottlerocket/pull/4961
+[bottlerocket-core-kit#1060]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/1060
+[bottlerocket-kernel-kit#577]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/577
+
 # v1.66.0 (2026-09-18)
 
 ## Release Highlights
