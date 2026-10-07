@@ -39,6 +39,7 @@ kernel-parameters = [
     "net.ifnames=0",
     "netdog.default-interface=eth0:dhcp4,dhcp6?",
     "quiet",
+    "sysctl.kernel.kexec_load_disabled=1",
     "module_blacklist=i8042,binfmt_misc",
 ]
 
