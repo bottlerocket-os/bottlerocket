@@ -41,7 +41,7 @@ kernel-parameters = [
     "netdog.default-interface=eth0:dhcp4,dhcp6?",
     "quiet",
     "fips=1",
-    "module_blacklist=i8042",
+    "module_blacklist=i8042,binfmt_misc",
 ]
 
 [lib]
