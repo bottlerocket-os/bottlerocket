@@ -1,8 +1,8 @@
-# v1.67.0 (2026-10-02)
+# v1.67.0 (2026-10-12)
 
 ## OS Changes
 * Update `bottlerocket-core-kit` from 17.0.0 to 17.2.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1720-2026-10-02) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v17.0.0...v17.2.0)) ([#4959], [#4961])
-* Update `bottlerocket-kernel-kit` from 9.2.0 to 9.4.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v940-2026-10-01) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v9.2.0...v9.4.0)) ([#4959], [#4960])
+* Update `bottlerocket-kernel-kit` from 9.2.0 to 9.4.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v941-2026-10-07) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v9.2.0...v9.4.1)) ([#4959], [#4960], [#4965])
 * Default to `nvidia.NVreg_CoherentGPUMemoryMode=driver` on `aws-mantle-1-nvidia` and `aws-mantle-1-nvidia-fips` variants ([#4952])
 
 ## Orchestrator Changes
@@ -24,6 +24,7 @@
 [#4959]: https://github.com/bottlerocket-os/bottlerocket/pull/4959
 [#4960]: https://github.com/bottlerocket-os/bottlerocket/pull/4960
 [#4961]: https://github.com/bottlerocket-os/bottlerocket/pull/4961
+[#4965]: https://github.com/bottlerocket-os/bottlerocket/pull/4965
 [bottlerocket-core-kit#1060]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/1060
 [bottlerocket-kernel-kit#577]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/577
 
