@@ -489,5 +489,6 @@ version = "1.69.0"
 "(1.67.0, 1.68.0)" = []
 "(1.68.0, 1.68.1)" = []
 "(1.68.1, 1.69.0)" = [
-    "migrate_v1.69.0_kubelet-dra-drivers-net-settings.lz4"
+    "migrate_v1.69.0_kubelet-dra-drivers-net-settings.lz4",
+    "migrate_v1.69.0_ntp-time-servers.lz4"
 ]
