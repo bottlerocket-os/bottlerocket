@@ -1,6 +1,7 @@
 # v1.67.0 (2026-10-12)
 
 ## OS Changes
+* Add rollback migration for per-source NTP object lists, preserving addresses and textually matching common options; invalid source entries stop migration ([#4969])
 * Update `bottlerocket-core-kit` from 17.0.0 to 17.2.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1720-2026-10-02) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v17.0.0...v17.2.0)) ([#4959], [#4961])
 * Update `bottlerocket-kernel-kit` from 9.2.0 to 9.4.1 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v941-2026-10-07) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v9.2.0...v9.4.1)) ([#4959], [#4960], [#4965])
 * Default to `nvidia.NVreg_CoherentGPUMemoryMode=driver` on `aws-mantle-1-nvidia` and `aws-mantle-1-nvidia-fips` variants ([#4952])
@@ -16,8 +17,10 @@
 * Update Twoliter from `0.25.0` to `0.25.1` ([#4957])
 
 ## Documentation Changes
+* Document opt-in per-source NTP settings and rollback behavior ([#4969])
 * Describe the SBOM shipped in each image ([#4958])
 
+[#4969]: https://github.com/bottlerocket-os/bottlerocket/pull/4969
 [#4952]: https://github.com/bottlerocket-os/bottlerocket/pull/4952
 [#4957]: https://github.com/bottlerocket-os/bottlerocket/pull/4957
 [#4958]: https://github.com/bottlerocket-os/bottlerocket/pull/4958
