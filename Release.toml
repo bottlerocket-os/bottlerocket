@@ -485,4 +485,4 @@ version = "1.67.0"
     "migrate_v1.66.0_nvidia-driver-branch-setting.lz4",
     "migrate_v1.66.0_kubelet-dra-drivers-nvidia-enabled.lz4"
 ]
-"(1.66.0, 1.67.0)" = []
+"(1.66.0, 1.67.0)" = ["migrate_v1.67.0_ntp-time-servers.lz4"]
