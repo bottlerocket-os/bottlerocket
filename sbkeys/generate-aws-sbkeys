@@ -141,9 +141,9 @@ if [ -n "${CA_BUNDLE:-}" ] ; then
     # Move the ca bundle to a temporary file so that it is
     # mounted to a sane location in docker
     cp "${CA_BUNDLE}" "${CA_BUNDLE_FILE}"
-    CA_BUNDLE="${CA_BUNDLE_FILE}"
+    CA_BUNDLE_LOCAL="${CA_BUNDLE_FILE}"
 
-    AWS_CLI_ARGS+=(--ca-bundle "${CA_BUNDLE}")
+    AWS_CLI_ARGS+=(--ca-bundle "${CA_BUNDLE_LOCAL}")
 fi
 AWS_CLI="aws ${AWS_CLI_ARGS[@]+"${AWS_CLI_ARGS[@]}"}"
 
@@ -160,8 +160,8 @@ SBKEYS_SCRIPT="$(mktemp)"
 AWS_KMS_PKCS11_CONF="$(mktemp)"
 cleanup() {
   rm -f "${SBKEYS_SCRIPT}" "${AWS_KMS_PKCS11_CONF}"
-  if [ -n "${CA_BUNDLE:-}" ] ; then
-    rm -f "${CA_BUNDLE}"
+  if [ -n "${CA_BUNDLE_LOCAL:-}" ] ; then
+    rm -f "${CA_BUNDLE_LOCAL}"
   fi
 }
 trap 'cleanup' EXIT
@@ -219,7 +219,7 @@ if [ -n "${SDK_IMAGE:-}" ] ; then
     ${AWS_ACCESS_KEY_ID:+-e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID} \
     ${AWS_SECRET_ACCESS_KEY:+-e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY} \
     ${AWS_SESSION_TOKEN:+-e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN} \
-    ${CA_BUNDLE:+-v $CA_BUNDLE:$CA_BUNDLE} \
+    ${CA_BUNDLE_LOCAL:+-v $CA_BUNDLE_LOCAL:$CA_BUNDLE_LOCAL} \
     -e AWS_REGION="${AWS_REGION}" \
     -e AWS_PARTITION="${AWS_PARTITION}" \
     -e AWS_DEFAULT_REGION="${AWS_REGION}" \
@@ -235,7 +235,6 @@ if [ -n "${SDK_IMAGE:-}" ] ; then
     -e UKI_SIGN_KEY="${UKI_SIGN_KEY:-}" \
     -e AWS_KMS_PKCS11_CONF="${AWS_KMS_PKCS11_CONF}" \
     -e AWS_CLI="${AWS_CLI}" \
-    -e CA_BUNDLE="${CA_BUNDLE}" \
     -e OUTPUT_DIR="${OUTPUT_DIR}" \
     -w /tmp \
     "${SDK_IMAGE}" bash "${SBKEYS_SCRIPT}"
@@ -244,7 +243,7 @@ else
   export CODE_SIGN_KEY CONFIG_SIGN_KEY SHIM_SIGN_KEY UKI_SIGN_KEY
   export AWS_REGION AWS_KMS_PKCS11_CONF OUTPUT_DIR
   export AWS_PARTITION CA_SIGNING_ALGORITHM MODE
-  export AWS_CLI CA_BUNDLE
+  export AWS_CLI
   bash "${SBKEYS_SCRIPT}"
 fi
 
