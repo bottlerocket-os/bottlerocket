@@ -1252,6 +1252,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubernetes-merge-default-eviction-settings"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubernetes-reserved-pid-settings"
 version = "0.1.0"
 dependencies = [
