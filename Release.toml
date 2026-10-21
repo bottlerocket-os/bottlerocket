@@ -490,5 +490,6 @@ version = "1.69.0"
 "(1.68.0, 1.68.1)" = []
 "(1.68.1, 1.69.0)" = [
     "migrate_v1.69.0_kubelet-dra-drivers-net-settings.lz4",
-    "migrate_v1.69.0_kubernetes-merge-default-eviction-settings.lz4"
+    "migrate_v1.69.0_kubernetes-merge-default-eviction-settings.lz4",
+    "migrate_v1.69.0_kernel-zram-size.lz4"
 ]
