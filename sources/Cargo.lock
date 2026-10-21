@@ -1180,6 +1180,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-dra-drivers-net-settings"
+version = "0.1.0"
+dependencies = [
+ "maplit",
+ "migration-helpers",
+]
+
+[[package]]
 name = "kubelet-dra-drivers-nvidia-enabled"
 version = "0.1.0"
 dependencies = [
