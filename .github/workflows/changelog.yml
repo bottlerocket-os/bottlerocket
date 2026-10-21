@@ -1,0 +1,21 @@
+name: changelog
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+jobs:
+  changelog:
+    # Escape hatch: add the "skip-changelog" label to the PR. Re-runs on label change,
+    # so no re-push needed.
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: CHANGELOG.md must be updated
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git diff --name-only "origin/${BASE_REF}...HEAD" \
+            | grep -qx 'CHANGELOG.md' \
+            || { echo '::error file=CHANGELOG.md::PR does not touch CHANGELOG.md. Add an entry, or apply the "skip-changelog" label if this change needs none.'; exit 1; }
