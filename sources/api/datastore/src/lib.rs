@@ -24,7 +24,7 @@ The `deserialization` module provides code to deserialize datastore-acceptable k
 
 * The user (e.g. apiserver) needs to handle locking.
 * There's no support for rolling back transactions.
-* The `serialization` module can't handle complex types under lists; it assumes lists can be serialized as scalars.
+* Lists, including lists of objects, are stored as one JSON value; their elements cannot be updated as individual datastore keys.
 */
 
 pub mod constraints_check;
