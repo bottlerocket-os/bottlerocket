@@ -76,6 +76,7 @@ members = [
     "settings-migrations/v1.66.0/nvidia-driver-branch-setting",
     "settings-migrations/v1.66.0/kubelet-dra-drivers-nvidia-enabled",
     "settings-migrations/v1.69.0/kubernetes-merge-default-eviction-settings",
+    "settings-migrations/v1.69.0/kernel-zram-size",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
