@@ -144,6 +144,13 @@ restart-commands = []
 [metadata.settings.kernel.hugepages]
 affected-services = ["hugepages"]
 
+[services.zram]
+configuration-files = ["corndog-toml"]
+restart-commands = []
+
+[metadata.settings.kernel.zram]
+affected-services = ["zram"]
+
 [configuration-files.corndog-toml]
 path = "/etc/corndog.toml"
 template-path = "/usr/share/templates/corndog-toml"
