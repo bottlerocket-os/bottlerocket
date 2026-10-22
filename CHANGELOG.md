@@ -1,3 +1,34 @@
+# v1.68.0 (2026-10-22)
+
+## Release Highlights
+* Add NVIDIA driver branch selection at boot for NVIDIA variants using the 6.1 and 6.12 kernels ([bottlerocket-kernel-kit#566])
+
+## OS Changes
+* Update `bottlerocket-kernel-kit` from 9.4.1 to 9.6.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v960-2026-10-22) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v9.4.1...v9.6.0)) ([#4971],[#4981])
+* Update `bottlerocket-core-kit` from 17.2.0 to 17.4.0 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-core-kit/blob/develop/CHANGELOG.md#v1740-2026-10-22) ([commits](https://github.com/bottlerocket-os/bottlerocket-core-kit/compare/v17.2.0...v17.4.0)) ([#4981])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Update Kubernetes 1.31 through 1.36 to their latest EKS Distro releases ([bottlerocket-core-kit#1075])
+* Update `eni-max-pods` with new instance types and corrected limits ([bottlerocket-core-kit#1085])
+* Normalize container paths for NVIDIA user space libraries components ([bottlerocket-core-kit#1083])
+
+## Build Changes
+* Update Twoliter from `0.25.1` to `0.26.0` ([#4968])
+* Increase reproducibility by using deterministic filesystem UUIDs, partition GUIDs, and build timestamps ([twoliter#759])
+* Update `bottlerocket-sdk` from 0.80.0 to 0.81.1 ([#4981])
+
+[#4968]: https://github.com/bottlerocket-os/bottlerocket/pull/4968
+[#4971]: https://github.com/bottlerocket-os/bottlerocket/pull/4971
+[#4981]: https://github.com/bottlerocket-os/bottlerocket/pull/4981
+[twoliter#759]: https://github.com/bottlerocket-os/twoliter/pull/759
+[bottlerocket-core-kit#1075]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/1075
+[bottlerocket-core-kit#1083]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/1083
+[bottlerocket-core-kit#1085]: https://github.com/bottlerocket-os/bottlerocket-core-kit/pull/1085
+[bottlerocket-kernel-kit#566]: https://github.com/bottlerocket-os/bottlerocket-kernel-kit/pull/566
+
 # v1.67.0 (2026-10-12)
 
 ## OS Changes
