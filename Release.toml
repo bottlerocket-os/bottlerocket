@@ -486,4 +486,6 @@ version = "1.68.0"
     "migrate_v1.66.0_kubelet-dra-drivers-nvidia-enabled.lz4"
 ]
 "(1.66.0, 1.67.0)" = []
-"(1.67.0, 1.68.0)" = []
+"(1.67.0, 1.68.0)" = [
+    "migrate_v1.68.0_ecs-instance-ip-compatibility.lz4"
+]
