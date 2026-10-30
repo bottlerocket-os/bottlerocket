@@ -1,5 +1,5 @@
 schema-version = 2
-release-version = "1.68.0"
+release-version = "1.68.1"
 project-vendor = "Bottlerocket"
 
 [vendor.bottlerocket]
@@ -12,7 +12,7 @@ vendor = "bottlerocket"
 
 [[kit]]
 name = "bottlerocket-kernel-kit"
-version = "9.6.0"
+version = "9.6.2"
 vendor = "bottlerocket"
 
 [[kit]]
