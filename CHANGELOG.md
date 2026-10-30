@@ -1,3 +1,10 @@
+# v1.68.1 (2026-10-30)
+
+## OS Changes
+* Update `bottlerocket-kernel-kit` from 9.6.0 to 9.6.2 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/blob/develop/CHANGELOG.md#v962-2026-10-30) ([commits](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/compare/v9.6.0...v9.6.2)) ([#4993])
+
+[#4993]: https://github.com/bottlerocket-os/bottlerocket/pull/4993
+
 # v1.68.0 (2026-10-22)
 
 ## Release Highlights
