@@ -487,3 +487,7 @@ version = "1.68.0"
 ]
 "(1.66.0, 1.67.0)" = []
 "(1.67.0, 1.68.0)" = []
+"(1.68.0, 1.69.0)" = [
+    "migrate_v1.69.0_kubernetes-merge-default-eviction-settings.lz4",
+    "migrate_v1.69.0_kernel-zram-size.lz4"
+]
