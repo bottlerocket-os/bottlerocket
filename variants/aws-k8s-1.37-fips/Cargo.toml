@@ -37,6 +37,8 @@ included-packages = [
     "digestion-image-verifier",
     "notation-image-verifier",
     "thar-be-image-verifiers",
+# DRA drivers
+    "dranet",
 ]
 kernel-parameters = [
     "console=tty0",
