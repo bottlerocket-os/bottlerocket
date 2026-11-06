@@ -292,6 +292,8 @@ This doesn't require any external communication, so it's quicker than `apiclient
 
 Here we'll describe the settings you can configure on your Bottlerocket instance, and how to do it.
 
+For legacy and opt-in per-source NTP configuration, see [NTP settings](NTP_SETTINGS.md).
+
 (API endpoints are defined in our [OpenAPI spec](https://github.com/bottlerocket-os/bottlerocket-core-kit/tree/develop/sources/api/openapi.yaml) if you want more detail.)
 
 ### Interacting with settings

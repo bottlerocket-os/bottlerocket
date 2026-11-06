@@ -1,3 +1,13 @@
+# Unreleased
+
+## OS Changes
+* Add rollback migration for per-source NTP object lists. The migration keeps addresses, keeps options common to every source, and stops with an error on an invalid source entry ([#4969])
+
+## Documentation Changes
+* Document opt-in per-source NTP settings and rollback behavior ([#4969])
+
+[#4969]: https://github.com/bottlerocket-os/bottlerocket/pull/4969
+
 # v1.68.1 (2026-10-30)
 
 ## OS Changes
