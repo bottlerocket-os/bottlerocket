@@ -1,0 +1,3 @@
+# Still prefer zram, but unlike 200, also reclaim page cache so pods without swap aren't starved.
+[settings.kernel.sysctl]
+"vm.swappiness" = "150"
