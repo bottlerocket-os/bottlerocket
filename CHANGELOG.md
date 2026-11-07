@@ -1,3 +1,39 @@
+# v1.69.0 (2026-11-07)
+
+## Release Highlights
+* Use `containerd` 2.3 in all variants ([#4989])
+* Add the opt-in `dranet` DRA networking driver to Kubernetes 1.34 through 1.37 NVIDIA variants ([#4974])
+
+## OS Changes
+* Update `bottlerocket-kernel-kit` from 9.6.2 to 9.7.0 ([#5002])
+* Update `bottlerocket-core-kit` from 17.4.0 to 18.0.0 ([#5002])
+* Update `admin-container` from 0.21.6 to 0.21.7 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-admin-container/blob/develop/CHANGELOG.md#0217) ([commits](https://github.com/bottlerocket-os/bottlerocket-admin-container/compare/v0.21.6...v0.21.7)) ([#4996])
+* Update `control-container` from 0.21.6 to 0.21.7 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-control-container/blob/develop/CHANGELOG.md#0217) ([commits](https://github.com/bottlerocket-os/bottlerocket-control-container/compare/v0.21.6...v0.21.7)) ([#4996])
+* Update `bootstrap-container` from 0.3.6 to 0.3.7 [CHANGELOG](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/blob/develop/CHANGELOG.md#037) ([commits](https://github.com/bottlerocket-os/bottlerocket-bootstrap-container/compare/v0.3.6...v0.3.7)) ([#4996])
+* Add `settings.kernel.zram.size` to configure the boot-time zram device size ([#4991])
+* Harden mantle variants: disable `kexec`, deny the `binfmt_misc` kernel module, and remove the kernel lockdown defaults ([#4963])
+
+## Orchestrator Changes
+
+### Kubernetes
+
+* Set `vm.swappiness` to 150 on Kubernetes 1.37 variants ([#4990])
+* Merge user-provided Kubernetes eviction settings with the defaults instead of replacing them ([#4991])
+
+## Build Changes
+* Update Twoliter from `0.26.0` to `0.27.0` ([#4999])
+* Update `bottlerocket-settings-sdk` to v0.33.0 ([#4974], [#4991])
+* Update `bottlerocket-sdk` from 0.81.1 to 0.82.0 ([#5002])
+
+[#4963]: https://github.com/bottlerocket-os/bottlerocket/pull/4963
+[#4974]: https://github.com/bottlerocket-os/bottlerocket/pull/4974
+[#4989]: https://github.com/bottlerocket-os/bottlerocket/pull/4989
+[#4990]: https://github.com/bottlerocket-os/bottlerocket/pull/4990
+[#4991]: https://github.com/bottlerocket-os/bottlerocket/pull/4991
+[#4996]: https://github.com/bottlerocket-os/bottlerocket/pull/4996
+[#4999]: https://github.com/bottlerocket-os/bottlerocket/pull/4999
+[#5002]: https://github.com/bottlerocket-os/bottlerocket/pull/5002
+
 # v1.68.1 (2026-10-30)
 
 ## OS Changes
