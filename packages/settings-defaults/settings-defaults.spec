@@ -150,17 +150,23 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %{summary}.
 
 %package aws-k8s-1.31-nvidia
-Summary: Settings defaults for the aws-k8s 1.31 nvidia variants
-Requires: (%{shrink:
-           %{_cross_os}variant(aws-k8s-1.31-nvidia)      or
-           %{_cross_os}variant(aws-k8s-1.31-nvidia-fips)
-           %{nil}})
+Summary: Settings defaults for the aws-k8s 1.31 nvidia variant
+Requires: %{_cross_os}variant(aws-k8s-1.31-nvidia)
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.31-nvidia)
-Provides: %{_cross_os}settings-defaults(aws-k8s-1.31-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-k8s-1.31-nvidia
+%{summary}.
+
+%package aws-k8s-1.31-nvidia-fips
+Summary: Settings defaults for the aws-k8s 1.31 nvidia FIPS variant
+Requires: %{_cross_os}variant(aws-k8s-1.31-nvidia-fips)
+Provides: %{_cross_os}settings-defaults(any)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.31-nvidia-fips)
+Conflicts: %{_cross_os}settings-defaults(any)
+
+%description aws-k8s-1.31-nvidia-fips
 %{summary}.
 
 %package aws-k8s-1.32
@@ -178,17 +184,23 @@ Conflicts: %{_cross_os}settings-defaults(any)
 %{summary}.
 
 %package aws-k8s-1.32-nvidia
-Summary: Settings defaults for the aws-k8s 1.32 nvidia variants
-Requires: (%{shrink:
-           %{_cross_os}variant(aws-k8s-1.32-nvidia)      or
-           %{_cross_os}variant(aws-k8s-1.32-nvidia-fips)
-           %{nil}})
+Summary: Settings defaults for the aws-k8s 1.32 nvidia variant
+Requires: %{_cross_os}variant(aws-k8s-1.32-nvidia)
 Provides: %{_cross_os}settings-defaults(any)
 Provides: %{_cross_os}settings-defaults(aws-k8s-1.32-nvidia)
-Provides: %{_cross_os}settings-defaults(aws-k8s-1.32-nvidia-fips)
 Conflicts: %{_cross_os}settings-defaults(any)
 
 %description aws-k8s-1.32-nvidia
+%{summary}.
+
+%package aws-k8s-1.32-nvidia-fips
+Summary: Settings defaults for the aws-k8s 1.32 nvidia FIPS variant
+Requires: %{_cross_os}variant(aws-k8s-1.32-nvidia-fips)
+Provides: %{_cross_os}settings-defaults(any)
+Provides: %{_cross_os}settings-defaults(aws-k8s-1.32-nvidia-fips)
+Conflicts: %{_cross_os}settings-defaults(any)
+
+%description aws-k8s-1.32-nvidia-fips
 %{summary}.
 
 %package aws-k8s-1.33
@@ -457,8 +469,10 @@ for defaults in \
   aws-mantle-1-nvidia \
   aws-k8s-1.31 \
   aws-k8s-1.31-nvidia \
+  aws-k8s-1.31-nvidia-fips \
   aws-k8s-1.32 \
   aws-k8s-1.32-nvidia \
+  aws-k8s-1.32-nvidia-fips \
   aws-k8s-1.33 \
   aws-k8s-1.33-nvidia \
   aws-k8s-1.34 \
@@ -508,8 +522,10 @@ for defaults in \
   aws-mantle-1-nvidia \
   aws-k8s-1.31 \
   aws-k8s-1.31-nvidia \
+  aws-k8s-1.31-nvidia-fips \
   aws-k8s-1.32 \
   aws-k8s-1.32-nvidia \
+  aws-k8s-1.32-nvidia-fips \
   aws-k8s-1.33 \
   aws-k8s-1.33-nvidia \
   aws-k8s-1.34 \
@@ -586,6 +602,10 @@ done
 %{_cross_defaultsdir}/aws-k8s-1.31-nvidia.toml
 %{_cross_tmpfilesdir}/storewolf-defaults-aws-k8s-1.31-nvidia.conf
 
+%files aws-k8s-1.31-nvidia-fips
+%{_cross_defaultsdir}/aws-k8s-1.31-nvidia-fips.toml
+%{_cross_tmpfilesdir}/storewolf-defaults-aws-k8s-1.31-nvidia-fips.conf
+
 %files aws-k8s-1.32
 %{_cross_defaultsdir}/aws-k8s-1.32.toml
 %{_cross_tmpfilesdir}/storewolf-defaults-aws-k8s-1.32.conf
@@ -593,6 +613,10 @@ done
 %files aws-k8s-1.32-nvidia
 %{_cross_defaultsdir}/aws-k8s-1.32-nvidia.toml
 %{_cross_tmpfilesdir}/storewolf-defaults-aws-k8s-1.32-nvidia.conf
+
+%files aws-k8s-1.32-nvidia-fips
+%{_cross_defaultsdir}/aws-k8s-1.32-nvidia-fips.toml
+%{_cross_tmpfilesdir}/storewolf-defaults-aws-k8s-1.32-nvidia-fips.conf
 
 %files aws-k8s-1.33
 %{_cross_defaultsdir}/aws-k8s-1.33.toml

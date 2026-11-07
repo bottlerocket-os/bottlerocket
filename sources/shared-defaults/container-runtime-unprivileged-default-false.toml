@@ -1,0 +1,5 @@
+# containerd 2.x enables unprivileged ports and ICMP in pods by default; containerd 1.7 did not.
+# Variants that moved from containerd 1.7 keep 1.7's behaviour.
+[settings.container-runtime]
+enable-unprivileged-ports = false
+enable-unprivileged-icmp = false

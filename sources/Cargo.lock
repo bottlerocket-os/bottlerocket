@@ -2018,6 +2018,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-defaults-aws-k8s-1_31-nvidia-fips"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
 name = "settings-defaults-aws-k8s-1_32"
 version = "0.1.0"
 dependencies = [
@@ -2026,6 +2033,13 @@ dependencies = [
 
 [[package]]
 name = "settings-defaults-aws-k8s-1_32-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
+name = "settings-defaults-aws-k8s-1_32-nvidia-fips"
 version = "0.1.0"
 dependencies = [
  "bottlerocket-defaults-helper",

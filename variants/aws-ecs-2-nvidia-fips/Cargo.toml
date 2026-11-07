@@ -21,6 +21,7 @@ included-packages = [
 # core
     "release",
     "kernel-6.1",
+    "containerd-2.3",
     "whippet",
 # docker
     "docker-cli",
