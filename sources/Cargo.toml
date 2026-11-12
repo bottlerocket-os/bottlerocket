@@ -80,6 +80,7 @@ members = [
     "settings-migrations/v1.69.0/kubelet-dra-drivers-net-settings",
     "settings-migrations/v1.69.0/kubernetes-merge-default-eviction-settings",
     "settings-migrations/v1.69.0/kernel-zram-size",
+    "settings-migrations/v1.70.0/kubelet-dra-drivers-net-rename",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",

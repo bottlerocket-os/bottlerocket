@@ -1188,6 +1188,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "kubelet-dra-drivers-net-rename"
+version = "0.1.0"
+dependencies = [
+ "maplit",
+ "migration-helpers",
+ "serde_json",
+]
+
+[[package]]
 name = "kubelet-dra-drivers-net-settings"
 version = "0.1.0"
 dependencies = [
