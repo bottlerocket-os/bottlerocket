@@ -390,6 +390,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-mantle-next-64k-nvidia"
+version = "0.1.0"
+dependencies = [
+ "settings-defaults",
+ "settings-migrations",
+ "settings-plugins",
+]
+
+[[package]]
 name = "metal-dev"
 version = "0.1.0"
 dependencies = [

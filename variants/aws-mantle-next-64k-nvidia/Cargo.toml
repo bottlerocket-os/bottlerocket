@@ -1,0 +1,67 @@
+[package]
+name = "aws-mantle-next-64k-nvidia"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[package.metadata.build-variant.image-features]
+grub-set-private-var = true
+uefi-secure-boot = true
+xfs-data-partition = true
+systemd-networkd = true
+erofs-root-partition = true
+external-kmod-development = false
+encrypted-storage = true
+ephemeral-encryption-keys = true
+in-place-updates = false
+
+[package.metadata.build-variant.image-layout]
+os-image-size-gib = 4
+
+[package.metadata.build-variant]
+# Set the flavor to "nvidia" so that packages which check variant-flavor(nvidia)
+# treat this as an NVIDIA variant
+flavor = "nvidia"
+# kernel-next uses 64K pages only on aarch64.
+supported-arches = ["aarch64"]
+image-format = "uki"
+included-packages = [
+# core
+    "release",
+    "kernel-next",
+    "containerd-2.3",
+    "systemd-257",
+    "nftables",
+    "whippet",
+    "aws-signer-notation-plugin",
+    "digestion-image-verifier",
+    "notation-image-verifier",
+    "thar-be-image-verifiers",
+# NVIDIA support
+    "nvidia-container-toolkit-ecs",
+    "kmod-next-nvidia-r620-tesla",
+    "kmod-next-nvidia-r620-gdrcopy",
+    "kmod-next-nvidia-r620-imex-config",
+    "kmod-next-nvidia-r620-fabricmanager",
+]
+
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0,115200n8",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
+    "quiet",
+    # Keep GPU HBM under NVIDIA driver management instead of onlining it to the
+    # OS as a NUMA node, so Linux does not allocate general system memory into
+    # the GPU's coherent memory on Grace-class platforms. Default is "numa".
+    "nvidia.NVreg_CoherentGPUMemoryMode=driver",
+]
+
+[lib]
+path = "../variants.rs"
+
+[build-dependencies]
+settings-defaults = { path = "../../packages/settings-defaults" }
+settings-plugins = { path = "../../packages/settings-plugins" }
+settings-migrations = { path = "../../packages/settings-migrations" }
