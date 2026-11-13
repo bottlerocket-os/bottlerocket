@@ -36,11 +36,11 @@ template-path = "/usr/share/templates/dranet-disabled-marker"
 # healthz server on localhost.
 # advertised-devices maps to the device filter in the template, where "efa" is the
 # expression the AWS-supported aws-dranet Helm chart passes.
-[settings.kubelet-dra-drivers.net]
+[settings.kubelet-dra-drivers-net]
 enabled = false
 bind-address = "127.0.0.1:9177"
 advertised-devices = "efa"
 
 # Re-render the drop-in and the marker, then restart the service, on any change.
-[metadata.settings.kubelet-dra-drivers.net]
+[metadata.settings.kubelet-dra-drivers-net]
 affected-services = ["dranet"]
