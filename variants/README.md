@@ -218,6 +218,17 @@ This variant is intended for use by AWS Bedrock's Mantle API and may make breaki
 
 It also includes the required packages to configure containers to leverage NVIDIA GPUs and is FIPS-enabled.
 
+### aws-mantle-next-64k-nvidia: limited support
+
+The [aws-mantle-next-64k-nvidia](aws-mantle-next-64k-nvidia/Cargo.toml) variant is a minimal Bottlerocket build, it runs no container orchestrator agent.
+
+A `-64k` in a variant name means that the variant uses a kernel with 64K pages and builds only for aarch64.
+
+This variant does not guarantee stability or backward compatibility. This variant is intended for use by AWS Bedrock's Mantle API and may make breaking changes without warning.
+If you need a fully supported variant, use a Kubernetes or Amazon ECS variant.
+
+There is no FIPS version of this variant, because `kernel-next` has no FIPS certification.
+
 ### aws-dev: AWS development build
 
 The [aws-dev](aws-dev/Cargo.toml) variant has useful packages for local development of the OS.

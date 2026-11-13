@@ -19,6 +19,7 @@ members = [
     "variants/aws-mantle-1-fips",
     "variants/aws-mantle-1-nvidia",
     "variants/aws-mantle-1-nvidia-fips",
+    "variants/aws-mantle-next-64k-nvidia",
     "variants/aws-k8s-1.31",
     "variants/aws-k8s-1.31-fips",
     "variants/aws-k8s-1.32",
