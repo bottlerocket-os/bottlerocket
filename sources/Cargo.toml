@@ -38,6 +38,7 @@ members = [
     "settings-defaults/aws-k8s-1.37-nvidia",
     "settings-defaults/aws-mantle-1",
     "settings-defaults/aws-mantle-1-nvidia",
+    "settings-defaults/aws-mantle-next-64k-nvidia",
     "settings-defaults/metal-dev",
     "settings-defaults/metal-k8s-1.30",
     "settings-defaults/vmware-dev",
