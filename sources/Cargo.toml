@@ -80,6 +80,7 @@ members = [
     "settings-migrations/v1.69.0/kubelet-dra-drivers-net-settings",
     "settings-migrations/v1.69.0/kubernetes-merge-default-eviction-settings",
     "settings-migrations/v1.69.0/kernel-zram-size",
+    "settings-migrations/v1.70.0/kubelet-dra-drivers-net-rename",
 
     "settings-plugins/aws-dev",
     "settings-plugins/aws-ecs-2",
@@ -148,28 +149,28 @@ url = "2"
 walkdir = "2"
 
 [workspace.dependencies.bottlerocket-defaults-helper]
-git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.33.0"
+git = "https://github.com/maherthomsi/bottlerocket-settings-sdk"
+branch = "dranet-settings-split"
 version = "0.1.1"
 
 [workspace.dependencies.bottlerocket-modeled-types]
-git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.33.0"
+git = "https://github.com/maherthomsi/bottlerocket-settings-sdk"
+branch = "dranet-settings-split"
 version = "0.20.0"
 
 [workspace.dependencies.bottlerocket-settings-models]
-git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.33.0"
-version = "0.33.0"
+git = "https://github.com/maherthomsi/bottlerocket-settings-sdk"
+branch = "dranet-settings-split"
+version = "0.34.0"
 
 [workspace.dependencies.bottlerocket-settings-plugin]
-git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.33.0"
+git = "https://github.com/maherthomsi/bottlerocket-settings-sdk"
+branch = "dranet-settings-split"
 version = "0.1.0"
 
 [workspace.dependencies.settings-extension-oci-defaults]
-git = "https://github.com/bottlerocket-os/bottlerocket-settings-sdk"
-tag = "bottlerocket-settings-models-v0.33.0"
+git = "https://github.com/maherthomsi/bottlerocket-settings-sdk"
+branch = "dranet-settings-split"
 version = "0.1.0"
 
 [profile.release]

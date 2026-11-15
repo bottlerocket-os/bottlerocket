@@ -28,4 +28,5 @@ struct AwsK8sSettings {
     nvidia_container_runtime: bottlerocket_settings_models::NvidiaContainerRuntimeSettingsV1,
     kubelet_device_plugins: bottlerocket_settings_models::KubeletDevicePluginsV1,
     kubelet_dra_drivers: bottlerocket_settings_models::KubeletDraDriversV1,
+    kubelet_dra_drivers_net: bottlerocket_settings_models::KubeletDraDriversNetV1,
 }

@@ -26,4 +26,5 @@ struct AwsK8sSettings {
     container_runtime_plugins: bottlerocket_settings_models::ContainerRuntimePluginsSettingsV1,
     image_verifier_plugins: bottlerocket_settings_models::ImageVerifierPluginsSettingsV1,
     autoscaling: bottlerocket_settings_models::AutoScalingSettingsV1,
+    kubelet_dra_drivers_net: bottlerocket_settings_models::KubeletDraDriversNetV1,
 }
