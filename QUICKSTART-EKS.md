@@ -385,7 +385,11 @@ Bottlerocket `v1.30.0+` supports Neuron Instance Types such as: `inf1`, `inf2`, 
 [settings.kubernetes]
 device-ownership-from-security-context = true
 ```
-This setting allows the container to take ownership of the mounted Neuron device based on the `runAsUser` and `runAsGroup` values provided in the spec.
+
+If you are provisioning nodes via [EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode.html) the setting above is applied automatically - when using
+different provisioning mechanisms such as Karpenter or modified AMIs, we recommend you set [user-data](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html).
+
+The following setting allows the container to take ownership of the mounted Neuron device based on the `runAsUser` and `runAsGroup` values provided in the spec.
 For more details on this, see the [Kubernetes documentation](https://kubernetes.io/blog/2021/11/09/non-root-containers-and-devices/):
 
 ```yaml
@@ -404,8 +408,10 @@ spec:
   - name: test
     image: amazonlinux:2023
     resources:
+      requests:
+        aws.amazon.com/neuroncore: "1"
       limits:
         aws.amazon.com/neuron: "1"
 ```
 
-Along with the `device-ownership-from-secuirity-context` setting, you will need to deploy the [neuron-device-plugin](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/containers/kubernetes-getting-started.html#neuron-device-plugin), and optionally, the [neuron-scheduler](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/containers/kubernetes-getting-started.html#neuron-scheduler-extension).
+Along with the `device-ownership-from-secuirity-context` setting, you will need to deploy the [neuron-device-plugin](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/containers/kubernetes-getting-started.html#neuron-device-plugin) in order to make neuron devices available to the container, and optionally, the [neuron-scheduler](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/containers/kubernetes-getting-started.html#neuron-scheduler-extension).
