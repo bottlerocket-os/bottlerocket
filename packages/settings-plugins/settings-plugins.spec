@@ -86,13 +86,15 @@ Requires: (%{shrink:
            %{_cross_os}variant(aws-mantle-1) or
            %{_cross_os}variant(aws-mantle-1-fips) or
            %{_cross_os}variant(aws-mantle-1-nvidia) or
-           %{_cross_os}variant(aws-mantle-1-nvidia-fips)
+           %{_cross_os}variant(aws-mantle-1-nvidia-fips) or
+           %{_cross_os}variant(aws-mantle-next-64k-nvidia)
            %{nil}})
 Provides: %{_cross_os}settings-plugin(any)
 Provides: %{_cross_os}settings-plugin(aws-mantle-1)
 Provides: %{_cross_os}settings-plugin(aws-mantle-1-nvidia)
 Provides: %{_cross_os}settings-plugin(aws-mantle-1-fips)
 Provides: %{_cross_os}settings-plugin(aws-mantle-1-nvidia-fips)
+Provides: %{_cross_os}settings-plugin(aws-mantle-next-64k-nvidia)
 Conflicts: %{_cross_os}settings-plugin(any)
 
 %description aws-mantle-1

@@ -1,0 +1,11 @@
+description = "Minimal Bottlerocket build for AWS Bedrock's Mantle API on aarch64 NVIDIA platforms with a 64K page kernel. Carries experimental features like ephemeral-encryption-keys, runs no container orchestrator agent, and may make breaking changes without warning."
+
+# https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html
+imds-support = "v2.0"
+
+# Override the pubsys "gp2" default
+[block-device-mappings."/dev/xvda".ebs]
+volume-type = "gp3"
+
+[block-device-mappings."/dev/xvdb".ebs]
+volume-type = "gp3"
