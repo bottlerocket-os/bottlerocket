@@ -184,6 +184,27 @@ pub trait DataStore {
         }
         Ok(())
     }
+    /// Set multiple metadata entries at once.
+    ///
+    /// The outer key is a data key and the inner map is metadata keys to values.
+    /// Implementers can replace the default implementation if there's a faster way than
+    /// setting each metadata entry individually.
+    fn set_metadata_batch<S>(
+        &mut self,
+        metadata: &HashMap<Key, HashMap<Key, S>>,
+        committed: &Committed,
+    ) -> Result<()>
+    where
+        S: AsRef<str>,
+    {
+        for (data_key, meta_map) in metadata {
+            for (meta_key, value) in meta_map {
+                self.set_metadata(meta_key, data_key, value, committed)?;
+            }
+        }
+        Ok(())
+    }
+
     /// Removes multiple data keys at once in the data store.
     ///
     /// Implementers can replace the default implementation if there's a faster way than
@@ -320,6 +341,7 @@ mod test {
     use super::memory::MemoryDataStore;
     use super::{Committed, DataStore, Key, KeyType};
     use maplit::{hashmap, hashset};
+    use std::collections::HashMap;
 
     #[test]
     fn set_unset_keys() {
@@ -499,5 +521,62 @@ mod test {
             .unwrap(),
             hashmap!(k2 => hashmap!(mk2 => "42".to_string()))
         );
+    }
+
+    #[test]
+    fn set_metadata_batch_writes_all_entries() {
+        let mut m = MemoryDataStore::new();
+
+        // Two data keys, each with two metadata entries.
+        let d1 = Key::new(KeyType::Data, "x.1").unwrap();
+        let d2 = Key::new(KeyType::Data, "x.2").unwrap();
+
+        let mk1 = Key::new(KeyType::Meta, "creator").unwrap();
+        let mk2 = Key::new(KeyType::Meta, "age").unwrap();
+
+        // Build the batch: outer key = data key, inner map = meta key -> value.
+        let mut d1_entries = HashMap::new();
+        d1_entries.insert(mk1.clone(), "alice".to_string());
+        d1_entries.insert(mk2.clone(), "30".to_string());
+
+        let mut d2_entries = HashMap::new();
+        d2_entries.insert(mk1.clone(), "bob".to_string());
+        d2_entries.insert(mk2.clone(), "25".to_string());
+
+        let batch = hashmap!(
+            d1.clone() => d1_entries,
+            d2.clone() => d2_entries,
+        );
+
+        let tx = "test transaction";
+        let pending = Committed::Pending { tx: tx.into() };
+
+        m.set_metadata_batch(&batch, &pending).unwrap();
+
+        // Every entry from the batch should be retrievable.
+        assert_eq!(
+            m.get_metadata(&mk1, &d1, &pending).unwrap(),
+            Some("alice".to_string())
+        );
+        assert_eq!(
+            m.get_metadata(&mk2, &d1, &pending).unwrap(),
+            Some("30".to_string())
+        );
+        assert_eq!(
+            m.get_metadata(&mk1, &d2, &pending).unwrap(),
+            Some("bob".to_string())
+        );
+        assert_eq!(
+            m.get_metadata(&mk2, &d2, &pending).unwrap(),
+            Some("25".to_string())
+        );
+    }
+
+    #[test]
+    fn set_metadata_batch_empty_is_noop() {
+        let mut m = MemoryDataStore::new();
+        let empty: HashMap<Key, HashMap<Key, String>> = HashMap::new();
+        m.set_metadata_batch(&empty, &Committed::Live).unwrap();
+        // Nothing to assert beyond "no panic, no error".
     }
 }

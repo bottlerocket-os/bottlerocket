@@ -154,11 +154,9 @@ impl FilesystemDataStore {
                     if e.kind() == io::ErrorKind::NotFound {
                         continue;
 
-                    // "Directory not empty" doesn't have its own ErrorKind, so we have to check a
-                    // platform-specific error number or the error description, neither of which is
-                    // ideal.  Still, we can at least log an error in the case we know.  Don't
-                    // fail, though, because we've still accomplished our main purpose.
-                    } else if e.raw_os_error() != Some(39) {
+                    // Don't fail on "directory not empty" — we've still accomplished our main
+                    // purpose of removing the target key.  Log any other unexpected error.
+                    } else if e.kind() != io::ErrorKind::DirectoryNotEmpty {
                         error!(
                             "Failed to delete directory '{}' we believe is empty: {}",
                             parent.display(),
