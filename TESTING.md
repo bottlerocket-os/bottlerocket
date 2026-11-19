@@ -23,9 +23,8 @@ cargo make \
 
 Unit tests will only get us so far.
 Ultimately we want to know if Bottlerocket runs correctly as a complete system.
-We have created a [command line utility] and [testing system] to help us test Bottlerocket holistically.
+We use the `testsys` CLI through `cargo make testsys`, alongside the [testing system], to test Bottlerocket holistically.
 
-[command line utility]: ./tools/testsys
 [testing system]: https://github.com/bottlerocket-os/bottlerocket-test-system
 
 The test system coordinates:
@@ -127,7 +126,8 @@ Now that you have the testsys cluster set up, it's time to run a Bottlerocket in
 ### Configuration
 
 There are many arguments that can be configured via environment variables with `cargo make`; however, it is possible to create a configuration file instead.
-Check out the [example config file](tools/testsys/Test.toml.example) for a sample `Test.toml` file.
+By default, `cargo make` looks for `Test.toml` in the repository root, and falls back to `tests/Test.toml` if the root file is absent.
+If both files exist, `cargo make` exits with an error so there is only one active test configuration.
 
 For example, the instance type can be specified based on variant requirements:
 
