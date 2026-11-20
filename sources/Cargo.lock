@@ -2137,6 +2137,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "settings-defaults-aws-mantle-next-nvidia"
+version = "0.1.0"
+dependencies = [
+ "bottlerocket-defaults-helper",
+]
+
+[[package]]
 name = "settings-defaults-metal-dev"
 version = "0.1.0"
 dependencies = [

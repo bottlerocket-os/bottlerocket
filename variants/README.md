@@ -229,6 +229,20 @@ If you need a fully supported variant, use a Kubernetes or Amazon ECS variant.
 
 There is no FIPS version of this variant, because `kernel-next` has no FIPS certification.
 
+### aws-mantle-next-nvidia: limited support
+
+The [aws-mantle-next-nvidia](aws-mantle-next-nvidia/Cargo.toml) variant is a minimal Bottlerocket build for AWS Bedrock's Mantle API. It runs no container orchestrator agent.
+This variant builds only for x86_64.
+
+This variant does not guarantee stability or backward compatibility. It can make breaking changes without warning.
+If you need a fully supported variant, use a Kubernetes or Amazon ECS variant.
+
+This variant has the same settings and the same `kernel-6.18` kernel as `aws-mantle-1-nvidia`.
+It uses the NVIDIA R620 driver instead of R580. R620 has only the open GPU kernel modules.
+It does not set `nvidia.NVreg_CoherentGPUMemoryMode=driver` on the kernel command line, because x86_64 hosts have no coherent GPU memory.
+
+There is no FIPS version of this variant.
+
 ### aws-dev: AWS development build
 
 The [aws-dev](aws-dev/Cargo.toml) variant has useful packages for local development of the OS.
