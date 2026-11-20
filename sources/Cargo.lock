@@ -1450,6 +1450,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "nvidia-k8s-device-plugin-disable-health-checks"
+version = "0.1.0"
+dependencies = [
+ "migration-helpers",
+]
+
+[[package]]
 name = "nvidia-k8s-device-plugin-enabled"
 version = "0.1.0"
 dependencies = [
