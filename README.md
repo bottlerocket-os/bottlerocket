@@ -519,8 +519,8 @@ There are a few important caveats about the provided kdump support:
 Bottlerocket's `nvidia` variants include the required packages and configurations to leverage NVIDIA GPUs.
 Currently, the following NVIDIA driver versions are supported in Bottlerocket:
 
-* 470.X
-* 515.X
+* 580.X
+* 595.X
 
 The official AMIs for these variants can be used with EC2 GPU-equipped instance types such as: `p2`, `p3`, `p4`, `g3`, `g4dn`, `g5` and `g5g`.
 Note that older instance types, such as `p2`, are not supported by NVIDIA driver `515.X` and above.
