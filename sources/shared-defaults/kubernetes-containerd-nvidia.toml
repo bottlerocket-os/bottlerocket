@@ -13,12 +13,16 @@ overwrite-path-if-present = false
 
 # Container runtime - soci.
 [services.soci-snapshotter]
-configuration-files = ["soci-config-toml"]
+configuration-files = ["soci-config-toml", "soci-docker-config-json"]
 restart-commands = ["/bin/systemctl try-restart soci-snapshotter.service"]
 
 [configuration-files.soci-config-toml]
 path = "/etc/soci-snapshotter/config.toml"
 template-path = "/usr/share/templates/soci-config-toml"
+
+[configuration-files.soci-docker-config-json]
+path = "/etc/soci-snapshotter/config.json"
+template-path = "/usr/share/templates/soci-docker-config-json"
 
 [configuration-files.selected-snapshotter]
 path = "/etc/containerd/selected-snapshotter"
